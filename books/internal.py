@@ -37,11 +37,10 @@ def storage_check(request):
     using, and a live round trip when it is the bucket: write a small file,
     read it back through its signed link, confirm the same object is refused
     without the signature, delete it."""
-    from django.http import Http404
-    from django.utils import timezone
-
     import requests
     from django.core.files.base import ContentFile
+    from django.http import Http404
+    from django.utils import timezone
 
     from . import storage
 
@@ -63,3 +62,38 @@ def storage_check(request):
     else:
         out["ok"] = False
     return JsonResponse(out)
+
+
+def sources_check(request):
+    """Superuser only (404 for anyone else): is each book source configured
+    and answering right now? One live search per source, no cache, plus the
+    enrichment and web-lookup numbers."""
+    from django.conf import settings
+    from django.http import Http404
+
+    from . import enrich, weblookup
+    from .sources import googlebooks, nli, openlibrary
+
+    if not (request.user.is_authenticated and request.user.is_superuser):
+        raise Http404
+    tests = {"english": "Harry Potter Rowling", "hebrew": "מיכאל שלי עמוס עוז"}
+    out = {}
+    for source, key_name in ((googlebooks, "BOOKS_GOOGLE_BOOKS_KEY"), (openlibrary, None), (nli, "BOOKS_NLI_API_KEY")):
+        row = {"key_set": bool(getattr(settings, key_name, "")) if key_name else None}
+        if key_name == "BOOKS_NLI_API_KEY" and not row["key_set"]:
+            row["skipped"] = "no key"
+            out[source.NAME] = row
+            continue
+        for label, query in tests.items():
+            try:
+                records = source.search(query, limit=3)
+                row[label] = {"ok": True, "results": len(records),
+                              "first": records[0].title if records else "",
+                              "isbn": records[0].isbns[:1] if records else []}
+            except Exception as exc:  # noqa: BLE001
+                row[label] = {"ok": False, "error": str(exc)[:200]}
+        out[source.NAME] = row
+    return JsonResponse({"sources": out, "enrichment": enrich.counts(),
+                         "web": {"enabled": weblookup.enabled(), "today_usd": float(weblookup.spent_today()),
+                                 "cap_usd": float(weblookup.daily_cap())}},
+                        json_dumps_params={"ensure_ascii": False})

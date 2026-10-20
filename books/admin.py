@@ -5,6 +5,7 @@ from .models import (
     Circle,
     CircleMember,
     Deal,
+    EntryEnrichment,
     EntryTagging,
     Feedback,
     Job,
@@ -150,4 +151,13 @@ class WebLookupAdmin(admin.ModelAdmin):
     list_display = ["title", "author", "found", "searches", "cost_usd", "created_at"]
     list_filter = ["found"]
     search_fields = ["title", "author"]
+    raw_id_fields = ["entry"]
+
+
+@admin.register(EntryEnrichment)
+class EntryEnrichmentAdmin(admin.ModelAdmin):
+    """One pass per record. Delete a row to have that record enriched again."""
+
+    list_display = ["entry", "status", "used_web", "cost_usd", "enriched_at"]
+    list_filter = ["status", "used_web"]
     raw_id_fields = ["entry"]

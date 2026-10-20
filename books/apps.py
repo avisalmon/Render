@@ -17,4 +17,4 @@ class BooksConfig(AppConfig):
     def ready(self):
         # Job workers register themselves on import; import them here so a
         # job run from a command or the token endpoint finds its worker.
-        from . import catalog, hub, shelf, signals, tagging  # noqa: F401
+        from . import catalog, enrich, hub, shelf, signals, tagging  # noqa: F401

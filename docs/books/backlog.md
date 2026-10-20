@@ -41,7 +41,7 @@ anyone who reaches it (no allow-list), and said start BK3.
 | ACT-BK.5 | Read the Google Books terms against the paid tier (spec 12.11) | BK11 | TODO |
 | ACT-BK.6 | Create the Google Cloud Storage bucket for Books (private, Europe or Israel region) and a service account limited to that one bucket; put its key in Render's environment (`BOOKS_GCS_BUCKET`, `BOOKS_GCS_CREDENTIALS_JSON`), never in git. I can write the exact steps | images in prod (disk fallback until then) | DONE 2026-10-19: bucket `babook-books-images` (me-west1, not public) in project `babook-storage`, service account `books-storage` with Storage Object Admin on that bucket only; live check: write ok, signed read 200, unsigned read 403 |
 | ACT-BK.7 | Request a National Library of Israel API key and set `BOOKS_NLI_API_KEY` in Render; until then Hebrew look-ups rely on Open Library and Google Books | BK3 accuracy gate | TODO |
-| ACT-BK.8 | Optionally a Google Books API key (`BOOKS_GOOGLE_BOOKS_KEY`) for a higher quota | BK3 | TODO |
+| ACT-BK.8 | Optionally a Google Books API key (`BOOKS_GOOGLE_BOOKS_KEY`) for a higher quota | BK3 | DONE 2026-10-20: key in Render, restricted to Books API |
 
 ---
 
@@ -284,6 +284,24 @@ in that day's deploys) and he retyped the place on every book. Fixed:
 | F-BK3.10 | A reminder bar on every Books page while books wait ("N books from M shelves are waiting for you"), shelves reading, or failed; the bell rings when a shelf is read or fails | DONE |
 | F-BK3.11 | A scan whose reading stopped (a restart) is read again from any visit after five minutes, up to three tries, then shown as failed; "try again" reads the same photo; a scan can be removed (shelved books stay) | DONE |
 | F-BK3.12 | One place per batch: the first place typed on a book becomes the default for the books still waiting; "where is this shelf?" at the top sets it for all and fills books already shelved without one; typing it in any card fills the others on the page | DONE |
+
+## Enriching every book once, automatically (Avi, 2026-10-20)
+
+Avi: "an automatic way that the system scans books that were not enriched,
+uses the APIs or your ways to fill in information, and marks the book done
+so it is never enriched more than once." The Google Books key is in Render
+(ACT-BK.8 done); the National Library key is being requested (ACT-BK.7).
+
+| ID | Feature | Status |
+| --- | --- | --- |
+| F-BK3.16 | `books/enrich.py`: free sources first (by ISBN when the record has one, else title and author), then the web only if the ISBN or cover is still missing (cached, within the $2 day); a source's answer is used only when it is the same book (title close, author close when both name one); only blanks are filled | DONE |
+| F-BK3.17 | Every pass ends in `EntryEnrichment` (done / partly done / not found, the fields filled, the sources, the cost); a record with a row is never enriched again; deleting the row in admin asks for one more pass | DONE |
+| F-BK3.18 | Runs by itself: a book that reaches a library is enriched in the background; the backlog is worked through eight at a time, at most every ten minutes, from ordinary page views; `books_enrich` does a batch on request (`--no-web` costs nothing) | DONE |
+| F-BK3.19 | The pilot desk shows done / partly / not found / waiting; `/books/internal/sources/` (superuser) shows whether each source is configured and answers, with a live English and Hebrew search | DONE |
+
+Found by the tests before shipping: enriching from the web also saved the
+find as a new record, which then held the ISBN instead of the book being
+enriched. Now enrichment fills its own record and creates nothing.
 
 ## Finding scanned books on the web (Avi, 2026-10-20)
 

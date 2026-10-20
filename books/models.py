@@ -944,3 +944,24 @@ class WebLookup(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+
+
+class EntryEnrichment(models.Model):
+    """One enrichment pass over one record, and the mark that it was done,
+    so no record is enriched twice (Avi, 2026-10-20). A record with a row is
+    left alone; deleting the row (admin) asks for one more pass."""
+
+    DONE, PARTIAL, NOT_FOUND = "done", "partial", "not_found"
+    STATUSES = [(DONE, "done"), (PARTIAL, "partly done"), (NOT_FOUND, "not found")]
+
+    entry = models.OneToOneField(CatalogEntry, on_delete=models.CASCADE, related_name="enrichment")
+    status = models.CharField(max_length=10, choices=STATUSES, db_index=True)
+    filled = models.JSONField(default=list, blank=True, help_text="fields that were blank and are now filled")
+    sources = models.JSONField(default=list, blank=True, help_text="where the filled values came from")
+    used_web = models.BooleanField(default=False)
+    cost_usd = models.DecimalField(max_digits=8, decimal_places=5, default=0)
+    note = models.CharField(max_length=300, blank=True)
+    enriched_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-enriched_at"]

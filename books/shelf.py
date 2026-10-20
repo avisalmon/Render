@@ -272,6 +272,9 @@ def accept(item, entry, visibility, offer_kinds, location_note, edited=False):
 
         play.book_confirmed(profile, entry)
         tagging.ensure_tagged(entry, profile)
+        from . import enrich
+
+        enrich.start(entry, profile)
     return copy
 
 

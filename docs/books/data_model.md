@@ -487,3 +487,9 @@ twice by anyone: `key` (normalised title and author, unique), `title`,
 `author`, `found`, `result` (the answer, for audit), `source_url`, `entry`
 (the record it produced), `searches`, `cost_usd`, `created_at`. A record it
 produces has `source` "web". Migration 0013.
+
+**Enrichment addition (2026-10-20, Avi asked for it).** `EntryEnrichment`:
+one per record, the mark that it was enriched so it never is twice:
+`entry` (one-to-one), `status` done / partial / not_found, `filled` (the
+fields that were blank and are now filled), `sources`, `used_web`,
+`cost_usd`, `note`, `enriched_at`. Migration 0014.

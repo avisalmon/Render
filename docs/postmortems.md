@@ -17,6 +17,21 @@ Newest first.
 
 ---
 
+## PM-23 · 2026-10-20 · Enrichment: one duplicate caught by the tests
+
+**What happened.** Nothing reached production. Building the once-per-book
+enrichment, its own test found that a web find was also saved as a new
+catalogue record, so the ISBN went to that duplicate and not to the book
+being enriched. Fixed (enrichment fills its own record and creates
+nothing) with a test that the record count does not change.
+
+**Rule.** No new rule: the sprint's tests did their job. Reinforced: a
+helper written for one caller (the scan needed a record to offer) is read
+again before a second caller uses it.
+
+Here: tests/test_books_enrich.py
+BKM: deferred - caught by the sprint's own tests, no new general lesson
+
 ## PM-22 · 2026-10-20 · On Avi's phone the options covered the books
 
 **What happened.** Avi, using Books on his phone: buttons across the top

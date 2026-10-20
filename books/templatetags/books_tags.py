@@ -100,6 +100,9 @@ def books_scan_queue(context):
     try:
         if cache.add(f"books:scan-heal:{profile.pk}", True, 60):
             heal_all(profile)
+            from ..enrich import sweep_lazily
+
+            sweep_lazily()
         return queue_summary(profile)
     except Exception:  # noqa: BLE001
         return {"any": False}

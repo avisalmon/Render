@@ -128,17 +128,35 @@ def to_record(answer):
                   year=year, publisher=(answer.get("publisher") or "").strip()[:200], isbns=isbns, cover_url=cover)
 
 
-def lookup_many(items, profile=None, job=None, client=None):
-    """Look up books the free sources missed: [(title, author)] in, a dict
-    {(title, author): WebLookup} out. Cached ones cost nothing; new ones run
-    in parallel within today's budget; the rest wait for tomorrow's scan."""
+def _save(row, profile):
+    """Turn a found answer into a catalogue record (a scan needs one to offer
+    as a candidate). Enrichment does not: it fills the record it has."""
     from . import catalog
 
+    record = to_record(row.result or {})
+    if record is None or row.entry_id:
+        return row
+    try:
+        entry, _ = catalog.upsert_from_record(record, created_by=profile)
+    except Exception:  # noqa: BLE001
+        log.exception("books web lookup: could not save %r", record.title)
+        return row
+    row.entry = entry
+    row.save(update_fields=["entry"])
+    return row
+
+
+def lookup_many(items, profile=None, job=None, client=None, save_entries=True):
+    """Look up books the free sources missed: [(title, author)] in, a dict
+    {(title, author): WebLookup} out. Cached ones cost nothing; new ones run
+    in parallel within today's budget; the rest wait for tomorrow's scan.
+    With save_entries a found book becomes a catalogue record (for a scan's
+    candidates); without, nothing new is created (enrichment fills its own)."""
     out, todo = {}, []
     for title, author in items:
         cached = WebLookup.objects.filter(key=key_for(title, author)).first()
         if cached:
-            out[(title, author)] = cached
+            out[(title, author)] = _save(cached, profile) if save_entries and cached.found else cached
         elif (title, author) not in todo:
             todo.append((title, author))
     if not todo or not enabled():
@@ -167,16 +185,10 @@ def lookup_many(items, profile=None, job=None, client=None):
         ModelCall.objects.create(profile=profile, job=job, provider="openai", model=call["model"], purpose="web_lookup",
                                  input_tokens=call["input_tokens"], output_tokens=call["output_tokens"],
                                  cost_usd=call["cost_usd"], duration_ms=int(call["seconds"] * 1000))
-        entry = None
-        record = to_record(answer)
-        if record is not None:
-            try:
-                entry, _ = catalog.upsert_from_record(record, created_by=profile)
-            except Exception:  # noqa: BLE001
-                log.exception("books web lookup: could not save %r", record.title)
         row, _ = WebLookup.objects.update_or_create(key=key_for(title, author), defaults={
-            "title": title[:300], "author": (author or "")[:200], "found": entry is not None, "result": answer,
-            "source_url": (answer.get("source_url") or "")[:500] if (answer.get("source_url") or "").startswith(
-                "http") else "", "entry": entry, "searches": call["searches"], "cost_usd": call["cost_usd"]})
-        out[(title, author)] = row
+            "title": title[:300], "author": (author or "")[:200], "found": to_record(answer) is not None,
+            "result": answer, "source_url": (answer.get("source_url") or "")[:500]
+            if (answer.get("source_url") or "").startswith("http") else "", "entry": None,
+            "searches": call["searches"], "cost_usd": call["cost_usd"]})
+        out[(title, author)] = _save(row, profile) if save_entries and row.found else row
     return out
