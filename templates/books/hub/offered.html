@@ -21,8 +21,8 @@
 <div class="bk-narrow">
   <p><a href="{% url 'books:near' %}">{% t "near.title" %}</a></p>
   <div class="bk-entry-head">
-    <div class="bk-entry-cover bk-entry-cover--large">
-      {% if entry.cover %}<img src="{{ entry.cover.url }}" alt="{% t "entry.cover" %}: {{ entry.title }}">{% else %}<span class="bk-muted">{% t "catalog.no_cover" %}</span>{% endif %}
+    <div class="bk-entry-cover bk-entry-cover--large{% if not entry.cover %} bk-cover-drawn{% endif %}"{% if not entry.cover %} style="{% spine_style entry %}" aria-hidden="true"{% endif %}>
+      {% if entry.cover %}<img src="{{ entry.cover.url }}" alt="{% t "entry.cover" %}: {{ entry.title }}">{% else %}<span class="bk-cover-title">{{ entry.title }}</span><span class="bk-cover-by">{{ entry.creator_names }}</span>{% endif %}
     </div>
     <div>
       <h1 class="bk-title" style="margin-top: 0">{{ entry.title }}</h1>

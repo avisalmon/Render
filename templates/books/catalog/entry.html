@@ -5,8 +5,8 @@
 <div class="bk-wide">
   <p><a href="{% url 'books:catalog' %}">{% t "catalog.title" %}</a></p>
   <div class="bk-entry-head">
-    <div class="bk-entry-cover bk-entry-cover--large">
-      {% if entry.cover %}<img src="{{ entry.cover.url }}" alt="{% t "entry.cover" %}: {{ entry.title }}">{% else %}<span class="bk-muted">{% t "catalog.no_cover" %}</span>{% endif %}
+    <div class="bk-entry-cover bk-entry-cover--large{% if not entry.cover %} bk-cover-drawn{% endif %}"{% if not entry.cover %} style="{% spine_style entry %}" aria-hidden="true"{% endif %}>
+      {% if entry.cover %}<img src="{{ entry.cover.url }}" alt="{% t "entry.cover" %}: {{ entry.title }}">{% else %}<span class="bk-cover-title">{{ entry.title }}</span><span class="bk-cover-by">{{ entry.creator_names }}</span>{% endif %}
     </div>
     <div>
       <h1 class="bk-title" style="margin-top: 0">{{ entry.title }}</h1>
@@ -19,12 +19,14 @@
       </p>
       <p class="bk-kicker" style="margin: 8px 0 0">{% if entry.is_verified %}{% t "catalog.verified" %}{% else %}{% t "catalog.unverified" %}{% endif %} · {% t "catalog.source" %}: {% if entry.source == "manual" or not entry.source %}{% t "catalog.source_manual" %}{% else %}{{ entry.source }}{% endif %}</p>
       <div class="bk-row" style="margin-top: 10px">
-        {% if my_copy %}<a class="bk-btn bk-btn--small bk-btn--primary" href="{% url 'books:copy' my_copy.pk %}">{% t "add.already" %}</a>
-        {% else %}<form method="post" action="{% url 'books:have' entry.pk %}">{% csrf_token %}<button type="submit" class="bk-btn bk-btn--small bk-btn--primary">{% t "add.have" %}</button></form>{% endif %}
+        <a class="bk-btn bk-btn--small bk-btn--primary" href="{% url 'books:read' %}?entry={{ entry.pk }}">{% if read_progress.last_page %}{% t "read.continue_from" n=read_progress.last_page %}{% else %}{% t "read.start" %}{% endif %}</a>
+        {% if my_copy %}<a class="bk-btn bk-btn--small" href="{% url 'books:copy' my_copy.pk %}">{% t "add.already" %}</a>
+        {% else %}<form method="post" action="{% url 'books:have' entry.pk %}">{% csrf_token %}<button type="submit" class="bk-btn bk-btn--small">{% t "add.have" %}</button></form>{% endif %}
         {% if wished %}<span class="bk-chip-note">{% t "wish.wanted" %}</span>
         {% elif not my_copy %}<form method="post" action="{% url 'books:wish_entry' entry.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button type="submit" class="bk-btn bk-btn--small">{% t "wish.want" %}</button></form>{% endif %}
-        {% if can_edit %}<a class="bk-btn bk-btn--small" href="{% url 'books:catalog_edit' entry.pk %}">{% t "catalog.edit" %}</a>{% endif %}
+        {% if can_edit %}<a class="bk-btn bk-btn--small bk-btn--quiet" href="{% url 'books:catalog_edit' entry.pk %}">{% t "catalog.edit" %}</a>{% endif %}
       </div>
+      {% if read_progress.sessions %}<p class="bk-muted" style="margin: 8px 0 0">{% if read_progress.percent %}<span class="bk-progress" aria-hidden="true"><span style="width: {{ read_progress.percent }}%"></span></span>{{ read_progress.percent }}% · {% endif %}{% t "read.book_minutes" n=read_progress.minutes s=read_progress.sessions %}{% if read_progress.pace %} · {% t "read.pace" n=read_progress.pace %}{% endif %}{% if read_progress.minutes_left %} · {% t "read.left" n=read_progress.minutes_left %}{% endif %}</p>{% endif %}
     </div>
   </div>
 
@@ -41,15 +43,23 @@
 
   {% if entry.description %}<p class="bk-prose">{{ entry.description|linebreaksbr }}</p>{% endif %}
 
+  <section class="bk-reading-state" id="reading" aria-label="{% t "reading.title" %}">
+    {% if club_error %}<p class="bk-error" role="alert">{% with key=club_error %}{% t key %}{% endwith %}</p>{% endif %}
+    <div class="bk-chips">
+      {% for k, _ in reading_statuses %}
+      <form method="post" action="{% url 'books:reading' entry.pk %}">{% csrf_token %}<input type="hidden" name="status" value="{% if my_reading and my_reading.status == k %}none{% else %}{{ k }}{% endif %}">
+        <button type="submit" class="bk-chip" aria-pressed="{% if my_reading and my_reading.status == k %}true{% else %}false{% endif %}">{% with key="reading."|add:k %}{% t key %}{% endwith %}</button></form>
+      {% endfor %}
+    </div>
+    <p class="bk-help" style="margin: 4px 0 0">{% t "reading.private_note" %}</p>
+  </section>
+
   {% if entry.tags.all %}
   <h2 class="bk-h2">{% t "catalog.tags" %}</h2>
   <div class="bk-chips">{% for tag in entry.tags.all %}<a class="bk-chip" style="display: inline-flex; align-items: center; text-decoration: none" href="{% url 'books:catalog_tag' tag.key %}">{% if lang == "he" %}{{ tag.name_he }}{% else %}{{ tag.name_en }}{% endif %}</a>{% endfor %}</div>
   {% endif %}
 
-  {% if entry.identifiers.all %}
-  <h2 class="bk-h2">{% t "catalog.identifiers" %}</h2>
-  <ul class="bk-plain-list">{% for i in entry.identifiers.all %}<li><span class="bk-muted">{{ i.get_scheme_display }}</span> <code>{{ i.value }}</code></li>{% endfor %}</ul>
-  {% endif %}
+
 
   {% if editions %}
   <h2 class="bk-h2">{% t "catalog.editions" %}</h2>
@@ -65,29 +75,17 @@
   <ul class="bk-entry-list">
     {% for r in also_read %}
     <li class="bk-entry-row"><a class="bk-entry-link" href="{% url 'books:catalog_entry' r.entry.pk %}">
-      <span class="bk-entry-cover" aria-hidden="true">{% if r.entry.cover %}<img src="{{ r.entry.cover.url }}" alt="">{% endif %}</span>
+      <span class="bk-entry-cover" aria-hidden="true"{% if not r.entry.cover %} style="{% spine_style r.entry %}"{% endif %}>{% if r.entry.cover %}<img src="{{ r.entry.cover.url }}" alt="">{% endif %}</span>
       <span class="bk-entry-text"><span class="bk-entry-title">{{ r.entry.title }}</span><span class="bk-muted">{{ r.entry.creator_names }}</span><span class="bk-kicker">{% t "disc.readers_n" n=r.people %}</span></span>
     </a></li>
     {% endfor %}
   </ul>
   {% endif %}
 
-  <h2 class="bk-h2" id="reading">{% t "reading.title" %}</h2>
-  <div class="bk-row" style="margin-bottom: 8px">
-    <a class="bk-btn bk-btn--primary" href="{% url 'books:read' %}?entry={{ entry.pk }}">{% if read_progress.last_page %}{% t "read.continue_from" n=read_progress.last_page %}{% else %}{% t "read.start" %}{% endif %}</a>
-    {% if read_progress.sessions %}<span class="bk-muted">{% if read_progress.percent %}{{ read_progress.percent }}% · {% endif %}{% t "read.book_minutes" n=read_progress.minutes s=read_progress.sessions %}{% if read_progress.pace %} · {% t "read.pace" n=read_progress.pace %}{% endif %}{% if read_progress.minutes_left %} · {% t "read.left" n=read_progress.minutes_left %}{% endif %}</span>{% endif %}
-  </div>
-  {% if club_error %}<p class="bk-error" role="alert">{% with key=club_error %}{% t key %}{% endwith %}</p>{% endif %}
-  <div class="bk-chips">
-    {% for k, _ in reading_statuses %}
-    <form method="post" action="{% url 'books:reading' entry.pk %}">{% csrf_token %}<input type="hidden" name="status" value="{% if my_reading and my_reading.status == k %}none{% else %}{{ k }}{% endif %}">
-      <button type="submit" class="bk-chip" aria-pressed="{% if my_reading and my_reading.status == k %}true{% else %}false{% endif %}">{% with key="reading."|add:k %}{% t key %}{% endwith %}</button></form>
-    {% endfor %}
-  </div>
-  <p class="bk-help">{% t "reading.private_note" %}</p>
-
   <h2 class="bk-h2" id="reviews">{% t "review.title" %}{% if rating.count %} <span class="bk-muted">· {% t "review.summary" avg=rating.average n=rating.count %}</span>{% endif %}</h2>
-  <form method="post" action="{% url 'books:review' entry.pk %}" class="bk-card bk-form" style="max-width: 440px">
+  <details class="bk-filterbox bk-fold">
+    <summary>{% if my_review %}{% t "review.edit_mine" %}{% else %}{% t "review.write" %}{% endif %}</summary>
+  <form method="post" action="{% url 'books:review' entry.pk %}" class="bk-filterbox-body bk-form">
     {% csrf_token %}
     <fieldset class="bk-fieldset">
       <legend class="bk-field">{% t "review.rating" %}</legend>
@@ -100,6 +98,7 @@
       {% if my_review %}<button type="submit" class="bk-btn bk-btn--quiet" name="action" value="delete" data-confirm>{% t "review.delete" %}</button>{% endif %}
     </div>
   </form>
+  </details>
   {% for rv in reviews %}
   <article class="bk-review">
     <p class="bk-kicker" style="margin: 0 0 4px"><a href="{% url 'books:person' rv.profile.pk %}">{{ rv.profile.display_name }}</a> · {% t "review.stars" n=rv.rating %} · {{ rv.created_at|date:"d.m.Y" }}{% if rv.has_spoilers %} · <b>{% t "review.has_spoilers" %}</b>{% endif %}</p>
@@ -115,15 +114,23 @@
     <a class="bk-btn bk-btn--small" href="{% url 'books:thread_new' %}?entry={{ entry.pk }}&kind=report">{% t "club.write_report" %}</a>
   </div>
 
-  <h2 class="bk-h2">{% t "correct.title" %}</h2>
-  <p class="bk-lead">{% t "correct.lead" %}</p>
-  {% if sent %}<p class="bk-notice bk-notice--ok" role="status">{% t "correct.sent" %}</p>{% endif %}
-  <form method="post" class="bk-card bk-form" style="max-width: 440px" novalidate>
-    {% csrf_token %}
-    <label class="bk-field">{{ form.field.label }} {{ form.field }}</label>
-    <label class="bk-field">{{ form.value.label }} {{ form.value }}</label>
-    <label class="bk-field">{{ form.note.label }} {{ form.note }}</label>
-    <button type="submit" class="bk-btn">{% t "correct.send" %}</button>
-  </form>
+  {% if entry.identifiers.all %}
+  <details class="bk-more">
+    <summary>{% t "catalog.identifiers" %}</summary>
+    <ul class="bk-plain-list">{% for i in entry.identifiers.all %}<li><span class="bk-muted">{{ i.get_scheme_display }}</span> <code>{{ i.value }}</code></li>{% endfor %}</ul>
+  </details>
+  {% endif %}
+  <details class="bk-more" id="correct" {% if sent or form.errors %}open{% endif %}>
+    <summary>{% t "correct.title" %}</summary>
+    <p class="bk-help">{% t "correct.lead" %}</p>
+    {% if sent %}<p class="bk-notice bk-notice--ok" role="status">{% t "correct.sent" %}</p>{% endif %}
+    <form method="post" class="bk-card bk-form" style="max-width: 440px" novalidate>
+      {% csrf_token %}
+      <label class="bk-field">{{ form.field.label }} {{ form.field }}</label>
+      <label class="bk-field">{{ form.value.label }} {{ form.value }}</label>
+      <label class="bk-field">{{ form.note.label }} {{ form.note }}</label>
+      <button type="submit" class="bk-btn">{% t "correct.send" %}</button>
+    </form>
+  </details>
 </div>
 {% endblock %}

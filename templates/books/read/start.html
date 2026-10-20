@@ -19,7 +19,7 @@
     <li class="bk-read-row" data-read-row data-text="{{ b.entry.title|lower }} {{ b.entry.creator_names|lower }}">
       <details {% if picked and picked.pk == b.entry.pk %}open{% endif %}>
         <summary class="bk-read-summary">
-          <span class="bk-entry-cover" aria-hidden="true">{% if b.entry.cover %}<img src="{{ b.entry.cover.url }}" alt="">{% endif %}</span>
+          <span class="bk-entry-cover" aria-hidden="true"{% if not b.entry.cover %} style="{% spine_style b.entry %}"{% endif %}>{% if b.entry.cover %}<img src="{{ b.entry.cover.url }}" alt="">{% endif %}</span>
           <span class="bk-entry-text">
             <span class="bk-entry-title">{{ b.entry.title }}</span>
             <span class="bk-muted">{% if b.page %}{% t "read.stopped_at" n=b.page %}{% else %}{{ b.entry.creator_names }}{% endif %}</span>

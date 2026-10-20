@@ -23,7 +23,7 @@
       {% for e in results %}
       <li class="bk-entry-row bk-entry-row--actions">
         <a class="bk-entry-link" href="{% url 'books:catalog_entry' e.pk %}">
-          <span class="bk-entry-cover" aria-hidden="true">{% if e.cover %}<img src="{{ e.cover.url }}" alt="">{% endif %}</span>
+          <span class="bk-entry-cover" aria-hidden="true"{% if not e.cover %} style="{% spine_style e %}"{% endif %}>{% if e.cover %}<img src="{{ e.cover.url }}" alt="">{% endif %}</span>
           <span class="bk-entry-text"><span class="bk-entry-title">{{ e.title }}</span><span class="bk-muted">{{ e.creator_names }}{% if e.year %} · {{ e.year }}{% endif %}</span></span>
         </a>
         {% if e.pk in held %}<span class="bk-chip-note">{% t "add.already" %}</span>

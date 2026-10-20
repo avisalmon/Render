@@ -34,7 +34,7 @@
     {% for c in library %}
     <li class="bk-entry-row">
       <a class="bk-entry-link" href="{% if me %}{% url 'books:copy' c.pk %}{% else %}{% url 'books:offered' c.pk %}{% endif %}">
-        <span class="bk-entry-cover" aria-hidden="true">{% if c.entry.cover %}<img src="{{ c.entry.cover.url }}" alt="">{% endif %}</span>
+        <span class="bk-entry-cover" aria-hidden="true"{% if not c.entry.cover %} style="{% spine_style c.entry %}"{% endif %}>{% if c.entry.cover %}<img src="{{ c.entry.cover.url }}" alt="">{% endif %}</span>
         <span class="bk-entry-text">
           <span class="bk-entry-title">{{ c.entry.title }}</span>
           <span class="bk-muted">{{ c.entry.creator_names }}</span>

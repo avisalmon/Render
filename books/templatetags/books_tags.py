@@ -130,3 +130,15 @@ def books_reading_now(context):
         return active(profile)
     except Exception:  # noqa: BLE001
         return None
+
+
+@register.simple_tag
+def spine_style(entry):
+    """The book's own spine colours, for a cover that has no image (the same
+    colours as on the shelf, so a book looks the same everywhere)."""
+    if entry is None:
+        return ""
+    from ..shelf import spine_for
+
+    sp = spine_for(entry.pk, entry.title)
+    return f"background: {sp['color']}; color: {sp['ink']}"

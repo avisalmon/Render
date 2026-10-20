@@ -65,7 +65,7 @@
       <li class="bk-entry-row bk-copy-row">
         <label class="bk-copy-pick"><input type="checkbox" name="copy" value="{{ c.pk }}"><span class="bk-visually-hidden">{% t "lib.select" title=c.entry.title %}</span></label>
         <a class="bk-entry-link" href="{% url 'books:copy' c.pk %}">
-          <span class="bk-entry-cover" aria-hidden="true">{% if c.entry.cover %}<img src="{{ c.entry.cover.url }}" alt="">{% endif %}</span>
+          <span class="bk-entry-cover" aria-hidden="true"{% if not c.entry.cover %} style="{% spine_style c.entry %}"{% endif %}>{% if c.entry.cover %}<img src="{{ c.entry.cover.url }}" alt="">{% endif %}</span>
           <span class="bk-entry-text">
             <span class="bk-entry-title">{{ c.entry.title }}</span>
             <span class="bk-muted">{{ c.entry.creator_names }}{% if c.location_note %} · {{ c.location_note }}{% endif %}</span>

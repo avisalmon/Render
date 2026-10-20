@@ -778,3 +778,20 @@ dozens.
 the person's job start to finish
 (`test_on_a_phone_a_reader_can_find_a_book_start_and_finish`), with a
 realistic amount of data, and the builder walks it once before shipping.
+
+### 28. Detail pages: one main action on top, the rest folds with its value showing
+
+Avi, 2026-10-20: "it's nice, not amazing." Mistake 25 had fixed the list
+screens; the detail pages still opened every form at once. A copy's page
+was one long form (place, condition, notes, three offers, rarity, twice),
+a book's page had the review and correction forms open, home stacked five
+big buttons and a large "0", and photo uploads showed the browser's raw
+"Choose File" box.
+
+**The rule.** A detail page opens with what the thing is and its one main
+action ("Start reading"). Every other form folds into a `bk-filterbox`
+whose summary shows the current value (where it is, what is offered), and
+opens by itself when it has an error or something active. Never show a
+raw file input: a big labelled button, with the input over it, sends on
+choose. Zero is not a score: an empty streak says how to start one.
+

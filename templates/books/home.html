@@ -21,22 +21,22 @@
   </div>
   <aside class="bk-aside">
     <div class="bk-card bk-card--tight bk-streak-card">
-      <a class="bk-link-row" href="{% url 'books:play' %}"><b class="bk-streak-n">{{ play.streak }}</b> <span>{% t "play.streak_days" n=play.streak %}</span>{% if play.freezes %} <span class="bk-muted">· {% t "play.freezes" n=play.freezes %}</span>{% endif %}</a>
-      <p class="bk-muted" style="margin: 0">{% t "read.today" n=reading_today %}</p>
+      <a class="bk-streak-line" href="{% url 'books:play' %}">
+        {% if play.streak %}<b class="bk-streak-n">{{ play.streak }}</b> <span>{% t "play.streak_days" n=play.streak %}</span>{% if play.freezes %} <span class="bk-muted">· {% t "play.freezes" n=play.freezes %}</span>{% endif %}
+        {% else %}<span>{% t "home.streak_start" %}</span>{% endif %}
+      </a>
+      {% if reading_today %}<p class="bk-muted" style="margin: 0">{% t "read.today" n=reading_today %}</p>{% endif %}
       <a class="bk-btn bk-btn--primary bk-btn--wide" href="{% url 'books:read' %}">{% if reading_now %}{% t "read.back_to_timer" %}{% else %}{% t "read.start" %}{% endif %}</a>
     </div>
-    {% if books_json and books_json != "[]" %}<a class="bk-btn bk-btn--wide" href="{% url 'books:library' %}">{% t "lib.all_books" %}</a>{% endif %}
-    <a class="bk-btn bk-btn--wide" href="{% url 'books:discover' %}">{% t "disc.title" %}</a>
-    <div class="bk-row">
-      <a class="bk-btn bk-btn--quiet" href="{% url 'books:library_add' %}">{% t "lib.add" %}</a>
-      <a class="bk-btn bk-btn--quiet" href="{% url 'books:wishlist' %}">{% t "lib.wishlist" %}</a>
-    </div>
-    {% if books_json and books_json != "[]" %}
-    <a class="bk-btn bk-btn--primary bk-btn--wide" href="{% url 'books:scan_new' %}">
-      <svg class="bk-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
-      {% t "home.scan" %}
-    </a>
-    {% endif %}
+    <nav class="bk-quick" aria-label="{% t "home.quick" %}">
+      {% if books_json and books_json != "[]" %}
+      <a class="bk-quick-tile bk-quick-tile--main" href="{% url 'books:scan_new' %}">{% include "books/ui/_icon.html" with name="camera" %}<span>{% t "home.scan" %}</span></a>
+      <a class="bk-quick-tile" href="{% url 'books:library' %}">{% include "books/ui/_icon.html" with name="books" %}<span>{% t "lib.all_books" %}</span></a>
+      {% endif %}
+      <a class="bk-quick-tile" href="{% url 'books:discover' %}">{% include "books/ui/_icon.html" with name="compass" %}<span>{% t "disc.title" %}</span></a>
+      <a class="bk-quick-tile" href="{% url 'books:library_add' %}">{% include "books/ui/_icon.html" with name="plus" %}<span>{% t "lib.add" %}</span></a>
+      <a class="bk-quick-tile" href="{% url 'books:wishlist' %}">{% include "books/ui/_icon.html" with name="heart" %}<span>{% t "lib.wishlist" %}</span></a>
+    </nav>
   </aside>
 </div>
 {% endblock %}

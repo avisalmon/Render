@@ -25,7 +25,7 @@
   <ul class="bk-entry-list">
     {% for r in circles %}
     <li class="bk-entry-row"><a class="bk-entry-link" href="{% url 'books:catalog_entry' r.entry.pk %}">
-      <span class="bk-entry-cover" aria-hidden="true">{% if r.entry.cover %}<img src="{{ r.entry.cover.url }}" alt="">{% endif %}</span>
+      <span class="bk-entry-cover" aria-hidden="true"{% if not r.entry.cover %} style="{% spine_style r.entry %}"{% endif %}>{% if r.entry.cover %}<img src="{{ r.entry.cover.url }}" alt="">{% endif %}</span>
       <span class="bk-entry-text"><span class="bk-entry-title">{{ r.entry.title }}</span><span class="bk-muted">{{ r.entry.creator_names }}</span><span class="bk-rec-why">{% t "disc.circle_n" n=r.people %}</span></span>
     </a></li>
     {% endfor %}

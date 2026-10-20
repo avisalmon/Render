@@ -2,7 +2,7 @@
   {% for d in rows %}
   <li class="bk-entry-row">
     <a class="bk-entry-link" href="{% url 'books:deal' d.pk %}">
-      <span class="bk-entry-cover" aria-hidden="true">{% if d.copy.entry.cover %}<img src="{{ d.copy.entry.cover.url }}" alt="">{% endif %}</span>
+      <span class="bk-entry-cover" aria-hidden="true"{% if not d.copy.entry.cover %} style="{% spine_style d.copy.entry %}"{% endif %}>{% if d.copy.entry.cover %}<img src="{{ d.copy.entry.cover.url }}" alt="">{% endif %}</span>
       <span class="bk-entry-text">
         <span class="bk-entry-title">{{ d.copy.entry.title }}</span>
         <span class="bk-muted">{% if d.requester_id == me.pk %}{% t "deals.i_asked" name=d.owner.display_name %}{% else %}{% t "deals.asked_me" name=d.requester.display_name %}{% endif %} · {% with key="status."|add:d.kind %}{% t key %}{% endwith %}</span>

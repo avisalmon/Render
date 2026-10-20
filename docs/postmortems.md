@@ -17,6 +17,27 @@ Newest first.
 
 ---
 
+## PM-28 · 2026-10-20 · "Nice, not amazing": detail pages opened every form
+
+**What happened.** Avi asked for a pass over everything built so far: it
+worked, but it was "nice". Phone screenshots of every main page showed
+the detail pages still opened all their forms (a copy's page, a book's
+page), home was a stack of buttons under a big "0", and two pages showed
+the browser's raw file box.
+
+**Why our process let it happen.** PM-22 and mistake 25 set the rule for
+list screens only; nothing checked detail pages for priority, and no one
+walked them on a phone with a critical eye after each sprint.
+
+**Rule.** Detail pages: one main action on top, every other form folded
+with its current value in the summary, no raw native file inputs, no bare
+zero as a score. Applied to the copy page, the book page, home, scanning
+and the scan review cards, plus drawn covers (spine colour, title, author)
+for books with no image.
+
+Here: docs/building_an_app.md mistake 28
+BKM: FullStackBKM a37b80d (lesson 36)
+
 ## PM-27 · 2026-10-20 · Avi could not start reading on his phone
 
 **What happened.** Avi tried "start reading" on his phone: not made for a

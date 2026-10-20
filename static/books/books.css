@@ -642,3 +642,47 @@ details.bk-filterbox .bk-filter { margin-bottom: 0; }
 .bk-read-row details[open] > summary { background: var(--bk-surface); }
 .bk-read-go { display: grid; gap: 10px; padding: 10px 2px 14px; }
 .bk-btn--big { min-height: 52px; font-size: 18px; }
+/* ---- a book with no cover image still looks like a book ------------------------- */
+.bk-cover-drawn { display: flex; flex-direction: column; justify-content: space-between; align-items: stretch; padding: 14px 12px; text-align: start; box-shadow: inset 6px 0 0 rgba(0, 0, 0, 0.18), 0 8px 16px var(--bk-shadow); }
+.bk-cover-title { font-family: var(--bk-serif); font-weight: 700; font-size: 17px; line-height: 1.2; overflow-wrap: anywhere; }
+.bk-cover-by { font-size: 12px; opacity: .9; }
+/* ---- a copy's page: folded sections, a real photo button --------------------------- */
+.bk-copy-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; }
+.bk-copy-form { gap: 8px; margin: 12px 0; }
+.bk-copy-form details.bk-filterbox { margin: 0; }
+.bk-photo-add { display: grid; gap: 8px; margin: 8px 0 14px; }
+.bk-file-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; position: relative; }
+.bk-file-button:focus-within { outline: 2px solid var(--bk-brass); outline-offset: 2px; }
+/* ---- a book's page: reading state up top, forms folded --------------------------- */
+.bk-reading-state { margin: 14px 0 4px; }
+.bk-fold { max-width: 520px; margin: 8px 0 12px; }
+.bk-progress { display: inline-block; vertical-align: middle; width: 80px; height: 6px; border-radius: 999px; background: var(--bk-line); overflow: hidden; margin-inline-end: 6px; }
+.bk-progress > span { display: block; height: 100%; background: var(--bk-brass); }
+/* ---- home: a quiet streak line and a tile grid of shortcuts ---------------------- */
+.bk-streak-line { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; color: var(--bk-ink); text-decoration: none; min-height: 44px; align-content: center; }
+.bk-quick { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.bk-quick-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 76px; padding: 10px 8px; text-align: center;
+  border: 1px solid var(--bk-line); border-radius: 12px; background: var(--bk-surface); color: var(--bk-ink); text-decoration: none; font-size: 14px; font-weight: 600;
+  transition: transform .15s ease, border-color .15s ease; }
+.bk-quick-tile:hover { border-color: var(--bk-brass); transform: translateY(-1px); }
+.bk-quick-tile:active { transform: translateY(1px); }
+.bk-quick-tile .bk-icon { width: 24px; height: 24px; color: var(--bk-brass); }
+.bk-quick-tile--main { grid-column: 1 / -1; flex-direction: row; min-height: 56px; background: var(--bk-brass); border-color: var(--bk-brass); color: var(--bk-on-brass); }
+.bk-quick-tile--main .bk-icon { color: inherit; }
+@media (prefers-reduced-motion: reduce) { .bk-quick-tile { transition: none; } .bk-quick-tile:hover, .bk-quick-tile:active { transform: none; } }
+/* ---- scan: one big camera button first ------------------------------------------- */
+.bk-scan-form { margin: 8px 0 14px; }
+.bk-camera { position: relative; display: grid; justify-items: center; gap: 4px; padding: 22px 16px; border-radius: 16px; cursor: pointer;
+  background: var(--bk-brass); color: var(--bk-on-brass); text-align: center; box-shadow: 0 6px 18px var(--bk-shadow); transition: transform .12s ease; }
+.bk-camera:active { transform: scale(.98); }
+.bk-camera:focus-within { outline: 3px solid var(--bk-ink); outline-offset: 3px; }
+.bk-camera .bk-icon { width: 40px; height: 40px; }
+.bk-camera-label { font-size: 19px; font-weight: 800; }
+.bk-camera-sub { font-size: 13px; opacity: .85; }
+.bk-visually-hidden-file input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+@media (prefers-reduced-motion: reduce) { .bk-camera { transition: none; } .bk-camera:active { transform: none; } }
+.bk-card-options { border-top: 1px solid var(--bk-line); padding-top: 6px; }
+.bk-card-options > summary { cursor: pointer; min-height: 40px; display: flex; align-items: center; font-size: 14px; font-weight: 600; }
+.bk-card-options[open] > summary { margin-bottom: 6px; }
+.bk-card-options > .bk-field, .bk-card-options > .bk-fieldset { margin-top: 8px; }
+

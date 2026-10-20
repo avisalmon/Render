@@ -8,8 +8,47 @@
   {% if sent %}<p class="bk-notice bk-notice--ok" role="status">{% if sent.shelf_label %}{% t "scan.sent" label=sent.shelf_label %}{% else %}{% t "scan.sent_nolabel" %}{% endif %}</p>
   {% else %}<p class="bk-lead">{% t "scan.lead" %}</p>{% endif %}
 
+  {% if left is not None and left < 50 %}<p class="bk-notice" role="status">{% t "scan.left" left=left %}</p>{% endif %}
+
+  <form method="post" enctype="multipart/form-data" class="bk-form bk-scan-form" novalidate data-scan-form>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<p class="bk-error" role="alert">{{ form.non_field_errors.0 }}</p>{% endif %}
+    <label class="bk-camera">
+      {% include "books/ui/_icon.html" with name="camera" %}
+      <span class="bk-camera-label" data-camera-label data-again="{% t "scan.photo_again" %}">{% t "scan.take_photo" %}</span>
+      <span class="bk-camera-sub">{% t "scan.camera_sub" %}</span>
+      <span class="bk-visually-hidden-file">{{ form.photo }}</span>
+    </label>
+    {% if form.photo.errors %}<p class="bk-error" role="alert">{{ form.photo.errors.0 }}</p>{% endif %}
+    <img class="bk-scan-preview" data-scan-preview alt="{% t "scan.photo_alt" %}" hidden>
+    <label class="bk-field">{{ form.shelf_label.label }} {{ form.shelf_label }}</label>
+    <details class="bk-filterbox">
+      <summary>{% t "scan.defaults_h" %}</summary>
+      <div class="bk-filterbox-body bk-form">
+        <fieldset class="bk-fieldset">
+          <legend class="bk-field">{{ form.default_visibility.label }}</legend>
+          <div class="bk-radio-row">{% for r in form.default_visibility %}<label class="bk-radio">{{ r.tag }} {{ r.choice_label }}</label>{% endfor %}</div>
+        </fieldset>
+        <fieldset class="bk-fieldset">
+          <legend class="bk-field">{{ form.default_offers.label }}</legend>
+          <div class="bk-radio-row">{% for r in form.default_offers %}<label class="bk-radio">{{ r.tag }} {{ r.choice_label }}</label>{% endfor %}</div>
+        </fieldset>
+      </div>
+    </details>
+    <button type="submit" class="bk-btn bk-btn--primary bk-btn--wide">{% t "scan.submit" %}</button>
+  </form>
+
+  <details class="bk-more">
+    <summary>{% t "scan.tips_title" %}</summary>
+    <ul class="bk-tips">
+      <li>{% t "scan.tip_1" %}</li>
+      <li>{% t "scan.tip_2" %}</li>
+      <li>{% t "scan.tip_3" %}</li>
+    </ul>
+  </details>
+
   {% if queue %}
-  <h2 class="bk-h2" style="margin-top: 0">{% t "scan.queue_title" %}</h2>
+  <h2 class="bk-h2" >{% t "scan.queue_title" %}</h2>
   <ul class="bk-queue" data-queue data-queue-url="{% url 'books:scan_queue' %}">
     {% for r in queue %}
     <li class="bk-queue-row" data-queue-row="{{ r.scan.pk }}" data-state="{{ r.scan.status }}">
@@ -22,40 +61,6 @@
     {% endfor %}
   </ul>
   {% endif %}
-
-  <div class="bk-card bk-card--tight" style="margin-bottom: 14px">
-    <p class="bk-kicker" style="margin: 0 0 6px">{% t "scan.tips_title" %}</p>
-    <ul class="bk-tips">
-      <li>{% t "scan.tip_1" %}</li>
-      <li>{% t "scan.tip_2" %}</li>
-      <li>{% t "scan.tip_3" %}</li>
-    </ul>
-  </div>
-
-  {% if left is not None and left < 50 %}<p class="bk-notice" role="status">{% t "scan.left" left=left %}</p>{% endif %}
-
-  <form method="post" enctype="multipart/form-data" class="bk-card bk-form" novalidate data-scan-form>
-    {% csrf_token %}
-    {% if form.non_field_errors %}<p class="bk-error" role="alert">{{ form.non_field_errors.0 }}</p>{% endif %}
-    <label class="bk-field">{{ form.photo.label }}
-      <span class="bk-file-drop">
-        <svg class="bk-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
-        {{ form.photo }}
-      </span>
-    </label>
-    {% if form.photo.errors %}<p class="bk-error" role="alert">{{ form.photo.errors.0 }}</p>{% endif %}
-    <img class="bk-scan-preview" data-scan-preview alt="{% t "scan.photo_alt" %}" hidden>
-    <label class="bk-field">{{ form.shelf_label.label }} {{ form.shelf_label }}</label>
-    <fieldset class="bk-fieldset">
-      <legend class="bk-field">{{ form.default_visibility.label }}</legend>
-      <div class="bk-radio-row">{% for r in form.default_visibility %}<label class="bk-radio">{{ r.tag }} {{ r.choice_label }}</label>{% endfor %}</div>
-    </fieldset>
-    <fieldset class="bk-fieldset">
-      <legend class="bk-field">{{ form.default_offers.label }}</legend>
-      <div class="bk-radio-row">{% for r in form.default_offers %}<label class="bk-radio">{{ r.tag }} {{ r.choice_label }}</label>{% endfor %}</div>
-    </fieldset>
-    <button type="submit" class="bk-btn bk-btn--primary bk-btn--wide">{% t "scan.submit" %}</button>
-  </form>
 
   {% if recent %}
   <h2 class="bk-h2">{% t "scan.recent" %}</h2>
@@ -98,6 +103,8 @@
     var f = input.files && input.files[0];
     if (!f) { img.hidden = true; return; }
     img.src = URL.createObjectURL(f); img.hidden = false;
+    var label = document.querySelector('[data-camera-label]');
+    if (label) label.textContent = label.getAttribute('data-again') || label.textContent;
   });
 })();
 </script>

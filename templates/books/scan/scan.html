@@ -82,7 +82,7 @@
           {% for c in item.candidates.all %}
             <label class="bk-candidate">
               <input type="radio" name="entry" value="{{ c.entry.pk }}" {% if forloop.first %}checked{% endif %}>
-              <span class="bk-entry-cover" aria-hidden="true">{% if c.entry.cover %}<img src="{{ c.entry.cover.url }}" alt="">{% endif %}</span>
+              <span class="bk-entry-cover" aria-hidden="true"{% if not c.entry.cover %} style="{% spine_style c.entry %}"{% endif %}>{% if c.entry.cover %}<img src="{{ c.entry.cover.url }}" alt="">{% endif %}</span>
               <span class="bk-entry-text">
                 <span class="bk-entry-title">{{ c.entry.title }}</span>
                 <span class="bk-muted">{{ c.entry.creator_names }}{% if c.entry.year %} · {{ c.entry.year }}{% endif %}{% if c.entry.book.publisher %} · {{ c.entry.book.publisher }}{% endif %}</span>
@@ -104,15 +104,18 @@
           <label class="bk-field">{% t "scan.author_field" %} <input class="bk-input" name="author" value="{{ item.raw_author }}"></label>
         </div>
 
-        <fieldset class="bk-fieldset">
-          <legend class="bk-kicker">{% t "scan.what_to_do" %}</legend>
-          <div class="bk-radio-row">
-            <label class="bk-radio"><input type="radio" name="visibility" value="private" {% if scan.default_visibility == "private" %}checked{% endif %}> {% t "status.private" %}</label>
-            <label class="bk-radio"><input type="radio" name="visibility" value="public" {% if scan.default_visibility == "public" %}checked{% endif %}> {% t "status.public" %}</label>
-            {% for k in offer_kinds %}<label class="bk-radio"><input type="checkbox" name="offers" value="{{ k }}" {% if k in default_offers %}checked{% endif %}> {% with key="status."|add:k %}{% t key %}{% endwith %}</label>{% endfor %}
-          </div>
-        </fieldset>
-        <label class="bk-field">{% t "scan.location" %} <input class="bk-input" name="location_note" value="{{ scan.shelf_label }}" data-location></label>
+        <details class="bk-card-options">
+          <summary>{% t "scan.card_options" %}<span class="bk-muted" data-place-show>{% if scan.shelf_label %} · {{ scan.shelf_label }}{% endif %}</span></summary>
+          <fieldset class="bk-fieldset">
+            <legend class="bk-kicker">{% t "scan.what_to_do" %}</legend>
+            <div class="bk-radio-row">
+              <label class="bk-radio"><input type="radio" name="visibility" value="private" {% if scan.default_visibility == "private" %}checked{% endif %}> {% t "status.private" %}</label>
+              <label class="bk-radio"><input type="radio" name="visibility" value="public" {% if scan.default_visibility == "public" %}checked{% endif %}> {% t "status.public" %}</label>
+              {% for k in offer_kinds %}<label class="bk-radio"><input type="checkbox" name="offers" value="{{ k }}" {% if k in default_offers %}checked{% endif %}> {% with key="status."|add:k %}{% t key %}{% endwith %}</label>{% endfor %}
+            </div>
+          </fieldset>
+          <label class="bk-field">{% t "scan.location" %} <input class="bk-input" name="location_note" value="{{ scan.shelf_label }}" data-location></label>
+        </details>
 
         <div class="bk-row">
           <button type="submit" class="bk-btn bk-btn--primary" style="flex: 1">{% t "scan.accept" %}</button>
@@ -177,6 +180,10 @@
   var fields = function () { return root.querySelectorAll('[data-location]'); };
   var spread = function (from, value, old) {
     fields().forEach(function (f) { if (f !== from && (f.value === '' || f.value === old)) f.value = value; });
+    root.querySelectorAll('[data-scan-card]').forEach(function (card) {
+      var f = card.querySelector('[data-location]'), show = card.querySelector('[data-place-show]');
+      if (f && show) show.textContent = f.value ? ' · ' + f.value : '';
+    });
     if (place && place !== from && (place.value === '' || place.value === old)) place.value = value;
   };
   root.querySelectorAll('[data-location], [data-batch-place]').forEach(function (f) {
