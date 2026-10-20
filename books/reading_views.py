@@ -31,12 +31,22 @@ def read_page(request):
             "pages": reading.total_pages(session.entry), "error": _err(request),
         })
     picked = CatalogEntry.objects.filter(pk=request.GET.get("entry") or 0).first()
-    copies = (Copy.objects.filter(owner=me, status__in=Copy.HELD).select_related("entry")
-              .order_by("entry__title"))
+    books, seen = [], set()
+    if picked:
+        books.append({"entry": picked, "page": reading.last_page(me, picked)})
+        seen.add(picked.pk)
+    for c in reading.continue_list(me, limit=12):
+        if c["entry"].pk not in seen:
+            books.append({"entry": c["entry"], "page": c["page"]})
+            seen.add(c["entry"].pk)
+    for copy in (Copy.objects.filter(owner=me, status__in=Copy.HELD).select_related("entry")
+                 .prefetch_related("entry__creators").order_by("entry__title")):
+        if copy.entry_id not in seen:
+            books.append({"entry": copy.entry, "page": 0})
+            seen.add(copy.entry_id)
     return render(request, "books/read/start.html", {
-        "continue": reading.continue_list(me), "copies": copies, "picked": picked,
-        "picked_page": reading.last_page(me, picked) if picked else 0, "stats": reading.stats(me),
-        "error": _err(request), "lang": _lang(request),
+        "books": books, "picked": picked, "stats": reading.stats(me), "error": _err(request),
+        "lang": _lang(request),
     })
 
 

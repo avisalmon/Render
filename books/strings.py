@@ -940,6 +940,8 @@ STRINGS = {
     "circle.err.tier": {"he": "פתיחת מעגל היא חלק מהמנוי.", "en": "Starting a circle is part of the subscription."},
 
     # ---- reading sessions (Avi, 2026-10-20) ----------------------------------------
+    "read.search": {"he": "חיפוש ספר או סופר/ת", "en": "Search a book or an author"},
+    "read.no_match": {"he": "לא נמצא ספר כזה בספרייה שלך.", "en": "No such book in your library."},
     "read.title": {"he": "קריאה", "en": "Reading"},
     "read.start": {"he": "מתחילים לקרוא", "en": "Start reading"},
     "read.go": {"he": "להמשיך", "en": "Continue"},

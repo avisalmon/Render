@@ -621,3 +621,19 @@ details.bk-filterbox .bk-filter { margin-bottom: 0; }
 .bk-timer { font-family: var(--bk-serif); font-size: 64px; line-height: 1; text-align: center; margin: 24px 0 8px; font-variant-numeric: tabular-nums; color: var(--bk-brass); }
 .bk-input--big { font-size: 22px; text-align: center; }
 .bk-reading .bk-title { font-size: 26px; }
+
+/* ---- start reading, on a phone first (Avi, 2026-10-20) ------------------------- */
+.bk-read-search { margin: 4px 0 8px; }
+.bk-read-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--bk-line); }
+.bk-read-row { border-bottom: 1px solid var(--bk-line); }
+.bk-read-row details > summary { list-style: none; }
+.bk-read-row details > summary::-webkit-details-marker { display: none; }
+.bk-read-summary { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 5px 2px; cursor: pointer; }
+.bk-read-summary .bk-entry-cover { width: 28px; height: 38px; }
+.bk-read-summary .bk-entry-text { flex: 1; min-width: 0; }
+.bk-read-summary .bk-entry-text > * { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bk-read-summary .bk-entry-title { font-size: 16px; }
+.bk-read-summary .bk-muted { font-size: 13px; }
+.bk-read-row details[open] > summary { background: var(--bk-surface); }
+.bk-read-go { display: grid; gap: 10px; padding: 10px 2px 14px; }
+.bk-btn--big { min-height: 52px; font-size: 18px; }

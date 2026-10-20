@@ -187,3 +187,20 @@ def test_my_shelf_photo_also_shows_on_the_books_catalogue_page_for_me_only(clien
     dan = person("דן", "dan@example.com")
     page = login(client, dan).get(f"/books/catalog/{e.pk}/").content.decode()
     assert f"/books/scan/{scan.pk}/photo.jpg" not in page and "חדר עבודה" not in page
+
+
+def test_starting_is_one_list_with_search_and_a_start_button_per_book(client, noa, book):
+    """Avi on his phone: "I have to choose from a list, there is no search, no
+    start button." Now: a search box, every book of mine as a row, and each
+    row opens to the page and a Start button."""
+    other = CatalogEntry.objects.create(collection_type=catalog.book_type(), title="Jane Eyre")
+    Copy.objects.create(owner=noa, entry=other)
+    read_for(noa, book, 10, 0, 33)
+    page = login(client, noa).get("/books/read/").content.decode()
+    assert "data-read-search" in page and "<select" not in page
+    assert page.count('class="bk-read-row"') == 2
+    assert page.count('name="entry"') == 2 and page.count("bk-btn--big") == 2
+    assert page.index("מיכאל שלי") < page.index("Jane Eyre")  # the book I am in comes first
+    assert 'value="33"' in page  # where I stopped
+    picked = client.get(f"/books/read/?entry={other.pk}").content.decode()
+    assert "<details open>" in picked
