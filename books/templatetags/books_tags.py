@@ -116,3 +116,17 @@ def tagnames(tags, lang):
     """Tag names in the reader's language, joined for a sentence."""
     sep = ", "
     return sep.join(t.name_he if lang == "he" else t.name_en for t in tags)
+
+
+@register.simple_tag(takes_context=True)
+def books_reading_now(context):
+    request = context.get("request")
+    profile = getattr(getattr(request, "user", None), "books_profile", None) if request else None
+    if profile is None or profile.pk is None:
+        return None
+    try:
+        from ..reading import active
+
+        return active(profile)
+    except Exception:  # noqa: BLE001
+        return None

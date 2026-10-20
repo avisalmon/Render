@@ -64,6 +64,10 @@
   {% endif %}
 
   <h2 class="bk-h2" id="reading">{% t "reading.title" %}</h2>
+  <div class="bk-row" style="margin-bottom: 8px">
+    <a class="bk-btn bk-btn--primary" href="{% url 'books:read' %}?entry={{ entry.pk }}">{% if read_progress.last_page %}{% t "read.continue_from" n=read_progress.last_page %}{% else %}{% t "read.start" %}{% endif %}</a>
+    {% if read_progress.sessions %}<span class="bk-muted">{% if read_progress.percent %}{{ read_progress.percent }}% · {% endif %}{% t "read.book_minutes" n=read_progress.minutes s=read_progress.sessions %}{% if read_progress.pace %} · {% t "read.pace" n=read_progress.pace %}{% endif %}{% if read_progress.minutes_left %} · {% t "read.left" n=read_progress.minutes_left %}{% endif %}</span>{% endif %}
+  </div>
   {% if club_error %}<p class="bk-error" role="alert">{% with key=club_error %}{% t key %}{% endwith %}</p>{% endif %}
   <div class="bk-chips">
     {% for k, _ in reading_statuses %}

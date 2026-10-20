@@ -313,6 +313,11 @@ from a 15-minute cache. A transient 502 right after a push is usually the
 new instance still starting, not a broken build, but do not assume that
 either way without checking again.
 
+A sprint that adds a Django app also runs `tests/test_spr_13_1.py`, the
+portal's registry sweep: every installed app must be in `app/portal.py` or
+in its "deliberately out" list. Scoped runs skip it otherwise (PM-26: the
+counter app went three days unregistered).
+
 ---
 
 ## BKM: giving an agent a key, without giving it the house

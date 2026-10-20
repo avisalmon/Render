@@ -58,6 +58,8 @@ def home(request):
     return render(request, "books/home.html", {
         "profile": profile, "books_json": json.dumps(rows, ensure_ascii=False), "count": len(rows),
         "play": play.summary(profile),
+        "reading_now": __import__("books.reading", fromlist=["active"]).active(profile),
+        "reading_today": __import__("books.reading", fromlist=["stats"]).stats(profile)["today_minutes"],
     })
 
 

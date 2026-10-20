@@ -9,6 +9,7 @@ from . import (
     discover_views,
     museum_views,
     plans_views,
+    reading_views,
     hub_views,
     internal,
     library_views,
@@ -78,6 +79,12 @@ urlpatterns = [
     path("curate/rare/", museum_views.rare_desk, name="rare_desk"),
     path("copy/<int:pk>/rare/", museum_views.copy_rare, name="copy_rare"),
     path("photo/<int:pk>.jpg", museum_views.photo, name="photo"),
+    # Reading sessions (Avi, 2026-10-20).
+    path("read/", reading_views.read_page, name="read"),
+    path("read/start/", reading_views.start, name="read_start"),
+    path("read/<int:pk>/", reading_views.summary, name="read_summary"),
+    path("read/<int:pk>/end/", reading_views.end, name="read_end"),
+    path("read/<int:pk>/discard/", reading_views.discard, name="read_discard"),
     # Tiers (BK11).
     path("plans/", plans_views.plans, name="plans"),
     # Play (BK8).

@@ -1,0 +1,32 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "read.summary" %} · {% t "brand" %}{% endblock %}
+{% block screen %}read-summary{% endblock %}
+{% block content %}
+<div class="bk-narrow">
+  <h1 class="bk-title">{% t "read.summary" %}</h1>
+  <p class="bk-entry-title" style="margin: 0 0 8px">{{ s.entry.title }}</p>
+  <div class="bk-stats">
+    <div class="bk-stat"><b>{{ s.minutes }}</b><span>{% t "read.minutes" %}</span></div>
+    <div class="bk-stat"><b>{{ s.pages }}</b><span>{% t "read.pages" %}</span></div>
+    <div class="bk-stat"><b>{% if pace %}{{ pace }}{% else %}-{% endif %}</b><span>{% t "read.pages_per_minute" %}</span></div>
+  </div>
+  {% if s.finished_book %}<p class="bk-notice bk-notice--ok" role="status">{% t "read.finished_note" %}</p>
+  {% elif progress.pages %}<p class="bk-muted">{% t "read.progress" page=s.end_page pages=progress.pages pct=progress.percent %}{% if progress.minutes_left %} · {% t "read.left" n=progress.minutes_left %}{% endif %}</p>{% endif %}
+
+  {% if stats.today_counts %}
+  <p class="bk-notice bk-notice--ok" role="status">{% t "read.day_counts" n=stats.streak %}</p>
+  {% else %}
+  <p class="bk-notice" role="status">{% t "read.day_not_yet" n=min_minutes today=stats.today_minutes %}</p>
+  {% endif %}
+
+  <div class="bk-stats">
+    <div class="bk-stat"><b>{{ stats.today_minutes }}</b><span>{% t "read.today_label" %}</span></div>
+    <div class="bk-stat"><b>{{ stats.week_minutes }}</b><span>{% t "read.week_label" %}</span></div>
+    <div class="bk-stat"><b>{{ stats.streak_minutes }}</b><span>{% t "read.streak_minutes" %}</span></div>
+  </div>
+  <div class="bk-stack">
+    <a class="bk-btn bk-btn--primary bk-btn--wide" href="{% url 'books:home' %}">{% t "read.back_home" %}</a>
+    <a class="bk-btn bk-btn--wide" href="{% url 'books:catalog_entry' s.entry_id %}">{% t "read.to_book" %}</a>
+  </div>
+</div>
+{% endblock %}

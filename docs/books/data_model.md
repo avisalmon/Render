@@ -512,3 +512,10 @@ floor. `Coupon` is new: `code` (unique, lower case), `tier`, `days`,
 `is_active`, `max_uses`, `uses`, `expires_at`, `note`; unique (`profile`,
 `coupon`) on Subscription makes a code once per person. "helpavi" is
 created by migration 0017. Migrations 0016 and 0017.
+
+**Reading sessions (2026-10-20, Avi asked for them).** `ReadingSession`:
+one sitting with a book: `profile`, `entry`, `copy` (nullable),
+`started_at`, `ended_at`, `start_page`, `end_page`, `seconds` (capped at
+four hours), `finished_book`. Pages and pace are computed. A day's sessions
+reaching five minutes write that day's `ReadingCheckin` (with its minutes),
+so the streak in play.py is earned by reading time. Migration 0018.

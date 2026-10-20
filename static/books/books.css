@@ -612,3 +612,12 @@ details.bk-filterbox .bk-filter { margin-bottom: 0; }
 .bk-plan.is-current { border: 2px solid var(--bk-brass); }
 .bk-plan-price { font-family: var(--bk-serif); font-size: 20px; margin: 0; }
 .bk-plan .bk-btn[disabled] { opacity: .65; cursor: not-allowed; }
+
+/* ---- my shelf photos ---------------------------------------------------------- */
+.bk-scan-list .bk-entry-link { min-height: 64px; }
+.bk-scan-thumb { width: 84px; height: 56px; object-fit: cover; border-radius: 4px; flex: none; border: 1px solid var(--bk-line); }
+
+/* ---- reading sessions ------------------------------------------------------------ */
+.bk-timer { font-family: var(--bk-serif); font-size: 64px; line-height: 1; text-align: center; margin: 24px 0 8px; font-variant-numeric: tabular-nums; color: var(--bk-brass); }
+.bk-input--big { font-size: 22px; text-align: center; }
+.bk-reading .bk-title { font-size: 26px; }

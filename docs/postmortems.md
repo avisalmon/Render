@@ -17,6 +17,26 @@ Newest first.
 
 ---
 
+## PM-26 · 2026-10-20 · The counter app was never registered with the portal
+
+**What happened.** Adding the Books card to babook's portal ran the
+portal's own tests, and one was already failing: `counter`, built in this
+session on 2026-10-17, was in INSTALLED_APPS but neither in the portal's
+registry nor in its "deliberately out" list. The counter's sprint ran its
+own tests and never the portal's, so the guard that exists for exactly this
+went unrun for three days. Fixed: the counter is recorded as deliberately
+off the portal (it is Avi's private dashboard).
+
+**Why.** Scoped test runs (the right default here) ran each app's own
+tests; a new app touches babook's registry test too, and nothing said so.
+
+**Rule.** When a sprint adds a Django app, run `tests/test_spr_13_1.py`
+(the portal registry) along with the app's own tests. Written into
+"Deploy discipline" in docs/building_an_app.md.
+
+Here: docs/building_an_app.md (Deploy discipline)
+BKM: deferred - the general rule (one function decides, a sweep test guards it) is already in FullStackBKM; this is babook's own registry
+
 ## PM-25 · 2026-10-20 · BK11 sprint end: nothing new
 
 **What happened.** Nothing reached production. Turning the tiers on made

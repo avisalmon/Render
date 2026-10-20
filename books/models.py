@@ -1079,3 +1079,32 @@ class Subscription(models.Model):
     class Meta:
         ordering = ["-ends_at"]
         constraints = [models.UniqueConstraint(fields=["profile", "coupon"], name="books_coupon_once_per_person")]
+
+
+class ReadingSession(models.Model):
+    """One sitting with a book (Avi, 2026-10-20): started with the page you
+    are on, timed, ended with the page you reached. The streak counts a day
+    once its sessions add up to five minutes; pace is pages over minutes."""
+
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="sessions")
+    entry = models.ForeignKey(CatalogEntry, on_delete=models.CASCADE, related_name="sessions")
+    copy = models.ForeignKey(Copy, on_delete=models.SET_NULL, null=True, blank=True, related_name="sessions")
+    started_at = models.DateTimeField()
+    ended_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    start_page = models.PositiveIntegerField(default=0)
+    end_page = models.PositiveIntegerField(null=True, blank=True)
+    seconds = models.PositiveIntegerField(default=0)
+    finished_book = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["-started_at"]
+
+    @property
+    def pages(self):
+        if self.end_page is None:
+            return 0
+        return max(0, self.end_page - self.start_page)
+
+    @property
+    def minutes(self):
+        return round(self.seconds / 60, 1)

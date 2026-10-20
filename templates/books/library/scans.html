@@ -6,9 +6,11 @@
   <p><a href="{% url 'books:library' %}">{% t "copy.back" %}</a></p>
   <h1 class="bk-title">{% t "scans.title" %}</h1>
   {% if scans %}
-  <ul class="bk-entry-list">
+  <p class="bk-help">{% t "scans.private" %}</p>
+  <ul class="bk-entry-list bk-scan-list">
     {% for s in scans %}
     <li class="bk-entry-row"><a class="bk-entry-link" href="{% url 'books:scan' s.pk %}">
+      <img class="bk-scan-thumb" src="{% url 'books:scan_photo' s.pk %}" alt="{% t "scan.photo_alt" %}" loading="lazy">
       <span class="bk-entry-text">
         <span class="bk-entry-title">{% if s.shelf_label %}{{ s.shelf_label }}{% else %}{{ s.created_at|date:"j.n.Y" }}{% endif %}</span>
         <span class="bk-muted">{{ s.created_at|date:"j.n.Y" }} · {% t "scan.progress" done=s.books_accepted total=s.books_found %} · {% with key="scan.status_"|add:s.status %}{% t key %}{% endwith %}</span>

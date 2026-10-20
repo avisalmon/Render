@@ -57,9 +57,8 @@ class CheckinViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, mixins.Dest
         return ReadingCheckin.objects.filter(profile=_me(self.request))
 
     def create(self, request, *args, **kwargs):
-        minutes = request.data.get("minutes")
-        row = play.checkin(_me(request), minutes=int(minutes) if str(minutes or "").isdigit() else None)
-        return Response(self.get_serializer(row).data, status=status.HTTP_201_CREATED)
+        # Retired: a streak day is earned by five minutes in a reading session.
+        return Response({"detail": "read.err.use_sessions"}, status=status.HTTP_410_GONE)
 
     @action(detail=False, methods=["get"])
     def summary(self, request):

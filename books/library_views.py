@@ -181,6 +181,7 @@ def copy_page(request, pk):
     return render(request, "books/library/copy.html", {
         "copy": copy, "entry": copy.entry, "form": form, "saved": saved, "photo_kinds": PHOTO_KINDS,
         "scan_label": _scan_label(copy), "lang": _lang(request),
+        "from_scan": copy.scan_items.select_related("scan").first(),
         "rare_hints": __import__("books.rare", fromlist=["hints"]).hints(copy),
         "rare_review": getattr(copy, "rare_review", None) if hasattr(copy, "rare_review") else None,
         "provenance": __import__("books.rare", fromlist=["provenance"]).provenance(copy, request.books_profile),

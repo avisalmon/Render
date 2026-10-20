@@ -273,6 +273,24 @@ def build_world():
     # Live-server tests empty the database between tests, migration data too.
     Coupon.objects.get_or_create(code="helpavi", defaults={"tier": "plus", "days": 90})
     tiers.redeem(sp, "helpavi")
+
+    # Reading sessions: the reader read Jane Eyre twice (one ended session to
+    # summarise); the staff member has one running (the timer screen).
+    from datetime import timedelta as _td
+
+    from django.utils import timezone as _tz
+
+    from books import reading
+    from books.models import BookDetail, ReadingSession
+    BookDetail.objects.update_or_create(entry=c, defaults={"pages": 420})
+    for minutes, frm, to, ago in ((25, 0, 48, 1), (18, 48, 80, 0)):
+        sess = reading.start(rp, c, frm)
+        begun = _tz.now() - _td(days=ago, minutes=minutes)
+        ReadingSession.objects.filter(pk=sess.pk).update(started_at=begun)
+        sess.refresh_from_db()
+        reading.end(rp, sess, to, now=begun + _td(minutes=minutes))
+    running = reading.start(staff_p, hasamba, 12)
+    ReadingSession.objects.filter(pk=running.pk).update(started_at=_tz.now() - _td(minutes=7))
     return {"reader": reader, "staff": staff, "fresh": fresh}
 
 
@@ -342,6 +360,9 @@ SCREENS = [
     ("copy-rare-waiting", lambda: f"/books/copy/{__import__('books.models', fromlist=['Copy']).Copy.objects.get(entry__title='ספר ישן מאוד').pk}/", "staff", "copy"),
     ("plans", "/books/plans/", "reader", "plans"),
     ("plans-plus", "/books/plans/?redeemed=1", "shelver", "plans"),
+    ("read-start", "/books/read/", "reader", "read"),
+    ("read-session", "/books/read/", "staff", "read-session"),
+    ("read-summary", lambda: f"/books/read/{__import__('books.models', fromlist=['ReadingSession']).ReadingSession.objects.filter(ended_at__isnull=False).order_by('-ended_at').first().pk}/", "reader", "read-summary"),
     ("person-me", lambda: f"/books/people/{__import__('books.models', fromlist=['Profile']).Profile.objects.get(user__username='reader').pk}/", "reader", "person"),
 ]
 

@@ -119,6 +119,17 @@ APPS = [
         blurb="ארגונים אקספוננציאליים: מהרעיון שלך לכתבה בעיתון מהעתיד.",
     ),
     App(
+        slug="books",
+        icon="book",
+        name="ספרים",
+        path="/books/",
+        audience=EVERYONE,
+        # Avi, 2026-10-20: "add it as a link to the babook main cards", to let
+        # people play with it. Books has its own sign in and onboarding; its
+        # tiers are its own door to police (books/tiers.py), not the portal's.
+        blurb="צלמו מדף, והספרים שלכם בקטלוג. השאלה, החלפה וקריאה עם שכנים.",
+    ),
+    App(
         slug="ustrip",
         icon="suitcase",
         name="ustrip",
@@ -167,6 +178,9 @@ NOT_IN_THE_PORTAL = {
     # Avi listed five apps on 2026-09-21 and CrashTech was not one of them.
     # Built inside `app/` in 2026-06, before capabilities became apps.
     "crashtech",
+    # The visit counter for Avi's own GitHub Pages sites (2026-10-17): a
+    # snippet API plus a dashboard only he sees. Not an app for people.
+    "counter",
 }
 
 _BY_SLUG = {a.slug: a for a in APPS}

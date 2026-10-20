@@ -1,0 +1,47 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "read.title" %} · {% t "brand" %}{% endblock %}
+{% block screen %}read{% endblock %}
+{% block content %}
+<div class="bk-narrow">
+  <div class="bk-pagehead">
+    <h1 class="bk-title">{% t "read.title" %}</h1>
+    <a class="bk-btn bk-btn--small" href="{% url 'books:play' %}">{% t "read.stats_link" %}</a>
+  </div>
+  <p class="bk-pagehead-sub">{% t "read.today" n=stats.today_minutes %} · {% t "read.streak" n=stats.streak %}{% if stats.pace %} · {% t "read.pace" n=stats.pace %}{% endif %}</p>
+  {% if error %}<p class="bk-error" role="alert">{{ error }}</p>{% endif %}
+
+  {% if picked %}
+  <form method="post" action="{% url 'books:read_start' %}" class="bk-card bk-form">{% csrf_token %}
+    <input type="hidden" name="entry" value="{{ picked.pk }}">
+    <p class="bk-entry-title" style="margin: 0">{{ picked.title }}</p>
+    <label class="bk-field">{% t "read.page_now" %} <input class="bk-input" type="number" name="page" min="0" inputmode="numeric" value="{{ picked_page }}"></label>
+    <button type="submit" class="bk-btn bk-btn--primary bk-btn--wide">{% t "read.start" %}</button>
+  </form>
+  {% endif %}
+
+  {% if continue %}
+  <h2 class="bk-h2">{% t "read.continue" %}</h2>
+  <ul class="bk-entry-list">
+    {% for c in continue %}
+    <li class="bk-entry-row bk-entry-row--actions">
+      <span class="bk-entry-text"><span class="bk-entry-title">{{ c.entry.title }}</span><span class="bk-muted">{% if c.page %}{% t "read.stopped_at" n=c.page %}{% else %}{{ c.entry.creator_names }}{% endif %}</span></span>
+      <form method="post" action="{% url 'books:read_start' %}">{% csrf_token %}<input type="hidden" name="entry" value="{{ c.entry.pk }}"><input type="hidden" name="page" value="{{ c.page }}"><button type="submit" class="bk-btn bk-btn--small bk-btn--primary">{% t "read.go" %}</button></form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  <h2 class="bk-h2">{% t "read.other" %}</h2>
+  {% if copies %}
+  <form method="get" class="bk-row" style="flex-wrap: nowrap; gap: 8px">
+    <label class="bk-visually-hidden" for="read-pick">{% t "read.choose" %}</label>
+    <select id="read-pick" class="bk-select" name="entry" style="flex: 1 1 200px; width: auto" required>
+      <option value="">{% t "read.choose" %}</option>
+      {% for c in copies %}<option value="{{ c.entry_id }}">{{ c.entry.title }}</option>{% endfor %}
+    </select>
+    <button type="submit" class="bk-btn">{% t "read.pick" %}</button>
+  </form>
+  {% else %}<p class="bk-muted">{% t "read.no_books" %}</p>{% endif %}
+  <p class="bk-help">{% t "read.quiet_tip" %}</p>
+</div>
+{% endblock %}

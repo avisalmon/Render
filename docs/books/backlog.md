@@ -552,6 +552,27 @@ of Books; (4) only a copy a curator confirmed can be invited; (5) the
 owner's name and photos are off unless they choose them. Found by the
 screen check: the item title link in an exhibition was too small to tap.
 
+## Reading sessions and my shelf photos (Avi, 2026-10-20)
+
+Avi paused new epics to let people play, and asked for: Books on babook's
+main cards; his shelf photos visible to him (what did I already scan, and
+on which shelf is this book); and reading as sessions instead of a tap.
+
+| ID | Feature | Status |
+| --- | --- | --- |
+| F-RS.1 | A Books card on babook's main page (`app/portal.py`, everyone signed in); the counter recorded as deliberately off the portal | DONE |
+| F-RS.2 | My scans page shows each shelf photo; a book from a scan shows "photographed on this shelf" with that photo and its place in the photo; only the owner ever sees them | DONE |
+| F-RS.3 | `/books/read/`: start with a book and the page you are on (prefilled from last time, "continue where you stopped" first); a running timer, the screen kept awake; "I'm done" with the page reached and "finished the book"; discard a mistaken start | DONE |
+| F-RS.4 | The summary: time, pages, pages a minute, progress and minutes left in the book, whether today counts, minutes today / this week / in the current streak | DONE |
+| F-RS.5 | A streak day is earned by five minutes of reading in a day (Israel's day); the manual "I read today" is retired (its address leads to the reading screen; the API answers 410); days already marked stay; a forgotten timer counts at most four hours | DONE |
+| F-RS.6 | A book's page: "continue from page N", percent, minutes and sittings, pace, minutes left; a "reading now" bar on every page while a session runs | DONE |
+
+Not possible from a website: switching the phone to silent or Do Not
+Disturb (no browser allows a page to). The reading screen keeps the screen
+awake and reminds the reader to turn on Focus; a native app could do it
+later. Soft music: later, as Avi said. Model: `ReadingSession` (migration
+0018).
+
 ## Epic BK11: Tiers, payment blocked (Avi, 2026-10-20) `DONE (dev), 2026-10-20`
 
 Avi: "Make the payment partial with no billing, like blocked, but anyone

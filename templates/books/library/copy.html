@@ -19,6 +19,16 @@
 
   {% if saved %}<p class="bk-notice bk-notice--ok" role="status">{% t "copy.saved" %}</p>{% endif %}
 
+  {% if from_scan %}
+  <details class="bk-filterbox" id="shelf-photo">
+    <summary>{% t "copy.shelf_photo" %}{% if from_scan.scan.shelf_label %} · <b>{{ from_scan.scan.shelf_label }}</b>{% endif %}</summary>
+    <div class="bk-filterbox-body">
+      <a href="{% url 'books:scan' from_scan.scan_id %}"><img class="bk-scan-photo" src="{% url 'books:scan_photo' from_scan.scan_id %}" alt="{% t "copy.shelf_photo" %}" loading="lazy" style="margin: 0"></a>
+      <p class="bk-help" style="margin: 6px 0 0">{% t "copy.shelf_photo_help" n=from_scan.position|add:1 %}</p>
+    </div>
+  </details>
+  {% endif %}
+
   <form method="post" class="bk-card bk-form" novalidate>
     {% csrf_token %}
     {% if form.non_field_errors %}<p class="bk-error" role="alert">{{ form.non_field_errors.0 }}</p>{% endif %}

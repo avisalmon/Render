@@ -244,18 +244,16 @@ def test_at_most_two_freezes_are_held(noa):
     assert play.freezes_held(noa) == 2
 
 
-def test_check_in_from_home_and_undo(client, noa):
+def test_the_manual_check_in_is_retired_for_reading_sessions(client, noa):
+    """Avi, 2026-10-20: a streak day is earned by five minutes of reading in a
+    session, not by tapping "I read today"."""
     login(client, noa)
     page = client.get("/books/").content.decode()
-    assert "קראתי היום" in page
+    assert "קראתי היום" not in page and 'href="/books/read/"' in page
     r = client.post("/books/play/checkin/", {"next": "/books/"})
-    assert r["Location"] == "/books/" and ReadingCheckin.objects.filter(profile=noa).count() == 1
-    assert "קראת היום" in client.get("/books/").content.decode()
-    client.post("/books/play/checkin/", {"undo": "1"})
-    assert not ReadingCheckin.objects.filter(profile=noa).exists()
-    r = client.post("/books/api/checkins/", {"minutes": 25})
-    assert r.status_code == 201 and r.json()["minutes"] == 25
-    assert client.get("/books/api/checkins/summary/").json()["streak"] == 1
+    assert r["Location"] == "/books/read/" and not ReadingCheckin.objects.filter(profile=noa).exists()
+    assert client.post("/books/api/checkins/", {"minutes": 25}).status_code == 410
+    assert client.get("/books/api/checkins/summary/").json()["streak"] == 0
 
 
 # ---- badges, board, year ---------------------------------------------------------------------------
