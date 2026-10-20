@@ -28,6 +28,15 @@
     </div>
   </div>
 
+  {% if my_scan_item %}
+  <details class="bk-filterbox" id="shelf-photo">
+    <summary>{% t "copy.shelf_photo" %}{% if my_scan_item.scan.shelf_label %} · <b>{{ my_scan_item.scan.shelf_label }}</b>{% endif %}</summary>
+    <div class="bk-filterbox-body">
+      <a href="{% url 'books:scan' my_scan_item.scan_id %}"><img class="bk-scan-photo" src="{% url 'books:scan_photo' my_scan_item.scan_id %}" alt="{% t "copy.shelf_photo" %}" loading="lazy" style="margin: 0"></a>
+      <p class="bk-help" style="margin: 6px 0 0">{% t "copy.shelf_photo_help" n=my_scan_item.position|add:1 %}</p>
+    </div>
+  </details>
+  {% endif %}
   {% if near_count %}<a class="bk-notice" href="{% url 'books:near' %}?q={{ entry.title|urlencode }}">{% t "disc.near_count" n=near_count %}</a>{% endif %}
 
   {% if entry.description %}<p class="bk-prose">{{ entry.description|linebreaksbr }}</p>{% endif %}

@@ -173,3 +173,17 @@ def test_my_shelf_photos_are_listed_for_me(client, noa):
     ShelfScan.objects.create(owner=noa, status=ShelfScan.DONE, photo="x.jpg", shelf_label="מדף עליון")
     page = login(client, noa).get("/books/library/scans/").content.decode()
     assert "bk-scan-thumb" in page and "מדף עליון" in page and "רק את/ה רואה" in page
+
+
+def test_my_shelf_photo_also_shows_on_the_books_catalogue_page_for_me_only(client, noa):
+    from books.models import ScanItem, ShelfScan
+
+    scan = ShelfScan.objects.create(owner=noa, status=ShelfScan.DONE, photo="x.jpg", shelf_label="חדר עבודה")
+    e = CatalogEntry.objects.create(collection_type=catalog.book_type(), title="ספר")
+    c = Copy.objects.create(owner=noa, entry=e)
+    ScanItem.objects.create(scan=scan, position=0, raw_title="ספר", copy=c)
+    page = login(client, noa).get(f"/books/catalog/{e.pk}/").content.decode()
+    assert f"/books/scan/{scan.pk}/photo.jpg" in page and "חדר עבודה" in page
+    dan = person("דן", "dan@example.com")
+    page = login(client, dan).get(f"/books/catalog/{e.pk}/").content.decode()
+    assert f"/books/scan/{scan.pk}/photo.jpg" not in page and "חדר עבודה" not in page
