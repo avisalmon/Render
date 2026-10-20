@@ -472,3 +472,11 @@ reversed, never deleted) and an `adjustment` kind; the unique (`profile`,
 `kind`, `deal`) applies only when a deal is set; `Badge.about_he` /
 `about_en`; `Notification.badge` and `Notification.scan` (the bell for a
 badge and for a shelf read or failed, migration 0010). Migration 0011.
+
+**BK9 additions (2026-10-20, for Avi's ack).** `ProfileTaste` as approved,
+with its unique widened to (`profile`, `tag`, `source`): the survey and the
+derived taste are kept apart and combined when read, so recomputing one
+never erases the other. `EntryTagging` is new: one row per record saying
+how it got its tags (`source` model / curator, `model_name`, `confidence`,
+`raw` answer for audit, `tagged_at`); a curator row stops the model.
+Migration 0012.

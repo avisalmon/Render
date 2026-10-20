@@ -28,6 +28,8 @@
     </div>
   </div>
 
+  {% if near_count %}<a class="bk-notice" href="{% url 'books:near' %}?q={{ entry.title|urlencode }}">{% t "disc.near_count" n=near_count %}</a>{% endif %}
+
   {% if entry.description %}<p class="bk-prose">{{ entry.description|linebreaksbr }}</p>{% endif %}
 
   {% if entry.tags.all %}
@@ -43,6 +45,22 @@
   {% if editions %}
   <h2 class="bk-h2">{% t "catalog.editions" %}</h2>
   {% include "books/catalog/_entry_list.html" with entries=editions %}
+  {% endif %}
+
+  {% if by_author %}
+  <h2 class="bk-h2">{% t "disc.by_author" %}</h2>
+  {% include "books/catalog/_entry_list.html" with entries=by_author %}
+  {% endif %}
+  {% if also_read %}
+  <h2 class="bk-h2">{% t "disc.also_read" %}</h2>
+  <ul class="bk-entry-list">
+    {% for r in also_read %}
+    <li class="bk-entry-row"><a class="bk-entry-link" href="{% url 'books:catalog_entry' r.entry.pk %}">
+      <span class="bk-entry-cover" aria-hidden="true">{% if r.entry.cover %}<img src="{{ r.entry.cover.url }}" alt="">{% endif %}</span>
+      <span class="bk-entry-text"><span class="bk-entry-title">{{ r.entry.title }}</span><span class="bk-muted">{{ r.entry.creator_names }}</span><span class="bk-kicker">{% t "disc.readers_n" n=r.people %}</span></span>
+    </a></li>
+    {% endfor %}
+  </ul>
   {% endif %}
 
   <h2 class="bk-h2" id="reading">{% t "reading.title" %}</h2>

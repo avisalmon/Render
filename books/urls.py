@@ -6,6 +6,7 @@ from . import (
     circle_views,
     play_views,
     community_views,
+    discover_views,
     hub_views,
     internal,
     library_views,
@@ -65,6 +66,9 @@ urlpatterns = [
     path("reading/", community_views.my_reading, name="my_reading"),
     path("people/", community_views.people, name="people"),
     path("people/<int:pk>/", community_views.person, name="person"),
+    # Discovery (BK9).
+    path("discover/", discover_views.discover_page, name="discover"),
+    path("taste/", discover_views.taste_page, name="taste"),
     # Play (BK8).
     path("play/", play_views.play_page, name="play"),
     path("play/checkin/", play_views.checkin, name="checkin"),

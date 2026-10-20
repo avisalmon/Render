@@ -38,7 +38,9 @@ def onboarding(request):
                 from . import hub
 
                 hub.area_changed(profile)
-            return redirect(safe_next(request))
+            from urllib.parse import urlencode
+
+            return redirect(f"{reverse('books:taste')}?{urlencode({'first': 1, 'next': safe_next(request)})}")
     else:
         guess = request.user.first_name or request.user.get_username().split("@")[0]
         form = OnboardingForm(initial={"display_name": guess, "language": _lang(request)}, lang=_lang(request))

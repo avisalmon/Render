@@ -2,6 +2,7 @@ from rest_framework.routers import DefaultRouter
 
 from .circles import CircleMemberViewSet, CircleViewSet, FeedbackViewSet, PilotViewSet
 from .community import PeopleViewSet, PostViewSet, ReadingLogViewSet, ReviewViewSet, ThreadViewSet
+from .discover import DiscoverViewSet
 from .hub import (
                   BlockViewSet,
                   DealViewSet,
@@ -66,3 +67,4 @@ router.register("checkins", CheckinViewSet, basename="checkin")
 router.register("points", PointEventViewSet, basename="point")
 router.register("badges", BadgeViewSet, basename="badge")
 router.register("play", PlayViewSet, basename="play")
+router.register("discover", DiscoverViewSet, basename="discover")

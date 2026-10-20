@@ -5,6 +5,7 @@ from .models import (
     Circle,
     CircleMember,
     Deal,
+    EntryTagging,
     Feedback,
     Job,
     MeetingPlace,
@@ -130,3 +131,12 @@ class BadgeAdmin(admin.ModelAdmin):
 class ProfileBadgeAdmin(admin.ModelAdmin):
     list_display = ["profile", "badge", "earned_at"]
     raw_id_fields = ["profile"]
+
+
+@admin.register(EntryTagging)
+class EntryTaggingAdmin(admin.ModelAdmin):
+    """Who tagged a record. Setting source to curator stops the model touching it."""
+
+    list_display = ["entry", "source", "model_name", "confidence", "tagged_at"]
+    list_filter = ["source"]
+    raw_id_fields = ["entry"]

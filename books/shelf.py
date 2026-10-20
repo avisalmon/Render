@@ -213,9 +213,10 @@ def accept(item, entry, visibility, offer_kinds, location_note, edited=False):
     item.save(update_fields=["copy", "review_status"])
     _refresh_scan(item.scan)
     if first_time:
-        from . import play
+        from . import play, tagging
 
         play.book_confirmed(profile, entry)
+        tagging.ensure_tagged(entry, profile)
     return copy
 
 

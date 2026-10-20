@@ -26,6 +26,7 @@
       {% else %}<form method="post" action="{% url 'books:checkin' %}">{% csrf_token %}<input type="hidden" name="next" value="{% url 'books:home' %}"><button type="submit" class="bk-btn bk-btn--primary bk-btn--wide">{% t "play.i_read_today" %}</button></form>{% endif %}
     </div>
     {% if books_json and books_json != "[]" %}<a class="bk-btn bk-btn--wide" href="{% url 'books:library' %}">{% t "lib.all_books" %}</a>{% endif %}
+    <a class="bk-btn bk-btn--wide" href="{% url 'books:discover' %}">{% t "disc.title" %}</a>
     <div class="bk-row">
       <a class="bk-btn bk-btn--quiet" href="{% url 'books:library_add' %}">{% t "lib.add" %}</a>
       <a class="bk-btn bk-btn--quiet" href="{% url 'books:wishlist' %}">{% t "lib.wishlist" %}</a>

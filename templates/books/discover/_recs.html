@@ -1,0 +1,12 @@
+{% load books_tags %}<ul class="bk-entry-list">
+  {% for r in recs %}
+  <li class="bk-entry-row"><a class="bk-entry-link" href="{% url 'books:catalog_entry' r.entry.pk %}">
+    <span class="bk-entry-cover" aria-hidden="true">{% if r.entry.cover %}<img src="{{ r.entry.cover.url }}" alt="">{% endif %}</span>
+    <span class="bk-entry-text">
+      <span class="bk-entry-title">{{ r.entry.title }}</span>
+      <span class="bk-muted">{{ r.entry.creator_names }}{% if r.entry.year %} · {{ r.entry.year }}{% endif %}</span>
+      <span class="bk-rec-why">{% if r.because %}{% t "disc.because_book" title=r.because.title %}{% if r.tags %} · {% endif %}{% endif %}{% if r.tags %}{% with names=r.tags|tagnames:lang %}{% t "disc.because_tags" tags=names %}{% endwith %}{% endif %}{% if r.near %} · {% t "disc.is_near" %}{% endif %}</span>
+    </span>
+  </a></li>
+  {% endfor %}
+</ul>

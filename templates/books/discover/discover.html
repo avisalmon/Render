@@ -1,0 +1,39 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "disc.title" %} · {% t "brand" %}{% endblock %}
+{% block screen %}discover{% endblock %}
+{% block content %}
+<div class="bk-wide">
+  <h1 class="bk-title">{% t "disc.title" %}</h1>
+  <p class="bk-lead">{% t "disc.lead" %}</p>
+  <div class="bk-row" style="margin-bottom: 12px">
+    <a class="bk-btn bk-btn--small{% if not has_taste %} bk-btn--primary{% endif %}" href="{% url 'books:taste' %}">{% t "disc.edit_taste" %}</a>
+    <a class="bk-btn bk-btn--small" href="{% url 'books:catalog' %}">{% t "nav.catalog" %}</a>
+  </div>
+  {% if not has_taste %}<p class="bk-notice" role="status">{% t "disc.no_taste" %}</p>{% endif %}
+
+  {% if near %}
+  <h2 class="bk-h2">{% t "disc.near_h" %}</h2>
+  {% include "books/discover/_recs.html" with recs=near %}
+  {% endif %}
+
+  {% if recs %}
+  <h2 class="bk-h2">{% t "disc.for_you_h" %}</h2>
+  {% include "books/discover/_recs.html" with recs=recs %}
+  {% endif %}
+
+  {% if circles %}
+  <h2 class="bk-h2">{% t "disc.circles_h" %}</h2>
+  <ul class="bk-entry-list">
+    {% for r in circles %}
+    <li class="bk-entry-row"><a class="bk-entry-link" href="{% url 'books:catalog_entry' r.entry.pk %}">
+      <span class="bk-entry-cover" aria-hidden="true">{% if r.entry.cover %}<img src="{{ r.entry.cover.url }}" alt="">{% endif %}</span>
+      <span class="bk-entry-text"><span class="bk-entry-title">{{ r.entry.title }}</span><span class="bk-muted">{{ r.entry.creator_names }}</span><span class="bk-rec-why">{% t "disc.circle_n" n=r.people %}</span></span>
+    </a></li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if not near and not recs and not circles %}<p class="bk-lead">{% t "disc.none" %}</p>{% endif %}
+  <p class="bk-help">{% t "disc.tagging_note" %}</p>
+</div>
+{% endblock %}

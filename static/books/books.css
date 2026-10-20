@@ -542,3 +542,9 @@ details.bk-more > summary { cursor: pointer; color: var(--bk-muted); min-height:
 .bk-board tr.is-me td { font-weight: 700; background: var(--bk-surface); }
 .bk-ledger-row { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--bk-line); }
 .bk-ledger-row.is-reversed { color: var(--bk-muted); text-decoration: line-through; }
+
+/* ---- discovery (BK9) ------------------------------------------------------------ */
+.bk-rec-why { font-size: 13px; color: var(--bk-brass); }
+.bk-taste-grid { display: grid; gap: 6px; }
+.bk-taste-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; padding: 6px 0; border-bottom: 1px solid var(--bk-line); }
+.bk-taste-row .bk-radio-row { gap: 6px; }

@@ -258,6 +258,9 @@ def have(request, entry_pk):
     profile = request.books_profile
     if shelf.room_left(profile) == 0:
         return redirect(f"{reverse('books:library_add')}?cap=1")
+    from . import tagging
+
+    tagging.ensure_tagged(entry, profile)
     copy = Copy.objects.create(owner=profile, entry=entry, added_via="manual", position=shelf.next_position(profile),
                                location_note=(request.POST.get("location_note") or "").strip()[:120])
     Wish.objects.filter(profile=profile, entry=entry).delete()  # a wish that came true

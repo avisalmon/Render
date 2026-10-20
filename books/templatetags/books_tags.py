@@ -103,3 +103,10 @@ def books_scan_queue(context):
         return queue_summary(profile)
     except Exception:  # noqa: BLE001
         return {"any": False}
+
+
+@register.filter
+def tagnames(tags, lang):
+    """Tag names in the reader's language, joined for a sentence."""
+    sep = ", "
+    return sep.join(t.name_he if lang == "he" else t.name_en for t in tags)

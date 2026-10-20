@@ -124,6 +124,9 @@ def entry(request, pk):
         "my_reading": ReadingLog.objects.filter(profile=me, entry=obj).first(),
         "reading_statuses": ReadingLog.STATUSES, "ratings": range(1, community.MAX_RATING + 1),
         "threads": community.visible_threads(me, entry=obj)[:20], "thread_kinds": Thread.KINDS,
+        "by_author": __import__("books.discover", fromlist=["x"]).more_by_author(obj, me),
+        "also_read": __import__("books.discover", fromlist=["x"]).also_read(obj, me),
+        "near_count": __import__("books.discover", fromlist=["x"]).available_near(obj, me),
         "club_error": community.CommunityError and (request.GET.get("error") or ""),
         "entry": obj, "detail": detail, "form": form, "sent": sent, "editions": list(editions) + list(siblings),
         "can_edit": can_edit, "lang": _lang(request),
@@ -155,6 +158,12 @@ def new_entry(request, pk=None):
                 obj.save()
             catalog.set_creators(obj, [n.strip() for n in d["creators"].split(",") if n.strip()])
             obj.tags.set(d["tags"])
+            from . import tagging
+
+            if d["tags"]:
+                tagging.curator_tagged(obj)  # chosen by a person: the model leaves them alone
+            else:
+                tagging.ensure_tagged(obj, request.books_profile)
             detail, _ = BookDetail.objects.get_or_create(entry=obj)
             detail.publisher = d["publisher"]
             detail.save(update_fields=["publisher"])

@@ -471,7 +471,29 @@ cohort); (5) the year in books is private. Found by looking at the screens:
 the home page showed the old "a shelf is waiting" notice under the new
 reminder bar; removed.
 
-## Epics BK9 to BK13
+## Epic BK9: Discovery `DONE (dev), 2026-10-20`
 
-Not broken into sprints yet: discovery, rare books and the museum, tiers
-and billing, advanced creation, other collections.
+| ID | Feature | Status |
+| --- | --- | --- |
+| F-BK9.1 | Tagging: a small model sorts each record into the controlled list (genre up to 3, mood up to 2, audience 1; never "form", which describes a copy); a strict schema whose values are our own keys; costed per call; an unsure answer (below 0.5) is kept for audit and not applied; a curator's tags are never overwritten. Runs when a record reaches a library, from the discovery page for the visitor's untagged books, and by `books_tag_entries` | DONE |
+| F-BK9.2 | Measured on ten real books (Hebrew and English): gpt-6-luna and gpt-6.1-sol both right on all ten genres and audiences; luna $0.0012 for the ten, sol $0.0176. Luna is the default (`BOOKS_TAG_MODEL`) | DONE |
+| F-BK9.3 | Taste: a survey (every genre under its heading, the moods; like or not for me) at the end of onboarding, skippable, and at `/books/taste/`; derived taste from the person's library, reading log, reviews and wishes; the survey counts double | DONE |
+| F-BK9.4 | `/books/discover/`: for you and offered near you first, then more for you, each with its reason ("like X", "because you like ..."); books I have, logged or reviewed are left out; loved in my circles | DONE |
+| F-BK9.5 | A book's page: copies offered near me or in my circles, more by this author, readers of this also read (only what three or more people share, never named, never counting me) | DONE |
+| F-BK9.6 | API: discover (suggestions with reasons, taste get and set, a book's neighbours); admin for taggings | DONE |
+
+Models: `ProfileTaste` (approved) with the unique on (`profile`, `tag`,
+`source`) so the survey and the derived taste never overwrite each other;
+`EntryTagging` (new: how a record got its tags, by model or curator, with
+the model's answer for audit). data_model.md section 11; migration 0012.
+Decisions for Avi's ack: (1) the tagging model is gpt-6-luna, measured; (2)
+the survey counts double against derived taste; (3) "readers also read"
+needs three people; (4) onboarding ends at the survey, which can be
+skipped; (5) tagging is not run over the whole catalogue on deploy, only as
+books reach libraries and on request. Found by looking at the screens: the
+survey offered only the top-level genres (PM-20).
+
+## Epics BK10 to BK13
+
+Not broken into sprints yet: rare books and the museum, tiers and billing,
+advanced creation, other collections.

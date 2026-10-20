@@ -890,3 +890,36 @@ class ProfileBadge(models.Model):
     class Meta:
         ordering = ["-earned_at"]
         constraints = [models.UniqueConstraint(fields=["profile", "badge"], name="books_badge_once")]
+
+
+# ---- discovery (BK9) ---------------------------------------------------------------------------
+
+class EntryTagging(models.Model):
+    """How a record got its tags: by the tagging model (with its cost and
+    confidence) or by a curator. One row per record; a curator's choice is
+    never overwritten by the model."""
+
+    MODEL, CURATOR = "model", "curator"
+
+    entry = models.OneToOneField(CatalogEntry, on_delete=models.CASCADE, related_name="tagging")
+    source = models.CharField(max_length=8, default=MODEL)
+    model_name = models.CharField(max_length=60, blank=True)
+    confidence = models.DecimalField(max_digits=4, decimal_places=3, default=0)
+    raw = models.JSONField(default=dict, blank=True, help_text="the model's answer, for audit only")
+    tagged_at = models.DateTimeField(auto_now=True)
+
+
+class ProfileTaste(models.Model):
+    """What a person likes, per tag (data model section 6): from the survey
+    they answered, and derived from their library, log and reviews."""
+
+    SURVEY, DERIVED = "survey", "derived"
+
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="taste")
+    tag = models.ForeignKey(Tag, on_delete=models.CASCADE, related_name="tastes")
+    weight = models.DecimalField(max_digits=4, decimal_places=3)
+    source = models.CharField(max_length=8, default=SURVEY)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["profile", "tag", "source"], name="books_taste_once")]

@@ -17,6 +17,28 @@ Newest first.
 
 ---
 
+## PM-20 · 2026-10-20 · BK9 sprint end: a survey too coarse, and two tests that could not fail
+
+**What happened.** Nothing reached production. (1) The taste survey offered
+only the six top-level genres; the screenshot, read against the seeded
+answers ("fantasy", "classics"), showed they could not be chosen or seen.
+(2) All 14 BK9 tests passed first time; reviewing them for mistake 3 found
+two that could not fail (an `if ... else True`, and a check on a substring
+of the page's script). Both were rewritten, and the stricter one then
+caught "checked" inside the page script, mistake 1 again. (3) The
+hard-coded-copy guard flagged the survey: a `>` inside a template tag
+inside an HTML tag broke its reading; the template now compares sets.
+
+**Why.** Taste was set in code in every test, never through the form; and
+a first-time pass was taken as good news rather than as a reason to look.
+
+**Rule.** New: a picker must offer every value the stored data can hold
+(mistake 23 here, 31 in FullStackBKM). Reinforced: a test suite that passes
+the first time gets read for tests that cannot fail.
+
+Here: docs/building_an_app.md mistake 23; tests/test_books_9.py
+BKM: FullStackBKM ff79ff0
+
 ## PM-19 · 2026-10-20 · BK8 sprint end: a timezone caught before it shipped
 
 **What happened.** Nothing reached production. While writing the streak,

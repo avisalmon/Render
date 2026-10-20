@@ -704,3 +704,15 @@ a state the person sees (including "failed, try again" with the same
 input), and leaves its result where it keeps reminding them (Books: the bar
 on every page, and the bell). Every deploy is a restart: test what happens
 to work in flight.
+
+### 23. A picker must offer every value the stored data can hold
+
+The Books taste survey built its list from the genre tree but filtered to the
+top level: six headings, while records, recommendations and saved answers
+used the forty genres under them. A saved "fantasy" could neither be chosen
+nor seen. The tests set taste in code, never through the form; the
+screenshot, read against the seed, showed it.
+
+**The rule.** For every choice list, a test that it offers every value the
+stored data can hold, and that a saved answer shows as chosen
+(`test_the_survey_offers_every_genre_and_shows_my_answers`).

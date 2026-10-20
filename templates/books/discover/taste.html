@@ -1,0 +1,47 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "taste.title" %} · {% t "brand" %}{% endblock %}
+{% block screen %}taste{% endblock %}
+{% block content %}
+<div class="bk-narrow">
+  {% if not first %}<p><a href="{% url 'books:discover' %}">{% t "disc.title" %}</a></p>{% endif %}
+  <h1 class="bk-title">{% t "taste.title" %}</h1>
+  <p class="bk-lead">{% t "taste.lead" %}</p>
+  <form method="post" class="bk-form">
+    {% csrf_token %}
+    {% if first %}<input type="hidden" name="first" value="1">{% endif %}
+    <input type="hidden" name="next" value="{{ next }}">
+    {% for heading, tags in groups %}
+    <h2 class="bk-h2">{% if heading is None %}{% t "taste.moods" %}{% elif heading %}{{ heading }}{% else %}{% t "taste.genres" %}{% endif %}</h2>
+    <div class="bk-taste-grid">
+      {% for tag in tags %}
+      <fieldset class="bk-taste-row bk-fieldset">
+        <legend class="bk-entry-title" style="float: inline-start">{% if lang == "he" %}{{ tag.name_he }}{% else %}{{ tag.name_en }}{% endif %}</legend>
+        <div class="bk-radio-row">
+          <label class="bk-radio"><input type="checkbox" name="like" value="{{ tag.key }}" {% if tag.key in likes %}checked{% endif %}> {% t "taste.like" %}</label>
+          <label class="bk-radio"><input type="checkbox" name="dislike" value="{{ tag.key }}" {% if tag.key in dislikes %}checked{% endif %}> {% t "taste.dislike" %}</label>
+        </div>
+      </fieldset>
+      {% endfor %}
+    </div>
+    {% endfor %}
+    <div class="bk-row" style="margin-top: 14px">
+      <button type="submit" class="bk-btn bk-btn--primary" style="flex: 1">{% t "taste.save" %}</button>
+      {% if first %}<button type="submit" class="bk-btn" name="skip" value="1">{% t "taste.skip" %}</button>{% endif %}
+    </div>
+  </form>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  // Like and not-for-me are opposites: ticking one clears the other.
+  document.querySelectorAll('.bk-taste-row').forEach(function (row) {
+    row.addEventListener('change', function (e) {
+      if (!e.target.checked) return;
+      var other = e.target.name === 'like' ? 'dislike' : 'like';
+      var o = row.querySelector('input[name=' + other + ']'); if (o) o.checked = false;
+    });
+  });
+})();
+</script>
+{% endblock %}

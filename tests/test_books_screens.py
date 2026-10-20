@@ -225,6 +225,17 @@ def build_world():
         play.checkin(rp, day=play.today() - timedelta(days=i))
     play.book_confirmed(rp, a)
     play.book_confirmed(sp, c)
+
+    # Discovery (BK9): tags on the records, the reader's taste, a suggestion
+    # that is also offered nearby (the shelver's Jane Eyre).
+    from books import discover
+    from books.models import Tag
+    a.tags.add(*Tag.objects.filter(key__in=["literary-fiction", "israeli-fiction", "emotional"]))
+    c.tags.add(*Tag.objects.filter(key__in=["classics", "romance", "emotional"]))
+    hobbit = catalog.CatalogEntry.objects.create(collection_type=catalog.book_type(), title="ההוביט", year=1937)
+    catalog.set_creators(hobbit, ["J.R.R. Tolkien"])
+    hobbit.tags.add(*Tag.objects.filter(key__in=["fantasy", "classics", "hopeful"]))
+    discover.set_survey(rp, ["classics", "fantasy", "emotional"], ["thriller"])
     return {"reader": reader, "staff": staff, "fresh": fresh}
 
 
@@ -281,6 +292,10 @@ SCREENS = [
     ("play", "/books/play/", "reader", "play"),
     ("play-empty", "/books/play/", "staff", "play"),
     ("year", "/books/year/", "reader", "year"),
+    ("discover", "/books/discover/", "reader", "discover"),
+    ("discover-empty", "/books/discover/", "staff", "discover"),
+    ("taste", "/books/taste/", "reader", "taste"),
+    ("taste-first", "/books/taste/?first=1", "staff", "taste"),
     ("person-me", lambda: f"/books/people/{__import__('books.models', fromlist=['Profile']).Profile.objects.get(user__username='reader').pk}/", "reader", "person"),
 ]
 

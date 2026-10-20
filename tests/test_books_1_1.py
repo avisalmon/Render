@@ -64,7 +64,10 @@ def test_onboarding_needs_a_name(client, reader):
 def test_next_cannot_send_a_person_out_of_books(client, reader):
     client.force_login(reader)
     r = onboard_post(client, next="https://evil.example/")
-    assert r["Location"] == "/books/"
+    # Onboarding now ends at the taste survey (BK9), carrying a safe next.
+    assert r["Location"] == "/books/taste/?first=1&next=%2Fbooks%2F"
+    r = client.post("/books/taste/", {"first": "1", "skip": "1", "next": "https://evil.example/"})
+    assert r["Location"] == "/books/discover/"
     client.logout()
     r = client.post("/books/login/", {"username": "noa@example.com", "password": "pw-long-enough-1", "next": "/admin/"})
     assert r["Location"] == "/books/"
@@ -153,7 +156,8 @@ def test_sign_in_with_the_email(client, reader):
 def test_onboarding_creates_the_profile_and_returns_to_the_library(client, reader):
     client.force_login(reader)
     r = onboard_post(client)
-    assert r["Location"] == "/books/"
+    assert r["Location"] == "/books/taste/?first=1&next=%2Fbooks%2F"  # the survey, then the library
+    assert client.post("/books/taste/", {"first": "1", "skip": "1", "next": "/books/"})["Location"] == "/books/"
     p = Profile.objects.get(user=reader)
     assert p.is_adult_confirmed and p.accepted_terms_at is not None and p.area_name == "כרמל, חיפה"
     assert p.tier == "free"
