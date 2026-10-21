@@ -25,6 +25,7 @@ urlpatterns = [
     path("tracks/<str:slug>/", views.track, name="track"),
     path("tracks/<str:slug>/edit/", views.track_edit, name="track_edit"),
     path("materials/", views.materials, name="materials"),
+    path("examples/t-project/", views.project_example, name="project_example"),
     path("materials/new/", views.material_edit, name="material_new"),
     path("materials/<int:pk>/edit/", views.material_edit, name="material_edit"),
     path("requests/", views.requests_admin, name="requests"),

@@ -203,3 +203,21 @@ def test_the_api_lists_for_people_inside(client, people):
         assert client.get(f"/cohort/api/{route}/").status_code == 200, route
     tracks = client.get("/cohort/api/tracks/").json()
     assert len(tracks) == 7
+
+
+# ------------------------------------------------------------ the example project page
+
+
+def test_the_example_project_page_is_for_people_inside_only(client, people):
+    """Avi's T-shaped project definition, linked from the imaginary track."""
+    assert client.get("/cohort/examples/t-project/").status_code == 302
+    pending = _member("w@example.com", "ממתין", status=Member.PENDING)
+    client.force_login(pending.user)
+    assert client.get("/cohort/examples/t-project/").status_code == 302
+    client.force_login(people["eli"].user)
+    html = client.get("/cohort/examples/t-project/").content.decode()
+    for part in ("פרויקט בצורת", "בידיים", "AI בתחום", "AI מחוץ לתחום", "צלילה מדעית",
+                 "תחנת השקיה חכמה", "מוניטור צריכת חשמל", "תא גידול חכם", "מחוון", "יומן הבינה המלאכותית"):
+        assert part in html, part
+    assert "אינו מסמך רשמי של משרד החינוך" in html
+    assert 'href="/cohort/tracks/imaginary-electronics/"' in html

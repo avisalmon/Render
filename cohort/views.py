@@ -265,3 +265,11 @@ def requests_admin(request):
         "declined": [m for m in people if m.status == Member.DECLINED],
         "section": "requests",
     })
+
+
+@access.inside
+def project_example(request):
+    """Avi's example project definition for the imaginary electronics track
+    (2026-10-21): a document page of its own, for participants only. Avi links
+    it from the track's "project definition"."""
+    return render(request, "cohort/project_example.html")

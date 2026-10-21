@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>פרויקט בצורת T · מגמה דמיונית: אלקטרוניקה</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&family=Frank+Ruhl+Libre:wght@500;700;900&family=Karantina:wght@700&display=swap">
+<style>
+/* A project brief: a white document with one cork band at the top, so it
+   belongs to the course's noticeboard. Each kind of element has one colour,
+   the colours of the board's pins, and the colour always means the same thing. */
+:root {
+  --paper: #ffffff;
+  --page: #f6f3ee;
+  --ink: #1f1a15;
+  --soft: #5f564c;
+  --line: #e4ddd2;
+  --cork: #c4955f;
+  --wood: #5b3c22;
+  --hand: #2b2118;     /* built by hand: the stem of the T */
+  --infield: #1458b8;  /* AI, inside the field */
+  --outfield: #2f8a1f; /* AI, outside the field */
+  --science: #c8102e;  /* the scientific deep dive */
+  --math: #a87700;     /* mathematics */
+  --f-display: "Karantina", "Assistant", Arial, sans-serif;
+  --f-serif: "Frank Ruhl Libre", "David", Georgia, serif;
+  --f-body: "Assistant", Arial, sans-serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink); font-family: var(--f-body); font-size: 18px; line-height: 1.65; }
+a { color: var(--infield); }
+.strip { background: var(--wood); color: #f1dfc3; font-size: .8rem; padding: 6px 16px; display: flex; gap: 8px 16px; flex-wrap: wrap; justify-content: space-between; }
+.strip a { color: #fff; font-weight: 700; }
+.hero {
+  background-color: var(--cork);
+  background-image: radial-gradient(rgba(90,55,25,.32) 1px, transparent 1.6px), radial-gradient(rgba(255,235,200,.22) 1px, transparent 1.6px);
+  background-size: 7px 7px, 11px 11px; background-position: 0 0, 3px 4px;
+  padding: 34px 16px 46px;
+}
+.hero-card { max-width: 980px; margin: 0 auto; background: var(--paper); padding: 30px clamp(18px, 4vw, 44px) 34px; box-shadow: 0 10px 24px rgba(0,0,0,.28); position: relative; transform: rotate(-.4deg); }
+.hero-card::before { content: ""; position: absolute; top: -9px; left: 50%; width: 20px; height: 20px; margin-left: -10px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ff8c8c, var(--science) 70%); box-shadow: 0 3px 4px rgba(0,0,0,.35); }
+.eyebrow { font-size: .85rem; font-weight: 700; letter-spacing: .04em; color: var(--soft); margin: 0 0 6px; }
+h1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(3.2rem, 11vw, 6rem); line-height: .9; margin: 0 0 14px; }
+h1 em { font-style: normal; color: var(--science); }
+.lede { font-family: var(--f-serif); font-size: clamp(1.15rem, 2.6vw, 1.4rem); line-height: 1.55; margin: 0; max-width: 60ch; text-wrap: pretty; }
+.hero-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: .85rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; color: #fff; }
+.chip.hand { background: var(--hand); } .chip.infield { background: var(--infield); } .chip.outfield { background: var(--outfield); }
+.chip.science { background: var(--science); } .chip.math { background: var(--math); }
+
+main { max-width: 980px; margin: 0 auto; padding: 8px 16px 70px; }
+section { margin-top: 54px; }
+.kicker { font-family: var(--f-display); font-size: 1.15rem; color: var(--soft); margin: 0; letter-spacing: .02em; }
+h2 { font-family: var(--f-serif); font-weight: 900; font-size: clamp(1.7rem, 4.2vw, 2.35rem); line-height: 1.15; margin: 2px 0 14px; text-wrap: balance; }
+h3 { font-size: 1.15rem; margin: 0 0 6px; line-height: 1.3; }
+p { margin: 0 0 12px; max-width: 70ch; }
+.muted { color: var(--soft); }
+.panel { background: var(--paper); border: 1px solid var(--line); padding: 20px clamp(16px, 3vw, 26px); }
+
+/* the T */
+.t-wrap { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 26px; align-items: center; }
+.t-svg { width: 100%; height: auto; display: block; }
+.t-svg text { font-family: var(--f-body); font-weight: 700; }
+.t-legend { display: grid; gap: 12px; }
+.t-legend div { display: grid; grid-template-columns: 14px 1fr; gap: 10px; align-items: start; }
+.sw { width: 14px; height: 14px; margin-top: 6px; border-radius: 3px; }
+.sw.hand { background: var(--hand); } .sw.infield { background: var(--infield); } .sw.outfield { background: var(--outfield); } .sw.science { background: var(--science); }
+
+/* the four kinds of element */
+.kinds { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: 14px; }
+.kind { background: var(--paper); border: 1px solid var(--line); border-top: 6px solid; padding: 16px 16px 14px; display: grid; gap: 6px; align-content: start; }
+.kind.hand { border-top-color: var(--hand); } .kind.infield { border-top-color: var(--infield); }
+.kind.outfield { border-top-color: var(--outfield); } .kind.science { border-top-color: var(--science); }
+.kind .tag { font-size: .78rem; font-weight: 800; letter-spacing: .03em; }
+.kind.hand .tag { color: var(--hand); } .kind.infield .tag { color: var(--infield); } .kind.outfield .tag { color: var(--outfield); } .kind.science .tag { color: var(--science); }
+.kind p { font-size: .95rem; margin: 0; }
+.kind .must { font-size: .88rem; color: var(--soft); border-top: 1px dashed var(--line); padding-top: 8px; margin-top: 4px; }
+
+/* three views */
+.views { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 14px; }
+.view { background: var(--paper); border: 1px solid var(--line); padding: 18px; }
+.view .lens { font-family: var(--f-display); font-size: 2.2rem; line-height: 1; color: var(--soft); }
+
+/* STEM */
+.stem { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.letter { background: var(--paper); border: 1px solid var(--line); padding: 14px; display: grid; gap: 4px; align-content: start; }
+.letter b { font-family: var(--f-serif); font-size: 2.6rem; line-height: 1; direction: ltr; text-align: right; }
+.letter span { font-weight: 800; }
+.letter p { font-size: .92rem; margin: 0; color: var(--soft); }
+
+/* the comparison */
+.scroll { overflow-x: auto; border: 1px solid var(--line); background: var(--paper); }
+table { width: 100%; border-collapse: collapse; font-size: .96rem; min-width: 560px; }
+th, td { text-align: start; padding: 11px 14px; border-top: 1px solid var(--line); vertical-align: top; }
+thead th { background: #f3eee6; border-top: 0; font-size: .9rem; }
+tbody th { font-weight: 800; white-space: nowrap; }
+td.num { font-variant-numeric: tabular-nums; font-weight: 800; }
+
+/* examples */
+.example { background: var(--paper); border: 1px solid var(--line); margin-top: 22px; }
+.ex-head { padding: 18px clamp(16px, 3vw, 26px) 12px; border-bottom: 1px solid var(--line); display: grid; gap: 4px; }
+.ex-kind { font-size: .8rem; font-weight: 800; color: var(--soft); letter-spacing: .03em; }
+.ex-head h3 { font-family: var(--f-serif); font-weight: 900; font-size: clamp(1.4rem, 3.4vw, 1.8rem); margin: 0; }
+.ex-head p { margin: 0; color: var(--soft); }
+.ex-body { padding: 16px clamp(16px, 3vw, 26px) 20px; display: grid; gap: 16px; }
+.people { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 16px; }
+.person h4 { margin: 0 0 8px; font-size: 1rem; }
+.els { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.els li { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; font-size: .96rem; }
+.els li .chip { margin-top: 2px; white-space: nowrap; }
+.shared { display: grid; gap: 8px; border-top: 1px dashed var(--line); padding-top: 12px; }
+.stemline { font-size: .9rem; color: var(--soft); }
+.stemline b { color: var(--ink); }
+
+/* deliverables, defence, rubric */
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px; }
+ol.steps { margin: 0; padding-inline-start: 22px; display: grid; gap: 8px; }
+ul.list { margin: 0; padding-inline-start: 20px; display: grid; gap: 6px; }
+.rubric td:last-child, .rubric th:last-child { text-align: center; width: 90px; }
+.bar { height: 8px; background: #efe9df; border-radius: 4px; overflow: hidden; margin-top: 6px; }
+.bar i { display: block; height: 100%; background: var(--ink); }
+.rules { counter-reset: r; display: grid; gap: 10px; }
+.rule { background: var(--paper); border: 1px solid var(--line); border-inline-start: 6px solid var(--infield); padding: 12px 16px; }
+.rule b { display: block; margin-bottom: 2px; }
+.timeline { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.timeline li { display: grid; grid-template-columns: 92px 1fr; gap: 14px; padding: 12px 0; border-top: 1px solid var(--line); }
+.timeline .when { font-weight: 800; color: var(--soft); font-variant-numeric: tabular-nums; }
+.quote { font-family: var(--f-serif); font-size: clamp(1.25rem, 3vw, 1.6rem); line-height: 1.45; border-inline-start: 6px solid var(--science); padding: 6px 18px; margin: 0; max-width: 46ch; }
+footer { border-top: 1px solid var(--line); margin-top: 60px; padding-top: 18px; font-size: .85rem; color: var(--soft); }
+
+@media (max-width: 760px) {
+  .t-wrap { grid-template-columns: 1fr; }
+  .stem { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hero-card { transform: none; }
+}
+@media print {
+  .strip, .hero { background: none; padding: 0; }
+  .hero-card { box-shadow: none; transform: none; }
+  .hero-card::before { display: none; }
+  section { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+
+<div class="strip" role="note">
+  <span>מסמך לדוגמה בתוך אתר ההשתלמות של אבי סלמון. אינו מסמך רשמי של משרד החינוך, של אינטל או של כל גורם אחר.</span>
+  <a href="/cohort/tracks/imaginary-electronics/">חזרה למגמה</a>
+</div>
+
+<header class="hero">
+  <div class="hero-card">
+    <p class="eyebrow">מגמה דמיונית: אלקטרוניקה · הגדרת פרויקט הגמר</p>
+    <h1>פרויקט בצורת <em>T</em></h1>
+    <p class="lede">פרויקט אחד ושלוש דרכי עבודה: מה שאתם בונים בידיים ויודעים להגן עליו עד השורה האחרונה, מה שאתם בונים עם בינה מלאכותית בתוך התחום שלכם, ומה שאתם מעזים לבנות מחוץ לו. ובלב הכול, פרק אחד שבו אתם צוללים עד המדע שמאחורי הדברים.</p>
+    <div class="hero-tags" aria-label="המקרא של הצבעים במסמך">
+      <span class="chip hand">בידיים</span>
+      <span class="chip infield">AI בתחום</span>
+      <span class="chip outfield">AI מחוץ לתחום</span>
+      <span class="chip science">צלילה מדעית</span>
+      <span class="chip math">מתמטיקה</span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <section aria-labelledby="s-why">
+    <p class="kicker">למה ככה</p>
+    <h2 id="s-why">בעולם שבו הבינה המלאכותית כותבת קוד, מה עוד שווה ללמוד?</h2>
+    <p>מהנדסת טובה היום עושה שני דברים בבת אחת. היא מבינה לעומק לפחות דבר אחד, עד הרמה שבה אף כלי לא יכול להחליף את שיקול הדעת שלה. והיא יודעת לחבר אליו, במהירות ובאחריות, גם דברים שהיא לא למדה, בעזרת כלים חכמים. הפרויקט בנוי כדי לתרגל את שני הדברים יחד, ולוודא שהעומק לא הולך לאיבוד בדרך.</p>
+    <blockquote class="quote">מה שעשיתם בידיים, אתם יודעים להסביר שורה אחר שורה. מה שעשיתם עם בינה מלאכותית, אתם יודעים להסביר מה הוא עושה ואיך בדקתם שהוא עובד.</blockquote>
+  </section>
+
+  <section aria-labelledby="s-t">
+    <p class="kicker">המודל</p>
+    <h2 id="s-t">רגל אחת עמוקה, וגג רחב</h2>
+    <div class="t-wrap">
+      <svg class="t-svg" viewBox="0 0 520 380" role="img" aria-label="תרשים בצורת האות T: גג רחב של שלושה חלקים, רגל עמוקה של מה שנבנה בידיים, ונטיפה מדעית שיורדת מהגג">
+        <rect x="20" y="20" width="160" height="78" fill="#2f8a1f"/>
+        <rect x="180" y="20" width="160" height="78" fill="#1458b8"/>
+        <rect x="340" y="20" width="160" height="78" fill="#1458b8" opacity=".55"/>
+        <text x="100" y="54" fill="#ffffff" font-size="16" text-anchor="middle" direction="rtl">AI מחוץ לתחום</text>
+        <text x="100" y="76" fill="#ffffff" font-size="12" text-anchor="middle" direction="rtl">vibe coding</text>
+        <text x="260" y="54" fill="#ffffff" font-size="16" text-anchor="middle" direction="rtl">AI בתחום</text>
+        <text x="260" y="76" fill="#ffffff" font-size="12" text-anchor="middle" direction="rtl">בעזרת כלים, עם הבנה</text>
+        <text x="420" y="54" fill="#ffffff" font-size="16" text-anchor="middle" direction="rtl">מבט מערכת</text>
+        <text x="420" y="76" fill="#ffffff" font-size="12" text-anchor="middle" direction="rtl">איך הכול מתחבר</text>
+        <rect x="215" y="98" width="90" height="262" fill="#2b2118"/>
+        <text x="260" y="200" fill="#ffffff" font-size="17" text-anchor="middle" direction="rtl">בידיים</text>
+        <text x="260" y="224" fill="#ffffff" font-size="12" text-anchor="middle" direction="rtl">עד השורה</text>
+        <text x="260" y="242" fill="#ffffff" font-size="12" text-anchor="middle" direction="rtl">האחרונה</text>
+        <rect x="80" y="98" width="40" height="150" fill="#c8102e"/>
+        <text x="100" y="275" fill="#c8102e" font-size="14" text-anchor="middle" direction="rtl">צלילה מדעית</text>
+        <text x="100" y="294" fill="#5f564c" font-size="12" text-anchor="middle" direction="rtl">רכיב אחד, עד הפיזיקה</text>
+      </svg>
+      <div class="t-legend">
+        <div><span class="sw hand"></span><p><b>הרגל: מה שבניתם בידיים.</b> החלק שאתם יודעים לעומק ומגינים עליו שורה אחר שורה. בלי בינה מלאכותית, בלי קיצורי דרך.</p></div>
+        <div><span class="sw infield"></span><p><b>הגג: מה שבניתם עם כלים.</b> רכיבים בתחום שלכם שנבנו בעזרת בינה מלאכותית, והתמונה הכוללת של המערכת.</p></div>
+        <div><span class="sw outfield"></span><p><b>קצה הגג: מחוץ לתחום.</b> רכיב שלא למדתם, ובניתם בכל זאת בעזרת בינה מלאכותית (vibe coding).</p></div>
+        <div><span class="sw science"></span><p><b>הנטיפה: צלילה מדעית.</b> רכיב אחד מהמערכת, שאתם מסבירים עד המדע שמאחוריו.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="s-kinds">
+    <p class="kicker">ארבעה סוגי רכיבים</p>
+    <h2 id="s-kinds">המערכת בנויה מרכיבים, ולכל רכיב דרך עבודה</h2>
+    <p>הפרויקט הוא <b>מערכת</b>: כמה רכיבים שעובדים יחד ומדברים זה עם זה. כל רכיב שייך לאחד מהסוגים הבאים, ולכל סוג דרישה אחרת.</p>
+    <div class="kinds">
+      <article class="kind hand">
+        <span class="tag">בידיים</span>
+        <h3>הרכיב היסודי</h3>
+        <p>נבנה בדרך הקלאסית, מתוך הידע של המגמה: קוד שכתבתם, מעגל שתכננתם, חישוב שפתרתם.</p>
+        <p class="must">בהגנה: מסבירים כל שורה, כל רכיב וכל החלטה. "ה-AI כתב את זה" אינה תשובה.</p>
+      </article>
+      <article class="kind infield">
+        <span class="tag">AI בתחום</span>
+        <h3>רכיב בתחום שלכם, עם בינה מלאכותית</h3>
+        <p>משהו שהמגמה מלמדת, שבניתם בעזרת כלי בינה מלאכותית, כדי להגיע רחוק ומהר יותר.</p>
+        <p class="must">בהגנה: מסבירים מה הרכיב עושה, למה בחרתם בפתרון הזה, ואיך בדקתם שהוא נכון.</p>
+      </article>
+      <article class="kind outfield">
+        <span class="tag">AI מחוץ לתחום</span>
+        <h3>רכיב שלא למדתם</h3>
+        <p>משהו מחוץ למגמה, שבניתם ב-vibe coding: מתארים לבינה המלאכותית מה צריך, ובודקים שזה עובד.</p>
+        <p class="must">בהגנה: מסבירים מה הרכיב עושה במערכת, מה נכנס ומה יוצא ממנו, ואיך ידעתם שהוא עובד.</p>
+      </article>
+      <article class="kind science">
+        <span class="tag">צלילה מדעית</span>
+        <h3>פרק המדע</h3>
+        <p>בוחרים רכיב אחד מהמערכת וכותבים עליו פרק שלם: המדע שמאחוריו, מהעיקרון ועד המספרים.</p>
+        <p class="must">בהגנה: מסבירים את התופעה, את הנוסחאות ואת המקורות, ומקשרים אותם למה שקורה במערכת.</p>
+      </article>
+    </div>
+  </section>
+
+  <section aria-labelledby="s-views">
+    <p class="kicker">שלוש זוויות מבט</p>
+    <h2 id="s-views">כל פרויקט נבחן משלוש זוויות</h2>
+    <div class="views">
+      <article class="view"><span class="lens">מערכת</span><h3>רואים את התמונה כולה</h3><p>תרשים מלבנים של המערכת: הרכיבים, מה עובר ביניהם (חשמל, נתונים, פקודות), ובאיזה סדר. מבינים מה יקרה כשרכיב אחד נכשל.</p></article>
+      <article class="view"><span class="lens">עומק</span><h3>יורדים לפרטים</h3><p>הרכיב שנבנה בידיים, מוסבר עד הרמה הנמוכה ביותר: כל שורת קוד, כל נגד, כל החלטה תכנונית.</p></article>
+      <article class="view"><span class="lens">מדע</span><h3>שואלים למה זה עובד</h3><p>רכיב אחד מוסבר דרך החוקים שמפעילים אותו: פיזיקה, כימיה או ביולוגיה, עם נוסחאות ומקורות.</p></article>
+    </div>
+  </section>
+
+  <section aria-labelledby="s-stem">
+    <p class="kicker">STEM בתוך הפרויקט</p>
+    <h2 id="s-stem">ארבע האותיות, בכל פרויקט</h2>
+    <p>אנחנו לא מוסיפים STEM מבחוץ. הוא כבר נמצא בתוך הפרויקט, וצריך רק להצביע עליו. כל פרויקט מראה במפורש איפה מופיעה כל אחת מארבע האותיות.</p>
+    <div class="stem">
+      <div class="letter"><b>S</b><span>מדע</span><p>הצלילה המדעית. בדוגמה: איך LED מפיק אור.</p></div>
+      <div class="letter"><b>T</b><span>טכנולוגיה</span><p>הבקר והקוד. בדוגמה: ה-ESP32.</p></div>
+      <div class="letter"><b>E</b><span>הנדסה</span><p>התכנון. בדוגמה: עיצוב הכרטיס המודפס.</p></div>
+      <div class="letter"><b>M</b><span>מתמטיקה</span><p>חישוב אמיתי שהמערכת תלויה בו, מוצג ומוסבר.</p></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="s-types">
+    <p class="kicker">שלושה סוגי פרויקטים</p>
+    <h2 id="s-types">אותו מתכון, בשלושה גדלים</h2>
+    <p>הכלל הוא לכל תלמיד ותלמידה: רכיב אחד בידיים, רכיב אחד עם AI בתחום, רכיב אחד עם AI מחוץ לתחום, וצלילה מדעית אחת. ככל שיש יותר תלמידים, המערכת גדלה, אבל כל אחד נושא את הסט המלא שלו.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th scope="col">סוג הפרויקט</th><th scope="col">מי</th><th scope="col">רכיבים לפחות</th><th scope="col">מה כל תלמיד/ה נושא/ת</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">יחיד</th><td>תלמיד/ה אחד/ת מהמגמה</td><td class="num">3</td><td>בידיים, AI בתחום, AI מחוץ לתחום, וצלילה מדעית אחת</td></tr>
+          <tr><th scope="row">זוג באותה מגמה</th><td>שני תלמידים מאותה מגמה</td><td class="num">6</td><td>אותו סט מלא לכל אחד, במערכת אחת גדולה פי שניים</td></tr>
+          <tr><th scope="row">רב תחומי</th><td>תלמידים משתיים או שלוש מגמות</td><td class="num">3 לכל אחד/ת</td><td>כל אחד/ת מביא/ה את הסט המלא מהתחום שלו/ה, והרכיבים נפגשים במערכת משותפת</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted" style="margin-top:12px">בפרויקט משותף כל אחד מגן על החלק שלו לבד, וכולם מגינים יחד על המערכת.</p>
+  </section>
+
+  <section aria-labelledby="s-examples">
+    <p class="kicker">שלוש דוגמאות</p>
+    <h2 id="s-examples">איך זה נראה בפועל</h2>
+
+    <article class="example" aria-labelledby="ex1">
+      <div class="ex-head">
+        <span class="ex-kind">דוגמה 1 · פרויקט יחיד · אלקטרוניקה</span>
+        <h3 id="ex1">תחנת השקיה חכמה לעציץ</h3>
+        <p>חיישן לחות באדמה, משאבה קטנה, ואפליקציה שמראה מתי העציץ השתה.</p>
+      </div>
+      <div class="ex-body">
+        <ul class="els">
+          <li><span class="chip hand">בידיים</span><span>הקוד של בקר ה-ESP32 שקורא את חיישן הלחות ומפעיל את המשאבה. נכתב בידי התלמיד, וכל שורה בו מוסברת.</span></li>
+          <li><span class="chip infield">AI בתחום</span><span>הכרטיס המודפס: מנהל המשאבה (טרנזיסטור MOSFET) וחיבור החיישן, שתוכננו בעזרת בינה מלאכותית.</span></li>
+          <li><span class="chip outfield">AI מחוץ לתחום</span><span>אפליקציית אנדרואיד שמציגה את היסטוריית הלחות, שנבנתה ב-vibe coding.</span></li>
+          <li><span class="chip science">צלילה מדעית</span><span>איך חיישן קיבולי מודד מים: הקבוע הדיאלקטרי של מים לעומת אדמה יבשה, ולמה הקיבול משתנה.</span></li>
+          <li><span class="chip math">מתמטיקה</span><span>עקומת כיול מקריאת החיישן הגולמית לאחוזי לחות, בהתאמה ליניארית.</span></li>
+        </ul>
+        <p class="stemline"><b>S</b> הפיזיקה של החיישן · <b>T</b> ה-ESP32 · <b>E</b> הכרטיס · <b>M</b> הכיול</p>
+      </div>
+    </article>
+
+    <article class="example" aria-labelledby="ex2">
+      <div class="ex-head">
+        <span class="ex-kind">דוגמה 2 · זוג באותה מגמה · אלקטרוניקה</span>
+        <h3 id="ex2">מוניטור צריכת חשמל ביתי</h3>
+        <p>מודדים כמה חשמל צורך מכשיר, מנתקים אותו מרחוק, ומקבלים תחזית לחשבון.</p>
+      </div>
+      <div class="ex-body">
+        <div class="people">
+          <div class="person">
+            <h4>תלמיד/ה א: יחידת המדידה</h4>
+            <ul class="els">
+              <li><span class="chip hand">בידיים</span><span>קוד ה-ESP32 שמודד זרם וחישוב ערך ה-RMS.</span></li>
+              <li><span class="chip infield">AI בתחום</span><span>כרטיס החיישן, שתוכנן בעזרת בינה מלאכותית.</span></li>
+              <li><span class="chip outfield">AI מחוץ לתחום</span><span>אפליקציית אנדרואיד להצגת הצריכה.</span></li>
+              <li><span class="chip science">צלילה מדעית</span><span>השראה אלקטרומגנטית במלחציים של חיישן הזרם (חוק פאראדיי).</span></li>
+            </ul>
+          </div>
+          <div class="person">
+            <h4>תלמיד/ה ב: יחידת השליטה</h4>
+            <ul class="els">
+              <li><span class="chip hand">בידיים</span><span>ממסר חכם ופרוטוקול התקשורת האלחוטית בין היחידות (ESP-NOW).</span></li>
+              <li><span class="chip infield">AI בתחום</span><span>ספק הכוח וההגנות שלו, שתוכננו בעזרת בינה מלאכותית.</span></li>
+              <li><span class="chip outfield">AI מחוץ לתחום</span><span>לוח נתונים בענן עם תחזית צריכה פשוטה.</span></li>
+              <li><span class="chip science">צלילה מדעית</span><span>מקדם הספק: למה מתח וזרם זזים זה מול זה בזמן.</span></li>
+            </ul>
+          </div>
+        </div>
+        <div class="shared">
+          <ul class="els"><li><span class="chip math">מתמטיקה</span><span>RMS כאינטגרל, מעבר מהספק לאנרגיה בקוט"ש, וחישוב מקדם ההספק.</span></li></ul>
+          <p class="stemline"><b>S</b> השראה ומקדם הספק · <b>T</b> שני בקרים ופרוטוקול · <b>E</b> כרטיס וספק כוח · <b>M</b> RMS ואנרגיה</p>
+        </div>
+      </div>
+    </article>
+
+    <article class="example" aria-labelledby="ex3">
+      <div class="ex-head">
+        <span class="ex-kind">דוגמה 3 · רב תחומי · אלקטרוניקה, מדעי המחשב וביולוגיה</span>
+        <h3 id="ex3">תא גידול חכם לניסוי בצמחים</h3>
+        <p>תא סגור שבו מגדלים צמחים באורות שונים, מצלמים אותם כל שעה, ובודקים איזה אור מצמיח הכי טוב.</p>
+      </div>
+      <div class="ex-body">
+        <div class="people">
+          <div class="person">
+            <h4>אלקטרוניקה</h4>
+            <ul class="els">
+              <li><span class="chip hand">בידיים</span><span>רכזת החיישנים על ESP32: אור, טמפרטורה, לחות ו-CO₂.</span></li>
+              <li><span class="chip infield">AI בתחום</span><span>כרטיס מנהל לנורות הגידול (LED).</span></li>
+              <li><span class="chip outfield">AI מחוץ לתחום</span><span>אפליקציה לשליטה בתא.</span></li>
+              <li><span class="chip science">צלילה מדעית</span><span>איך LED מפיק אור באורך גל מסוים.</span></li>
+            </ul>
+          </div>
+          <div class="person">
+            <h4>מדעי המחשב</h4>
+            <ul class="els">
+              <li><span class="chip hand">בידיים</span><span>השרת וצינור הנתונים, שנכתבו ביד.</span></li>
+              <li><span class="chip infield">AI בתחום</span><span>מודל זיהוי תמונה שמודד את שטח העלים מהמצלמה.</span></li>
+              <li><span class="chip outfield">AI מחוץ לתחום</span><span>מארז מודפס בתלת ממד למצלמה, שתוכנן בעזרת בינה מלאכותית.</span></li>
+              <li><span class="chip science">צלילה מדעית</span><span>איך קונבולוציה "רואה" תמונה.</span></li>
+            </ul>
+          </div>
+          <div class="person">
+            <h4>ביולוגיה</h4>
+            <ul class="els">
+              <li><span class="chip hand">בידיים</span><span>תכנון הניסוי וביצועו: קבוצת ביקורת, משתנים ומדידות.</span></li>
+              <li><span class="chip infield">AI בתחום</span><span>סקירת ספרות וניתוח נתונים בעזרת בינה מלאכותית.</span></li>
+              <li><span class="chip outfield">AI מחוץ לתחום</span><span>דף אינטרנט שמציג את תוצאות הניסוי.</span></li>
+              <li><span class="chip science">צלילה מדעית</span><span>פוטוסינתזה וספקטרום הבליעה של כלורופיל.</span></li>
+            </ul>
+          </div>
+        </div>
+        <div class="shared">
+          <ul class="els"><li><span class="chip math">מתמטיקה</span><span>התאמת עקומת גדילה (לוגיסטית) ומבחן סטטיסטי בין הטיפולים.</span></li></ul>
+          <p class="muted" style="margin:0">החיבור היפה: אורכי הגל שהאלקטרוניקה מפיקה הם בדיוק מה שהביולוגיה בודקת, ומה שמדעי המחשב מודדים.</p>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section aria-labelledby="s-submit">
+    <p class="kicker">מה מגישים</p>
+    <h2 id="s-submit">תיק הפרויקט</h2>
+    <div class="cols">
+      <div class="panel">
+        <h3>המסמכים</h3>
+        <ul class="list">
+          <li><b>מסמך מערכת:</b> תרשים מלבנים, ממשקים בין הרכיבים, והסבר מי עשה מה ובאיזו דרך.</li>
+          <li><b>הרכיב היסודי:</b> הקוד, השרטוט או החישוב, עם הסברים בגוף הקוד ובמסמך.</li>
+          <li><b>פרק המדע:</b> שניים עד ארבעה עמודים, עם נוסחאות, איורים ומקורות.</li>
+          <li><b>נספח מתמטי:</b> החישוב שהמערכת תלויה בו, צעד אחר צעד.</li>
+          <li><b>יומן בינה מלאכותית:</b> לכל רכיב שנבנה עם AI.</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3>יומן הבינה המלאכותית</h3>
+        <p>לכל רכיב שנבנה בעזרת בינה מלאכותית, רושמים בקצרה:</p>
+        <ol class="steps">
+          <li>באיזה כלי השתמשתם.</li>
+          <li>מה ביקשתם: שתיים או שלוש הנחיות מרכזיות.</li>
+          <li>מה קיבלתם, ומה שיניתם בעצמכם.</li>
+          <li>איך בדקתם שזה עובד ושזה נכון.</li>
+          <li>מה למדתם מזה.</li>
+        </ol>
+      </div>
+      <div class="panel">
+        <h3>ההדגמה</h3>
+        <p>מערכת שעובדת, מול הבוחנים. וגם סרטון קצר של עד שלוש דקות, למקרה שמשהו לא עובד ביום ההגנה.</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="s-defence">
+    <p class="kicker">ההגנה</p>
+    <h2 id="s-defence">ארבעה חלקים, בסדר הזה</h2>
+    <div class="cols">
+      <div class="panel">
+        <ol class="steps">
+          <li><b>הדגמה ומבט מערכת (5 דקות).</b> המערכת עובדת, ומסבירים את התרשים.</li>
+          <li><b>הרכיב שבידיים (10 דקות).</b> הבוחן בוחר שורות וחלקים, ואתם מסבירים.</li>
+          <li><b>רכיבי ה-AI (5 דקות).</b> מה הם עושים, ואיך בדקתם אותם.</li>
+          <li><b>המדע והמתמטיקה (5 דקות).</b> שאלות על הפרק ועל החישוב.</li>
+        </ol>
+      </div>
+      <div class="panel">
+        <h3>בפרויקט של כמה תלמידים</h3>
+        <p>כל תלמיד ותלמידה מגנים לבד על הרכיב שבידיים ועל הצלילה המדעית שלהם, ומקבלים ציון אישי. את המערכת כולה מציגים יחד, וכל אחד צריך לדעת להסביר גם את החיבור לרכיבים של האחרים.</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="s-rubric">
+    <p class="kicker">מחוון</p>
+    <h2 id="s-rubric">על מה נותנים את הציון</h2>
+    <div class="scroll">
+      <table class="rubric">
+        <thead><tr><th scope="col">מה נבדק</th><th scope="col">מה מצפים לראות</th><th scope="col">משקל</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">הרכיב שבידיים</th><td>עובד, כתוב היטב, וכל חלק בו מוסבר ומוגן בהבנה מלאה.<div class="bar" aria-hidden="true"><i style="width:100%"></i></div></td><td class="num">30%</td></tr>
+          <tr><th scope="row">מבט מערכת ושילוב</th><td>הרכיבים מדברים זה עם זה, התרשים נכון, וברור מה קורה בתקלה.<div class="bar" aria-hidden="true"><i style="width:67%"></i></div></td><td class="num">20%</td></tr>
+          <tr><th scope="row">הצלילה המדעית</th><td>התופעה מוסברת נכון, עם נוסחאות ומקורות, וקשורה למערכת.<div class="bar" aria-hidden="true"><i style="width:67%"></i></div></td><td class="num">20%</td></tr>
+          <tr><th scope="row">רכיבי ה-AI ויומן הבינה המלאכותית</th><td>הרכיבים עובדים, נבדקו, והיומן מראה שימוש אחראי ושקוף.<div class="bar" aria-hidden="true"><i style="width:50%"></i></div></td><td class="num">15%</td></tr>
+          <tr><th scope="row">מתמטיקה</th><td>חישוב אמיתי שהמערכת תלויה בו, נכון ומוסבר.<div class="bar" aria-hidden="true"><i style="width:34%"></i></div></td><td class="num">10%</td></tr>
+          <tr><th scope="row">הצגה ותיעוד</th><td>מסמכים מסודרים והדגמה ברורה.<div class="bar" aria-hidden="true"><i style="width:17%"></i></div></td><td class="num">5%</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section aria-labelledby="s-rules">
+    <p class="kicker">כללי הבינה המלאכותית</p>
+    <h2 id="s-rules">חמישה כללים, בלי אותיות קטנות</h2>
+    <div class="rules">
+      <div class="rule"><b>הרכיב שבידיים נשאר בידיים.</b>לא משתמשים בבינה מלאכותית כדי לכתוב אותו. מותר לשאול אותה שאלות כדי ללמוד, כמו ששואלים מורה.</div>
+      <div class="rule"><b>שקיפות מלאה.</b>כל שימוש בבינה מלאכותית נרשם ביומן. שימוש שלא דווח נחשב כאילו הרכיב כולו לא שלכם.</div>
+      <div class="rule"><b>אתם אחראים על הכול.</b>גם על מה שהבינה המלאכותית כתבה. אם זה בפרויקט שלכם, אתם צריכים לדעת מה זה עושה.</div>
+      <div class="rule"><b>בודקים, לא מאמינים.</b>כל רכיב שנבנה עם AI נבדק: ניסוי, מדידה או בדיקה שמראה שהוא עובד כמו שצריך.</div>
+      <div class="rule"><b>בטיחות קודם.</b>במתח רשת, בסוללות ובכל דבר מסוכן, מורה בודק את התכנון לפני שמחברים, גם אם הוא נראה מושלם.</div>
+    </div>
+  </section>
+
+  <section aria-labelledby="s-time">
+    <p class="kicker">לוח זמנים מוצע</p>
+    <h2 id="s-time">חמש תחנות בדרך</h2>
+    <ol class="timeline">
+      <li><span class="when">שבוע 1 עד 2</span><span><b>הצעת פרויקט.</b> רעיון, תרשים מערכת ראשון, ומי עושה מה ובאיזו דרך. המורה מאשר/ת שהחלוקה עומדת בכללים.</span></li>
+      <li><span class="when">שבוע 3 עד 6</span><span><b>הרכיב שבידיים.</b> אב טיפוס עובד, ופגישת הגנה קצרה מול המורה באמצע הדרך.</span></li>
+      <li><span class="when">שבוע 7 עד 9</span><span><b>רכיבי ה-AI והשילוב.</b> המערכת המלאה עובדת, ויומן הבינה המלאכותית מעודכן.</span></li>
+      <li><span class="when">שבוע 10 עד 11</span><span><b>פרק המדע והנספח המתמטי.</b> טיוטה, משוב, וגרסה סופית.</span></li>
+      <li><span class="when">שבוע 12</span><span><b>הגנה.</b> הדגמה, מבט מערכת, הרכיב שבידיים, ושאלות על המדע.</span></li>
+    </ol>
+  </section>
+
+  <footer>
+    מסמך לדוגמה שהכין אבי סלמון במסגרת ההשתלמות "הובלת חדשנות בבינה מלאכותית", כדי להראות איך הגדרת פרויקט במגמה יכולה להיראות. המגמה והדוגמאות דמיוניות, והמשקלות וזמני ההגנה הם הצעה לדיון.
+  </footer>
+</main>
+</body>
+</html>
