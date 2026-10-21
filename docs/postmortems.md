@@ -17,6 +17,26 @@ Newest first.
 
 ---
 
+## PM-29 · 2026-10-21 · The phone overflow check could never fail
+
+**What happened.** Building the welcome page for visitors, its phone
+screenshot came out 536px wide although every screen-contract check had
+passed. The demo shelf inside a grid stretched the column past the phone.
+
+**Why our process let it happen.** The overflow check compared elements to
+`clientWidth`. On a phone a too-wide page makes the browser zoom out, and
+`clientWidth` grows to match, so the check measured the page against
+itself. It had been blind on phones since it was written; only reading the
+screenshot caught it (mistake 29 in FullStackBKM's list, "read the
+screenshot", paid off again).
+
+**Rule.** The check takes the device width and also fails on a wide
+`scrollWidth`. The whole screen contract (284 checks) passed again under
+the stricter check, so no other page was secretly too wide.
+
+Here: docs/building_an_app.md mistake 29; tests/test_books_screens.py
+BKM: FullStackBKM 167cfa3 (lesson 37)
+
 ## PM-28 · 2026-10-20 · "Nice, not amazing": detail pages opened every form
 
 **What happened.** Avi asked for a pass over everything built so far: it

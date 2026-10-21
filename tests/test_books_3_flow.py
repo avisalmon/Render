@@ -48,7 +48,7 @@ def other(db):
 def fake_reader(monkeypatch):
     books = [Book("מיכאל שלי", "עמוס עוז"), Book("Jane Eyre", "Charlotte Brontë"), Book("ספר שלישי", "")]
     calls = [{"input_tokens": 3000, "output_tokens": 400, "seconds": 12.5, "cost_usd": Decimal("0.01")}]
-    monkeypatch.setattr(shelf, "read_shelf", lambda data: Reading(model="gpt-6.1-sol", books=list(books), calls=calls))
+    monkeypatch.setattr(shelf, "read_shelf", lambda data, **kw: Reading(model="gpt-6.1-sol", books=list(books), calls=calls))
 
 
 def login(client, p):

@@ -795,3 +795,16 @@ opens by itself when it has an error or something active. Never show a
 raw file input: a big labelled button, with the input over it, sends on
 choose. Zero is not a score: an empty streak says how to start one.
 
+### 29. On a phone, a too-wide page hides from an overflow check
+
+The new welcome page passed the screen contract on a phone, and its
+screenshot came out 536px wide on a 390px phone: the demo shelf stretched
+its grid column. A mobile browser zooms out to fit a page that is too wide,
+and then `clientWidth` grows with it, so a check that compares every
+element against `clientWidth` can never fail on a phone.
+
+**The rule.** The overflow check takes the device's width as an argument
+and also fails when `document.documentElement.scrollWidth` is larger
+(`OVERFLOW_JS` in `tests/test_books_screens.py`). A grid that holds a
+scrolling strip gets `minmax(0, 1fr)` columns and `min-width: 0` children.
+

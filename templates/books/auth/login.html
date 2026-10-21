@@ -3,24 +3,29 @@
 {% block screen %}login{% endblock %}
 {% block signin %}{% endblock %}
 {% block content %}
-<div class="bk-narrow">
-  <h1 class="bk-title">{% t "login.title" %}</h1>
-  <a class="bk-btn bk-btn--primary bk-btn--wide" href="/accounts/google/login/?process=login&amp;next={{ next|default:'/books/'|urlencode }}">
+<div class="bk-narrow bk-login">
+  <h1 class="bk-title">{% t "login.welcome" %}</h1>
+  <p class="bk-lead">{% t "login.lead" %}</p>
+  <a class="bk-btn bk-btn--primary bk-btn--wide bk-google" href="/accounts/google/login/?process=login&amp;next={{ next|default:'/books/'|urlencode }}">
     <svg class="bk-icon bk-icon--fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.35 11.1h-9.17v2.98h5.4c-.23 1.36-1.6 4-5.4 4-3.25 0-5.9-2.7-5.9-6s2.65-6 5.9-6c1.85 0 3.09.79 3.8 1.47l2.6-2.5C17.02 3.46 14.9 2.5 12.18 2.5 6.98 2.5 2.78 6.7 2.78 12s4.2 9.5 9.4 9.5c5.42 0 9.02-3.8 9.02-9.16 0-.62-.07-1.09-.15-1.24z"/></svg>
     {% t "login.google" %}
   </a>
-  <p class="bk-divider">{% t "login.or" %}</p>
-  <form method="post" class="bk-card bk-form" novalidate>
-    {% csrf_token %}
-    {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
-    {% if form.non_field_errors %}<p class="bk-error" role="alert">{{ form.non_field_errors.0 }}</p>{% endif %}
-    <label class="bk-field">{% t "field.email" %} {{ form.username }}</label>
-    <label class="bk-field">{% t "field.password" %} {{ form.password }}</label>
-    <button type="submit" class="bk-btn bk-btn--primary bk-btn--wide">{% t "login.submit" %}</button>
-  </form>
-  <div class="bk-stack">
-    <a class="bk-btn" href="{% url 'books:signup' %}{% if next %}?next={{ next|urlencode }}{% endif %}">{% t "login.no_account" %}</a>
-    <a class="bk-btn bk-btn--quiet" href="{% url 'books:password_reset' %}">{% t "login.forgot" %}</a>
-  </div>
+  <p class="bk-help bk-login-note">{% t "login.google_note" %}</p>
+
+  <details class="bk-more bk-login-other" {% if form.errors %}open{% endif %}>
+    <summary>{% t "login.other" %}</summary>
+    <form method="post" class="bk-card bk-form" novalidate>
+      {% csrf_token %}
+      {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+      {% if form.non_field_errors %}<p class="bk-error" role="alert">{{ form.non_field_errors.0 }}</p>{% endif %}
+      <label class="bk-field">{% t "field.email" %} {{ form.username }}</label>
+      <label class="bk-field">{% t "field.password" %} {{ form.password }}</label>
+      <button type="submit" class="bk-btn bk-btn--wide">{% t "login.submit" %}</button>
+    </form>
+    <div class="bk-row" style="margin-top: 8px">
+      <a class="bk-btn bk-btn--small bk-btn--quiet" href="{% url 'books:signup' %}{% if next %}?next={{ next|urlencode }}{% endif %}">{% t "login.no_account" %}</a>
+      <a class="bk-btn bk-btn--small bk-btn--quiet" href="{% url 'books:password_reset' %}">{% t "login.forgot" %}</a>
+    </div>
+  </details>
 </div>
 {% endblock %}

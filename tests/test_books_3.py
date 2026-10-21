@@ -72,7 +72,7 @@ def fake_reader(monkeypatch):
     books = [Book("מיכאל שלי", "עמוס עוז"), Book("Jane Eyre", "Charlotte Brontë"), Book("ספר לא מוכר", "")]
     calls = [{"input_tokens": 3000, "output_tokens": 400, "seconds": 12.5, "cost_usd": Decimal("0.01000")},
              {"input_tokens": 3100, "output_tokens": 380, "seconds": 14.0, "cost_usd": Decimal("0.01020")}]
-    monkeypatch.setattr(shelf, "read_shelf", lambda data: Reading(model="gpt-6.1-sol", books=list(books), calls=calls))
+    monkeypatch.setattr(shelf, "read_shelf", lambda data, **kw: Reading(model="gpt-6.1-sol", books=list(books), calls=calls))
     return books
 
 
@@ -152,7 +152,7 @@ def test_a_person_with_an_area_keeps_it(reader, fake_reader):
 
 
 def test_a_bad_key_stops_the_scan_with_a_clear_reason(reader, monkeypatch):
-    def boom(data):
+    def boom(data, **kw):
         raise recognition.KeyProblem("401")
     monkeypatch.setattr(shelf, "read_shelf", boom)
     scan = shelf.start_scan(reader.books_profile, upload(), "", "private", [])

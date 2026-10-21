@@ -47,8 +47,34 @@ def onboarding(request):
     return render(request, "books/onboarding.html", {"form": form, "next": safe_next(request, default="")})
 
 
-@books_page
 def home(request):
+    """Signed in: my shelf. A visitor: what Books is, and one way in."""
+    if not request.user.is_authenticated:
+        return landing(request)
+    return _home(request)
+
+
+DEMO_SHELF = [
+    ("הנסיך הקטן", "אנטואן דה סנט-אכזופרי"), ("סיפור על אהבה וחושך", "עמוס עוז"), ("קיצור תולדות האנושות", "יובל נח הררי"),
+    ("מאה שנים של בדידות", "גבריאל גרסיה מרקס"), ("מישהו לרוץ איתו", "דוד גרוסמן"), ("הארי פוטר ואבן החכמים", "ג'יי קיי רולינג"),
+    ("אנה קרנינה", "לב טולסטוי"), ("שלושה בסירה אחת", "ג'רום ק. ג'רום"), ("החיים על פי אגפא", "אסף שור"),
+    ("1984", "ג'ורג' אורוול"), ("חסמב\"ה", "יגאל מוסינזון"), ("הרוח בערבי הנחל", "קנת גרהם"),
+]
+
+
+def landing(request):
+    from . import shelf
+
+    rows = []
+    for i, (title, author) in enumerate(DEMO_SHELF):
+        row = {"id": -(i + 1), "title": title, "author": author, "status": "public", "rare": False, "url": ""}
+        row.update(shelf.spine_for(9000 + i, title))
+        rows.append(row)
+    return render(request, "books/landing.html", {"books_json": json.dumps(rows, ensure_ascii=False)})
+
+
+@books_page
+def _home(request):
     from . import shelf
 
     profile = request.books_profile

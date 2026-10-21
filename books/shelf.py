@@ -67,7 +67,7 @@ def room_left(profile):
 
 # ---- starting a scan -------------------------------------------------------------
 
-def start_scan(profile, uploaded, shelf_label="", default_visibility="private", default_offers=()):
+def start_scan(profile, uploaded, shelf_label="", default_visibility="private", default_offers=(), single=False):
     # Read at up to 4000 px: measured 63/70 found and 3 extra, against 61/70
     # and 5 extra at 2000 px, same cost (books_measure, 2026-10-19).
     prepared = images.prepare(uploaded, max_side=SCAN_MAX_SIDE)
@@ -80,7 +80,7 @@ def start_scan(profile, uploaded, shelf_label="", default_visibility="private", 
     if offers:
         visibility = "public"
     scan = ShelfScan(owner=profile, shelf_label=shelf_label.strip()[:120], default_visibility=visibility,
-                     default_offers=",".join(offers))
+                     default_offers=",".join(offers), is_single=bool(single))
     scan.photo.save(f"{profile.pk}-{timezone.now():%Y%m%d%H%M%S}.jpg", ContentFile(prepared.data), save=False)
     scan.save()
     jobs.enqueue("scan.read", ref_id=scan.pk, profile=profile)
@@ -100,7 +100,8 @@ def read_job(job):
     try:
         with scan.photo.open("rb") as fh:
             data = fh.read()
-        reading = read_shelf(data)
+        # A single book is one cover or spine: splitting it in strips would cut it in half.
+        reading = read_shelf(data, strips=1 if scan.is_single else None)
     except KeyProblem as exc:
         scan.status, scan.error = ShelfScan.FAILED, "key"
         scan.save(update_fields=["status", "error"])

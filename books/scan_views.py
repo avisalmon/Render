@@ -54,15 +54,17 @@ class ScanForm(_Localised, forms.Form):
 def new_scan(request):
     profile = request.books_profile
     left = shelf.room_left(profile)
+    single = (request.POST.get("single") or request.GET.get("book")) == "1"
     if request.method == "POST":
         form = ScanForm(request.POST, request.FILES, lang=_lang(request))
         if left == 0:
             form.add_error(None, t("scan.cap", _lang(request), cap=shelf.FREE_CAP))
         elif form.is_valid():
             d = form.cleaned_data
-            scan = shelf.start_scan(profile, d["photo"], d["shelf_label"], d["default_visibility"], d["default_offers"])
+            scan = shelf.start_scan(profile, d["photo"], d["shelf_label"], d["default_visibility"], d["default_offers"],
+                                    single=single)
             # Back to the camera at once: the next shelf can go while this one reads.
-            return redirect(f"{reverse('books:scan_new')}?sent={scan.pk}")
+            return redirect(f"{reverse('books:scan_new')}?sent={scan.pk}{'&book=1' if single else ''}")
     else:
         last = ShelfScan.objects.filter(owner=profile).first()
         form = ScanForm(lang=_lang(request), initial={
@@ -71,7 +73,7 @@ def new_scan(request):
     shelf.heal_all(profile)
     sent = ShelfScan.objects.filter(owner=profile, pk=request.GET.get("sent") or 0).first()
     return render(request, "books/scan/new.html", {
-        "form": form, "left": left, "cap": shelf.FREE_CAP, "sent": sent, "queue": shelf.queue(profile),
+        "form": form, "left": left, "cap": shelf.FREE_CAP, "sent": sent, "queue": shelf.queue(profile), "single": single,
         "recent": ShelfScan.objects.filter(owner=profile, status=ShelfScan.DONE)[:5]})
 
 

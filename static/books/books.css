@@ -13,6 +13,8 @@ html[data-palette="lamplit"] {
   --bk-muted: #6A5D4A;
   --bk-brass: #7A5518;
   --bk-on-brass: #FFF8EA;
+  --bk-flame: #E8590C;
+  --bk-flame-core: #FFB020;
   --bk-line: #D3C4A8;
   --bk-wood: #B08A5A;
   --bk-wood-edge: #C9A473;
@@ -46,6 +48,8 @@ html[data-palette="den"] {
   --bk-muted: #A89C86;
   --bk-brass: #D8B46A;
   --bk-on-brass: #15120F;
+  --bk-flame: #FF7A2E;
+  --bk-flame-core: #FFC84A;
   --bk-line: #3A3128;
   --bk-wood: #4E3B28;
   --bk-wood-edge: #7A6040;
@@ -71,6 +75,8 @@ html[data-palette="den"] {
     --bk-muted: #A89C86;
     --bk-brass: #D8B46A;
     --bk-on-brass: #15120F;
+    --bk-flame: #FF7A2E;
+    --bk-flame-core: #FFC84A;
     --bk-line: #3A3128;
     --bk-wood: #4E3B28;
     --bk-wood-edge: #7A6040;
@@ -100,6 +106,8 @@ html[data-palette="warm"]:not([data-theme="dark"]) {
   --bk-muted: #5E5A52;
   --bk-brass: #B4532A;
   --bk-on-brass: #FFFDF8;
+  --bk-flame: #E8590C;
+  --bk-flame-core: #FFB020;
   --bk-line: #E4DACA;
   --bk-wood: #C9A473;
   --bk-wood-edge: #D9B98A;
@@ -119,6 +127,8 @@ html[data-palette="bright"]:not([data-theme="dark"]) {
   --bk-muted: #5B5775;
   --bk-brass: #4A2FD6;
   --bk-on-brass: #FFFFFF;
+  --bk-flame: #E8590C;
+  --bk-flame-core: #FFB020;
   --bk-line: #E3DEFF;
   --bk-wood: #B9AEFF;
   --bk-wood-edge: #D6CFFF;
@@ -685,4 +695,39 @@ details.bk-filterbox .bk-filter { margin-bottom: 0; }
 .bk-card-options > summary { cursor: pointer; min-height: 40px; display: flex; align-items: center; font-size: 14px; font-weight: 600; }
 .bk-card-options[open] > summary { margin-bottom: 6px; }
 .bk-card-options > .bk-field, .bk-card-options > .bk-fieldset { margin-top: 8px; }
+/* ---- the streak flame in the header (Avi, 2026-10-21: like Duolingo) -------------- */
+.bk-flame { display: inline-flex; align-items: center; gap: 3px; min-height: 44px; padding: 0 6px; text-decoration: none; color: var(--bk-ink); font-size: 14px; white-space: nowrap; }
+.bk-flame b { font-size: 16px; }
+.bk-flame-min { color: var(--bk-muted); font-size: 12px; }
+.bk-flame-icon { width: 22px; height: 22px; flex: none; }
+.bk-flame-outer { fill: var(--bk-flame); }
+.bk-flame-core { fill: var(--bk-flame-core); }
+.bk-flame:not(.is-lit) .bk-flame-icon { filter: grayscale(1); opacity: .35; }
+.bk-flame:not(.is-lit) b { color: var(--bk-muted); }
+.bk-flame.is-lit .bk-flame-icon { animation: bk-flicker 2.6s ease-in-out infinite; transform-origin: 50% 90%; }
+@keyframes bk-flicker { 0%, 100% { transform: scale(1) rotate(0); } 30% { transform: scale(1.05, .97) rotate(-2deg); } 60% { transform: scale(.97, 1.04) rotate(2deg); } }
+@media (prefers-reduced-motion: reduce) { .bk-flame.is-lit .bk-flame-icon { animation: none; } }
+@media (max-width: 480px) { .bk-account-name { display: none; } }
+
+/* ---- the welcome page for visitors ------------------------------------------------ */
+.bk-landing { display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); }
+.bk-landing > * { min-width: 0; }
+.bk-hero { text-align: center; padding: 12px 8px 0; }
+.bk-hero-title { font-family: var(--bk-serif); font-size: clamp(36px, 9vw, 64px); line-height: 1.05; margin: 4px 0 10px; color: var(--bk-ink); }
+.bk-hero-lead { font-size: clamp(17px, 4.4vw, 21px); line-height: 1.5; max-width: 560px; margin: 0 auto 18px; color: var(--bk-ink); }
+.bk-hero-cta { font-size: 19px; min-height: 56px; padding: 0 40px; border-radius: 999px; box-shadow: 0 8px 22px var(--bk-shadow); }
+.bk-hero--end { padding-bottom: 12px; }
+.bk-features { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); }
+.bk-feature { background: var(--bk-surface); border: 1px solid var(--bk-line); border-radius: 16px; padding: 16px; }
+.bk-feature .bk-icon, .bk-feature .bk-flame-icon { width: 30px; height: 30px; color: var(--bk-brass); }
+.bk-feature h2 { font-family: var(--bk-serif); font-size: 20px; margin: 8px 0 4px; }
+.bk-feature p { margin: 0; color: var(--bk-muted); line-height: 1.5; }
+
+/* ---- sign in: Google first, the rest one tap away -------------------------------- */
+.bk-login { text-align: center; }
+.bk-login .bk-google { min-height: 56px; font-size: 18px; margin-top: 8px; }
+.bk-login-note { margin: 8px 0 18px; }
+.bk-login-other { text-align: start; }
+.bk-login-other > summary { justify-content: center; }
+.bk-scan-switch { text-align: center; margin: 0 0 12px; }
 

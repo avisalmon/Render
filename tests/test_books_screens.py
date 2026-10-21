@@ -66,9 +66,11 @@ CONTRAST_JS = r"""() => {
     return [...new Set(bad)];
 }"""
 
-OVERFLOW_JS = """() => {
-    const limit = document.documentElement.clientWidth;
-    const wide = [];
+OVERFLOW_JS = """(expected) => {
+    // A page wider than a phone makes a mobile browser zoom out, and then
+    // clientWidth grows with it: measure against the device's own width too.
+    const limit = Math.min(document.documentElement.clientWidth, expected || 1e9);
+    const wide = document.documentElement.scrollWidth > limit + 1 ? ['html w=' + document.documentElement.scrollWidth] : [];
     document.querySelectorAll('body *').forEach(el => {
         if (el.closest('.bk-shelf-scroll')) return;  // the shelf scrolls sideways on purpose
         const r = el.getBoundingClientRect();
@@ -395,6 +397,7 @@ def _open(browser, live_server, who, path, viewport, theme, lang="he"):
     page.on("dialog", lambda d: (dialogs.append(d.message), d.dismiss()))
     if who:
         page.goto(f"{live_server.url}/books/login/", wait_until="domcontentloaded")
+        page.click(".bk-login-other > summary")  # the password is the other way in
         page.fill('input[name="username"]', f"{who}@example.com")
         page.fill('input[name="password"]', PASSWORD)
         page.click('form.bk-form button[type="submit"]')
@@ -429,7 +432,7 @@ def test_screen_contract(browser, live_server, db, label, path, who, screen, the
         for word in ALARM_WORDS:
             assert not re.search(rf"\b{re.escape(word)}\b", text), f"{label}: '{word}' reached the reader"
         assert not dialogs
-        assert page.evaluate(OVERFLOW_JS) == [], f"{label} {viewport['width']}: overflows"
+        assert page.evaluate(OVERFLOW_JS, viewport["width"]) == [], f"{label} {viewport['width']}: overflows"
         assert page.evaluate(CONTRAST_JS) == [], f"{label} {theme}: contrast"
         assert page.evaluate(TAP_JS, 44) == [], f"{label}: tap targets"
         assert page.evaluate(A11Y_JS) == [], f"{label}: accessibility"

@@ -119,6 +119,20 @@ def tagnames(tags, lang):
 
 
 @register.simple_tag(takes_context=True)
+def books_flame(context):
+    request = context.get("request")
+    profile = getattr(getattr(request, "user", None), "books_profile", None) if request else None
+    if profile is None or profile.pk is None:
+        return None
+    try:
+        from ..reading import flame
+
+        return flame(profile)
+    except Exception:  # noqa: BLE001
+        return None
+
+
+@register.simple_tag(takes_context=True)
 def books_reading_now(context):
     request = context.get("request")
     profile = getattr(getattr(request, "user", None), "books_profile", None) if request else None

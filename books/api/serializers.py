@@ -126,8 +126,9 @@ class ShelfScanSerializer(serializers.ModelSerializer):
     class Meta:
         model = ShelfScan
         fields = ["id", "shelf_label", "status", "error", "model_name", "cost_usd", "seconds", "books_found",
-                  "books_accepted", "default_visibility", "default_offers", "created_at", "finished_at", "items"]
-        read_only_fields = ["status", "error", "model_name", "cost_usd", "seconds", "books_found", "books_accepted",
+                  "books_accepted", "default_visibility", "default_offers", "is_single", "created_at", "finished_at",
+                  "items"]
+        read_only_fields = ["is_single", "status", "error", "model_name", "cost_usd", "seconds", "books_found", "books_accepted",
                             "created_at", "finished_at", "items"]
 
 

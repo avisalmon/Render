@@ -1,0 +1,39 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "brand" %} · {% t "landing.title" %}{% endblock %}
+{% block screen %}landing{% endblock %}
+{% block content %}
+<div class="bk-landing">
+  <section class="bk-hero">
+    <p class="bk-kicker">{% t "landing.kicker" %}</p>
+    <h1 class="bk-hero-title">{% t "landing.title" %}</h1>
+    <p class="bk-hero-lead">{% t "landing.lead" %}</p>
+    <a class="bk-btn bk-btn--primary bk-hero-cta" href="{% url 'books:login' %}?next=/books/">{% t "landing.start" %}</a>
+    <p class="bk-help" style="margin: 8px 0 0">{% t "landing.free" %}</p>
+  </section>
+
+  {% include "books/_shelf.html" with shelf_id="demo" books_json=books_json view="lamp" %}
+
+  <section class="bk-features" aria-label="{% t "landing.how" %}">
+    <article class="bk-feature">
+      {% include "books/ui/_icon.html" with name="camera" %}
+      <h2>{% t "landing.f1_h" %}</h2>
+      <p>{% t "landing.f1_p" %}</p>
+    </article>
+    <article class="bk-feature">
+      {% include "books/ui/_icon.html" with name="books" %}
+      <h2>{% t "landing.f2_h" %}</h2>
+      <p>{% t "landing.f2_p" %}</p>
+    </article>
+    <article class="bk-feature">
+      <svg class="bk-flame-icon" viewBox="0 0 24 24" aria-hidden="true"><path class="bk-flame-outer" d="M12 2.5c.6 3.2 2.6 4.8 4.3 6.6 1.6 1.7 2.7 3.6 2.7 6 0 3.9-3.1 6.4-7 6.4s-7-2.5-7-6.4c0-2.3 1-4 2.3-5.3.2 1.3.9 2.4 2 2.9-.3-3.7 1.2-7.3 2.7-10.2z"/><path class="bk-flame-core" d="M12 12.3c.3 1.5 1.3 2.3 2 3.1.6.7 1 1.4 1 2.3 0 1.7-1.3 2.8-3 2.8s-3-1.1-3-2.8c0-1.6 1.2-2.8 3-5.4z"/></svg>
+      <h2>{% t "landing.f3_h" %}</h2>
+      <p>{% t "landing.f3_p" %}</p>
+    </article>
+  </section>
+
+  <section class="bk-hero bk-hero--end">
+    <h2 class="bk-h2" style="margin-top: 0">{% t "landing.end_h" %}</h2>
+    <a class="bk-btn bk-btn--primary bk-hero-cta" href="{% url 'books:login' %}?next=/books/">{% t "landing.start" %}</a>
+  </section>
+</div>
+{% endblock %}

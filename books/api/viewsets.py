@@ -208,7 +208,7 @@ class EntryCorrectionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, m
 class ShelfScanViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin,
                        mixins.DestroyModelMixin, viewsets.GenericViewSet):
     """Create through POST /scans/upload/ (multipart: photo, shelf_label,
-    default_visibility, default_offers). The photo itself is never in the API."""
+    default_visibility, default_offers, single=1 for one book). The photo itself is never in the API."""
 
     serializer_class = ShelfScanSerializer
     permission_classes = [HasBooksProfile]
@@ -226,7 +226,8 @@ class ShelfScanViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.
             return Response({"detail": "cap"}, status=status.HTTP_409_CONFLICT)
         offers = request.data.getlist("default_offers") if hasattr(request.data, "getlist") else []
         scan = shelf_service.start_scan(me, photo, request.data.get("shelf_label", ""),
-                                        request.data.get("default_visibility", "private"), offers)
+                                        request.data.get("default_visibility", "private"), offers,
+                                        single=request.data.get("single") in ("1", "true", "True", True))
         scan.refresh_from_db()
         return Response(ShelfScanSerializer(scan).data, status=status.HTTP_201_CREATED)
 

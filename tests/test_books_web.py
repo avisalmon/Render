@@ -68,7 +68,7 @@ def noa(db):
 @pytest.fixture
 def reader_sees(monkeypatch):
     def setup(books, answers, searches=2):
-        monkeypatch.setattr(shelf, "read_shelf", lambda data: Reading(
+        monkeypatch.setattr(shelf, "read_shelf", lambda data, **kw: Reading(
             model="gpt-6.1-sol", books=[Book(t, a) for t, a in books],
             calls=[{"input_tokens": 1, "output_tokens": 1, "seconds": 1, "cost_usd": Decimal("0.01")}]))
         fake = FakeClient(answers, searches)

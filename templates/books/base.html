@@ -30,10 +30,11 @@
         <button type="submit" class="bk-btn bk-btn--quiet" lang="{{ request.books_other_lang|default:'en' }}" aria-label="{% t "lang.switch" %}">{% t "lang.other" %}</button>
       </form>
       {% if user.is_authenticated %}
+        {% if user.books_profile %}{% books_flame as fl %}{% if fl %}<a class="bk-flame{% if fl.lit %} is-lit{% endif %}" href="{% url 'books:play' %}" aria-label="{% if fl.lit %}{% t "flame.aria_lit" n=fl.streak m=fl.minutes %}{% else %}{% t "flame.aria_dim" n=fl.streak m=fl.minutes %}{% endif %}"><svg class="bk-flame-icon" viewBox="0 0 24 24" aria-hidden="true"><path class="bk-flame-outer" d="M12 2.5c.6 3.2 2.6 4.8 4.3 6.6 1.6 1.7 2.7 3.6 2.7 6 0 3.9-3.1 6.4-7 6.4s-7-2.5-7-6.4c0-2.3 1-4 2.3-5.3.2 1.3.9 2.4 2 2.9-.3-3.7 1.2-7.3 2.7-10.2z"/><path class="bk-flame-core" d="M12 12.3c.3 1.5 1.3 2.3 2 3.1.6.7 1 1.4 1 2.3 0 1.7-1.3 2.8-3 2.8s-3-1.1-3-2.8c0-1.6 1.2-2.8 3-5.4z"/></svg><b>{{ fl.streak }}</b><span class="bk-flame-min">({% t "flame.min" n=fl.minutes %})</span></a>{% endif %}{% endif %}
         {% if user.books_profile %}{% books_unread as unread_n %}<a class="bk-bell" href="{% url 'books:notifications' %}" aria-label="{% t "notif.bell" n=unread_n %}">
           <svg class="bk-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>{% if unread_n %}<span class="bk-bell-n">{{ unread_n }}</span>{% endif %}</a>{% endif %}
         {% block account %}
-          {% if user.books_profile %}<a class="bk-btn bk-btn--quiet" href="{% url 'books:settings' %}">{{ user.books_profile.display_name }}</a>{% endif %}
+          {% if user.books_profile %}<a class="bk-btn bk-btn--quiet bk-account-name" href="{% url 'books:settings' %}">{{ user.books_profile.display_name }}</a>{% endif %}
         {% endblock %}
         <form method="post" action="{% url 'books:logout' %}">{% csrf_token %}
           <button type="submit" class="bk-btn bk-btn--quiet">{% t "sign_out" %}</button>

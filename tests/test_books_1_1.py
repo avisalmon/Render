@@ -37,8 +37,9 @@ def onboard_post(client, **over):
 # ---- refusals: pages ---------------------------------------------------------
 
 def test_anonymous_is_sent_to_books_own_sign_in(client):
-    r = client.get("/books/")
-    assert r.status_code == 302 and r["Location"] == "/books/login/?next=/books/"
+    # The home is a welcome page for a visitor (Avi, 2026-10-21); every other page sends them to sign in.
+    r = client.get("/books/library/")
+    assert r.status_code == 302 and r["Location"] == "/books/login/?next=/books/library/"
 
 
 def test_signed_in_without_a_profile_is_sent_to_onboarding(client, reader):

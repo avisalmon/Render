@@ -353,6 +353,8 @@ class ShelfScan(models.Model):
     # The choices to start every book of this scan with (spec BK3).
     default_visibility = models.CharField(max_length=8, default="private")
     default_offers = models.CharField(max_length=40, blank=True, help_text="comma list of lend,exchange,sell")
+    # One book held up to the camera, not a shelf: read as one image, not strips (Avi, 2026-10-21).
+    is_single = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     finished_at = models.DateTimeField(null=True, blank=True)
 

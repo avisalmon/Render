@@ -171,6 +171,17 @@ def stats(profile):
     }
 
 
+def flame(profile):
+    """The header's streak: days in a row, whether today already counts, and
+    every minute read since joining (Avi, 2026-10-21: like Duolingo)."""
+    from . import play
+
+    today = play.today()
+    return {"streak": play.streak(profile), "lit": day_seconds(profile, today) >= MIN_STREAK_SECONDS,
+            "minutes": (ReadingSession.objects.filter(profile=profile, ended_at__isnull=False)
+                        .aggregate(n=Sum("seconds"))["n"] or 0) // 60}
+
+
 def continue_list(profile, limit=6):
     """Books I am in the middle of, newest first, with the page to start from."""
     seen, out = set(), []
