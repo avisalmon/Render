@@ -1110,3 +1110,24 @@ class ReadingSession(models.Model):
     @property
     def minutes(self):
         return round(self.seconds / 60, 1)
+
+
+class ReadingNote(models.Model):
+    """A thought on a book while reading it (Avi, 2026-10-21), typed or said
+    out loud and transcribed. Private to me; notes on a book add up in order."""
+
+    TYPED, VOICE = "typed", "voice"
+
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="reading_notes")
+    entry = models.ForeignKey(CatalogEntry, on_delete=models.CASCADE, related_name="notes")
+    session = models.ForeignKey(ReadingSession, on_delete=models.SET_NULL, null=True, blank=True, related_name="notes")
+    page = models.PositiveIntegerField(null=True, blank=True)
+    body = models.TextField(max_length=2000)
+    source = models.CharField(max_length=6, choices=[(TYPED, "typed"), (VOICE, "voice")], default=TYPED)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["created_at"]
+        indexes = [models.Index(fields=["profile", "entry"], name="books_note_profile_entry")]
+

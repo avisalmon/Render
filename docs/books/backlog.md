@@ -596,6 +596,23 @@ first. Payment provider, receipts and cancellation stay for when payment
 opens. The Google Books terms question (spec 12.11) is still open before
 charging for the web lookup.
 
+## The front door and reading notes (Avi, 2026-10-21) `DONE (dev), 2026-10-21`
+
+| ID | What | State |
+|---|---|---|
+| F-R.1 | A welcome page for visitors: what Books is, a demo shelf, one big "Start here" | DONE |
+| F-R.2 | Sign in leads with Google; email and password behind "sign in another way" | DONE |
+| F-R.3 | The streak as a flame in the header: dim until today's five minutes count; streak days and every minute read since joining | DONE |
+| F-R.4 | Home: "photograph a shelf" and "photograph a book" apart; a single book read whole (`ShelfScan.is_single`) | DONE |
+| F-R.5 | The page wheel on the timer: flick the pages with a finger, a leaf turns per page; typing still works | DONE |
+| F-R.6 | Home says "continue reading (title)" for the book I stopped in, and one tap starts it at my page | DONE |
+| F-R.7 | Thoughts while reading: a sheet over the timer, typed or spoken (transcribed, checked, then saved), adding up per book; shown after the session and on the book's page | DONE |
+| F-R.8 | API: `sessions` and `notes` | DONE |
+| F-R.9 | The big home buttons: no icons; a look chosen by Avi from the options page | WAITING for Avi's choice |
+
+Open for later (Avi): what to do with a finished book's notes (a summary, a
+review draft, sharing some of them).
+
 ## Epics BK12 and BK13
 
 Not broken into sprints yet: advanced creation, other collections.

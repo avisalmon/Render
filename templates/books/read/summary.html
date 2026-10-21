@@ -24,6 +24,14 @@
     <div class="bk-stat"><b>{{ stats.week_minutes }}</b><span>{% t "read.week_label" %}</span></div>
     <div class="bk-stat"><b>{{ stats.streak_minutes }}</b><span>{% t "read.streak_minutes" %}</span></div>
   </div>
+  {% if notes %}
+  <details class="bk-filterbox bk-notes-read" {% if s.finished_book %}open{% endif %}>
+    <summary>{% t "notes.mine" %} · <b>{% t "notes.n" n=notes|length %}</b></summary>
+    <ol class="bk-notes-list bk-filterbox-body">
+      {% for n in notes %}<li><p>{{ n.body|linebreaksbr }}</p><span class="bk-notes-meta">{% if n.page %}{% t "notes.page" n=n.page %} · {% endif %}{{ n.created_at|date:"d.m.Y" }}{% if n.source == "voice" %} · {% t "notes.voice" %}{% endif %}</span></li>{% endfor %}
+    </ol>
+  </details>
+  {% endif %}
   <div class="bk-stack">
     <a class="bk-btn bk-btn--primary bk-btn--wide" href="{% url 'books:home' %}">{% t "read.back_home" %}</a>
     <a class="bk-btn bk-btn--wide" href="{% url 'books:catalog_entry' s.entry_id %}">{% t "read.to_book" %}</a>

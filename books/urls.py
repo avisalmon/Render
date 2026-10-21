@@ -85,6 +85,9 @@ urlpatterns = [
     path("read/<int:pk>/", reading_views.summary, name="read_summary"),
     path("read/<int:pk>/end/", reading_views.end, name="read_end"),
     path("read/<int:pk>/discard/", reading_views.discard, name="read_discard"),
+    path("read/notes/<int:entry_pk>/add/", reading_views.note_add, name="note_add"),
+    path("read/notes/<int:pk>/delete/", reading_views.note_delete, name="note_delete"),
+    path("read/voice/", reading_views.note_voice, name="note_voice"),
     # Tiers (BK11).
     path("plans/", plans_views.plans, name="plans"),
     # Play (BK8).

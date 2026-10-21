@@ -53,6 +53,15 @@
     </div>
     <p class="bk-help" style="margin: 4px 0 0">{% t "reading.private_note" %}</p>
   </section>
+  {% if notes %}
+  <details class="bk-filterbox bk-notes-read" >
+    <summary>{% t "notes.mine" %} · <b>{% t "notes.n" n=notes|length %}</b></summary>
+    <ol class="bk-notes-list bk-filterbox-body">
+      {% for n in notes %}<li><p>{{ n.body|linebreaksbr }}</p><span class="bk-notes-meta">{% if n.page %}{% t "notes.page" n=n.page %} · {% endif %}{{ n.created_at|date:"d.m.Y" }}{% if n.source == "voice" %} · {% t "notes.voice" %}{% endif %}</span></li>{% endfor %}
+    </ol>
+  </details>
+  {% endif %}
+
 
   {% if entry.tags.all %}
   <h2 class="bk-h2">{% t "catalog.tags" %}</h2>

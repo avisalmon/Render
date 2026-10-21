@@ -13,8 +13,56 @@
   <p class="bk-help" style="text-align: center" data-awake>{% t "read.quiet_tip" %}</p>
   {% if error %}<p class="bk-error" role="alert">{{ error }}</p>{% endif %}
 
+  <button type="button" class="bk-btn bk-btn--wide bk-notes-open" data-notes-open aria-haspopup="dialog">
+    {% t "notes.open" %}<span class="bk-notes-count" data-notes-count>{% if notes %}{{ notes|length }}{% endif %}</span>
+  </button>
+  <dialog class="bk-notes" data-notes aria-labelledby="notes-h"
+          data-add-url="{% url 'books:note_add' session.entry_id %}" data-voice-url="{% url 'books:note_voice' %}"
+          data-del-tpl="{% url 'books:note_delete' 0 %}" data-page-tpl="{% t "notes.page" n="{n}" %}" data-voice-label="{% t "notes.voice" %}"
+          data-delete-label="{% t "notes.delete" %}" data-stop="{% t "notes.stop" %}" data-record="{% t "notes.record" %}"
+          data-listening="{% t "notes.listening" %}" data-working="{% t "notes.working" %}" data-check="{% t "notes.check" %}" data-mic-error="{% t "notes.err.mic" %}">
+    <div class="bk-sheet-handle" aria-hidden="true"></div>
+    <h2 class="bk-h2" id="notes-h" style="margin-top: 0">{% t "notes.title" %}</h2>
+    <p class="bk-help" style="margin: 0 0 8px">{{ session.entry.title }} · {% t "notes.private" %}</p>
+    <ol class="bk-notes-list" data-notes-list>
+      {% for n in notes %}<li data-note="{{ n.pk }}"><p>{{ n.body|linebreaksbr }}</p><span class="bk-notes-meta">{% if n.page %}{% t "notes.page" n=n.page %} · {% endif %}{{ n.created_at|date:"d.m" }}{% if n.source == "voice" %} · {% t "notes.voice" %}{% endif %}</span><button type="button" class="bk-notes-del" data-note-del="{{ n.pk }}">{% t "notes.delete" %}</button></li>{% endfor %}
+    </ol>
+    <p class="bk-muted" data-notes-empty {% if notes %}hidden{% endif %}>{% t "notes.none" %}</p>
+    <form class="bk-form bk-notes-form" method="post" action="{% url 'books:note_add' session.entry_id %}" data-notes-form>
+      {% csrf_token %}
+      <input type="hidden" name="source" value="typed" data-notes-source>
+      <input type="hidden" name="page" value="{{ session.start_page }}" data-notes-page>
+      <input type="hidden" name="next" value="{{ request.path }}">
+      <textarea class="bk-input" name="body" rows="3" maxlength="2000" placeholder="{% t "notes.placeholder" %}" aria-label="{% t "notes.title" %}" data-notes-body></textarea>
+      <p class="bk-help" data-notes-status aria-live="polite" style="margin: 0"></p>
+      <div class="bk-notes-actions">
+        {% if voice %}<button type="button" class="bk-btn bk-notes-mic" data-notes-mic hidden><span class="bk-notes-dot" aria-hidden="true"></span><span data-notes-mic-label>{% t "notes.record" %}</span></button>{% endif %}
+        <button type="submit" class="bk-btn bk-btn--primary">{% t "notes.save" %}</button>
+      </div>
+    </form>
+    <button type="button" class="bk-btn bk-btn--quiet bk-btn--wide" data-notes-close>{% t "notes.close" %}</button>
+  </dialog>
+
   <form method="post" action="{% url 'books:read_end' session.pk %}" class="bk-card bk-form">{% csrf_token %}
-    <label class="bk-field">{% t "read.page_reached" %} <input class="bk-input bk-input--big" type="number" name="end_page" min="{{ session.start_page }}" inputmode="numeric" value="{{ session.start_page }}" required></label>
+    <div class="bk-flip" data-flip data-min="{{ session.start_page }}" data-max="{{ pages|default:0 }}" data-read-tpl="{% t "read.flip_gained" n="{n}" %}"
+         role="slider" tabindex="0" aria-label="{% t "read.page_reached" %}" aria-valuemin="{{ session.start_page }}"{% if pages %} aria-valuemax="{{ pages }}"{% endif %} aria-valuenow="{{ session.start_page }}">
+      <p class="bk-kicker bk-flip-label">{% t "read.page_reached" %}</p>
+      <div class="bk-flip-pad" data-flip-pad>
+        <div class="bk-flip-book" aria-hidden="true">
+          <div class="bk-flip-side bk-flip-side--read"></div>
+          <div class="bk-flip-side bk-flip-side--ahead"><span class="bk-flip-n" data-flip-n>{{ session.start_page }}</span></div>
+          <div class="bk-flip-leaf" data-flip-leaf></div>
+        </div>
+        <div class="bk-flip-ruler" data-flip-ruler aria-hidden="true"></div>
+        <p class="bk-flip-hint">{% t "read.flip_hint" %}</p>
+      </div>
+      <p class="bk-flip-gained" data-flip-read aria-live="polite"></p>
+      <div class="bk-flip-steps">
+        <button type="button" class="bk-btn bk-btn--small" dir="ltr" data-flip-step="-1" aria-label="{% t "read.flip_back" %}">−1</button>
+        <label class="bk-flip-type">{% t "read.flip_type" %} <input class="bk-input" type="number" name="end_page" min="{{ session.start_page }}" inputmode="numeric" value="{{ session.start_page }}" required data-flip-input></label>
+        <button type="button" class="bk-btn bk-btn--small" dir="ltr" data-flip-step="10" aria-label="{% t "read.flip_ten" %}">+10</button>
+      </div>
+    </div>
     <label class="bk-check"><input type="checkbox" name="finished" value="1"> <span>{% t "read.finished" %}</span></label>
     <button type="submit" class="bk-btn bk-btn--primary bk-btn--wide">{% t "read.done" %}</button>
   </form>
@@ -24,6 +72,8 @@
 </div>
 {% endblock %}
 {% block scripts %}
+{% load static %}<script src="{% static 'books/flip.js' %}" defer></script>
+<script src="{% static 'books/notes.js' %}" defer></script>
 <script>
 (function () {
   var root = document.querySelector('[data-started]');

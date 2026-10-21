@@ -128,6 +128,7 @@ def entry(request, pk):
         "also_read": __import__("books.discover", fromlist=["x"]).also_read(obj, me),
         "near_count": __import__("books.discover", fromlist=["x"]).available_near(obj, me),
         "read_progress": __import__("books.reading", fromlist=["x"]).book_progress(me, obj),
+        "notes": __import__("books.notes", fromlist=["for_book"]).for_book(me, obj),
         "club_error": community.CommunityError and (request.GET.get("error") or ""),
         "entry": obj, "detail": detail, "form": form, "sent": sent, "editions": list(editions) + list(siblings),
         "can_edit": can_edit, "lang": _lang(request),

@@ -86,6 +86,7 @@ def _home(request):
         "play": play.summary(profile),
         "reading_now": __import__("books.reading", fromlist=["active"]).active(profile),
         "reading_today": __import__("books.reading", fromlist=["stats"]).stats(profile)["today_minutes"],
+        "go_on": (__import__("books.reading", fromlist=["continue_list"]).continue_list(profile, limit=1) or [None])[0],
     })
 
 

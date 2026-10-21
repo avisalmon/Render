@@ -12,23 +12,26 @@
     <div class="bk-empty bk-narrow">
       <h1 class="bk-title">{% t "home.empty_title" %}</h1>
       <p class="bk-lead">{% t "home.empty_lead" %}</p>
-      <a class="bk-btn bk-btn--primary bk-btn--wide" href="{% url 'books:scan_new' %}">
-        <svg class="bk-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
-        {% t "home.scan_first" %}
-      </a>
-      <a class="bk-btn bk-btn--wide" href="{% url 'books:scan_new' %}?book=1" style="margin-top: 8px">{% include "books/ui/_icon.html" with name="book" %} {% t "home.scan_book" %}</a>
+      <a class="bk-btn bk-btn--primary bk-btn--wide" href="{% url 'books:scan_new' %}">{% t "home.scan_first" %}</a>
+      <a class="bk-btn bk-btn--wide" href="{% url 'books:scan_new' %}?book=1" style="margin-top: 8px">{% t "home.scan_book" %}</a>
     </div>
     {% endif %}
   </div>
   <aside class="bk-aside">
     <div class="bk-card bk-card--tight bk-streak-card">
       <p class="bk-muted" style="margin: 0">{% if reading_today %}{% t "read.today" n=reading_today %}{% else %}{% t "home.streak_start" %}{% endif %}</p>
-      <a class="bk-btn bk-btn--primary bk-btn--wide" href="{% url 'books:read' %}">{% if reading_now %}{% t "read.back_to_timer" %}{% else %}{% t "read.start" %}{% endif %}</a>
+      {% if reading_now %}<a class="bk-btn bk-btn--primary bk-btn--wide" href="{% url 'books:read' %}">{% t "read.back_to_timer" %}</a>
+      {% elif go_on %}<form method="post" action="{% url 'books:read_start' %}">{% csrf_token %}
+        <input type="hidden" name="entry" value="{{ go_on.entry.pk }}"><input type="hidden" name="page" value="{{ go_on.page }}">
+        <button type="submit" class="bk-btn bk-btn--primary bk-btn--wide bk-go-on">{% t "read.continue_title" title=go_on.entry.title %}</button>
+      </form>
+      <a class="bk-link-quiet" href="{% url 'books:read' %}">{% t "read.other_book" %}</a>
+      {% else %}<a class="bk-btn bk-btn--primary bk-btn--wide" href="{% url 'books:read' %}">{% t "read.start" %}</a>{% endif %}
     </div>
     <nav class="bk-quick" aria-label="{% t "home.quick" %}">
       {% if books_json and books_json != "[]" %}
-      <a class="bk-quick-tile bk-quick-tile--main" href="{% url 'books:scan_new' %}">{% include "books/ui/_icon.html" with name="camera" %}<span>{% t "home.scan" %}</span></a>
-      <a class="bk-quick-tile bk-quick-tile--main" href="{% url 'books:scan_new' %}?book=1">{% include "books/ui/_icon.html" with name="book" %}<span>{% t "home.scan_book" %}</span></a>
+      <a class="bk-quick-tile bk-quick-tile--main" href="{% url 'books:scan_new' %}"><span>{% t "home.scan" %}</span></a>
+      <a class="bk-quick-tile bk-quick-tile--main" href="{% url 'books:scan_new' %}?book=1"><span>{% t "home.scan_book" %}</span></a>
       <a class="bk-quick-tile" href="{% url 'books:library' %}">{% include "books/ui/_icon.html" with name="books" %}<span>{% t "lib.all_books" %}</span></a>
       {% endif %}
       <a class="bk-quick-tile" href="{% url 'books:discover' %}">{% include "books/ui/_icon.html" with name="compass" %}<span>{% t "disc.title" %}</span></a>

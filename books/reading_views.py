@@ -1,6 +1,6 @@
 """Reading sessions' pages (Avi, 2026-10-20). Rules in books/reading.py."""
 
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
@@ -29,6 +29,8 @@ def read_page(request):
         return render(request, "books/read/session.html", {
             "session": session, "progress": reading.book_progress(me, session.entry),
             "pages": reading.total_pages(session.entry), "error": _err(request),
+            "notes": __import__("books.notes", fromlist=["for_book"]).for_book(me, session.entry),
+            "voice": __import__("books.notes", fromlist=["voice_enabled"]).voice_enabled(),
         })
     picked = CatalogEntry.objects.filter(pk=request.GET.get("entry") or 0).first()
     books, seen = [], set()
@@ -96,4 +98,64 @@ def summary(request, pk):
     return render(request, "books/read/summary.html", {
         "s": session, "progress": reading.book_progress(me, session.entry), "stats": reading.stats(me),
         "pace": reading.pace([session]), "min_minutes": reading.MIN_STREAK_SECONDS // 60,
+        "notes": __import__("books.notes", fromlist=["for_book"]).for_book(me, session.entry),
     })
+
+
+# ---- my notes on a book while I read it (Avi, 2026-10-21) ---------------------------
+
+def _wants_json(request):
+    return "application/json" in request.headers.get("Accept", "")
+
+
+def _note_row(note):
+    return {"id": note.pk, "body": note.body, "page": note.page, "source": note.source,
+            "when": note.created_at.isoformat()}
+
+
+@books_page
+@require_POST
+def note_add(request, entry_pk):
+    from . import notes
+
+    me = request.books_profile
+    entry = get_object_or_404(CatalogEntry, pk=entry_pk)
+    session = reading.active(me)
+    try:
+        note = notes.add(me, entry, request.POST.get("body"), request.POST.get("source") or "typed",
+                         session=session, page=request.POST.get("page"))
+    except notes.NoteError as exc:
+        if _wants_json(request):
+            return JsonResponse({"error": t(str(exc), _lang(request))}, status=400)
+        return redirect(f"{reverse('books:read')}?error={exc}")
+    if _wants_json(request):
+        return JsonResponse({"note": _note_row(note)}, status=201)
+    return redirect(request.POST.get("next") if (request.POST.get("next") or "").startswith("/books/") else "books:read")
+
+
+@books_page
+@require_POST
+def note_delete(request, pk):
+    from . import notes
+    from .models import ReadingNote
+
+    note = get_object_or_404(ReadingNote, pk=pk, profile=request.books_profile)
+    notes.remove(request.books_profile, note)
+    if _wants_json(request):
+        return JsonResponse({"ok": True})
+    return redirect(request.POST.get("next") if (request.POST.get("next") or "").startswith("/books/") else "books:read")
+
+
+@books_page
+@require_POST
+def note_voice(request):
+    """A short recording in, its words out, to be read and fixed before saving."""
+    from . import notes
+
+    try:
+        text = notes.transcribe(request.books_profile, request.FILES.get("audio"), request.POST.get("seconds"),
+                                lang=_lang(request))
+    except notes.NoteError as exc:
+        return JsonResponse({"error": t(str(exc), _lang(request))}, status=400)
+    return JsonResponse({"text": text})
+

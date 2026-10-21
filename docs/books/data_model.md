@@ -519,3 +519,15 @@ one sitting with a book: `profile`, `entry`, `copy` (nullable),
 four hours), `finished_book`. Pages and pace are computed. A day's sessions
 reaching five minutes write that day's `ReadingCheckin` (with its minutes),
 so the streak in play.py is earned by reading time. Migration 0018.
+
+**One book, and notes while reading (2026-10-21, Avi asked for them).**
+`ShelfScan.is_single`: the photo is one book (cover or spine), read as one
+image instead of strips. Migration 0019. `ReadingNote`: a thought on a book
+while reading it: `profile`, `entry`, `session` (nullable, set null),
+`page` (nullable), `body` (up to 2,000 characters), `source` typed / voice,
+`created_at`, `updated_at`. Private to its owner; notes on a book add up in
+order. A spoken note is transcribed and returned to be checked before it is
+saved; the audio is never stored, only the call's cost (`ModelCall`,
+purpose `voice_note`). Migration 0020. The API gained `sessions` (list,
+start, end, discard; missing until now) and `notes` (full CRUD, `voice`).
+

@@ -109,6 +109,42 @@ def test_the_flame_has_its_colours_in_every_palette():
     assert css.count("--bk-flame:") == 5 and css.count("--bk-flame-core:") == 5
 
 
+# ---- continue the book I stopped in -----------------------------------------------------
+
+def test_home_says_continue_with_the_book_and_one_tap_starts_at_my_page(client, noa, book):
+    client.force_login(noa.user)
+    assert "מתחילים לקרוא" in client.get("/books/").content.decode()
+    read_today(noa, book, 10)  # pages 1 to 20, not finished
+    html = client.get("/books/").content.decode()
+    assert "המשך לקרוא (מיכאל שלי)" in html and 'name="page" value="20"' in html
+    client.post("/books/read/start/", {"entry": book.pk, "page": "20"})
+    assert ReadingSession.objects.get(ended_at__isnull=True).start_page == 20
+
+
+def test_a_finished_book_is_not_offered_to_continue(client, noa, book):
+    s = reading.start(noa, book, 1)
+    reading.end(noa, s, 300, finished=True)
+    client.force_login(noa.user)
+    html = client.get("/books/").content.decode()
+    assert "המשך לקרוא" not in html and "מתחילים לקרוא" in html
+
+
+def test_the_timer_page_has_the_page_wheel(client, noa, book):
+    reading.start(noa, book, 30)
+    client.force_login(noa.user)
+    html = client.get("/books/read/").content.decode()
+    assert 'data-flip data-min="30"' in html and "books/flip.js" in html
+    assert 'name="end_page" min="30"' in html and "data-flip-input" in html
+
+
+def test_the_big_home_buttons_carry_no_icons(client, noa):
+    client.force_login(noa.user)
+    html = client.get("/books/").content.decode()
+    for line in html.splitlines():
+        if "bk-quick-tile--main" in line:
+            assert "<svg" not in line
+
+
 # ---- one book on its own -----------------------------------------------------------------
 
 def test_home_offers_a_shelf_and_a_single_book(client, noa):

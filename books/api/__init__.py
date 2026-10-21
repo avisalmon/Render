@@ -16,6 +16,7 @@ from .hub import (
 from .museum import ExhibitItemViewSet, ExhibitViewSet, RareReviewViewSet
 from .plans import PlanViewSet
 from .play import BadgeViewSet, CheckinViewSet, PlayViewSet, PointEventViewSet
+from .reading import ReadingNoteViewSet, ReadingSessionViewSet
 from .viewsets import (
                   BookDetailViewSet,
                   CatalogEntryViewSet,
@@ -66,6 +67,8 @@ router.register("reviews", ReviewViewSet, basename="review")
 router.register("reading", ReadingLogViewSet, basename="reading")
 router.register("people", PeopleViewSet, basename="people")
 router.register("checkins", CheckinViewSet, basename="checkin")
+router.register("sessions", ReadingSessionViewSet, basename="session")
+router.register("notes", ReadingNoteViewSet, basename="note")
 router.register("points", PointEventViewSet, basename="point")
 router.register("badges", BadgeViewSet, basename="badge")
 router.register("play", PlayViewSet, basename="play")

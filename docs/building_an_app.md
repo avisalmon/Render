@@ -808,3 +808,18 @@ and also fails when `document.documentElement.scrollWidth` is larger
 (`OVERFLOW_JS` in `tests/test_books_screens.py`). A grid that holds a
 scrolling strip gets `minmax(0, 1fr)` columns and `min-width: 0` children.
 
+### 30. In Hebrew, check anything with a direction or a sign by eye
+
+The page wheel passed its browser tests (a drag forward raised the number,
+a drag back stopped at the first page) and still looked wrong on the
+screenshot: its ruler put the pages ahead on the right, so a forward flick
+pulled the next page away from the middle, and the "−1" button read "1−".
+A test reads values; it does not see which way things move or where a
+minus sign lands in right-to-left text.
+
+**The rule.** Any widget with a direction (a ruler, a slider, a carousel,
+a page turn) is laid out from the reader's side: in Hebrew what is ahead
+comes from the left. A label that is a signed number or a range (−1, +10,
+3-5) gets `dir="ltr"`. Both are checked on a right-to-left screenshot
+before shipping, not only by the tests.
+

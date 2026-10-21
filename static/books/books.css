@@ -730,4 +730,64 @@ details.bk-filterbox .bk-filter { margin-bottom: 0; }
 .bk-login-other { text-align: start; }
 .bk-login-other > summary { justify-content: center; }
 .bk-scan-switch { text-align: center; margin: 0 0 12px; }
+/* ---- the page wheel (Avi, 2026-10-21): flick the pages, a leaf turns ------------- */
+.bk-flip { display: grid; gap: 6px; outline: none; }
+.bk-flip:focus-visible .bk-flip-pad { outline: 2px solid var(--bk-brass); outline-offset: 3px; }
+.bk-flip-label { margin: 0; text-align: center; }
+.bk-flip-pad { touch-action: pan-y; user-select: none; -webkit-user-select: none; cursor: grab; display: grid; justify-items: center; gap: 4px; padding: 6px 0 2px; }
+.bk-flip.is-held .bk-flip-pad { cursor: grabbing; }
+.bk-flip-book { position: relative; width: 210px; height: 128px; perspective: 700px; display: grid; grid-template-columns: 1fr 1fr; }
+.bk-flip-side { background: var(--bk-surface); border: 1px solid var(--bk-line); box-shadow: 0 6px 16px var(--bk-shadow); display: grid; place-items: center; }
+html[dir="rtl"] .bk-flip-side--read { order: 2; border-radius: 0 10px 10px 0; background: linear-gradient(to left, var(--bk-surface) 80%, var(--bk-surface-2)); }
+html[dir="rtl"] .bk-flip-side--ahead { order: 1; border-radius: 10px 0 0 10px; background: linear-gradient(to right, var(--bk-surface) 80%, var(--bk-surface-2)); }
+html[dir="ltr"] .bk-flip-side--read { border-radius: 10px 0 0 10px; background: linear-gradient(to right, var(--bk-surface) 80%, var(--bk-surface-2)); }
+html[dir="ltr"] .bk-flip-side--ahead { border-radius: 0 10px 10px 0; background: linear-gradient(to left, var(--bk-surface) 80%, var(--bk-surface-2)); }
+.bk-flip-n { font-family: var(--bk-serif); font-size: 44px; font-weight: 700; color: var(--bk-ink); font-variant-numeric: tabular-nums; }
+.bk-flip-leaf { position: absolute; top: 0; bottom: 0; width: 50%; background: var(--bk-surface); border: 1px solid var(--bk-line); opacity: 0; pointer-events: none; }
+html[dir="rtl"] .bk-flip-leaf { left: 0; transform-origin: right center; border-radius: 10px 0 0 10px; }
+html[dir="ltr"] .bk-flip-leaf { right: 0; transform-origin: left center; border-radius: 0 10px 10px 0; }
+html[dir="rtl"] .bk-flip-leaf.is-turning { animation: bk-leaf-rtl .32s ease-in forwards; }
+html[dir="rtl"] .bk-flip-leaf.is-back { animation: bk-leaf-rtl .32s ease-out reverse forwards; }
+html[dir="ltr"] .bk-flip-leaf.is-turning { animation: bk-leaf-ltr .32s ease-in forwards; }
+html[dir="ltr"] .bk-flip-leaf.is-back { animation: bk-leaf-ltr .32s ease-out reverse forwards; }
+@keyframes bk-leaf-rtl { 0% { opacity: 1; transform: rotateY(0); filter: brightness(1); } 60% { filter: brightness(.82); } 100% { opacity: .2; transform: rotateY(180deg); filter: brightness(1); } }
+@keyframes bk-leaf-ltr { 0% { opacity: 1; transform: rotateY(0); filter: brightness(1); } 60% { filter: brightness(.82); } 100% { opacity: .2; transform: rotateY(-180deg); filter: brightness(1); } }
+.bk-flip-ruler { position: relative; width: 100%; max-width: 320px; height: 34px; overflow: hidden; -webkit-mask-image: linear-gradient(to right, transparent, black 25%, black 75%, transparent); mask-image: linear-gradient(to right, transparent, black 25%, black 75%, transparent); }
+.bk-flip-ruler::after { content: ""; position: absolute; left: 50%; top: 0; width: 2px; height: 22px; margin-left: -1px; background: var(--bk-brass); border-radius: 2px; }
+.bk-flip-tick { position: absolute; left: 50%; top: 4px; width: 1px; height: 10px; background: var(--bk-muted); will-change: transform; }
+.bk-flip-tick.is-five { height: 16px; top: 2px; }
+.bk-flip-tick[data-page]:not([data-page=""])::after { content: attr(data-page); position: absolute; top: 18px; left: 50%; transform: translateX(-50%); font-size: 10px; color: var(--bk-muted); }
+.bk-flip-hint { margin: 0; font-size: 12px; color: var(--bk-muted); }
+.bk-flip-gained { margin: 0; min-height: 22px; text-align: center; font-weight: 700; color: var(--bk-brass); }
+.bk-flip-steps .bk-btn { min-width: 48px; }
+.bk-flip-steps { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
+.bk-flip-type { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--bk-muted); }
+.bk-flip-type .bk-input { width: 84px; text-align: center; }
+@media (prefers-reduced-motion: reduce) { .bk-flip-leaf { display: none; } }
+.bk-go-on { white-space: normal; line-height: 1.3; }
+.bk-link-quiet { display: flex; align-items: center; justify-content: center; min-height: 44px; font-size: 14px; color: var(--bk-muted); }
+/* ---- my thoughts while reading (Avi, 2026-10-21) --------------------------------- */
+.bk-notes-open { margin: 4px 0 12px; gap: 8px; }
+.bk-notes-count:not(:empty) { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; background: var(--bk-brass); color: var(--bk-on-brass); font-size: 12px; font-weight: 700; }
+dialog.bk-notes { width: 100%; max-width: 560px; max-height: 88vh; margin: auto auto 0; padding: 14px 18px 22px; border: 0; border-radius: 16px 16px 0 0; background: var(--bk-surface); color: var(--bk-ink); box-shadow: 0 -10px 30px var(--bk-shadow-strong); overflow: auto; }
+dialog.bk-notes::backdrop { background: var(--bk-scrim); }
+dialog.bk-notes[open] { animation: bk-sheet-up .22s ease-out; }
+@keyframes bk-sheet-up { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (min-width: 700px) { dialog.bk-notes { margin: auto; border-radius: 16px; } }
+.bk-notes-list { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 8px; max-height: 38vh; overflow: auto; }
+.bk-notes-list li { position: relative; background: var(--bk-ground); border: 1px solid var(--bk-line); border-radius: 12px; padding: 10px 12px; }
+.bk-notes-list p { margin: 0 0 4px; line-height: 1.5; white-space: pre-wrap; }
+.bk-notes-meta { font-size: 12px; color: var(--bk-muted); }
+.bk-notes-del { position: absolute; inset-inline-end: 6px; bottom: 4px; background: none; border: 0; color: var(--bk-muted); font-size: 12px; text-decoration: underline; min-height: 32px; padding: 0 6px; cursor: pointer; }
+.bk-notes-form { gap: 8px; }
+.bk-notes-actions { display: flex; gap: 8px; justify-content: space-between; flex-wrap: wrap; }
+.bk-notes-actions .bk-btn--primary { flex: 1; }
+.bk-notes-mic { gap: 8px; }
+.bk-notes-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--bk-muted); }
+.bk-notes-mic.is-on { border-color: var(--bk-danger); color: var(--bk-danger); }
+.bk-notes-mic.is-on .bk-notes-dot { background: var(--bk-danger); animation: bk-rec 1s ease-in-out infinite; }
+@keyframes bk-rec { 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { dialog.bk-notes[open], .bk-notes-mic.is-on .bk-notes-dot { animation: none; } }
+.bk-notes-read { margin: 10px 0; }
+.bk-notes-read .bk-notes-list { max-height: none; }
 

@@ -17,6 +17,27 @@ Newest first.
 
 ---
 
+## PM-30 · 2026-10-21 · Sprint end: the page wheel ran backwards in Hebrew
+
+**What happened.** The sprint (page wheel, "continue reading", thoughts
+while reading, the front door) passed 674 Books tests. The phone
+screenshot then showed the wheel's ruler running the wrong way in Hebrew
+and "−1" printed as "1−". The screen contract had also caught three real
+problems on its own: a 22px link, a 41px button, and ruler ticks hanging
+past the screen edge. One more thing went wrong in my own tooling: a
+Python script inlined in a shell heredoc failed to parse three times
+today (mistake 22 again); every script now goes through a file.
+
+**Why our process let it happen.** The browser test checked values (the
+number went up), not which way the ruler moved or how a signed number
+renders right to left. Only the screenshot shows that.
+
+**Rule.** Lay out direction widgets from the reader's side, give signed
+numbers `dir="ltr"`, and check both on a right-to-left screenshot.
+
+Here: docs/building_an_app.md mistake 30
+BKM: FullStackBKM f0092d0 (lesson 38)
+
 ## PM-29 · 2026-10-21 · The phone overflow check could never fail
 
 **What happened.** Building the welcome page for visitors, its phone

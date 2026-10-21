@@ -568,3 +568,76 @@ def test_on_a_phone_a_reader_can_find_a_book_start_and_finish(browser, live_serv
         assert ReadingSession.objects.get(profile=rp, entry__title="ספר מספר 17").end_page == 20
     finally:
         context.close()
+
+
+def test_on_a_phone_a_thought_is_saved_while_the_timer_runs(browser, live_server, db):
+    """Avi, 2026-10-21: "what do I think" while reading. Open the sheet, type,
+    save; it joins the earlier note without leaving the timer, and the count
+    on the button follows."""
+    from books import catalog, notes, reading
+    from books.models import Profile, ReadingNote
+    build_world()
+    rp = Profile.objects.get(user__username="reader")
+    e = catalog.CatalogEntry.objects.create(collection_type=catalog.book_type(), title="ספר עם מחשבות")
+    notes.add(rp, e, "מחשבה ראשונה")
+    reading.start(rp, e, 7)
+    context, page, _ = _open(browser, live_server, "reader", "/books/read/", PHONE, "light")
+    try:
+        page.click("[data-notes-open]")
+        page.wait_for_selector("dialog[data-notes][open]")
+        assert page.locator("[data-notes-list] li").count() == 1
+        page.fill("[data-notes-body]", "השורה על הים")
+        page.click("[data-notes-form] button[type=submit]")
+        page.wait_for_function("document.querySelectorAll('[data-notes-list] li').length === 2")
+        assert page.text_content("[data-notes-count]").strip() == "2"
+        assert page.input_value("[data-notes-body]") == "" and page.locator("[data-timer]").count() == 1
+        assert ReadingNote.objects.filter(profile=rp).order_by("pk").last().body == "השורה על הים"
+        page.click("[data-notes-close]")
+        assert page.locator("dialog[data-notes][open]").count() == 0
+    finally:
+        context.close()
+
+
+def test_on_a_phone_the_page_is_flicked_not_typed(browser, live_server, db):
+    """Avi, 2026-10-21: a wheel to flick the pages, not a box to type in. A
+    drag in the reading direction (right, in Hebrew) turns pages forward, the
+    number and the form follow, a drag back turns them back, and never below
+    the page I started from."""
+    from books import catalog, reading
+    from books.models import Profile, ReadingSession
+    build_world()
+    rp = Profile.objects.get(user__username="reader")
+    e = catalog.CatalogEntry.objects.create(collection_type=catalog.book_type(), title="ספר לדפדוף")
+    reading.start(rp, e, 30)
+    context, page, _ = _open(browser, live_server, "reader", "/books/read/", PHONE, "light")
+    try:
+        page.wait_for_selector("[data-flip-pad]")
+        box = page.locator("[data-flip-pad]").bounding_box()
+        y = box["y"] + box["height"] / 2
+        x0 = box["x"] + box["width"] / 2 - 100
+        page.mouse.move(x0, y)
+        page.mouse.down()
+        for i in range(1, 21):
+            page.mouse.move(x0 + i * 10, y)  # 200px to the right, slowly: no glide
+            page.wait_for_timeout(16)
+        page.wait_for_timeout(120)
+        page.mouse.up()
+        page.wait_for_timeout(600)
+        forward = int(page.input_value("input[name=end_page]"))
+        assert forward > 40 and page.text_content("[data-flip-n]").strip() == str(forward)
+        assert "עמודים היום" in page.text_content("[data-flip-read]")
+        # Back past the start: it stops at the page I started from.
+        page.mouse.move(x0 + 200, y)
+        page.mouse.down()
+        for i in range(1, 41):
+            page.mouse.move(x0 + 200 - i * 12, y)
+            page.wait_for_timeout(16)
+        page.mouse.up()
+        page.wait_for_timeout(900)
+        assert int(page.input_value("input[name=end_page]")) == 30
+        page.click("[data-flip-step='10']")
+        page.click("form[action$='/end/'] button[type=submit]")
+        page.wait_for_load_state("domcontentloaded")
+        assert ReadingSession.objects.get(profile=rp, entry=e).end_page == 40
+    finally:
+        context.close()
