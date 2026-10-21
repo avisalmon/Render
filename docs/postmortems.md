@@ -17,6 +17,26 @@ Newest first.
 
 ---
 
+## PM-33 · 2026-10-21 · Sprint end: the candle and the breathing button
+
+**What happened.** Avi chose the reading candle and the breathing button.
+The candle burns down over an hour of reading and goes out, with smoke,
+while the clock is paused; one tap on the button listens, a second tap
+returns the words with "save the thought", and typing is a link away.
+The whole voice path is now tested in a real browser with the microphone
+and the transcription stood in for. The guards caught one thing on their
+own: an English template comment counted as hard-coded copy. Avi also
+asked who pays for transcription: Books' OpenAI key (about $0.006 a
+minute, capped at $1 a day); the free browser recognition was offered.
+
+**Why our process let it happen.** Nothing slipped through; the guard did
+its job.
+
+**Rule.** Nothing new.
+
+Here: this file
+BKM: deferred - nothing new; mistakes 29 and 40 already cover it
+
 ## PM-32 · 2026-10-21 · The reading clock ran in the background, and the keyboard jumped up
 
 **What happened.** Avi read with the timer and found two things: leaving

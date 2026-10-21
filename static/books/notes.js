@@ -4,11 +4,12 @@
       with [data-voice-text], [data-voice-status], [data-voice-source]): tap to
       record, tap to stop; the recording is sent once to be written down, and
       the words land in the box to be read and fixed. The audio is not kept.
-   2. The notes sheet over the reading screen: earlier notes on this book and
-      a box to add one. It opens without the keyboard (the box takes focus
-      only when tapped; most notes will be spoken), and saving goes straight
-      back to the timer. Saving and deleting go by fetch, so the timer page
-      never reloads; without script the form still posts. */
+   2. "What I think" on the reading screen (Avi, 2026-10-21): one tap on the
+      breathing button and it listens; a second tap stops, and the words come
+      back in a card with "save the thought". "Type instead" opens the same
+      card for the keyboard. Saving goes by fetch, so the timer never reloads;
+      without script the form still posts.
+   3. The sheet of earlier thoughts on this book, opened from the count. */
 (function () {
   "use strict";
   var csrf = document.body.getAttribute("data-csrf");
@@ -57,6 +58,7 @@
           text.value = (text.value.trim() ? text.value.trim() + " " : "") + res.d.text;
           if (source) source.value = "voice";
           status.textContent = attr("check");
+          form.dispatchEvent(new CustomEvent("bk:voice-text"));
         })
         .catch(function () { mic.disabled = false; status.textContent = ""; });
     };
@@ -92,43 +94,42 @@
     });
   });
 
-  // ---- 2. the notes sheet ----------------------------------------------------------
+  // ---- 2. what I think ---------------------------------------------------------------
+  var think = document.querySelector("[data-think]");
+  var list = document.querySelector("[data-notes-list]");
   var sheet = document.querySelector("[data-notes]");
-  if (!sheet) return;
-  var openBtn = document.querySelector("[data-notes-open]");
-  var count = document.querySelector("[data-notes-count]");
-  var list = sheet.querySelector("[data-notes-list]");
-  var empty = sheet.querySelector("[data-notes-empty]");
-  var form = sheet.querySelector("[data-notes-form]");
-  var body = form.querySelector("[data-voice-text]");
-  var source = form.querySelector("[data-voice-source]");
-  var status = form.querySelector("[data-voice-status]");
-  var page = form.querySelector("[data-notes-page]");
-  var attr = function (k) { return sheet.getAttribute("data-" + k) || ""; };
+  if (!think) return;
+  var orb = think.querySelector("[data-orb]");
+  var card = think.querySelector("[data-think-card]");
+  var body = think.querySelector("[data-voice-text]");
+  var source = think.querySelector("[data-voice-source]");
+  var status = think.querySelector("[data-voice-status]");
+  var page = think.querySelector("[data-notes-page]");
+  var countLink = think.querySelector("[data-notes-open]");
+  var count = think.querySelector("[data-notes-count]");
+  var listens = orb.hasAttribute("data-voice-mic") && canRecord;
+  var sattr = function (k) { return sheet ? sheet.getAttribute("data-" + k) || "" : ""; };
 
-  var refreshCount = function () {
-    var n = list.children.length;
-    count.textContent = n ? String(n) : "";
-    empty.hidden = n > 0;
-  };
   var currentPage = function () {
-    var p = document.querySelector("[data-flip-input]");
-    return p && p.value ? p.value : page.value;
+    var f = document.querySelector("[data-flip-input]");
+    return f && f.value ? f.value : page.value;
   };
-  var close = function () { window.bkStopRecording(); sheet.close(); };
-
-  openBtn.addEventListener("click", function () {
-    page.value = currentPage();
-    status.textContent = "";
-    if (sheet.showModal) sheet.showModal(); else sheet.setAttribute("open", "");
-    // No focus on the box: the keyboard opens only when the box is tapped.
-    var first = sheet.querySelector("[data-voice-mic]:not([hidden])") || sheet.querySelector("[data-notes-close]");
-    if (first) first.focus({preventScroll: true});
-  });
-  sheet.querySelector("[data-notes-close]").addEventListener("click", close);
-  sheet.addEventListener("click", function (e) { if (e.target === sheet) close(); });
+  var showCard = function (focus) {
+    card.hidden = false;
+    if (focus) body.focus();
+    else card.scrollIntoView({block: "nearest", behavior: "smooth"});
+  };
+  var reset = function () {
+    card.hidden = true; body.value = ""; if (source) source.value = "typed"; status.textContent = "";
+  };
+  // Without a microphone (or without voice on the server) the button opens the keyboard card.
+  if (!listens) orb.addEventListener("click", function () { showCard(true); });
+  think.addEventListener("bk:voice-text", function () { showCard(false); });
+  think.querySelector("[data-think-type]").addEventListener("click", function () { window.bkStopRecording(); showCard(true); });
+  think.querySelector("[data-think-cancel]").addEventListener("click", function () { window.bkStopRecording(); reset(); });
 
   var addRow = function (n) {
+    if (!list) return;
     var li = document.createElement("li");
     li.setAttribute("data-note", n.id);
     var p = document.createElement("p");
@@ -136,43 +137,56 @@
     var meta = document.createElement("span");
     meta.className = "bk-notes-meta";
     var bits = [];
-    if (n.page) bits.push(attr("page-tpl").replace("{n}", n.page));
+    if (n.page) bits.push(sattr("page-tpl").replace("{n}", n.page));
     var d = new Date(n.when);
     bits.push(String(d.getDate()).padStart(2, "0") + "." + String(d.getMonth() + 1).padStart(2, "0"));
-    if (n.source === "voice") bits.push(attr("voice-label"));
+    if (n.source === "voice") bits.push(sattr("voice-label"));
     meta.textContent = bits.join(" · ");
     var del = document.createElement("button");
     del.type = "button"; del.className = "bk-notes-del"; del.setAttribute("data-note-del", n.id);
-    del.textContent = attr("delete-label");
+    del.textContent = sattr("delete-label");
     li.appendChild(p); li.appendChild(meta); li.appendChild(del);
     list.appendChild(li);
-    refreshCount();
+  };
+  var refreshCount = function () {
+    var n = list ? list.children.length : 0;
+    count.textContent = String(n);
+    countLink.hidden = n === 0;
   };
 
-  form.addEventListener("submit", function (e) {
+  think.addEventListener("submit", function (e) {
     e.preventDefault();
-    if (!body.value.trim()) return;
+    if (!body.value.trim()) { showCard(true); return; }
     page.value = currentPage();
-    fetch(form.getAttribute("action"), {method: "POST", body: new FormData(form),
+    fetch(think.getAttribute("action"), {method: "POST", body: new FormData(think),
       headers: {"Accept": "application/json", "X-CSRFToken": csrf}})
       .then(function (r) { return r.json().then(function (d) { return {ok: r.ok, d: d}; }); })
       .then(function (res) {
         if (!res.ok) { status.textContent = res.d.error || ""; return; }
         addRow(res.d.note);
-        body.value = ""; if (source) source.value = "typed"; status.textContent = "";
+        reset();
         body.blur();
-        close();  // saved: straight back to the timer
-        openBtn.classList.remove("is-saved"); void openBtn.offsetWidth; openBtn.classList.add("is-saved");
-        openBtn.setAttribute("data-flash", attr("saved"));
+        refreshCount();
+        status.textContent = think.getAttribute("data-saved") || "";
+        setTimeout(function () { if (card.hidden) status.textContent = ""; }, 2200);
       })
-      .catch(function () { form.submit(); });
+      .catch(function () { think.submit(); });
   });
 
+  // ---- 3. the sheet of earlier thoughts ---------------------------------------------
+  if (!sheet) return;
+  var close = function () { sheet.close(); };
+  countLink.addEventListener("click", function () {
+    if (sheet.showModal) sheet.showModal(); else sheet.setAttribute("open", "");
+    sheet.querySelector("[data-notes-close]").focus({preventScroll: true});
+  });
+  sheet.querySelector("[data-notes-close]").addEventListener("click", close);
+  sheet.addEventListener("click", function (e) { if (e.target === sheet) close(); });
   list.addEventListener("click", function (e) {
     var b = e.target.closest("[data-note-del]");
     if (!b) return;
     var id = b.getAttribute("data-note-del");
-    fetch(attr("del-tpl").replace("/0/", "/" + id + "/"), {method: "POST",
+    fetch(sattr("del-tpl").replace("/0/", "/" + id + "/"), {method: "POST",
       headers: {"Accept": "application/json", "X-CSRFToken": csrf}})
       .then(function (r) { if (r.ok) { b.closest("li").remove(); refreshCount(); } });
   });

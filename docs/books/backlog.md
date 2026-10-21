@@ -615,7 +615,7 @@ charging for the web lookup.
 | F-R.12 | "I finished the book!": a festive button; the clock stops, fireworks and confetti, a summary typed or said (can be skipped), then home | DONE |
 | F-R.13 | The top bar and the bottom menu stay fixed on every page | DONE |
 | F-R.14 | The reading screen: the "screen stays on" tip removed; the notes sheet opens without the keyboard, the microphone first, and saving returns to the timer | DONE |
-| F-R.15 | The timer's look and the "what I think" button: options page for Avi | WAITING for Avi's choice |
+| F-R.15 | Avi chose the reading candle (burns down over an hour, goes out with smoke when paused) and the breathing button (one tap listens, the words come back with "save the thought", typing a link away) | DONE |
 
 Open for later (Avi): what to do with a finished book's notes (a summary, a
 review draft, sharing some of them).

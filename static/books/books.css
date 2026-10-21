@@ -15,6 +15,8 @@ html[data-palette="lamplit"] {
   --bk-on-brass: #FFF8EA;
   --bk-flame: #E8590C;
   --bk-flame-core: #FFB020;
+  --bk-wax: #F3E9D2;
+  --bk-wax-edge: #D2BF97;
   --bk-line: #D3C4A8;
   --bk-wood: #B08A5A;
   --bk-wood-edge: #C9A473;
@@ -50,6 +52,8 @@ html[data-palette="den"] {
   --bk-on-brass: #15120F;
   --bk-flame: #FF7A2E;
   --bk-flame-core: #FFC84A;
+  --bk-wax: #E9DCC0;
+  --bk-wax-edge: #B5A27C;
   --bk-line: #3A3128;
   --bk-wood: #4E3B28;
   --bk-wood-edge: #7A6040;
@@ -77,6 +81,8 @@ html[data-palette="den"] {
     --bk-on-brass: #15120F;
     --bk-flame: #FF7A2E;
     --bk-flame-core: #FFC84A;
+    --bk-wax: #E9DCC0;
+    --bk-wax-edge: #B5A27C;
     --bk-line: #3A3128;
     --bk-wood: #4E3B28;
     --bk-wood-edge: #7A6040;
@@ -108,6 +114,8 @@ html[data-palette="warm"]:not([data-theme="dark"]) {
   --bk-on-brass: #FFFDF8;
   --bk-flame: #E8590C;
   --bk-flame-core: #FFB020;
+  --bk-wax: #F3E9D2;
+  --bk-wax-edge: #D2BF97;
   --bk-line: #E4DACA;
   --bk-wood: #C9A473;
   --bk-wood-edge: #D9B98A;
@@ -129,6 +137,8 @@ html[data-palette="bright"]:not([data-theme="dark"]) {
   --bk-on-brass: #FFFFFF;
   --bk-flame: #E8590C;
   --bk-flame-core: #FFB020;
+  --bk-wax: #F3E9D2;
+  --bk-wax-edge: #D2BF97;
   --bk-line: #E3DEFF;
   --bk-wood: #B9AEFF;
   --bk-wood-edge: #D6CFFF;
@@ -773,8 +783,6 @@ html[dir="ltr"] .bk-flip-leaf.is-back { animation: bk-leaf-ltr .32s ease-out rev
 .bk-go-on { white-space: normal; line-height: 1.3; }
 .bk-link-quiet { display: flex; align-items: center; justify-content: center; min-height: 44px; font-size: 14px; color: var(--bk-muted); }
 /* ---- my thoughts while reading (Avi, 2026-10-21) --------------------------------- */
-.bk-notes-open { margin: 4px 0 12px; gap: 8px; }
-.bk-notes-count:not(:empty) { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; background: var(--bk-brass); color: var(--bk-on-brass); font-size: 12px; font-weight: 700; }
 dialog.bk-notes { width: 100%; max-width: 560px; max-height: 88vh; margin: auto auto 0; padding: 14px 18px 22px; border: 0; border-radius: 16px 16px 0 0; background: var(--bk-surface); color: var(--bk-ink); box-shadow: 0 -10px 30px var(--bk-shadow-strong); overflow: auto; }
 dialog.bk-notes::backdrop { background: var(--bk-scrim); }
 dialog.bk-notes[open] { animation: bk-sheet-up .22s ease-out; }
@@ -833,10 +841,6 @@ dialog.bk-notes[open] { animation: bk-sheet-up .22s ease-out; }
 .bk-total-pages .bk-input { max-width: 160px; }
 /* ---- the reading screen, round 3 (Avi, 2026-10-21) ------------------------------- */
 .bk-reading.is-paused .bk-timer { opacity: .45; }
-.bk-notes-open { position: relative; }
-.bk-notes-open.is-saved::after { content: attr(data-flash); position: absolute; inset-inline-end: 12px; top: 50%; transform: translateY(-50%);
-  font-size: 12px; font-weight: 700; color: var(--bk-ok); animation: bk-flash 1.6s ease-out forwards; }
-@keyframes bk-flash { 0% { opacity: 0; } 15% { opacity: 1; } 75% { opacity: 1; } 100% { opacity: 0; } }
 
 /* the microphone: the main way in when there is one */
 .bk-mic { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 64px; border-radius: 999px;
@@ -871,6 +875,60 @@ dialog.bk-finish::backdrop { background: var(--bk-scrim); backdrop-filter: blur(
 .bk-finish-card .bk-form { text-align: start; gap: 8px; }
 .bk-finish-cancel { background: none; border: 0; color: var(--bk-muted); font: inherit; font-size: 13px; text-decoration: underline; min-height: 44px; cursor: pointer; margin-top: 4px; }
 .bk-finished-note { margin: 0; }
-@media (prefers-reduced-motion: reduce) { .bk-finish-open, .bk-finish-card, .bk-notes-open.is-saved::after { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .bk-finish-open, .bk-finish-card { animation: none; } }
 
 @media (prefers-reduced-motion: reduce) { dialog.bk-notes[open], .bk-mic.is-on .bk-mic-dot { animation: none; } }
+/* ---- the reading candle (Avi chose it, 2026-10-21): it burns down over an hour ---- */
+.bk-candle { --h: 1; --wax-max: 112px; position: relative; width: 140px; height: calc(var(--wax-max) + 70px); margin: 10px auto 0;
+  display: grid; justify-items: center; align-content: end; }
+.bk-candle-wax { position: relative; width: 40px; height: calc(var(--h) * var(--wax-max)); border-radius: 8px 8px 4px 4px;
+  background: linear-gradient(90deg, var(--bk-wax-edge), var(--bk-wax) 35%, var(--bk-wax) 70%, var(--bk-wax-edge)); transition: height 1s linear; }
+.bk-candle-wax::before { content: ""; position: absolute; top: -3px; left: 0; right: 0; height: 9px; border-radius: 50%; background: var(--bk-wax); box-shadow: inset 0 2px 3px var(--bk-wax-edge); }
+.bk-drip { position: absolute; top: 3px; width: 6px; border-radius: 0 0 6px 6px; background: var(--bk-wax); }
+.bk-drip--a { left: 5px; height: 20px; } .bk-drip--b { right: 8px; height: 12px; }
+.bk-candle-dish { width: 84px; height: 11px; border-radius: 50%; background: var(--bk-wood); box-shadow: 0 6px 10px var(--bk-shadow); }
+.bk-candle-wick, .bk-candle-flame, .bk-candle-glow, .bk-candle-smoke { position: absolute; left: 50%; transition: bottom 1s linear; }
+.bk-candle-wick { bottom: calc(var(--h) * var(--wax-max) + 18px); width: 2px; height: 9px; margin-left: -1px; background: var(--bk-ink); }
+.bk-candle-flame { bottom: calc(var(--h) * var(--wax-max) + 25px); width: 16px; height: 30px; margin-left: -8px;
+  border-radius: 50% 50% 45% 45% / 65% 65% 35% 35%;
+  background: radial-gradient(ellipse at 50% 75%, var(--bk-on-brass) 0 18%, var(--bk-flame-core) 40%, var(--bk-flame) 75%, transparent 76%);
+  transform-origin: 50% 90%; animation: bk-candle-flicker 1.6s ease-in-out infinite; filter: drop-shadow(0 0 10px var(--bk-flame-core)); }
+.bk-candle-glow { bottom: calc(var(--h) * var(--wax-max) - 20px); width: 170px; height: 170px; margin-left: -85px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle closest-side, var(--bk-lamp-glow), transparent); }
+.bk-candle-smoke { bottom: calc(var(--h) * var(--wax-max) + 26px); width: 20px; height: 50px; margin-left: -10px; opacity: 0; }
+.bk-candle-smoke i { position: absolute; bottom: 0; left: 8px; width: 4px; height: 4px; border-radius: 50%; background: var(--bk-muted); opacity: 0; }
+@keyframes bk-candle-flicker { 0%, 100% { transform: scale(1) rotate(0); } 25% { transform: scale(1.06, .95) rotate(-3deg); } 50% { transform: scale(.95, 1.06) rotate(2deg); } 75% { transform: scale(1.03, .98) rotate(-1deg); } }
+/* paused: the candle goes out and a wisp of smoke rises */
+.bk-reading.is-paused .bk-candle-flame, .bk-reading.is-paused .bk-candle-glow { opacity: 0; transition: opacity .4s; }
+.bk-reading.is-paused .bk-candle-smoke { opacity: 1; }
+.bk-reading.is-paused .bk-candle-smoke i { animation: bk-smoke 2.4s ease-out infinite; }
+.bk-reading.is-paused .bk-candle-smoke i:nth-child(2) { animation-delay: .8s; } .bk-reading.is-paused .bk-candle-smoke i:nth-child(3) { animation-delay: 1.6s; }
+@keyframes bk-smoke { 0% { transform: translate(0, 0) scale(1); opacity: .55; } 100% { transform: translate(6px, -46px) scale(4); opacity: 0; } }
+.bk-reading .bk-timer { margin-top: 4px; }
+
+/* ---- what I think: the breathing button (Avi chose it, 2026-10-21) ------------------ */
+.bk-think { display: grid; justify-items: center; gap: 6px; margin: 6px 0 16px; }
+.bk-orb { position: relative; width: 148px; height: 148px; border-radius: 50%; border: 0; cursor: pointer; background: var(--bk-brass); color: var(--bk-on-brass);
+  font: inherit; display: grid; place-content: center; text-align: center; gap: 2px; box-shadow: 0 12px 26px var(--bk-shadow); margin: 10px 0 4px; }
+.bk-orb b { font-family: var(--bk-serif); font-size: 21px; }
+.bk-orb small { font-size: 12px; opacity: .9; }
+.bk-orb::before, .bk-orb::after { content: ""; position: absolute; inset: -10px; border-radius: 50%; border: 2px solid var(--bk-brass); opacity: .5; animation: bk-breathe 3.2s ease-out infinite; pointer-events: none; }
+.bk-orb::after { animation-delay: 1.6s; }
+@keyframes bk-breathe { from { transform: scale(.92); opacity: .6; } to { transform: scale(1.25); opacity: 0; } }
+.bk-orb.is-on { background: var(--bk-danger); color: var(--bk-on-danger); }
+.bk-orb.is-on::before, .bk-orb.is-on::after { border-color: var(--bk-danger); animation-duration: 1.4s; }
+.bk-orb:disabled { opacity: .7; }
+.bk-orb-wave { display: flex; gap: 4px; align-items: center; justify-content: center; height: 24px; margin-top: 4px; }
+.bk-orb-wave i { width: 4px; height: 6px; border-radius: 2px; background: currentColor; }
+.bk-orb.is-on .bk-orb-wave i { animation: bk-wave .9s ease-in-out infinite; }
+.bk-orb.is-on .bk-orb-wave i:nth-child(2) { animation-delay: .15s; } .bk-orb.is-on .bk-orb-wave i:nth-child(3) { animation-delay: .3s; }
+.bk-orb.is-on .bk-orb-wave i:nth-child(4) { animation-delay: .45s; } .bk-orb.is-on .bk-orb-wave i:nth-child(5) { animation-delay: .6s; }
+@keyframes bk-wave { 50% { height: 22px; } }
+.bk-think-status { margin: 0; min-height: 18px; text-align: center; }
+.bk-think-card { width: 100%; display: grid; gap: 8px; background: var(--bk-surface); border: 1px solid var(--bk-line); border-radius: 16px; padding: 12px; animation: bk-sheet-up .2s ease-out; }
+.bk-think-card[hidden] { display: none; }
+.bk-think-links { display: flex; gap: 14px; justify-content: center; margin: 0; }
+.bk-think-links button { background: none; border: 0; font: inherit; font-size: 14px; color: var(--bk-muted); text-decoration: underline; min-height: 44px; padding: 0 6px; cursor: pointer; }
+.bk-think-links button[hidden] { display: none; }
+@media (prefers-reduced-motion: reduce) { .bk-candle-flame, .bk-orb::before, .bk-orb::after, .bk-orb.is-on .bk-orb-wave i, .bk-reading.is-paused .bk-candle-smoke i, .bk-think-card { animation: none; } }
+

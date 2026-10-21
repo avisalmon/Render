@@ -10,33 +10,48 @@
   <h1 class="bk-title" style="margin-top: 4px">{{ session.entry.title }}</h1>
   <p class="bk-muted" style="margin: 0">{% t "read.from_page" n=session.start_page %}{% if pages %} · {% t "read.of_pages" n=pages %}{% endif %}{% if progress.pace %} · {% t "read.pace" n=progress.pace %}{% endif %}</p>
 
+  <div class="bk-candle" data-candle aria-hidden="true">
+    <span class="bk-candle-glow"></span>
+    <span class="bk-candle-smoke"><i></i><i></i><i></i></span>
+    <span class="bk-candle-flame"></span>
+    <span class="bk-candle-wick"></span>
+    <span class="bk-candle-wax"><i class="bk-drip bk-drip--a"></i><i class="bk-drip bk-drip--b"></i></span>
+    <span class="bk-candle-dish"></span>
+  </div>
   <div class="bk-timer" role="timer" aria-live="off" data-timer>0:00</div>
   {% if error %}<p class="bk-error" role="alert">{{ error }}</p>{% endif %}
 
-  <button type="button" class="bk-btn bk-btn--wide bk-notes-open" data-notes-open aria-haspopup="dialog">
-    {% t "notes.open" %}<span class="bk-notes-count" data-notes-count>{% if notes %}{{ notes|length }}{% endif %}</span>
-  </button>
+  <form class="bk-think" method="post" action="{% url 'books:note_add' session.entry_id %}" data-think data-saved="{% t "think.saved" %}">
+    {% csrf_token %}
+    <input type="hidden" name="source" value="typed" data-voice-source>
+    <input type="hidden" name="page" value="{{ session.start_page }}" data-notes-page>
+    <input type="hidden" name="next" value="{{ request.path }}">
+    <button type="button" class="bk-orb" data-orb{% if voice %} data-voice-mic data-url="{% url 'books:note_voice' %}"{% endif %}
+            data-record="{% t "think.tap" %}" data-stop="{% t "think.stop" %}" data-listening="{% t "notes.listening" %}"
+            data-working="{% t "notes.working" %}" data-check="{% t "notes.check" %}" data-mic-error="{% t "notes.err.mic" %}">
+      <b>{% t "notes.open" %}</b><small data-voice-label>{% if voice %}{% t "think.tap" %}{% else %}{% t "think.tap_type" %}{% endif %}</small>
+      <span class="bk-orb-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+    </button>
+    <p class="bk-help bk-think-status" data-voice-status aria-live="polite"></p>
+    <div class="bk-think-card" data-think-card hidden>
+      <textarea class="bk-input" name="body" rows="3" maxlength="2000" placeholder="{% t "notes.placeholder" %}" aria-label="{% t "notes.title" %}" data-voice-text></textarea>
+      <button type="submit" class="bk-btn bk-btn--primary bk-btn--wide">{% t "think.save" %}</button>
+      <button type="button" class="bk-btn bk-btn--quiet bk-btn--wide" data-think-cancel>{% t "think.cancel" %}</button>
+    </div>
+    <p class="bk-think-links">
+      <button type="button" data-think-type>{% t "think.type" %}</button>
+      <button type="button" data-notes-open aria-haspopup="dialog" {% if not notes %}hidden{% endif %}><span data-notes-count>{{ notes|length }}</span> {% t "think.earlier" %}</button>
+    </p>
+  </form>
   <dialog class="bk-notes" data-notes aria-labelledby="notes-h"
-          data-voice-url="{% url 'books:note_voice' %}"
           data-del-tpl="{% url 'books:note_delete' 0 %}" data-page-tpl="{% t "notes.page" n="{n}" %}" data-voice-label="{% t "notes.voice" %}"
-          data-delete-label="{% t "notes.delete" %}" data-saved="{% t "notes.saved" %}">
+          data-delete-label="{% t "notes.delete" %}">
     <div class="bk-sheet-handle" aria-hidden="true"></div>
     <h2 class="bk-h2" id="notes-h" style="margin-top: 0">{% t "notes.title" %}</h2>
     <p class="bk-help" style="margin: 0 0 8px">{{ session.entry.title }} · {% t "notes.private" %}</p>
     <ol class="bk-notes-list" data-notes-list>
       {% for n in notes %}<li data-note="{{ n.pk }}"><p>{{ n.body|linebreaksbr }}</p><span class="bk-notes-meta">{% if n.page %}{% t "notes.page" n=n.page %} · {% endif %}{{ n.created_at|date:"d.m" }}{% if n.source == "voice" %} · {% t "notes.voice" %}{% endif %}</span><button type="button" class="bk-notes-del" data-note-del="{{ n.pk }}">{% t "notes.delete" %}</button></li>{% endfor %}
     </ol>
-    <p class="bk-muted" data-notes-empty {% if notes %}hidden{% endif %}>{% t "notes.none" %}</p>
-    <form class="bk-form bk-notes-form" method="post" action="{% url 'books:note_add' session.entry_id %}" data-notes-form>
-      {% csrf_token %}
-      <input type="hidden" name="source" value="typed" data-voice-source>
-      <input type="hidden" name="page" value="{{ session.start_page }}" data-notes-page>
-      <input type="hidden" name="next" value="{{ request.path }}">
-      {% if voice %}{% include "books/read/_mic.html" %}{% endif %}
-      <textarea class="bk-input" name="body" rows="2" maxlength="2000" placeholder="{% t "notes.placeholder" %}" aria-label="{% t "notes.title" %}" data-voice-text></textarea>
-      <p class="bk-help" data-voice-status aria-live="polite" style="margin: 0"></p>
-      <button type="submit" class="bk-btn bk-btn--primary bk-btn--wide">{% t "notes.save" %}</button>
-    </form>
     <button type="button" class="bk-btn bk-btn--quiet bk-btn--wide" data-notes-close>{% t "notes.close" %}</button>
   </dialog>
 
@@ -110,7 +125,14 @@
     var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
     out.textContent = (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(sec).padStart(2, '0');
   };
-  var tick = function () { if (!paused) show(Math.max(0, Math.floor((Date.now() - base) / 1000))); };
+  var candle = document.querySelector('[data-candle]');
+  var tick = function () {
+    if (paused) return;
+    var sec = Math.max(0, Math.floor((Date.now() - base) / 1000));
+    show(sec);
+    // The candle burns down over an hour of reading (Avi chose it, 2026-10-21).
+    if (candle) candle.style.setProperty('--h', String(Math.max(0.12, 1 - sec / 3600)));
+  };
   tick();
   setInterval(tick, 1000);
   var pause = function () {

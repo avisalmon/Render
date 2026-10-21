@@ -155,8 +155,9 @@ def test_the_timer_page_has_the_notes_sheet_with_my_earlier_notes(client, noa, b
     reading.start(noa, book, 6)
     client.force_login(noa.user)
     html = client.get("/books/read/").content.decode()
-    assert "data-notes-open" in html and "מחשבה מאתמול" in html and "books/notes.js" in html
-    assert '<span class="bk-notes-count" data-notes-count>1</span>' in html
+    assert "data-orb" in html and "מחשבה מאתמול" in html and "books/notes.js" in html
+    assert '<span data-notes-count>1</span>' in html and "data-candle" in html
+    assert "data-voice-mic" not in html  # no key here: the button opens the keyboard card instead
 
 
 def test_adding_by_fetch_answers_json_and_takes_the_running_session(client, noa, book):

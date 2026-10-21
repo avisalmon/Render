@@ -571,9 +571,9 @@ def test_on_a_phone_a_reader_can_find_a_book_start_and_finish(browser, live_serv
 
 
 def test_on_a_phone_a_thought_is_saved_while_the_timer_runs(browser, live_server, db):
-    """Avi, 2026-10-21: "what do I think" while reading. Open the sheet (no
-    keyboard until the box is tapped), type, save; the sheet closes back to
-    the timer, the note joins the earlier one and the count follows."""
+    """Avi, 2026-10-21: "what I think" while reading, typed. "Type instead"
+    opens the card with the keyboard, "save the thought" saves it and the
+    card closes; the count opens the earlier thoughts."""
     from books import catalog, notes, reading
     from books.models import Profile, ReadingNote
     build_world()
@@ -583,18 +583,64 @@ def test_on_a_phone_a_thought_is_saved_while_the_timer_runs(browser, live_server
     reading.start(rp, e, 7)
     context, page, _ = _open(browser, live_server, "reader", "/books/read/", PHONE, "light")
     try:
-        page.click("[data-notes-open]")
-        page.wait_for_selector("dialog[data-notes][open]")
-        assert page.locator("[data-notes-list] li").count() == 1
-        # Opening does not pop the keyboard: the box is not focused until tapped.
         assert page.evaluate("document.activeElement.matches('[data-voice-text]')") is False
-        page.fill("dialog[data-notes] [data-voice-text]", "השורה על הים")
-        page.click("[data-notes-form] button[type=submit]")
-        page.wait_for_function("document.querySelectorAll('[data-notes-list] li').length === 2")
-        # Saved: straight back to the timer.
-        page.wait_for_function("!document.querySelector('dialog[data-notes]').open")
+        page.click("[data-think-type]")
+        assert page.is_visible("[data-think-card]")
+        page.fill("[data-think] [data-voice-text]", "השורה על הים")
+        page.click("[data-think] button[type=submit]")
+        page.wait_for_function("document.querySelector('[data-think-card]').hidden")
         assert page.text_content("[data-notes-count]").strip() == "2" and page.locator("[data-timer]").count() == 1
         assert ReadingNote.objects.filter(profile=rp).order_by("pk").last().body == "השורה על הים"
+        page.click("[data-think] [data-notes-open]")
+        page.wait_for_selector("dialog[data-notes][open]")
+        assert page.locator("[data-notes-list] li").count() == 2
+        page.click("[data-notes-close]")
+    finally:
+        context.close()
+
+
+FAKE_MIC = """
+navigator.mediaDevices.getUserMedia = () => Promise.resolve({getTracks: () => [{stop() {}}]});
+window.MediaRecorder = class {
+  constructor(s, o) { this.state = 'inactive'; this.mimeType = 'audio/webm'; }
+  static isTypeSupported() { return true; }
+  start() { this.state = 'recording'; }
+  stop() { this.state = 'inactive'; this.ondataavailable({data: new Blob(['x'], {type: 'audio/webm'})}); this.onstop(); }
+};
+"""
+
+
+def test_on_a_phone_one_tap_listens_and_the_words_are_saved(browser, live_server, db, settings):
+    """Avi, 2026-10-21: the breathing button listens at once; a second tap
+    stops, the words come back with "save the thought". The microphone and
+    the transcription are stood in for; everything else is real."""
+    import json
+
+    from books import catalog, reading
+    from books.models import Profile, ReadingNote
+    settings.OPENAI_API_KEY = "sk-test"
+    build_world()
+    rp = Profile.objects.get(user__username="reader")
+    e = catalog.CatalogEntry.objects.create(collection_type=catalog.book_type(), title="ספר מדבר")
+    reading.start(rp, e, 40)
+    context, page, _ = _open(browser, live_server, "reader", "/books/", PHONE, "light")
+    try:
+        page.add_init_script(FAKE_MIC)
+        page.route("**/books/read/voice/", lambda route: route.fulfill(
+            status=200, content_type="application/json", body=json.dumps({"text": "המשפט על הגשם"})))
+        page.goto(f"{live_server.url}/books/read/", wait_until="domcontentloaded")
+        page.wait_for_selector("[data-orb][data-voice-mic]")
+        page.click("[data-orb]")
+        page.wait_for_selector("[data-orb].is-on")
+        assert page.is_hidden("[data-think-card]")
+        page.click("[data-orb]")
+        page.wait_for_selector("[data-think-card]:not([hidden])")
+        assert page.input_value("[data-think] [data-voice-text]") == "המשפט על הגשם"
+        assert page.evaluate("document.activeElement.matches('[data-voice-text]')") is False  # no keyboard
+        page.click("[data-think] button[type=submit]")
+        page.wait_for_function("document.querySelector('[data-think-card]').hidden")
+        note = ReadingNote.objects.get(profile=rp)
+        assert note.body == "המשפט על הגשם" and note.source == "voice"
     finally:
         context.close()
 
@@ -613,6 +659,9 @@ def test_on_a_phone_the_page_is_flicked_not_typed(browser, live_server, db):
     context, page, _ = _open(browser, live_server, "reader", "/books/read/", PHONE, "light")
     try:
         page.wait_for_selector("[data-flip-pad]")
+        # The wheel sits below the candle: scroll it to the middle, as a reader would.
+        page.evaluate("document.querySelector('[data-flip-pad]').scrollIntoView({block: 'center'})")
+        page.wait_for_timeout(200)
         box = page.locator("[data-flip-pad]").bounding_box()
         y = box["y"] + box["height"] / 2
         x0 = box["x"] + box["width"] / 2 - 100
