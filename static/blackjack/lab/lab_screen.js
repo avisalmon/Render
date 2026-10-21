@@ -299,9 +299,14 @@
     renderLadder();
     renderFreeze();
     var m = model.measured;
+    var long = c.handsPerDay > 800 && m.ahead_pct_long != null;
+    var mine = m.ahead_pct_short != null ? (long ? m.ahead_pct_long : m.ahead_pct_short) : m.ahead_pct;
+    var theirs = m.default_ahead_pct_short != null ? (long ? m.default_ahead_pct_long : m.default_ahead_pct_short) : m.default_ahead_pct;
     var text = "מולא: " + Charts.policyLine(p) + (p.freezeAfter === "repeat" ? ", ואחרי השלב האחרון ממשיכים לפיו" : "") + ". " +
-      "על " + fmt(m.held_out) + " שולחנות שהמודל לא ראה, המלצות כאלה הסתיימו ברווח ב-" + m.ahead_pct + "% מהימים, " +
-      "מול " + m.default_ahead_pct + "% במדיניות ברירת המחדל ו-" + m.flat_ahead_pct + "% בהימור קבוע. הממוצע לא משתנה: היתרון של הקזינו נשאר.";
+      "על שולחנות שהמודל לא ראה, עם ימים " + (long ? "ארוכים (יותר מ-800 ידיים)" : "של עד 800 ידיים") +
+      ", המלצות כאלה הסתיימו ברווח ב-" + mine + "% מהימים, מול " + theirs + "% במדיניות ברירת המחדל. " +
+      (mine < 50 ? "יותר מחצי מהימים עדיין מפסידים" : "עדיין הרבה ימים מפסידים") +
+      ": היתרון של הקזינו נשאר, והממוצע לא משתנה.";
     var warn = [];
     if (document.querySelector('input[name="chart"]:checked').value !== "classic") warn.push("המודל אומן על הטבלה הקלאסית.");
     if (Object.keys(state.overrides).length) warn.push("המודל אומן בלי שינויים בטבלה.");
