@@ -122,7 +122,7 @@ class MaterialForm(forms.ModelForm):
     class Meta:
         model = Material
         fields = ["kind", "title", "line", "url", "file"]
-        labels = {"kind": "סוג", "title": "כותרת", "line": "שורת הסבר", "url": "קישור (סרטון יוטיוב או הדרכה ב-babook)", "file": "קובץ"}
+        labels = {"kind": "סוג", "title": "כותרת", "line": "שורת הסבר", "url": "קישור (סרטון יוטיוב, הדרכה ב-babook, או כל קישור אחר)", "file": "קובץ"}
         widgets = {"url": forms.URLInput(attrs={"dir": "ltr", "inputmode": "url", "placeholder": "https://"})}
 
     def clean(self):
@@ -132,7 +132,7 @@ class MaterialForm(forms.ModelForm):
             _http(url)
         if kind == Material.FILE and not file and not (self.instance and self.instance.file):
             self.add_error("file", "צריך לצרף קובץ.")
-        if kind in (Material.VIDEO, Material.COURSE) and not url:
+        if kind in (Material.VIDEO, Material.COURSE, Material.LINK) and not url:
             self.add_error("url", "צריך קישור.")
         if kind == Material.VIDEO and url:
             from .models import youtube_id

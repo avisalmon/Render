@@ -30,6 +30,7 @@ def _member(email, name, status=Member.APPROVED, admin=False, superuser=False):
 def people(db):
     avi = _member("avi.salmon@gmail.com", "אבי סלמון", admin=True, superuser=True)
     call_command("seed_cohort")
+    Material.objects.all().delete()   # the starter shelf has its own test below
     return {"avi": avi, "dana": _member("dana@example.com", "דנה רכזת"), "eli": _member("eli@example.com", "אלי")}
 
 
@@ -221,3 +222,31 @@ def test_the_example_project_page_is_for_people_inside_only(client, people):
         assert part in html, part
     assert "אינו מסמך רשמי של משרד החינוך" in html
     assert 'href="/cohort/tracks/imaginary-electronics/"' in html
+
+
+def test_the_starter_shelf_is_on_a_fresh_site(db):
+    """Avi, 2026-10-21: a first shelf of materials, put there once by a migration."""
+    items = list(Material.objects.order_by("created_at"))
+    assert [m.kind for m in items] == ["course", "video", "video", "video", "video", "course", "link", "video", "video", "video"] + ["course"] * 7
+    assert [m.url for m in items[10:]] == [f"https://babook.co.il/courses/{slug}/" for slug in (
+        "tinkercad", "fusion360", "python", "micropython-thonny", "exponential-organizations", "leading-innovation", "press-ideation")]
+    assert not any("co-coding" in m.url for m in items), "a hidden course was linked"
+    assert items[0].url == "https://babook.co.il/courses/ai-user-journey/"
+    assert items[5].url == "https://babook.co.il/courses/engineer-x10/"
+    assert items[6].url == "https://babook.co.il/blog/ai-education-compass/"
+    assert all(m.title and m.line for m in items)
+    assert [m.youtube_id for m in items if m.kind == "video"] == ["LPZh9BOjkQs", "zjkBMFhNj_g", "aircAruvnKk", "wjZofJX0v4M",
+                                                                  "eQdYIxiAw4E", "iMrC16J-LaQ", "Lqd2Sa8TkC8"]
+    assert all(youtube_id(m.url) == m.youtube_id for m in items if m.kind == "video")
+
+
+
+def test_a_link_material_opens_as_a_link_not_a_course(client, people):
+    """The compass is a page on the blog, so its button says open, not course."""
+    client.force_login(people["avi"].user)
+    client.post("/cohort/materials/new/", {"kind": "link", "title": "המצפן", "line": "מסמך המדיניות", "url": "https://babook.co.il/blog/ai-education-compass/"})
+    client.post("/cohort/materials/new/", {"kind": "link", "title": "בלי קישור", "line": "x"})
+    assert Material.objects.count() == 1
+    html = client.get("/cohort/materials/").content.decode()
+    item = html.split('class="cb-tag cb-tag-link"', 1)[1].split("</article>", 1)[0]
+    assert 'href="https://babook.co.il/blog/ai-education-compass/"' in item and "לפתוח" in item and "להדרכה" not in item

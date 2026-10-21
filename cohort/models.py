@@ -180,8 +180,8 @@ def youtube_id(url):
 class Material(models.Model):
     """Avi's shelf (REQ-C.30 to C.34), in the order he added it."""
 
-    VIDEO, FILE, COURSE = "video", "file", "course"
-    KINDS = [(VIDEO, "סרטון"), (FILE, "מסמך"), (COURSE, "הדרכה ב-babook")]
+    VIDEO, FILE, COURSE, LINK = "video", "file", "course", "link"
+    KINDS = [(VIDEO, "סרטון"), (FILE, "מסמך"), (COURSE, "הדרכה ב-babook"), (LINK, "קישור")]
 
     kind = models.CharField(max_length=8, choices=KINDS)
     title = models.CharField(max_length=160)

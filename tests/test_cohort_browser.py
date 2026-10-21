@@ -55,6 +55,7 @@ def world(transactional_db, settings, tmp_path, monkeypatch):
     settings.COHORT_SHOTS_ENABLED = True
     monkeypatch.setattr(shots, "fetch", lambda url, timeout=12: _jpeg())
     call_command("seed_cohort", stdout=StringIO())
+    Material.objects.all().delete()
     avi = User.objects.create_superuser("avi@example.com", "avi@example.com", PASSWORD, first_name="אבי", last_name="סלמון")
     people = []
     for i, name in enumerate(["רונית לוי", "יוסי כהן", "מיכל אברהם", "דוד מזרחי", "שירה פרץ"]):

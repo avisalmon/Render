@@ -192,7 +192,7 @@ img { max-width: 100%; height: auto; display: block; }
 .cb-track-name { font-family: var(--f-display); font-weight: 700; font-size: 2.1rem; line-height: 1; }
 .cb-track.is-example { background: #fffbe8; }
 .cb-tag { display: inline-block; background: var(--ink); color: #fff; font-size: .75rem; font-weight: 700; padding: 2px 8px; justify-self: start; }
-.cb-tag-video { background: var(--red); } .cb-tag-file { background: var(--blue); } .cb-tag-course { background: var(--green); }
+.cb-tag-video { background: var(--red); } .cb-tag-file { background: var(--blue); } .cb-tag-course { background: var(--green); } .cb-tag-link { background: var(--wood); }
 .cb-ticks { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; font-size: .82rem; }
 .cb-ticks li { padding: 2px 8px; border: 1px dashed var(--ink-soft); color: var(--ink-soft); }
 .cb-ticks li.is-done { border-style: solid; border-color: var(--green); color: var(--green); font-weight: 700; }

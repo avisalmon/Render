@@ -5,7 +5,7 @@
 <article class="cb-paper cb-form-paper">
   <span class="cb-pin" aria-hidden="true"></span>
   <h1 class="cb-h1">{% if item %}עריכת {{ item.title }}{% else %}חומר חדש{% endif %}</h1>
-  <p class="cb-muted">סרטון: קישור ליוטיוב. מסמך: קובץ שנשמר באתר. הדרכה: קישור להדרכה ב-babook.</p>
+  <p class="cb-muted">סרטון: קישור ליוטיוב. מסמך: קובץ שנשמר באתר. הדרכה: קישור להדרכה ב-babook. קישור: כל דף אחר.</p>
   <form method="post" enctype="multipart/form-data" class="cb-form">
     {% csrf_token %}
     {% for field in form %}
