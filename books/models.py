@@ -1097,6 +1097,9 @@ class ReadingSession(models.Model):
     end_page = models.PositiveIntegerField(null=True, blank=True)
     seconds = models.PositiveIntegerField(default=0)
     finished_book = models.BooleanField(default=False)
+    # Leaving the reading screen pauses the clock (Avi, 2026-10-21).
+    paused_at = models.DateTimeField(null=True, blank=True)
+    paused_seconds = models.PositiveIntegerField(default=0)
 
     class Meta:
         ordering = ["-started_at"]
@@ -1124,6 +1127,7 @@ class ReadingNote(models.Model):
     page = models.PositiveIntegerField(null=True, blank=True)
     body = models.TextField(max_length=2000)
     source = models.CharField(max_length=6, choices=[(TYPED, "typed"), (VOICE, "voice")], default=TYPED)
+    is_summary = models.BooleanField(default=False)  # written when the book was finished
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

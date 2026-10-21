@@ -835,3 +835,18 @@ saw the element and its numbers; only the picture showed nothing drawn.
 `radial-gradient(circle closest-side, ...)`, so the percentages are of the
 real radius; and any new drawn shape is checked on a screenshot.
 
+### 32. A timer counts only while its screen is in front; a sheet opens without the keyboard
+
+Avi, 2026-10-21, using the reading timer: it kept counting after he left
+the screen, and opening "what I think" popped the phone keyboard although
+he meant to speak. Both were built to the letter of the request (a
+timer from start to end; a box to write in) and missed how the phone is
+held.
+
+**The rule.** A clock that measures a person's activity pauses when its
+screen is hidden or left (`visibilitychange`, `pagehide`, a beacon to the
+server) and resumes on return; the server subtracts pauses. A sheet or
+dialog never focuses a text field on open (on a phone that opens the
+keyboard); focus goes to the likely first action, and when voice is
+offered, the microphone comes first.
+

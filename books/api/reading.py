@@ -21,14 +21,14 @@ class ReadingSessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = ReadingSession
         fields = ["id", "entry", "copy", "started_at", "ended_at", "start_page", "end_page", "seconds",
-                  "finished_book"]
+                  "finished_book", "paused_at", "paused_seconds"]
         read_only_fields = fields
 
 
 class ReadingSessionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     """My sittings. POST `start` {entry, page, total_pages (optional, fills
     an empty catalogue count)}; POST `{id}/end` {end_page, finished,
-    total_pages}; POST `{id}/discard`."""
+    total_pages}; POST `{id}/pause`, `{id}/resume`, `{id}/discard`."""
 
     serializer_class = ReadingSessionSerializer
     permission_classes = [HasBooksProfile]
@@ -62,6 +62,14 @@ class ReadingSessionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, vi
         return Response(ReadingSessionSerializer(s).data)
 
     @action(detail=True, methods=["post"])
+    def pause(self, request, pk=None):
+        return Response(ReadingSessionSerializer(reading.pause(_me(request), self.get_object())).data)
+
+    @action(detail=True, methods=["post"])
+    def resume(self, request, pk=None):
+        return Response(ReadingSessionSerializer(reading.resume(_me(request), self.get_object())).data)
+
+    @action(detail=True, methods=["post"])
     def discard(self, request, pk=None):
         reading.discard(_me(request), self.get_object())
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -70,7 +78,7 @@ class ReadingSessionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, vi
 class ReadingNoteSerializer(serializers.ModelSerializer):
     class Meta:
         model = ReadingNote
-        fields = ["id", "entry", "session", "page", "body", "source", "created_at", "updated_at"]
+        fields = ["id", "entry", "session", "page", "body", "source", "is_summary", "created_at", "updated_at"]
         read_only_fields = ["session", "created_at", "updated_at"]
 
 

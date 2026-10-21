@@ -34,7 +34,7 @@ def for_book(profile, entry):
     return list(ReadingNote.objects.filter(profile=profile, entry=entry).order_by("created_at"))
 
 
-def add(profile, entry, body, source=ReadingNote.TYPED, session=None, page=None):
+def add(profile, entry, body, source=ReadingNote.TYPED, session=None, page=None, is_summary=False):
     body = (body or "").strip()
     if not body:
         raise NoteError("notes.err.empty")
@@ -51,7 +51,7 @@ def add(profile, entry, body, source=ReadingNote.TYPED, session=None, page=None)
     if source not in (ReadingNote.TYPED, ReadingNote.VOICE):
         source = ReadingNote.TYPED
     return ReadingNote.objects.create(profile=profile, entry=entry, session=session, page=page, body=body,
-                                      source=source)
+                                      source=source, is_summary=bool(is_summary))
 
 
 def edit(profile, note, body):

@@ -73,6 +73,15 @@ def landing(request):
     return render(request, "books/landing.html", {"books_json": json.dumps(rows, ensure_ascii=False)})
 
 
+def _just_finished(request, profile):
+    from .models import ReadingSession
+
+    pk = request.GET.get("finished") or ""
+    if not pk.isdigit():
+        return None
+    return ReadingSession.objects.filter(pk=pk, profile=profile, finished_book=True).select_related("entry").first()
+
+
 def _dial(profile):
     """The reading dial's ring (Avi chose it, 2026-10-21): today's reading
     toward the five minutes that count for the streak."""
@@ -119,6 +128,7 @@ def _home(request):
         "reading_today": __import__("books.reading", fromlist=["stats"]).stats(profile)["today_minutes"],
         "go_on": (__import__("books.reading", fromlist=["continue_list"]).continue_list(profile, limit=1) or [None])[0],
         "dial": _dial(profile),
+        "just_finished": _just_finished(request, profile),
         "book_pct": _book_ring(profile, *_dial_book(profile)),
     })
 

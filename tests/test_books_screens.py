@@ -571,9 +571,9 @@ def test_on_a_phone_a_reader_can_find_a_book_start_and_finish(browser, live_serv
 
 
 def test_on_a_phone_a_thought_is_saved_while_the_timer_runs(browser, live_server, db):
-    """Avi, 2026-10-21: "what do I think" while reading. Open the sheet, type,
-    save; it joins the earlier note without leaving the timer, and the count
-    on the button follows."""
+    """Avi, 2026-10-21: "what do I think" while reading. Open the sheet (no
+    keyboard until the box is tapped), type, save; the sheet closes back to
+    the timer, the note joins the earlier one and the count follows."""
     from books import catalog, notes, reading
     from books.models import Profile, ReadingNote
     build_world()
@@ -586,14 +586,15 @@ def test_on_a_phone_a_thought_is_saved_while_the_timer_runs(browser, live_server
         page.click("[data-notes-open]")
         page.wait_for_selector("dialog[data-notes][open]")
         assert page.locator("[data-notes-list] li").count() == 1
-        page.fill("[data-notes-body]", "השורה על הים")
+        # Opening does not pop the keyboard: the box is not focused until tapped.
+        assert page.evaluate("document.activeElement.matches('[data-voice-text]')") is False
+        page.fill("dialog[data-notes] [data-voice-text]", "השורה על הים")
         page.click("[data-notes-form] button[type=submit]")
         page.wait_for_function("document.querySelectorAll('[data-notes-list] li').length === 2")
-        assert page.text_content("[data-notes-count]").strip() == "2"
-        assert page.input_value("[data-notes-body]") == "" and page.locator("[data-timer]").count() == 1
+        # Saved: straight back to the timer.
+        page.wait_for_function("!document.querySelector('dialog[data-notes]').open")
+        assert page.text_content("[data-notes-count]").strip() == "2" and page.locator("[data-timer]").count() == 1
         assert ReadingNote.objects.filter(profile=rp).order_by("pk").last().body == "השורה על הים"
-        page.click("[data-notes-close]")
-        assert page.locator("dialog[data-notes][open]").count() == 0
     finally:
         context.close()
 
@@ -641,3 +642,36 @@ def test_on_a_phone_the_page_is_flicked_not_typed(browser, live_server, db):
         assert ReadingSession.objects.get(profile=rp, entry=e).end_page == 40
     finally:
         context.close()
+
+
+def test_on_a_phone_finishing_the_book_celebrates_and_goes_home(browser, live_server, db):
+    """Avi, 2026-10-21: a festive "I finished the book" button. The clock stops,
+    fireworks go up, a summary can be written (or skipped), and the book is
+    finished and I am home."""
+    from books import catalog, reading
+    from books.models import Profile, ReadingNote, ReadingSession
+    build_world()
+    rp = Profile.objects.get(user__username="reader")
+    e = catalog.CatalogEntry.objects.create(collection_type=catalog.book_type(), title="ספר שנגמר")
+    reading.start(rp, e, 250)
+    context, page, _ = _open(browser, live_server, "reader", "/books/read/", PHONE, "light")
+    try:
+        page.click("[data-finish-open]")
+        page.wait_for_selector("dialog[data-finish][open]")
+        page.wait_for_timeout(400)
+        assert ReadingSession.objects.get(entry=e).paused_at is not None  # the clock stopped
+        drawn = page.evaluate("""() => { const c = document.querySelector('[data-sky]');
+            const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+            for (let i = 3; i < d.length; i += 4) if (d[i] > 0) return true; return false; }""")
+        assert drawn  # something is in the sky
+        page.fill("dialog[data-finish] [data-voice-text]", "ספר על זמן ועל בית")
+        page.click("[data-finish-form] button[type=submit]:not([data-finish-skip])")
+        page.wait_for_url("**/books/?finished=*")
+        assert "כל הכבוד" in page.text_content(".bk-finished-note")
+        s = ReadingSession.objects.get(entry=e)
+        assert s.finished_book and s.end_page == 250
+        note = ReadingNote.objects.get(entry=e)
+        assert note.is_summary and note.body == "ספר על זמן ועל בית"
+    finally:
+        context.close()
+

@@ -48,7 +48,7 @@
   <div class="bk-layout">
     {% if user.books_profile %}{% include "books/_nav.html" with side=True %}{% endif %}
     <main class="bk-main" id="bk-content">
-      {% if user.books_profile %}{% books_reading_now as rn %}{% if rn %}{% block readbar %}<a class="bk-notice bk-scanbar" href="{% url 'books:read' %}" role="status"><b>{% t "read.bar" title=rn.entry.title %}</b></a>{% endblock %}{% endif %}{% endif %}
+      {% if user.books_profile %}{% books_reading_now as rn %}{% if rn %}{% block readbar %}<a class="bk-notice bk-scanbar" href="{% url 'books:read' %}" role="status"><b>{% t "read.bar" title=rn.entry.title %}</b>{% if rn.paused_at %} <span>· {% t "read.paused" %}</span>{% endif %}</a>{% endblock %}{% endif %}{% endif %}
       {% if user.books_profile %}{% books_scan_queue as sq %}{% if sq.any %}{% block scanbar %}
       <a class="bk-notice bk-scanbar" href="{% if sq.first %}{% url 'books:scan' sq.first.pk %}{% else %}{% url 'books:scan_new' %}{% endif %}" role="status">
         {% if sq.books %}<b>{% t "scanbar.waiting" n=sq.books shelves=sq.shelves %}</b>{% endif %}

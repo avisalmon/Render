@@ -531,3 +531,10 @@ saved; the audio is never stored, only the call's cost (`ModelCall`,
 purpose `voice_note`). Migration 0020. The API gained `sessions` (list,
 start, end, discard; missing until now) and `notes` (full CRUD, `voice`).
 
+**The clock pauses, and a finished book's summary (2026-10-21, Avi asked).**
+`ReadingSession.paused_at` (nullable) and `paused_seconds`: leaving the
+reading screen pauses the clock and coming back resumes it, so `seconds`
+counts reading only. `ReadingNote.is_summary`: the note written in the
+celebration when a book is finished. Migration 0021. API: `sessions/{id}/pause`
+and `resume`.
+

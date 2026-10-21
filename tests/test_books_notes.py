@@ -244,3 +244,78 @@ def test_the_api_runs_a_reading_session(client, noa, book):
     rows = client.get("/books/api/sessions/").json()
     rows = rows["results"] if isinstance(rows, dict) else rows
     assert [s["id"] for s in rows] == [sid]
+
+
+# ---- the clock pauses when the reading screen is left (Avi, 2026-10-21) ----------------
+
+def test_a_pause_is_not_counted(noa, book):
+    s = reading.start(noa, book, 1)
+    t0 = s.started_at
+    reading.pause(noa, s, now=t0 + timedelta(minutes=10))
+    assert reading.elapsed(s, now=t0 + timedelta(minutes=50)) == 600  # still paused: 10 minutes
+    reading.resume(noa, s, now=t0 + timedelta(minutes=50))
+    s = reading.end(noa, s, 20, now=t0 + timedelta(minutes=55))
+    assert s.seconds == 15 * 60 and s.paused_seconds == 40 * 60 and s.paused_at is None
+
+
+def test_ending_while_paused_stops_at_the_pause(noa, book):
+    s = reading.start(noa, book, 1)
+    t0 = s.started_at
+    reading.pause(noa, s, now=t0 + timedelta(minutes=7))
+    s = reading.end(noa, s, 9, now=t0 + timedelta(hours=3))
+    assert s.seconds == 7 * 60
+
+
+def test_pause_and_resume_are_mine_and_idempotent(noa, dan, book):
+    s = reading.start(noa, book, 1)
+    reading.pause(dan, s)
+    s.refresh_from_db()
+    assert s.paused_at is None
+    reading.pause(noa, s)
+    first = s.paused_at
+    reading.pause(noa, s)
+    assert s.paused_at == first
+
+
+def test_the_pause_beacon_and_the_page_resume(client, noa, book):
+    s = reading.start(noa, book, 1)
+    client.force_login(noa.user)
+    assert client.post(f"/books/read/{s.pk}/pause/").json() == {"paused": True}
+    s.refresh_from_db()
+    assert s.paused_at is not None
+    html = client.get("/books/").content.decode()
+    assert "מושהה" in html  # the dial says the clock is stopped
+    client.get("/books/read/")  # back on the reading screen
+    s.refresh_from_db()
+    assert s.paused_at is None
+    r = client.post(f"/books/read/{s.pk}/resume/")
+    assert "elapsed" in r.json()
+
+
+def test_finishing_saves_the_summary_and_goes_home(client, noa, book):
+    s = reading.start(noa, book, 100)
+    client.force_login(noa.user)
+    r = client.post(f"/books/read/{s.pk}/end/", {"end_page": "320", "finished": "1", "summary": "סוף מושלם",
+                                                 "summary_source": "voice"})
+    assert r.status_code == 302 and r["Location"] == f"/books/?finished={s.pk}"
+    note = ReadingNote.objects.get()
+    assert note.is_summary and note.source == "voice" and note.page == 320
+    html = client.get(r["Location"]).content.decode()
+    assert "סיימת לקרוא את ״מיכאל שלי״. כל הכבוד." in html
+
+
+def test_finishing_without_a_summary_saves_no_note(client, noa, book):
+    s = reading.start(noa, book, 100)
+    client.force_login(noa.user)
+    client.post(f"/books/read/{s.pk}/end/", {"end_page": "120", "finished": "1", "summary": ""})
+    s.refresh_from_db()
+    assert s.finished_book and not ReadingNote.objects.exists()
+
+
+def test_the_timer_page_has_the_finish_celebration_and_no_quiet_tip(client, noa, book):
+    reading.start(noa, book, 1)
+    client.force_login(noa.user)
+    html = client.get("/books/read/").content.decode()
+    assert "data-finish-open" in html and "books/finish.js" in html and "סיימתי את הספר!" in html
+    assert "המסך יישאר דלוק" not in html and 'name="finished" value="1"' in html
+

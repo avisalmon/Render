@@ -124,7 +124,8 @@ def test_start_read_and_finish_through_the_pages(client, noa, book):
     assert s.start_page == 120 and s.ended_at is None
     assert ReadingLog.objects.get(profile=noa, entry=book).status == ReadingLog.READING
     page = client.get("/books/read/").content.decode()
-    assert "data-timer" in page and "נא לא להפריע" in page and "wakeLock" in page
+    # The tip about Do Not Disturb left the timer (Avi, 2026-10-21: it took too much room); it stays on the start page.
+    assert "data-timer" in page and "נא לא להפריע" not in page and "wakeLock" in page
     # Every other page shows that a session is running.
     assert "קוראים עכשיו: מיכאל שלי" in client.get("/books/library/").content.decode()
     ReadingSession.objects.filter(pk=s.pk).update(started_at=timezone.now() - timedelta(minutes=20))

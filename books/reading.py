@@ -100,6 +100,32 @@ def day_seconds(profile, day):
         n=Sum("seconds"))["n"] or 0
 
 
+def elapsed(session, now=None):
+    """Seconds actually read: the clock minus every pause, the open one too."""
+    now = now or timezone.now()
+    paused = session.paused_seconds + (max(0, (now - session.paused_at).total_seconds()) if session.paused_at else 0)
+    return int(min(MAX_SESSION_SECONDS, max(0, (now - session.started_at).total_seconds() - paused)))
+
+
+def pause(profile, session, now=None):
+    """The reading screen was left: the clock stops until I come back."""
+    if session.profile_id != profile.pk or session.ended_at is not None or session.paused_at is not None:
+        return session
+    session.paused_at = now or timezone.now()
+    session.save(update_fields=["paused_at"])
+    return session
+
+
+def resume(profile, session, now=None):
+    if session.profile_id != profile.pk or session.ended_at is not None or session.paused_at is None:
+        return session
+    now = now or timezone.now()
+    session.paused_seconds += int(max(0, (now - session.paused_at).total_seconds()))
+    session.paused_at = None
+    session.save(update_fields=["paused_at", "paused_seconds"])
+    return session
+
+
 def end(profile, session, end_page, finished=False, now=None):
     if session.profile_id != profile.pk:
         raise ReadingError("read.err.not_yours")
@@ -112,8 +138,11 @@ def end(profile, session, end_page, finished=False, now=None):
     if end_page < session.start_page:
         raise ReadingError("read.err.backwards")
     now = now or timezone.now()
+    session.seconds = elapsed(session, now)
+    if session.paused_at is not None:
+        session.paused_seconds += int(max(0, (now - session.paused_at).total_seconds()))
+        session.paused_at = None
     session.ended_at = now
-    session.seconds = int(min(MAX_SESSION_SECONDS, max(0, (now - session.started_at).total_seconds())))
     session.end_page = end_page
     pages = total_pages(session.entry)
     session.finished_book = bool(finished) or bool(pages and end_page >= pages)

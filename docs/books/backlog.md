@@ -611,6 +611,12 @@ charging for the web lookup.
 | F-R.9 | The big home buttons: no icons; Avi chose the reading dial: its ring is today's minutes toward five, the shelf and the book as two round pebbles | DONE |
 | F-R.10 | The dial's inner ring: how far into the book; the page count asked when starting a book it is unknown for, 200 assumed for my progress when there is no answer (marked "about", never stored, never finishing a book) | DONE |
 
+| F-R.11 | The clock pauses when the reading screen is left (another page, another app, the phone locked) and resumes on return | DONE |
+| F-R.12 | "I finished the book!": a festive button; the clock stops, fireworks and confetti, a summary typed or said (can be skipped), then home | DONE |
+| F-R.13 | The top bar and the bottom menu stay fixed on every page | DONE |
+| F-R.14 | The reading screen: the "screen stays on" tip removed; the notes sheet opens without the keyboard, the microphone first, and saving returns to the timer | DONE |
+| F-R.15 | The timer's look and the "what I think" button: options page for Avi | WAITING for Avi's choice |
+
 Open for later (Avi): what to do with a finished book's notes (a summary, a
 review draft, sharing some of them).
 

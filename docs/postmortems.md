@@ -17,6 +17,27 @@ Newest first.
 
 ---
 
+## PM-32 · 2026-10-21 · The reading clock ran in the background, and the keyboard jumped up
+
+**What happened.** Avi read with the timer and found two things: leaving
+the reading screen did not stop the count, and opening "what I think"
+opened the phone keyboard although he meant to speak. He also asked for a
+festive "I finished the book" with fireworks and a summary, fixed top and
+bottom bars, and less text on the timer screen; all built in this sprint.
+
+**Why our process let it happen.** The timer was specified as start to
+end and built that way; the notes sheet focused its box because that is
+what a form usually does. Neither was walked through with a phone in hand,
+the way it is used (put down, picked up, spoken to).
+
+**Rule.** Activity clocks pause when their screen is not in front; sheets
+never focus a text field on open, and voice comes first when it is there.
+The phone task test for the notes sheet now asserts nothing is focused on
+open and that saving returns to the timer.
+
+Here: docs/building_an_app.md mistake 32; tests/test_books_screens.py
+BKM: FullStackBKM 0f1a318 (lesson 40)
+
 ## PM-31 · 2026-10-21 · The dial's book ring was in the page and not on the screen
 
 **What happened.** Avi chose the reading dial and asked how it would know

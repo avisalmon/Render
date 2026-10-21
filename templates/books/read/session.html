@@ -4,23 +4,22 @@
 {% block scanbar %}{% endblock %}
 {% block readbar %}{% endblock %}
 {% block content %}
-<div class="bk-narrow bk-reading" data-started="{{ session.started_at|date:'c' }}">
+<div class="bk-narrow bk-reading" data-reading data-elapsed="{{ elapsed }}"
+     data-pause-url="{% url 'books:read_pause' session.pk %}" data-resume-url="{% url 'books:read_resume' session.pk %}">
   <p class="bk-kicker" style="margin: 0">{% t "read.reading_now" %}</p>
   <h1 class="bk-title" style="margin-top: 4px">{{ session.entry.title }}</h1>
   <p class="bk-muted" style="margin: 0">{% t "read.from_page" n=session.start_page %}{% if pages %} · {% t "read.of_pages" n=pages %}{% endif %}{% if progress.pace %} · {% t "read.pace" n=progress.pace %}{% endif %}</p>
 
   <div class="bk-timer" role="timer" aria-live="off" data-timer>0:00</div>
-  <p class="bk-help" style="text-align: center" data-awake>{% t "read.quiet_tip" %}</p>
   {% if error %}<p class="bk-error" role="alert">{{ error }}</p>{% endif %}
 
   <button type="button" class="bk-btn bk-btn--wide bk-notes-open" data-notes-open aria-haspopup="dialog">
     {% t "notes.open" %}<span class="bk-notes-count" data-notes-count>{% if notes %}{{ notes|length }}{% endif %}</span>
   </button>
   <dialog class="bk-notes" data-notes aria-labelledby="notes-h"
-          data-add-url="{% url 'books:note_add' session.entry_id %}" data-voice-url="{% url 'books:note_voice' %}"
+          data-voice-url="{% url 'books:note_voice' %}"
           data-del-tpl="{% url 'books:note_delete' 0 %}" data-page-tpl="{% t "notes.page" n="{n}" %}" data-voice-label="{% t "notes.voice" %}"
-          data-delete-label="{% t "notes.delete" %}" data-stop="{% t "notes.stop" %}" data-record="{% t "notes.record" %}"
-          data-listening="{% t "notes.listening" %}" data-working="{% t "notes.working" %}" data-check="{% t "notes.check" %}" data-mic-error="{% t "notes.err.mic" %}">
+          data-delete-label="{% t "notes.delete" %}" data-saved="{% t "notes.saved" %}">
     <div class="bk-sheet-handle" aria-hidden="true"></div>
     <h2 class="bk-h2" id="notes-h" style="margin-top: 0">{% t "notes.title" %}</h2>
     <p class="bk-help" style="margin: 0 0 8px">{{ session.entry.title }} · {% t "notes.private" %}</p>
@@ -30,20 +29,18 @@
     <p class="bk-muted" data-notes-empty {% if notes %}hidden{% endif %}>{% t "notes.none" %}</p>
     <form class="bk-form bk-notes-form" method="post" action="{% url 'books:note_add' session.entry_id %}" data-notes-form>
       {% csrf_token %}
-      <input type="hidden" name="source" value="typed" data-notes-source>
+      <input type="hidden" name="source" value="typed" data-voice-source>
       <input type="hidden" name="page" value="{{ session.start_page }}" data-notes-page>
       <input type="hidden" name="next" value="{{ request.path }}">
-      <textarea class="bk-input" name="body" rows="3" maxlength="2000" placeholder="{% t "notes.placeholder" %}" aria-label="{% t "notes.title" %}" data-notes-body></textarea>
-      <p class="bk-help" data-notes-status aria-live="polite" style="margin: 0"></p>
-      <div class="bk-notes-actions">
-        {% if voice %}<button type="button" class="bk-btn bk-notes-mic" data-notes-mic hidden><span class="bk-notes-dot" aria-hidden="true"></span><span data-notes-mic-label>{% t "notes.record" %}</span></button>{% endif %}
-        <button type="submit" class="bk-btn bk-btn--primary">{% t "notes.save" %}</button>
-      </div>
+      {% if voice %}{% include "books/read/_mic.html" %}{% endif %}
+      <textarea class="bk-input" name="body" rows="2" maxlength="2000" placeholder="{% t "notes.placeholder" %}" aria-label="{% t "notes.title" %}" data-voice-text></textarea>
+      <p class="bk-help" data-voice-status aria-live="polite" style="margin: 0"></p>
+      <button type="submit" class="bk-btn bk-btn--primary bk-btn--wide">{% t "notes.save" %}</button>
     </form>
     <button type="button" class="bk-btn bk-btn--quiet bk-btn--wide" data-notes-close>{% t "notes.close" %}</button>
   </dialog>
 
-  <form method="post" action="{% url 'books:read_end' session.pk %}" class="bk-card bk-form">{% csrf_token %}
+  <form method="post" action="{% url 'books:read_end' session.pk %}" class="bk-card bk-form" data-end-form>{% csrf_token %}
     <div class="bk-flip" data-flip data-min="{{ session.start_page }}" data-max="{{ pages|default:0 }}" data-read-tpl="{% t "read.flip_gained" n="{n}" %}"
          role="slider" tabindex="0" aria-label="{% t "read.page_reached" %}" aria-valuemin="{{ session.start_page }}"{% if pages %} aria-valuemax="{{ pages }}"{% endif %} aria-valuenow="{{ session.start_page }}">
       <p class="bk-kicker bk-flip-label">{% t "read.page_reached" %}</p>
@@ -63,9 +60,32 @@
         <button type="button" class="bk-btn bk-btn--small" dir="ltr" data-flip-step="10" aria-label="{% t "read.flip_ten" %}">+10</button>
       </div>
     </div>
-    <label class="bk-check"><input type="checkbox" name="finished" value="1"> <span>{% t "read.finished" %}</span></label>
     <button type="submit" class="bk-btn bk-btn--primary bk-btn--wide">{% t "read.done" %}</button>
   </form>
+
+  <button type="button" class="bk-finish-open" data-finish-open aria-haspopup="dialog"><span>{% t "finish.open" %}</span></button>
+  <dialog class="bk-finish" data-finish aria-labelledby="finish-h">
+    <canvas class="bk-finish-sky" data-sky aria-hidden="true"></canvas>
+    <div class="bk-finish-card" tabindex="-1">
+      <p class="bk-kicker" style="margin: 0">{% t "finish.kicker" %}</p>
+      <h2 class="bk-finish-title" id="finish-h">{% t "finish.title" %}</h2>
+      <p class="bk-finish-book">{{ session.entry.title }}</p>
+      <form method="post" action="{% url 'books:read_end' session.pk %}" class="bk-form" data-finish-form>
+        {% csrf_token %}
+        <input type="hidden" name="finished" value="1">
+        <input type="hidden" name="end_page" value="{{ pages|default:session.start_page }}" data-finish-page data-pages="{{ pages|default:0 }}">
+        <input type="hidden" name="summary_source" value="typed" data-voice-source>
+        <p class="bk-finish-ask">{% t "finish.ask" %}</p>
+        {% if voice %}{% include "books/read/_mic.html" %}{% endif %}
+        <textarea class="bk-input" name="summary" rows="3" maxlength="2000" placeholder="{% t "finish.placeholder" %}" aria-label="{% t "finish.ask" %}" data-voice-text></textarea>
+        <p class="bk-help" data-voice-status aria-live="polite" style="margin: 0"></p>
+        <button type="submit" class="bk-btn bk-btn--primary bk-btn--wide">{% t "finish.save" %}</button>
+        <button type="submit" class="bk-btn bk-btn--quiet bk-btn--wide" data-finish-skip formnovalidate>{% t "finish.skip" %}</button>
+      </form>
+      <button type="button" class="bk-finish-cancel" data-finish-cancel>{% t "finish.cancel" %}</button>
+    </div>
+  </dialog>
+
   <form method="post" action="{% url 'books:read_discard' session.pk %}" style="text-align: center">{% csrf_token %}
     <button type="submit" class="bk-btn bk-btn--quiet bk-btn--small" data-confirm>{% t "read.discard" %}</button>
   </form>
@@ -74,24 +94,50 @@
 {% block scripts %}
 {% load static %}<script src="{% static 'books/flip.js' %}" defer></script>
 <script src="{% static 'books/notes.js' %}" defer></script>
+<script src="{% static 'books/finish.js' %}" defer></script>
 <script>
 (function () {
-  var root = document.querySelector('[data-started]');
+  // The clock counts only while this screen is in front (Avi, 2026-10-21):
+  // leaving it, locking the phone or switching apps pauses it on the server,
+  // and coming back resumes it.
+  var root = document.querySelector('[data-reading]');
   var out = document.querySelector('[data-timer]');
   if (!root || !out) return;
-  var started = new Date(root.getAttribute('data-started')).getTime();
-  var tick = function () {
-    var s = Math.max(0, Math.floor((Date.now() - started) / 1000));
+  var csrf = document.body.getAttribute('data-csrf');
+  var base = Date.now() - (parseInt(root.getAttribute('data-elapsed'), 10) || 0) * 1000;
+  var paused = false, frozenAt = 0, ended = false;
+  var show = function (s) {
     var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
     out.textContent = (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(sec).padStart(2, '0');
   };
+  var tick = function () { if (!paused) show(Math.max(0, Math.floor((Date.now() - base) / 1000))); };
   tick();
   setInterval(tick, 1000);
+  var pause = function () {
+    if (paused || ended) return;
+    paused = true; frozenAt = Date.now(); root.classList.add('is-paused');
+    var fd = new FormData(); fd.append('csrfmiddlewaretoken', csrf);
+    if (navigator.sendBeacon) navigator.sendBeacon(root.getAttribute('data-pause-url'), fd);
+    else fetch(root.getAttribute('data-pause-url'), {method: 'POST', body: fd, keepalive: true});
+  };
+  var resume = function () {
+    if (!paused || ended) return;
+    fetch(root.getAttribute('data-resume-url'), {method: 'POST', headers: {'X-CSRFToken': csrf, 'Accept': 'application/json'}})
+      .then(function (r) { return r.json(); })
+      .then(function (d) { base = Date.now() - d.elapsed * 1000; paused = false; root.classList.remove('is-paused'); tick(); })
+      .catch(function () { base += Date.now() - frozenAt; paused = false; root.classList.remove('is-paused'); });
+  };
+  window.bkReading = {pause: pause, resume: resume, end: function () { ended = true; }};
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') pause(); else resume(); });
+  window.addEventListener('pagehide', pause);
+  window.addEventListener('pageshow', function (e) { if (e.persisted) resume(); });
+  document.querySelectorAll('form[action$="/end/"], form[action$="/discard/"]').forEach(function (f) {
+    f.addEventListener('submit', function () { ended = true; });
+  });
   // Keep the screen awake while reading (a web page cannot silence the phone).
-  var lock = null;
   var awake = function () {
     if (!('wakeLock' in navigator) || document.visibilityState !== 'visible') return;
-    navigator.wakeLock.request('screen').then(function (l) { lock = l; }).catch(function () {});
+    navigator.wakeLock.request('screen').catch(function () {});
   };
   awake();
   document.addEventListener('visibilitychange', awake);

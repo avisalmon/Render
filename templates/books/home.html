@@ -18,12 +18,13 @@
     {% endif %}
   </div>
   <aside class="bk-aside">
+    {% if just_finished %}<p class="bk-notice bk-notice--ok bk-finished-note" role="status">{% t "finish.home" title=just_finished.entry.title %}</p>{% endif %}
     <section class="bk-dial-zone" aria-label="{% t "read.title" %}">
       <div class="bk-dial-row">
         <a class="bk-pebble" href="{% url 'books:scan_new' %}">{% t "home.scan_short" %}</a>
         {% if reading_now %}
         <a class="bk-dial{% if dial.done %} is-done{% endif %}" href="{% url 'books:read' %}" style="--goal: {{ dial.pct }}{% if book_pct %}; --book: {{ book_pct.pct }}{% endif %}">
-          {% if book_pct %}<span class="bk-dial-book" aria-hidden="true"></span>{% endif %}<span class="bk-dial-face"><b>{% t "read.back_to_timer" %}</b><i>{{ reading_now.entry.title }}</i><small>{% t "dial.running" %}</small>{% if book_pct %}<em>{% if book_pct.assumed %}{% t "dial.book_about" n=book_pct.pct %}{% else %}{% t "dial.book" n=book_pct.pct %}{% endif %}</em>{% endif %}</span></a>
+          {% if book_pct %}<span class="bk-dial-book" aria-hidden="true"></span>{% endif %}<span class="bk-dial-face"><b>{% t "read.back_to_timer" %}</b><i>{{ reading_now.entry.title }}</i><small>{% if reading_now.paused_at %}{% t "read.paused" %}{% else %}{% t "dial.running" %}{% endif %}</small>{% if book_pct %}<em>{% if book_pct.assumed %}{% t "dial.book_about" n=book_pct.pct %}{% else %}{% t "dial.book" n=book_pct.pct %}{% endif %}</em>{% endif %}</span></a>
         {% elif go_on %}
         <form method="post" action="{% url 'books:read_start' %}" class="bk-dial-form">{% csrf_token %}
           <input type="hidden" name="entry" value="{{ go_on.entry.pk }}"><input type="hidden" name="page" value="{{ go_on.page }}">

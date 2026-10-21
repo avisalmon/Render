@@ -26,7 +26,9 @@ def read_page(request):
     me = request.books_profile
     session = reading.active(me)
     if session:
+        reading.resume(me, session)  # back on the reading screen: the clock runs again
         return render(request, "books/read/session.html", {
+            "elapsed": reading.elapsed(session),
             "session": session, "progress": reading.book_progress(me, session.entry),
             "pages": reading.total_pages(session.entry), "error": _err(request),
             "notes": __import__("books.notes", fromlist=["for_book"]).for_book(me, session.entry),
@@ -83,10 +85,40 @@ def end(request, pk):
     try:
         if request.POST.get("total_pages"):
             reading.set_pages(session.entry, request.POST["total_pages"], at_least=session.start_page)
-        reading.end(me, session, request.POST.get("end_page"), request.POST.get("finished") == "1")
+        finished = request.POST.get("finished") == "1"
+        reading.end(me, session, request.POST.get("end_page"), finished)
     except reading.ReadingError as exc:
         return redirect(f"{reverse('books:read')}?error={exc}")
+    if finished:
+        # The celebration already happened on the reading screen; its summary is kept, then home.
+        summary = (request.POST.get("summary") or "").strip()
+        if summary:
+            from . import notes
+
+            try:
+                notes.add(me, session.entry, summary, request.POST.get("summary_source") or "typed",
+                          session=session, page=session.end_page, is_summary=True)
+            except notes.NoteError:
+                pass
+        return redirect(f"{reverse('books:home')}?finished={session.pk}")
     return redirect("books:read_summary", pk=session.pk)
+
+
+@books_page
+@require_POST
+def pause(request, pk):
+    """Sent by the reading screen as it is left (a beacon, so no answer is read)."""
+    session = get_object_or_404(ReadingSession, pk=pk, profile=request.books_profile)
+    reading.pause(request.books_profile, session)
+    return JsonResponse({"paused": True})
+
+
+@books_page
+@require_POST
+def resume(request, pk):
+    session = get_object_or_404(ReadingSession, pk=pk, profile=request.books_profile)
+    reading.resume(request.books_profile, session)
+    return JsonResponse({"elapsed": reading.elapsed(session)})
 
 
 @books_page
