@@ -181,6 +181,9 @@ NOT_IN_THE_PORTAL = {
     # The visit counter for Avi's own GitHub Pages sites (2026-10-17): a
     # snippet API plus a dashboard only he sees. Not an app for people.
     "counter",
+    # The teachers' course site (2026-10-21): invitation only, reached by the
+    # link Avi sends; its own door decides who is inside.
+    "cohort",
 }
 
 _BY_SLUG = {a.slug: a for a in APPS}

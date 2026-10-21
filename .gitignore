@@ -54,3 +54,6 @@ docs/sensorlab/design/sensorlab-screens.html
 # the dataset and the experiments). Only the trained model ships, copied into
 # static/blackjack/lab/.
 blackjack_model/
+
+# cohort's private files (screenshots, course documents); on Render they live on the disk.
+cohort_private/

@@ -1,0 +1,49 @@
+{% extends "cohort/base.html" %}
+{% block title %}בקשות · השתלמות AI{% endblock %}
+{% block content %}
+<div class="cb-head"><h1 class="cb-title">בקשות הצטרפות</h1></div>
+
+<section class="cb-paper cb-list" id="pending">
+  <h2 class="cb-h2">ממתינים לאישור <span class="cb-badge">{{ pending|length }}</span></h2>
+  {% for m in pending %}
+    <div class="cb-row">
+      <div class="cb-row-who"><b>{{ m.display_name }}</b><span class="cb-small cb-muted" dir="ltr">{{ m.user.email }}</span>
+        <span class="cb-small cb-muted">ביקש/ה {{ m.requested_at|date:"d.m.Y H:i" }}</span></div>
+      <form method="post" class="cb-row-acts">{% csrf_token %}<input type="hidden" name="member" value="{{ m.pk }}">
+        <button class="cb-btn" name="action" value="approve">לאשר</button>
+        <button class="cb-btn cb-btn-quiet" name="action" value="decline">לדחות</button></form>
+    </div>
+  {% empty %}
+    <p class="cb-muted">אין בקשות חדשות.</p>
+  {% endfor %}
+</section>
+
+<section class="cb-paper cb-list" id="approved">
+  <h2 class="cb-h2">מאושרים <span class="cb-badge cb-badge-quiet">{{ approved|length }}</span></h2>
+  {% for m in approved %}
+    <div class="cb-row">
+      <div class="cb-row-who"><b>{{ m.display_name }}</b>{% if m.is_admin or m.user.is_superuser %} <span class="cb-tag">מנהל</span>{% endif %}
+        <span class="cb-small cb-muted" dir="ltr">{{ m.user.email }}</span></div>
+      {% if not m.user.is_superuser %}
+        <form method="post" class="cb-row-acts">{% csrf_token %}<input type="hidden" name="member" value="{{ m.pk }}">
+          <button class="cb-btn cb-btn-quiet" name="action" value="withdraw">לבטל גישה</button></form>
+      {% endif %}
+    </div>
+  {% empty %}
+    <p class="cb-muted">עוד אין משתתפים מאושרים.</p>
+  {% endfor %}
+</section>
+
+{% if declined %}
+<section class="cb-paper cb-list" id="declined">
+  <h2 class="cb-h2">נדחו</h2>
+  {% for m in declined %}
+    <div class="cb-row">
+      <div class="cb-row-who"><b>{{ m.display_name }}</b><span class="cb-small cb-muted" dir="ltr">{{ m.user.email }}</span></div>
+      <form method="post" class="cb-row-acts">{% csrf_token %}<input type="hidden" name="member" value="{{ m.pk }}">
+        <button class="cb-btn cb-btn-quiet" name="action" value="approve">לאשר בכל זאת</button></form>
+    </div>
+  {% endfor %}
+</section>
+{% endif %}
+{% endblock %}

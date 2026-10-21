@@ -1,0 +1,34 @@
+{% extends "cohort/base.html" %}
+{% block title %}חומרים · השתלמות AI{% endblock %}
+{% block content %}
+<div class="cb-head">
+  <h1 class="cb-title">חומרי ההשתלמות</h1>
+  {% if is_admin %}<a class="cb-btn" href="{% url 'cohort:material_new' %}" id="cb-material-add">+ חומר חדש</a>{% endif %}
+</div>
+{% if items %}
+  <div class="cb-materials">
+    {% for m in items %}
+      <article class="cb-paper cb-material" id="m{{ m.pk }}">
+        <span class="cb-pin" aria-hidden="true"></span>
+        <span class="cb-tag cb-tag-{{ m.kind }}">{{ m.get_kind_display }}</span>
+        <h2 class="cb-h2">{{ m.title }}</h2>
+        <p>{{ m.line }}</p>
+        {% if m.kind == "video" and m.youtube_id %}
+          <div class="cb-video">
+            <iframe src="https://www.youtube-nocookie.com/embed/{{ m.youtube_id }}" title="{{ m.title }}" loading="lazy"
+                    allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+          </div>
+          <a class="cb-btn cb-btn-quiet" href="https://www.youtube.com/watch?v={{ m.youtube_id }}" target="_blank" rel="noopener noreferrer">לפתוח ביוטיוב</a>
+        {% elif m.kind == "file" and m.file %}
+          <a class="cb-btn" href="/cohort/files/{{ m.file.name }}" target="_blank" rel="noopener">לפתוח את המסמך</a>
+        {% elif m.url %}
+          <a class="cb-btn" href="{{ m.url }}" target="_blank" rel="noopener noreferrer">{% if m.kind == "course" %}להדרכה ב-babook{% else %}לפתוח{% endif %}</a>
+        {% endif %}
+        {% if is_admin %}<p class="cb-small"><a href="{% url 'cohort:material_edit' m.pk %}">עריכה</a></p>{% endif %}
+      </article>
+    {% endfor %}
+  </div>
+{% else %}
+  <article class="cb-paper cb-empty"><p>עוד אין חומרים. אבי יוסיף כאן סרטונים, מסמכים והדרכות לאורך הקורס.</p></article>
+{% endif %}
+{% endblock %}

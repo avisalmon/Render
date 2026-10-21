@@ -41,6 +41,7 @@ markers = [
     "sprb71: SPR-B.7.1 blackjack: streaks",
     "sprb72: SPR-B.7.2 blackjack: sharing a result",
     "sprb73: SPR-B.7.3 blackjack: following",
+    "cohort: the teachers' course site (docs/cohort)",
     "sprblab: SPR-B.12 blackjack: the strategy lab",
     "bjclasses: blackjack: every class in the markup is styled",
     "review1002: blackjack: the review pass of 2026-10-02",

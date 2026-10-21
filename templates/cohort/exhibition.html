@@ -1,0 +1,28 @@
+{% extends "cohort/base.html" %}
+{% block title %}התערוכה · השתלמות AI{% endblock %}
+{% block content %}
+<div class="cb-head">
+  <h1 class="cb-title">התערוכה</h1>
+  <a class="cb-btn" href="{% url 'cohort:exhibit_new' %}" id="cb-add">+ אתר חדש</a>
+</div>
+<nav class="cb-chips" aria-label="מה להציג">
+  <a href="?show=all" {% if show == 'all' %}aria-current="true"{% endif %}>כל האתרים</a>
+  <a href="?show=stars" {% if show == 'stars' %}aria-current="true"{% endif %}>המועדפים שלי</a>
+  <a href="?show=mine" {% if show == 'mine' %}aria-current="true"{% endif %}>האתרים שלי</a>
+</nav>
+{% if cards %}
+  <div class="cb-board">
+    {% for card in cards %}{% include "cohort/_card.html" %}{% endfor %}
+  </div>
+{% else %}
+  <article class="cb-paper cb-empty">
+    {% if show == 'stars' %}
+      <p>עוד לא סימנתם אתר במועדפים. הכוכב שבכל כרטיס מוסיף אותו לכאן, ורק אתם רואים את הרשימה.</p>
+    {% elif show == 'mine' %}
+      <p>עוד לא תליתם אתר. <a href="{% url 'cohort:exhibit_new' %}">תלו את הראשון</a>.</p>
+    {% else %}
+      <p>הלוח עוד ריק. בניתם אתר במסגרת ההשתלמות? <a href="{% url 'cohort:exhibit_new' %}">תלו אותו ראשונים</a>.</p>
+    {% endif %}
+  </article>
+{% endif %}
+{% endblock %}

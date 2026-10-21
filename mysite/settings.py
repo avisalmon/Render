@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "blackjack",
     "improv",
     "crashtech",
+    "cohort",
 ]
 
 MIDDLEWARE = [
@@ -122,6 +123,12 @@ MEDIA_DIR = PERSISTENT_ROOT / "media"
 # so these live outside it and are handed out only by a view that checks who is
 # asking (REQ-M.80).
 MATAZIM_PRIVATE_DIR = PERSISTENT_ROOT / "matazim_private"
+# cohort (docs/cohort): screenshots and course documents, for approved
+# participants only, so never under the public MEDIA_ROOT.
+COHORT_PRIVATE_DIR = PERSISTENT_ROOT / "cohort_private"
+# Screenshots of participants' sites come from a public screenshot service.
+# The cohort tests replace it with a fake and never reach the network.
+COHORT_SHOTS_ENABLED = os.environ.get("COHORT_SHOTS_ENABLED", "1") == "1"
 
 # REQ-M.84 — the guardian-consent gate, switched off while the site is being
 # built. Avi, 2026-09-14: "when sign up, don't force the parents agreement for

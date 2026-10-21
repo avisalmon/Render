@@ -1,0 +1,25 @@
+{% extends "cohort/base.html" %}
+{% block title %}{% if item %}עריכת חומר{% else %}חומר חדש{% endif %} · השתלמות AI{% endblock %}
+{% block content %}
+<p class="cb-back"><a href="{% url 'cohort:materials' %}">חזרה לחומרים</a></p>
+<article class="cb-paper cb-form-paper">
+  <span class="cb-pin" aria-hidden="true"></span>
+  <h1 class="cb-h1">{% if item %}עריכת {{ item.title }}{% else %}חומר חדש{% endif %}</h1>
+  <p class="cb-muted">סרטון: קישור ליוטיוב. מסמך: קובץ שנשמר באתר. הדרכה: קישור להדרכה ב-babook.</p>
+  <form method="post" enctype="multipart/form-data" class="cb-form">
+    {% csrf_token %}
+    {% for field in form %}
+      <label class="cb-field" for="{{ field.id_for_label }}"><span>{{ field.label }}</span>{{ field }}
+        {% for e in field.errors %}<small class="cb-error">{{ e }}</small>{% endfor %}</label>
+    {% endfor %}
+    {% for e in form.non_field_errors %}<p class="cb-error">{{ e }}</p>{% endfor %}
+    <button type="submit" class="cb-btn">שמירה</button>
+  </form>
+  {% if item %}
+    <form method="post" onsubmit="return confirm('להסיר את החומר?')">
+      {% csrf_token %}<input type="hidden" name="action" value="delete">
+      <button type="submit" class="cb-btn cb-btn-danger">להסיר</button>
+    </form>
+  {% endif %}
+</article>
+{% endblock %}

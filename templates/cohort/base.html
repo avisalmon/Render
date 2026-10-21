@@ -1,0 +1,55 @@
+{% load static cohort_tags %}<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <title>{% block title %}השתלמות AI{% endblock %}</title>
+  {% comment %}
+    Rule 3: the app's own frame. Nothing from babook's base or menu. The
+    design is the teachers' room noticeboard Avi chose on 2026-10-21.
+  {% endcomment %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&family=Karantina:wght@400;700&display=swap">
+  <link rel="stylesheet" href="{% static 'cohort/cohort.css' %}">
+</head>
+<body class="cb">
+  {% cohort_nav as nav %}
+  <div class="cb-top">
+    <header class="cb-bar">
+      <a class="cb-brand" href="{% url 'cohort:door' %}">השתלמות AI</a>
+      {% if nav.inside %}
+        <nav class="cb-nav" aria-label="תפריט">
+          <a href="{% url 'cohort:exhibition' %}" {% if section == 'exhibition' %}aria-current="page"{% endif %}>התערוכה</a>
+          <a href="{% url 'cohort:tracks' %}" {% if section == 'tracks' %}aria-current="page"{% endif %}>מגמות</a>
+          <a href="{% url 'cohort:materials' %}" {% if section == 'materials' %}aria-current="page"{% endif %}>חומרים</a>
+          {% if nav.admin %}
+            <a href="{% url 'cohort:requests' %}" {% if section == 'requests' %}aria-current="page"{% endif %}>בקשות{% if nav.waiting %} <span class="cb-badge" aria-label="{{ nav.waiting }} ממתינים">{{ nav.waiting }}</span>{% endif %}</a>
+          {% endif %}
+        </nav>
+      {% endif %}
+      <div class="cb-account">
+        {% if user.is_authenticated %}
+          <form method="post" action="{% url 'cohort:logout' %}">{% csrf_token %}<button type="submit" class="cb-link">יציאה</button></form>
+        {% else %}
+          <a class="cb-link" href="{% url 'cohort:login' %}">כניסה</a>
+        {% endif %}
+      </div>
+    </header>
+    {# REQ-C.1: on every page, before sign-in too; it never scrolls away. #}
+    <p class="cb-notice" role="note" id="cb-disclaimer">
+      <strong>שימו לב:</strong> זהו אתר זמני של אבי סלמון, שנועד רק לתקשורת במהלך ההשתלמות. הוא אינו אתר רשמי של משרד החינוך, של אינטל או של כל גורם אחר, ואינו משותף עם אף אחד מלבד משתתפי הקורס שאושרו להיכנס.
+    </p>
+  </div>
+
+  <main class="cb-main">
+    {% if messages %}
+      <div class="cb-flash" role="status">{% for m in messages %}<p>{{ m }}</p>{% endfor %}</div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <script src="{% static 'cohort/cohort.js' %}" defer></script>
+</body>
+</html>

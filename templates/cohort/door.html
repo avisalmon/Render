@@ -1,0 +1,27 @@
+{% extends "cohort/base.html" %}
+{% block title %}כניסה · השתלמות AI{% endblock %}
+{% block content %}
+<section class="cb-door">
+  <article class="cb-paper cb-door-paper">
+    <span class="cb-pin" aria-hidden="true"></span>
+    <h1 class="cb-h1">השתלמות: הובלת חדשנות בבינה מלאכותית</h1>
+    <p>האתר של ההשתלמות: התערוכה של האתרים שבניתם, דפי המגמות, והחומרים שאבי שולח לאורך הקורס. הוא פתוח רק למשתתפי ההשתלמות שאבי אישר.</p>
+
+    {% if state == "visitor" %}
+      <p class="cb-door-state">כדי להיכנס צריך להתחבר, ואז לבקש הצטרפות.</p>
+      <div class="cb-actions">
+        <a class="cb-btn" href="{% url 'cohort:login' %}">כניסה</a>
+        <a class="cb-btn cb-btn-quiet" href="{% url 'cohort:signup' %}">הרשמה</a>
+        <a class="cb-btn cb-btn-quiet" href="/accounts/google/login/?next=/cohort/">כניסה עם Google</a>
+      </div>
+    {% elif state == "ask" %}
+      <p class="cb-door-state">עוד אין לך גישה לאתר. בקשו להצטרף, ואבי יאשר.</p>
+      <form method="post">{% csrf_token %}<button type="submit" class="cb-btn" id="cb-ask">בקשת הצטרפות</button></form>
+    {% elif state == "pending" %}
+      <p class="cb-door-state cb-state-wait" id="cb-pending">הבקשה שלך התקבלה וממתינה לאישור של אבי. כשתאושר יגיע אליך מייל, והאתר ייפתח.</p>
+    {% elif state == "declined" %}
+      <p class="cb-door-state" id="cb-declined">הבקשה שלך לא אושרה. אם נראה לך שזו טעות, פנו לאבי.</p>
+    {% endif %}
+  </article>
+</section>
+{% endblock %}

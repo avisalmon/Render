@@ -1,0 +1,21 @@
+{% extends "cohort/base.html" %}
+{% block title %}כניסה · השתלמות AI{% endblock %}
+{% block content %}
+<section class="cb-door">
+  <article class="cb-paper cb-door-paper">
+    <span class="cb-pin" aria-hidden="true"></span>
+    <h1 class="cb-h1">כניסה</h1>
+    <p class="cb-muted">עם חשבון babook שלכם.</p>
+    <form method="post" class="cb-form">
+      {% csrf_token %}
+      {% if form.non_field_errors %}<p class="cb-error">{{ form.non_field_errors.0 }}</p>{% endif %}
+      {% for field in form %}
+        <label class="cb-field" for="{{ field.id_for_label }}"><span>{{ field.label }}</span>{{ field }}</label>
+      {% endfor %}
+      <input type="hidden" name="next" value="{{ request.GET.next }}">
+      <button type="submit" class="cb-btn">כניסה</button>
+    </form>
+    <p class="cb-small">אין חשבון? <a href="{% url 'cohort:signup' %}">הרשמה</a> · <a href="/accounts/google/login/?next=/cohort/">כניסה עם Google</a></p>
+  </article>
+</section>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "cohort/base.html" %}
+{% block title %}{% if new %}אתר חדש{% else %}עריכה{% endif %} · השתלמות AI{% endblock %}
+{% block content %}
+<p class="cb-back"><a href="{% if new %}{% url 'cohort:exhibition' %}{% else %}{% url 'cohort:exhibit' card.pk %}{% endif %}">חזרה</a></p>
+<article class="cb-paper cb-form-paper">
+  <span class="cb-pin" aria-hidden="true"></span>
+  <h1 class="cb-h1">{% if new %}לתלות אתר בתערוכה{% else %}עריכת {{ card.title }}{% endif %}</h1>
+  {% if new %}<p class="cb-muted">מדביקים את הקישור לאתר שבניתם. המערכת מצלמת אותו בעצמה, זה לוקח כמה שניות.</p>{% endif %}
+  <form method="post" class="cb-form">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="save">
+    {% for field in form %}
+      <label class="cb-field" for="{{ field.id_for_label }}"><span>{{ field.label }}</span>{{ field }}
+        {% for e in field.errors %}<small class="cb-error">{{ e }}</small>{% endfor %}</label>
+    {% endfor %}
+    <button type="submit" class="cb-btn">{% if new %}לתלות בתערוכה{% else %}שמירה{% endif %}</button>
+  </form>
+</article>
+
+{% if not new %}
+  <article class="cb-paper cb-form-paper">
+    <h2 class="cb-h2">התמונה בכרטיס</h2>
+    <form method="post" class="cb-actions">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="retake">
+      <button type="submit" class="cb-btn cb-btn-quiet" id="cb-retake">לצלם שוב</button>
+    </form>
+    <form method="post" enctype="multipart/form-data" class="cb-form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="upload">
+      <label class="cb-upload" for="id_picture">
+        <span class="cb-btn cb-btn-quiet">להעלות תמונה במקום</span>
+        <input type="file" name="picture" id="id_picture" accept="image/*" onchange="this.form.submit()">
+      </label>
+      {% for e in upload.picture.errors %}<small class="cb-error">{{ e }}</small>{% endfor %}
+    </form>
+  </article>
+  <article class="cb-paper cb-form-paper cb-danger">
+    <h2 class="cb-h2">להוריד מהתערוכה</h2>
+    <p class="cb-muted">האתר, הלייקים והתגובות שלו יוסרו.</p>
+    <form method="post" onsubmit="return confirm('להוריד את האתר מהתערוכה?')">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="delete">
+      <button type="submit" class="cb-btn cb-btn-danger" id="cb-delete">להוריד</button>
+    </form>
+  </article>
+{% endif %}
+{% endblock %}

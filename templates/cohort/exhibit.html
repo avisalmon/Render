@@ -1,0 +1,63 @@
+{% extends "cohort/base.html" %}
+{% block title %}{{ card.title }} · השתלמות AI{% endblock %}
+{% block content %}
+<p class="cb-back"><a href="{% url 'cohort:exhibition' %}">חזרה לתערוכה</a></p>
+<div class="cb-detail">
+  <div class="cb-detail-main">
+    {% include "cohort/_card.html" %}
+    {% if card.shot_status == "failed" and not card.shot %}
+      <p class="cb-small cb-muted">לא הצלחנו לצלם את האתר.{% if may_change %} אפשר לנסות שוב או להעלות תמונה בעריכה.{% endif %}</p>
+    {% endif %}
+  </div>
+  <div class="cb-detail-side">
+    <article class="cb-paper">
+      <h1 class="cb-h1">{{ card.title }}</h1>
+      <p class="cb-muted">מאת {{ card.owner.display_name }} · {{ card.created_at|date:"d.m.Y" }}</p>
+      {% if card.blurb %}<p>{{ card.blurb }}</p>{% endif %}
+      <div class="cb-actions">
+        <a class="cb-btn" href="{{ card.url }}" target="_blank" rel="noopener noreferrer" id="cb-open-site">לפתוח את האתר</a>
+        {% if may_change %}<a class="cb-btn cb-btn-quiet" href="{% url 'cohort:exhibit_edit' card.pk %}">עריכה</a>{% endif %}
+      </div>
+      <p class="cb-small cb-url" dir="ltr">{{ card.url }}</p>
+    </article>
+  </div>
+</div>
+
+<section class="cb-thread" id="thread" aria-label="תגובות" data-exhibit="{{ card.pk }}" data-me="{{ me.pk }}" data-admin="{% if me.admin %}1{% endif %}">
+  <h2 class="cb-h2">תגובות</h2>
+  {% for c in comments %}
+    <article class="cb-note{% if c.deleted %} is-deleted{% endif %}" id="c{{ c.pk }}" data-comment="{{ c.pk }}" data-author="{{ c.author.display_name }}">
+      {% if c.reply_to %}
+        <a class="cb-quote" href="#c{{ c.reply_to.pk }}">
+          <b>{{ c.reply_to.author.display_name }}</b>
+          {% if c.reply_to.deleted %}<i>התגובה נמחקה</i>{% else %}{{ c.reply_to.body|truncatechars:120 }}{% endif %}
+        </a>
+      {% endif %}
+      <div class="cb-note-head"><b>{{ c.author.display_name }}</b> <span class="cb-muted cb-small">{{ c.created_at|date:"d.m H:i" }}{% if c.edited_at and not c.deleted %} · נערכה{% endif %}</span></div>
+      {% if c.deleted %}
+        <p class="cb-note-body"><i>התגובה נמחקה</i></p>
+      {% else %}
+        <p class="cb-note-body">{{ c.body|linebreaksbr }}</p>
+        <div class="cb-note-acts">
+          <button type="button" class="cb-link" data-reply="{{ c.pk }}">תשובה</button>
+          {% if c.author_id == me.pk %}<button type="button" class="cb-link" data-edit="{{ c.pk }}">עריכה</button>{% endif %}
+          {% if c.author_id == me.pk or me.admin %}<button type="button" class="cb-link" data-delete="{{ c.pk }}">מחיקה</button>{% endif %}
+        </div>
+      {% endif %}
+    </article>
+  {% empty %}
+    <p class="cb-muted" id="cb-no-comments">עוד אין תגובות. אפשר להיות הראשונים.</p>
+  {% endfor %}
+
+  <form class="cb-note cb-note-new" id="cb-comment-form">
+    <div class="cb-replying" id="cb-replying" hidden>
+      <span>תשובה ל<b id="cb-replying-to"></b></span>
+      <button type="button" class="cb-link" id="cb-replying-cancel">ביטול</button>
+    </div>
+    <label class="cb-field" for="cb-comment-body"><span>תגובה</span>
+      <textarea id="cb-comment-body" rows="3" maxlength="2000" required></textarea></label>
+    <p class="cb-error" id="cb-comment-error" hidden></p>
+    <button type="submit" class="cb-btn">פרסום</button>
+  </form>
+</section>
+{% endblock %}

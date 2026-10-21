@@ -1,0 +1,21 @@
+{% extends "cohort/base.html" %}
+{% block title %}מגמות · השתלמות AI{% endblock %}
+{% block content %}
+<div class="cb-head"><h1 class="cb-title">מגמות</h1></div>
+<p class="cb-intro">לכל מגמה שלושה מסמכים שרכז המקצוע מכין: חזון, דמות הבוגר, והגדרת הפרויקט שתלמידי התיכון מגישים.</p>
+<div class="cb-board cb-board-tracks">
+  {% for t in tracks %}
+    <a class="cb-card cb-track{% if t.is_example %} is-example{% endif %}" href="{% url 'cohort:track' t.slug %}">
+      <span class="cb-pin" aria-hidden="true"></span>
+      {% if t.is_example %}<span class="cb-tag">לדוגמה</span>{% endif %}
+      <span class="cb-track-name">{{ t.name }}</span>
+      <span class="cb-card-by">{% if t.owner %}{{ t.owner.display_name }}{% else %}עוד אין רכז/ת{% endif %}</span>
+      <ul class="cb-ticks" aria-label="מה כבר יש">
+        <li class="{% if t.vision_url %}is-done{% endif %}">חזון</li>
+        <li class="{% if t.graduate_url %}is-done{% endif %}">דמות הבוגר</li>
+        <li class="{% if t.project_url %}is-done{% endif %}">הגדרת פרויקט</li>
+      </ul>
+    </a>
+  {% endfor %}
+</div>
+{% endblock %}

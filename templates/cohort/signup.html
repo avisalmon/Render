@@ -1,0 +1,21 @@
+{% extends "cohort/base.html" %}
+{% block title %}הרשמה · השתלמות AI{% endblock %}
+{% block content %}
+<section class="cb-door">
+  <article class="cb-paper cb-door-paper">
+    <span class="cb-pin" aria-hidden="true"></span>
+    <h1 class="cb-h1">הרשמה</h1>
+    <p class="cb-muted">חשבון babook חדש. אחרי ההרשמה מבקשים להצטרף, ואבי מאשר.</p>
+    <form method="post" class="cb-form">
+      {% csrf_token %}
+      {% for field in form %}
+        <label class="cb-field" for="{{ field.id_for_label }}"><span>{{ field.label }}</span>{{ field }}
+          {% for e in field.errors %}<small class="cb-error">{{ e }}</small>{% endfor %}</label>
+      {% endfor %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <button type="submit" class="cb-btn">הרשמה</button>
+    </form>
+    <p class="cb-small">כבר יש חשבון? <a href="{% url 'cohort:login' %}">כניסה</a></p>
+  </article>
+</section>
+{% endblock %}

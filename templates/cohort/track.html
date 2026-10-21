@@ -1,0 +1,27 @@
+{% extends "cohort/base.html" %}
+{% block title %}{{ track.name }} · השתלמות AI{% endblock %}
+{% block content %}
+<p class="cb-back"><a href="{% url 'cohort:tracks' %}">כל המגמות</a></p>
+<div class="cb-head">
+  <h1 class="cb-title">{{ track.name }}</h1>
+  {% if may_edit %}<a class="cb-btn" href="{% url 'cohort:track_edit' track.slug %}" id="cb-track-edit">עדכון הקישורים</a>{% endif %}
+</div>
+<p class="cb-intro">
+  {% if track.is_example %}מגמה דמיונית, שאבי מילא כדי להראות איך דף מגמה טוב נראה.{% endif %}
+  {% if track.owner %}רכז/ת המגמה: <b>{{ track.owner.display_name }}</b>.{% else %}עוד לא נקבע רכז/ת למגמה הזו.{% endif %}
+</p>
+<div class="cb-sheets">
+  {% for field, title, about, url in links %}
+    <article class="cb-paper cb-sheet" id="sheet-{{ field }}">
+      <span class="cb-pin" aria-hidden="true"></span>
+      <h2 class="cb-h2">{{ title }}</h2>
+      <p class="cb-muted">{{ about }}</p>
+      {% if url %}
+        <a class="cb-btn" href="{{ url }}" target="_blank" rel="noopener noreferrer">לפתוח</a>
+      {% else %}
+        <p class="cb-pending">בהכנה</p>
+      {% endif %}
+    </article>
+  {% endfor %}
+</div>
+{% endblock %}
