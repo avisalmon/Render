@@ -86,7 +86,13 @@ def end(request, pk):
         if request.POST.get("total_pages"):
             reading.set_pages(session.entry, request.POST["total_pages"], at_least=session.start_page)
         finished = request.POST.get("finished") == "1"
+        from .models import ReadingCheckin
+
+        day = reading._day(session.started_at)
+        counted_before = ReadingCheckin.objects.filter(profile=me, day=day).exists()
         reading.end(me, session, request.POST.get("end_page"), finished)
+        # This sitting made the day count for the streak: home shows the moment (Avi, 2026-10-21).
+        newly = not counted_before and ReadingCheckin.objects.filter(profile=me, day=day).exists()
     except reading.ReadingError as exc:
         return redirect(f"{reverse('books:read')}?error={exc}")
     if finished:
@@ -100,8 +106,9 @@ def end(request, pk):
                           session=session, page=session.end_page, is_summary=True)
             except notes.NoteError:
                 pass
-        return redirect(f"{reverse('books:home')}?finished={session.pk}")
-    return redirect("books:read_summary", pk=session.pk)
+        return redirect(f"{reverse('books:home')}?finished={session.pk}{'&streak=1' if newly else ''}")
+    # No summary in between (Avi, 2026-10-21): straight home.
+    return redirect(f"{reverse('books:home')}{'?streak=1' if newly else ''}")
 
 
 @books_page

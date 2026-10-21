@@ -130,8 +130,9 @@ def test_start_read_and_finish_through_the_pages(client, noa, book):
     assert "קוראים עכשיו: מיכאל שלי" in client.get("/books/library/").content.decode()
     ReadingSession.objects.filter(pk=s.pk).update(started_at=timezone.now() - timedelta(minutes=20))
     r = client.post(f"/books/read/{s.pk}/end/", {"end_page": 150})
-    assert r["Location"] == f"/books/read/{s.pk}/"
-    summary = client.get(r["Location"]).content.decode()
+    # Straight home, with the streak moment: twenty minutes made today count (Avi, 2026-10-21).
+    assert r["Location"] == "/books/?streak=1"
+    summary = client.get(f"/books/read/{s.pk}/").content.decode()  # the sitting's page is still there
     s.refresh_from_db()
     assert s.pages == 30 and 1190 <= s.seconds <= 1210
     assert "1.5" in summary and "היום נספר ברצף" in summary

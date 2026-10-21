@@ -17,6 +17,28 @@ Newest first.
 
 ---
 
+## PM-34 · 2026-10-21 · A deploy "missing" for fifteen minutes, and the moment of the streak
+
+**What happened.** Avi asked that "done reading" go straight home, with a
+Duolingo-style moment when that sitting makes the day count; built and
+tested. Along the way: the deploy check for the candle push reported
+"none" for fifteen minutes because the polling loop ran out of GitHub's
+anonymous rate limit and read the error as no deployment (another chat
+had also pushed on top). And a new test matched "data-streak-moment" in
+the page's script instead of the overlay itself (mistake 1 again); it
+was caught by the test failing the other way, and fixed to the class
+attribute.
+
+**Why our process let it happen.** The deploy loop trusted any answer as a
+state; nothing checked the site itself.
+
+**Rule.** Watch deploys by a marker on the live site; check API answers
+for errors first. Assert on attributes, never on names that scripts also
+use.
+
+Here: docs/building_an_app.md mistake 33
+BKM: FullStackBKM 5ffde61 (lesson 41)
+
 ## PM-33 · 2026-10-21 · Sprint end: the candle and the breathing button
 
 **What happened.** Avi chose the reading candle and the breathing button.

@@ -617,6 +617,8 @@ charging for the web lookup.
 | F-R.14 | The reading screen: the "screen stays on" tip removed; the notes sheet opens without the keyboard, the microphone first, and saving returns to the timer | DONE |
 | F-R.15 | Avi chose the reading candle (burns down over an hour, goes out with smoke when paused) and the breathing button (one tap listens, the words come back with "save the thought", typing a link away) | DONE |
 
+| F-R.16 | "Done reading" goes straight home (no summary in between); the sitting that makes the day count first shows the streak moment: the flame lights, the number rolls over, today's dot pops in the week | DONE |
+
 Open for later (Avi): what to do with a finished book's notes (a summary, a
 review draft, sharing some of them).
 

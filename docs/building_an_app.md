@@ -850,3 +850,16 @@ dialog never focuses a text field on open (on a phone that opens the
 keyboard); focus goes to the likely first action, and when voice is
 offered, the microphone comes first.
 
+### 33. Watch a deploy on the site, not by hammering the API
+
+After the candle push the deploy check said "none" for fifteen minutes.
+The loop polled the GitHub Deployments API every 20 seconds without a
+token, ran out of GitHub's 60 anonymous requests an hour, and read the
+rate-limit answer as "no deployment". Meanwhile another chat had pushed
+on top, so the deployment to watch had a different commit anyway.
+
+**The rule.** Confirm a deploy by asking the live site for something only
+the new code has (a class in the CSS, a string in a script), every 20 to
+30 seconds. Use the API at most once to find the deployment, and check
+an API answer for an error before reading it as a state.
+

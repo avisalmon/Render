@@ -320,3 +320,48 @@ def test_the_timer_page_has_the_finish_celebration_and_no_quiet_tip(client, noa,
     assert "data-finish-open" in html and "books/finish.js" in html and "סיימתי את הספר!" in html
     assert "המסך יישאר דלוק" not in html and 'name="finished" value="1"' in html
 
+
+# ---- done reading goes home; the sitting that makes today count gets the moment ---------
+
+def _sit(noa, book, minutes, start=1, end=10):
+    s = reading.start(noa, book, start)
+    ReadingSession.objects.filter(pk=s.pk).update(started_at=timezone.now() - timedelta(minutes=minutes))
+    s.refresh_from_db()
+    return s
+
+
+def test_done_reading_goes_straight_home(client, noa, book):
+    s = _sit(noa, book, 2)
+    client.force_login(noa.user)
+    r = client.post(f"/books/read/{s.pk}/end/", {"end_page": "10"})
+    assert r.status_code == 302 and r["Location"] == "/books/"
+
+
+def test_the_sitting_that_makes_today_count_shows_the_streak_moment_once(client, noa, book):
+    client.force_login(noa.user)
+    s = _sit(noa, book, 3)
+    assert client.post(f"/books/read/{s.pk}/end/", {"end_page": "10"})["Location"] == "/books/"
+    s = _sit(noa, book, 3, start=10, end=20)  # 6 minutes today now
+    r = client.post(f"/books/read/{s.pk}/end/", {"end_page": "20"})
+    assert r["Location"] == "/books/?streak=1"
+    html = client.get(r["Location"]).content.decode()
+    assert 'class="bk-streak-moment"' in html and "רצף של 1 ימים!" in html
+    assert '<span class="bk-sm-roll"><b>0</b><b>1</b></span>' in html
+    assert html.count('class="is-on is-today"') == 1
+    s = _sit(noa, book, 4, start=20, end=30)  # the day already counts
+    assert client.post(f"/books/read/{s.pk}/end/", {"end_page": "30"})["Location"] == "/books/"
+
+
+def test_the_moment_needs_a_day_that_really_counts(client, noa):
+    client.force_login(noa.user)
+    assert 'class="bk-streak-moment"' not in client.get("/books/?streak=1").content.decode()
+
+
+def test_finishing_the_book_on_the_counting_sitting_shows_both(client, noa, book):
+    client.force_login(noa.user)
+    s = _sit(noa, book, 8)
+    r = client.post(f"/books/read/{s.pk}/end/", {"end_page": "300", "finished": "1"})
+    assert r["Location"] == f"/books/?finished={s.pk}&streak=1"
+    html = client.get(r["Location"]).content.decode()
+    assert 'class="bk-streak-moment"' in html and "כל הכבוד" in html
+

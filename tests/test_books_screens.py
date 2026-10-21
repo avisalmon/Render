@@ -564,7 +564,7 @@ def test_on_a_phone_a_reader_can_find_a_book_start_and_finish(browser, live_serv
         page.fill("input[name=end_page]", "20")
         page.click("form[action$='/end/'] button[type=submit]")
         page.wait_for_load_state("domcontentloaded")
-        assert "/books/read/" in page.url and page.locator(".bk-stat").count() >= 3
+        assert page.url.rstrip("/").endswith("/books") and page.locator("[data-streak-moment]").count() == 0  # straight home; a few seconds do not count a day
         assert ReadingSession.objects.get(profile=rp, entry__title="ספר מספר 17").end_page == 20
     finally:
         context.close()
@@ -721,6 +721,39 @@ def test_on_a_phone_finishing_the_book_celebrates_and_goes_home(browser, live_se
         assert s.finished_book and s.end_page == 250
         note = ReadingNote.objects.get(entry=e)
         assert note.is_summary and note.body == "ספר על זמן ועל בית"
+    finally:
+        context.close()
+
+
+def test_on_a_phone_the_streak_moment_plays_and_leaves_the_main_screen(browser, live_server, db):
+    """Avi, 2026-10-21: like Duolingo, the day turns over with a "wow", then the
+    main screen. Shown once: the address loses ?streak=1."""
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    from books import catalog, reading
+    from books.models import Profile, ReadingCheckin, ReadingSession
+    build_world()
+    rp = Profile.objects.get(user__username="reader")
+    # The seeded world already counted today for this reader: start from a clean slate.
+    ReadingCheckin.objects.filter(profile=rp).delete()
+    ReadingSession.objects.filter(profile=rp).delete()
+    e = catalog.CatalogEntry.objects.create(collection_type=catalog.book_type(), title="ספר של רצף")
+    s = reading.start(rp, e, 1)
+    ReadingSession.objects.filter(pk=s.pk).update(started_at=timezone.now() - timedelta(minutes=7))
+    context, page, _ = _open(browser, live_server, "reader", "/books/read/", PHONE, "light")
+    try:
+        page.click("form[action$='/end/'] button[type=submit]")
+        page.wait_for_selector("[data-streak-moment]")
+        assert "streak=1" not in page.url
+        page.wait_for_timeout(2600)  # the roll, the week, the button
+        assert page.text_content(".bk-sm-title").strip() == "רצף של 1 ימים!"
+        roll = page.evaluate("getComputedStyle(document.querySelector('.bk-sm-roll')).transform")
+        assert roll not in ("none", "matrix(1, 0, 0, 1, 0, 0)")  # rolled over to the new day
+        page.click("[data-streak-close]")
+        page.wait_for_selector("[data-streak-moment]", state="detached")
+        assert page.locator(".bk-dial").count() == 1  # the main screen
     finally:
         context.close()
 

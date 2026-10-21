@@ -73,6 +73,30 @@ def landing(request):
     return render(request, "books/landing.html", {"books_json": json.dumps(rows, ensure_ascii=False)})
 
 
+HEBREW_DAYS = ["ב", "ג", "ד", "ה", "ו", "ש", "א"]  # Monday first, as date.weekday() counts
+ENGLISH_DAYS = ["M", "T", "W", "T", "F", "S", "S"]
+
+
+def _streak_moment(request, profile):
+    """The Duolingo-style moment after the sitting that made today count."""
+    if request.GET.get("streak") != "1":
+        return None
+    from datetime import timedelta
+
+    from . import play
+    from .models import ReadingCheckin
+
+    today = play.today()
+    if not ReadingCheckin.objects.filter(profile=profile, day=today).exists():
+        return None
+    n = play.streak(profile)
+    active = play._active_days(profile)
+    names = HEBREW_DAYS if getattr(request, "books_lang", "he") == "he" else ENGLISH_DAYS
+    week = [{"name": names[d.weekday()], "on": d in active, "today": d == today}
+            for d in (today - timedelta(days=i) for i in range(6, -1, -1))]
+    return {"n": n, "before": max(0, n - 1), "week": week}
+
+
 def _just_finished(request, profile):
     from .models import ReadingSession
 
@@ -129,6 +153,7 @@ def _home(request):
         "go_on": (__import__("books.reading", fromlist=["continue_list"]).continue_list(profile, limit=1) or [None])[0],
         "dial": _dial(profile),
         "just_finished": _just_finished(request, profile),
+        "streak_moment": _streak_moment(request, profile),
         "book_pct": _book_ring(profile, *_dial_book(profile)),
     })
 

@@ -49,10 +49,33 @@
     </nav>
   </aside>
 </div>
+{% if streak_moment %}
+<div class="bk-streak-moment" data-streak-moment role="dialog" aria-modal="true" aria-labelledby="streak-h">
+  <div class="bk-sm-burst" aria-hidden="true">{% for i in "123456789012" %}<i style="--i: {{ forloop.counter0 }}"></i>{% endfor %}</div>
+  <svg class="bk-sm-flame" viewBox="0 0 24 24" aria-hidden="true"><path class="bk-flame-outer" d="M12 2.5c.6 3.2 2.6 4.8 4.3 6.6 1.6 1.7 2.7 3.6 2.7 6 0 3.9-3.1 6.4-7 6.4s-7-2.5-7-6.4c0-2.3 1-4 2.3-5.3.2 1.3.9 2.4 2 2.9-.3-3.7 1.2-7.3 2.7-10.2z"/><path class="bk-flame-core" d="M12 12.3c.3 1.5 1.3 2.3 2 3.1.6.7 1 1.4 1 2.3 0 1.7-1.3 2.8-3 2.8s-3-1.1-3-2.8c0-1.6 1.2-2.8 3-5.4z"/></svg>
+  <div class="bk-sm-count" aria-hidden="true"><span class="bk-sm-roll"><b>{{ streak_moment.before }}</b><b>{{ streak_moment.n }}</b></span></div>
+  <h2 class="bk-sm-title" id="streak-h">{% t "streak.title" n=streak_moment.n %}</h2>
+  <p class="bk-sm-sub">{% t "streak.sub" %}</p>
+  <ol class="bk-sm-week" aria-label="{% t "streak.week" %}">
+    {% for d in streak_moment.week %}<li class="{% if d.on %}is-on{% endif %}{% if d.today %} is-today{% endif %}"><span class="bk-sm-dot"></span><small>{{ d.name }}</small></li>{% endfor %}
+  </ol>
+  <button type="button" class="bk-btn bk-btn--primary bk-btn--wide bk-sm-go" data-streak-close>{% t "streak.go" %}</button>
+</div>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}
 <script>
+(function () {
+  // The streak moment: shown once, then the main screen (Avi, 2026-10-21).
+  var m = document.querySelector('[data-streak-moment]');
+  if (!m) return;
+  try { var u = new URL(location.href); u.searchParams.delete('streak'); history.replaceState(null, '', u); } catch (e) { /* ignore */ }
+  if (navigator.vibrate) { try { navigator.vibrate([20, 80, 40]); } catch (e) { /* ignore */ } }
+  var close = function () { m.classList.add('is-leaving'); setTimeout(function () { m.remove(); }, 260); };
+  m.querySelector('[data-streak-close]').addEventListener('click', close);
+  m.querySelector('[data-streak-close]').focus({preventScroll: true});
+})();
 (function () {
   // The living shelf's drag is saved as the shelf's order.
   var shelf = document.querySelector('[data-shelf]');
