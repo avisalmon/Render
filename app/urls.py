@@ -21,7 +21,8 @@ from . import (
 )
 
 urlpatterns = [
-    path("", views.home, name="home"),
+    # babook.co.il opens Books (Avi, 2026-10-21: Books is the site); the main page lives here now.
+    path("babook/", views.home, name="home"),
     path("add_note/", views.add_note, name="add_note"),
     path("register/", views.register, name="register"),
     path("login/", auth_views.LoginView.as_view(), name="login"),

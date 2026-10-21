@@ -23,7 +23,7 @@ def test_base_template_exists():
 @pytest.mark.django_db
 def test_home_contains_bootstrap(client):
     """T-F-1.3.2-1: Home page response contains Bootstrap 5 CDN."""
-    response = client.get("/")
+    response = client.get("/babook/")
     assert b"bootstrap" in response.content.lower()
 
 
@@ -31,7 +31,7 @@ def test_home_contains_bootstrap(client):
 @pytest.mark.django_db
 def test_bootstrap_icons_in_response(client):
     """T-F-1.3.3-1: Home page response contains Bootstrap Icons CDN."""
-    response = client.get("/")
+    response = client.get("/babook/")
     assert b"bootstrap-icons" in response.content.lower()
 
 
@@ -39,7 +39,7 @@ def test_bootstrap_icons_in_response(client):
 @pytest.mark.django_db
 def test_viewport_meta_tag(client):
     """T-F-1.3.6-1: Home page has responsive viewport meta tag."""
-    response = client.get("/")
+    response = client.get("/babook/")
     assert b'name="viewport"' in response.content
 
 
@@ -47,7 +47,7 @@ def test_viewport_meta_tag(client):
 @pytest.mark.django_db
 def test_meta_description_in_home(client):
     """T-F-1.3.7-3: Home page has a meta description tag."""
-    response = client.get("/")
+    response = client.get("/babook/")
     assert b'name="description"' in response.content
 
 
@@ -130,7 +130,7 @@ def test_terms_page_returns_200(client):
 @pytest.mark.django_db
 def test_cookie_banner_in_home(client):
     """T-F-1.3.8-3: Home page contains a cookie banner element."""
-    response = client.get("/")
+    response = client.get("/babook/")
     assert b"cookie" in response.content.lower()
 
 
@@ -143,5 +143,5 @@ def test_cookie_banner_in_home(client):
 def test_plausible_not_in_home_when_domain_not_set(client, settings):
     """T-F-1.3.9-1: plausible.io script absent when PLAUSIBLE_DOMAIN is empty."""
     settings.PLAUSIBLE_DOMAIN = ""
-    response = client.get("/")
+    response = client.get("/babook/")
     assert b"plausible.io" not in response.content

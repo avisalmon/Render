@@ -199,14 +199,14 @@ def test_homepage_has_no_community_strip_when_logged_in():
     """SPR-13.2 made the home a portal; the activity strip lives on the hub."""
     _seed_activity()
     viewer = _member("homeviewer")
-    body = _client(viewer).get("/").content.decode()
+    body = _client(viewer).get("/babook/").content.decode()
     assert "מהקהילה" not in body
 
 
 @pytest.mark.django_db
 def test_homepage_no_strip_for_anonymous():
     _seed_activity()
-    body = Client().get("/").content.decode()
+    body = Client().get("/babook/").content.decode()
     assert "מהקהילה" not in body
 
 

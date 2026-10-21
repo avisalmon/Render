@@ -1157,7 +1157,7 @@ def test_the_nav_entry_is_hidden_from_everyone_but_the_allow_list(client):
     User.objects.create_user("nosy", password="p", email="nosy@example.com",
                              is_staff=True, is_superuser=True)
     client.login(username="nosy", password="p")
-    assert link not in client.get("/").content.decode()
+    assert link not in client.get("/babook/").content.decode()
 
     # Avi, 2026-10-03: the link is shown to an admin who is also on the list.
     owner = _viewer()
@@ -1165,7 +1165,7 @@ def test_the_nav_entry_is_hidden_from_everyone_but_the_allow_list(client):
     owner.is_staff = True
     owner.save(update_fields=["is_staff", "is_superuser"])
     client.login(username="owner", password="p")
-    assert link in client.get("/").content.decode()
+    assert link in client.get("/babook/").content.decode()
 
 
 @pytest.mark.django_db

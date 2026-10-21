@@ -77,7 +77,7 @@ def test_the_nav_never_links_an_app_a_person_may_not_open(client, people):
 
 def test_a_stranger_signed_out_is_offered_no_app(client, db, settings):
     settings.CONTENT_RELEVANCE_ENABLED = False
-    body = client.get("/").content.decode()
+    body = client.get("/babook/").content.decode()
     for path in ("/matazim/", "/blackjack/", "/memz/", "/ustrip/", "/home/"):
         assert f'href="{path}"' not in body
 
@@ -104,24 +104,24 @@ def test_blackjack_is_reachable_from_any_page_not_only_the_home_page(client, peo
 
 def test_everyone_sees_the_open_apps_and_only_the_owner_sees_the_house(client, people):
     client.force_login(people["stranger"])
-    linked = _links(client.get("/").content.decode())
+    linked = _links(client.get("/babook/").content.decode())
     for path in ("/blackjack/", "/matazim/", "/memz/", "/sensorlab/"):
         assert path in linked, f"{path} is missing from the nav"
     assert "/home/" not in linked
     assert "/ustrip/" not in linked
 
     client.force_login(people["relative"])
-    assert "/ustrip/" not in _links(client.get("/").content.decode())
+    assert "/ustrip/" not in _links(client.get("/babook/").content.decode())
 
     client.force_login(people["owner"])
-    assert "/home/" not in _links(client.get("/").content.decode())
+    assert "/home/" not in _links(client.get("/babook/").content.decode())
 
     owner = people["owner"]
     owner.is_superuser = True
     owner.is_staff = True
     owner.save(update_fields=["is_staff", "is_superuser"])
     client.force_login(owner)
-    assert "/home/" in _links(client.get("/").content.decode())
+    assert "/home/" in _links(client.get("/babook/").content.decode())
 
 
 def test_the_nav_reads_the_registry_rather_than_a_list_of_its_own(client, people):
@@ -135,7 +135,7 @@ def test_the_nav_reads_the_registry_rather_than_a_list_of_its_own(client, people
         portal.APPS = []
         portal._BY_SLUG = {}
         client.force_login(people["owner"])
-        linked = _links(client.get("/").content.decode())
+        linked = _links(client.get("/babook/").content.decode())
     finally:
         portal.APPS = real
         portal._BY_SLUG = {a.slug: a for a in real}

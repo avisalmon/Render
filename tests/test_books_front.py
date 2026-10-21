@@ -302,3 +302,23 @@ def test_the_api_takes_a_single_book(client, noa, monkeypatch):
     client.force_login(noa.user)
     r = client.post("/books/api/scans/upload/", {"photo": upload(), "single": "1"})
     assert r.status_code == 201 and r.json()["is_single"] is True
+
+
+# ---- the domain opens Books (Avi, 2026-10-21: Books is the site) ----------------------
+
+def test_the_domain_opens_books(client):
+    r = client.get("/")
+    assert r.status_code == 302 and r["Location"] == "/books/"
+
+
+def test_babooks_main_page_lives_on_and_its_name_points_there(client):
+    from django.urls import reverse
+    assert reverse("home") == "/babook/" and client.get("/babook/").status_code == 200
+
+
+def test_books_menu_leads_to_the_rest_of_the_site(client, noa):
+    client.force_login(noa.user)
+    html = client.get("/books/").content.decode()
+    assert html.count('class="bk-nav-item bk-nav-item--site" href="/babook/"') == 2  # phone bar and desktop side
+    assert "עוד באתר" in html
+

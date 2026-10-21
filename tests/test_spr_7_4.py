@@ -9,13 +9,13 @@ from django.test import Client
 
 @pytest.mark.django_db
 def test_theme_toggle_present():
-    body = Client().get("/").content.decode()
+    body = Client().get("/babook/").content.decode()
     assert 'id="theme-toggle"' in body
 
 
 @pytest.mark.django_db
 def test_theme_default_light():
-    body = Client().get("/").content.decode()
+    body = Client().get("/babook/").content.decode()
     # Light is the default (Khan refresh); dark only when the cookie says so
     assert "Default = LIGHT" in body
     assert "theme=(dark|light)" in body

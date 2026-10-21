@@ -199,7 +199,7 @@ def test_base_loads_bootstrap_rtl_conditionally():
 @pytest.mark.django_db
 def test_hebrew_request_uses_rtl_bootstrap(client):
     """T-F-2.0.6-2: When LANGUAGE_CODE is Hebrew, response includes RTL bootstrap link."""
-    response = client.get("/", HTTP_ACCEPT_LANGUAGE="he")
+    response = client.get("/babook/", HTTP_ACCEPT_LANGUAGE="he")
     content = response.content.decode("utf-8", errors="ignore")
     # default LANGUAGE_CODE=he, so RTL variant should be in body
     assert "bootstrap.rtl.min.css" in content or 'dir="rtl"' in content
@@ -213,7 +213,7 @@ def test_hebrew_request_uses_rtl_bootstrap(client):
 @pytest.mark.django_db
 def test_home_renders_with_dark_theme(client):
     """T-F-2.0.7-1: Home page renders successfully with the new dark theme."""
-    response = client.get("/")
+    response = client.get("/babook/")
     assert response.status_code == 200
 
 
@@ -234,6 +234,6 @@ def test_existing_pages_still_render(client):
     """T-F-2.0.7-3: Existing Chapter 1 pages still respond 200 after theme change.
     (django_db added: REQ-5.2.1 first-touch capture writes a session row.)"""
     # Smoke tests against the dark-theme refactor — must not break existing pages.
-    for path in ["/", "/healthz", "/privacy/", "/terms/"]:
+    for path in ["/babook/", "/healthz", "/privacy/", "/terms/"]:
         response = client.get(path)
         assert response.status_code == 200, f"{path} returned {response.status_code}"

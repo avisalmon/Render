@@ -376,7 +376,7 @@ def test_home_shows_continue_watching_card():
     UserVideoProgress.objects.create(user=user, video=video, percent_watched=50)
     client = Client()
     client.login(username="resumeuser", password="testpass123")
-    resp = client.get("/")
+    resp = client.get("/babook/")
     assert resp.status_code == 200
     content = resp.content.decode("utf-8")
     assert "resume-course" in content or "Lesson 1" in content or "Resume Course" in content
@@ -389,7 +389,7 @@ def test_home_no_redirect_without_progress():
     user = User.objects.create_user(username="freshuser", password="testpass123")
     client = Client()
     client.login(username="freshuser", password="testpass123")
-    resp = client.get("/")
+    resp = client.get("/babook/")
     assert resp.status_code == 200
 
 

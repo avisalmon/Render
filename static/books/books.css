@@ -213,7 +213,7 @@ html[dir="rtl"] .bk-wordmark { letter-spacing: 0; }
 
 /* Bottom navigation on a phone. */
 .bk-nav {
-  position: fixed; inset-inline: 0; bottom: 0; z-index: 20; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
+  position: fixed; inset-inline: 0; bottom: 0; z-index: 20; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr));
   background: var(--bk-surface); border-top: 1px solid var(--bk-line); padding: 6px 4px calc(10px + env(safe-area-inset-bottom, 0px));
   box-shadow: 0 -4px 14px var(--bk-shadow);
 }
@@ -978,3 +978,7 @@ html, body { max-width: 100%; overflow-x: clip; }
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .bk-input, .bk-select, .bk-textarea, input, select, textarea { font-size: max(16px, 1em); }
 .bk-wordmark { display: inline-flex; align-items: center; min-height: 44px; }
+/* the menu's one door to the rest of babook (Avi, 2026-10-21) */
+.bk-nav-item--site { white-space: nowrap; }
+.bk-side .bk-nav-item--site { margin-top: 14px; border-top: 1px solid var(--bk-line); padding-top: 14px; }
+

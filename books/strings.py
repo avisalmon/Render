@@ -29,6 +29,7 @@ STRINGS = {
     "ui.search_filter": {"he": "חיפוש וסינון", "en": "Search and filter"},
     "ui.search": {"he": "חיפוש", "en": "Search"},
     "nav.club": {"he": "מועדון", "en": "Club"},
+    "nav.site": {"he": "עוד באתר", "en": "More"},
     "nav.me": {"he": "אני", "en": "Me"},
     "nav.main": {"he": "ניווט ראשי", "en": "Main navigation"},
     "nav.soon": {"he": "בקרוב", "en": "Soon"},

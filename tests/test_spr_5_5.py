@@ -80,9 +80,9 @@ def test_home_rail_shows_once_then_homepage_stays_clean():
     session = c.session
     session["recs_once"] = True  # set by onboarding completion
     session.save()
-    first = c.get("/").content.decode()
+    first = c.get("/babook/").content.decode()
     assert "לפי תחומי העניין והרמה שבחרת" in first and "ai-user-journey" in first
-    second = c.get("/").content.decode()
+    second = c.get("/babook/").content.decode()
     # Clean after the first entrance - no rail (the nav ⭐ icon remains)
     assert "לפי תחומי העניין והרמה שבחרת" not in second
     assert "ai-user-journey" not in second
@@ -122,7 +122,7 @@ def test_home_generic_without_learner_profile():
     u = User.objects.create_user("legacy", password="pass12345")
     c = Client()
     c.force_login(u)
-    body = c.get("/").content.decode()
+    body = c.get("/babook/").content.decode()
     assert "מומלץ עבורך" not in body
     assert "המרחבים שלך" in body, "the generic home lists the apps"
 
@@ -134,7 +134,7 @@ def test_entry_event_fires_once():
     c = Client()
     first = c.get("/courses/").content.decode()
     assert "plausible('entry'" in first
-    second = c.get("/").content.decode()
+    second = c.get("/babook/").content.decode()
     assert "plausible('entry'" not in second
 
 

@@ -623,6 +623,8 @@ charging for the web lookup.
 | F-R.18 | A single-book photo becomes the book's picture: the reading call also returns the book's box, the crop is my copy's cover and the catalogue's when it has none | DONE |
 | F-R.19 | Voice notes use the phone's own speech recognition in Hebrew, free; paid transcription only behind `BOOKS_VOICE_PAID` | DONE |
 
+| F-R.20 | babook.co.il opens Books (Avi, 2026-10-21: Books is the site); babook's main page moved to /babook/ (url name "home"), and Books' menu has one door to it, "more on the site" | DONE |
+
 Open for later (Avi): what to do with a finished book's notes (a summary, a
 review draft, sharing some of them).
 

@@ -81,8 +81,8 @@ def test_superuser_ok():
 @pytest.mark.django_db
 def test_nav_link_superuser_only():
     """F-8.1.1 — the ניהול nav link shows only to superusers."""
-    assert "admin-dashboard" in _client(_super()).get("/").content.decode()
-    assert "admin-dashboard" not in _client(_user("s2", is_staff=True)).get("/").content.decode()
+    assert "admin-dashboard" in _client(_super()).get("/babook/").content.decode()
+    assert "admin-dashboard" not in _client(_user("s2", is_staff=True)).get("/babook/").content.decode()
 
 
 @pytest.mark.django_db

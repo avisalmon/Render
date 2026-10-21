@@ -28,7 +28,7 @@ def _client(user):
 
 @pytest.mark.django_db
 def test_language_toggle_removed():
-    body = Client().get("/").content.decode()
+    body = Client().get("/babook/").content.decode()
     assert "set_language" not in body
     assert ">EN<" not in body
 
@@ -38,14 +38,14 @@ def test_language_toggle_removed():
 @pytest.mark.django_db
 def test_nav_shows_display_name_not_username():
     u = _user("rawuser", display_name="דנה כהן")
-    body = _client(u).get("/").content.decode()
+    body = _client(u).get("/babook/").content.decode()
     assert "דנה כהן" in body
 
 
 @pytest.mark.django_db
 def test_nav_falls_back_to_username():
     u = _user("fallbackuser")  # no display_name
-    body = _client(u).get("/").content.decode()
+    body = _client(u).get("/babook/").content.decode()
     assert "fallbackuser" in body
 
 
@@ -56,18 +56,18 @@ def test_hero_line_shows_for_new_and_old_users():
     """The slim hero line is pinned to the top of the home page for everyone
     (SPR-13.2 replaced the first-day-only hero)."""
     new = _user("freshie")
-    assert "בינתיים יש כאן כל השאר" in _client(new).get("/").content.decode()
+    assert "בינתיים יש כאן כל השאר" in _client(new).get("/babook/").content.decode()
 
     old = _user("oldie")
     User.objects.filter(pk=old.pk).update(
         date_joined=timezone.now() - timezone.timedelta(days=3)
     )
-    assert "בינתיים יש כאן כל השאר" in _client(old).get("/").content.decode()
+    assert "בינתיים יש כאן כל השאר" in _client(old).get("/babook/").content.decode()
 
 
 @pytest.mark.django_db
 def test_hero_shows_for_anonymous():
-    assert "בינתיים יש כאן כל השאר" in Client().get("/").content.decode()
+    assert "בינתיים יש כאן כל השאר" in Client().get("/babook/").content.decode()
 
 
 # --- F-7.1.6: chat removed from nav ---
@@ -75,7 +75,7 @@ def test_hero_shows_for_anonymous():
 @pytest.mark.django_db
 def test_chat_link_removed_from_nav():
     u = _user("navuser")
-    body = _client(u).get("/").content.decode()
+    body = _client(u).get("/babook/").content.decode()
     assert "צ'אט AI" not in body
 
 
@@ -109,7 +109,7 @@ def test_cookie_consent_links_user():
 
 @pytest.mark.django_db
 def test_footer_connect_with_avi():
-    body = Client().get("/").content.decode()
+    body = Client().get("/babook/").content.decode()
     assert "מייל לאבי סלמון" in body
     assert "linkedin.com/in/avi-salmon" in body
 

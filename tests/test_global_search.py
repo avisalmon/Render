@@ -37,4 +37,4 @@ def test_search_page_and_empty_query():
 
 
 def test_search_link_in_nav():
-    assert "/search/" in Client().get("/").content.decode()
+    assert "/search/" in Client().get("/babook/").content.decode()

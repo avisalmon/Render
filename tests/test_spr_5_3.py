@@ -13,7 +13,7 @@ from app.models import Course, Video
 @pytest.mark.django_db
 def test_welcome_strip_on_first_visit():
     """T-F-5.3.1-1: anonymous first visit shows the orientation strip."""
-    resp = Client().get("/")
+    resp = Client().get("/babook/")
     assert "welcome-strip" in resp.content.decode()
 
 
@@ -25,7 +25,7 @@ def test_welcome_strip_acknowledges_entry_course():
     resp = c.get("/courses/camefor/")
     assert "הקורס שבגללו באתי" in resp.content.decode()
     # strip keeps acknowledging on subsequent pages
-    resp = c.get("/")
+    resp = c.get("/babook/")
     body = resp.content.decode()
     assert "welcome-strip" in body and "camefor" in body
 
@@ -33,9 +33,9 @@ def test_welcome_strip_acknowledges_entry_course():
 @pytest.mark.django_db
 def test_welcome_strip_dismissed_by_cookie():
     c = Client()
-    c.get("/")
+    c.get("/babook/")
     c.cookies["welcome_dismissed"] = "1"
-    assert "welcome-strip" not in c.get("/").content.decode()
+    assert "welcome-strip" not in c.get("/babook/").content.decode()
 
 
 @pytest.mark.django_db
@@ -43,13 +43,13 @@ def test_no_strip_for_logged_in_users():
     u = User.objects.create_user("member1", password="pass12345")
     c = Client()
     c.force_login(u)
-    assert "welcome-strip" not in c.get("/").content.decode()
+    assert "welcome-strip" not in c.get("/babook/").content.decode()
 
 
 @pytest.mark.django_db
 def test_strip_has_no_register_ask():
     """T-F-5.3.2-1 (DEC-34): the strip orients - it never asks to register."""
-    resp = Client().get("/")
+    resp = Client().get("/babook/")
     body = resp.content.decode()
     strip = body.split('id="welcome-strip"')[1].split("</div>\n  </div>")[0]
     assert "הרשמה" not in strip and "/register" not in strip and "/join" not in strip

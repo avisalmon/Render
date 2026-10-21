@@ -201,13 +201,17 @@ def test_books_pages_carry_no_babook_chrome_and_no_link_out(client, path):
 def test_the_library_page_is_sealed_too(client, onboarded):
     client.force_login(onboarded)
     html = client.get("/books/").content.decode()
+    # One door out, asked for by Avi (2026-10-21): the menu's "more on the site", to babook's main page.
+    door = 'class="bk-nav-item bk-nav-item--site" href="/babook/"'
+    assert html.count(door) == 2
+    html = html.replace(door, "")
     assert "babook" not in html.lower()
     for href in re.findall(r'href="([^"]+)"', html):
         assert href.startswith(("/books/", "/static/", "https://fonts.", "#")), href
 
 
 def test_babook_does_not_link_to_books(client, db):
-    html = client.get("/").content.decode()
+    html = client.get("/babook/").content.decode()
     assert 'href="/books' not in html
 
 

@@ -20,6 +20,7 @@ from django.contrib import admin
 from django.contrib.sitemaps.views import sitemap
 from django.http import JsonResponse
 from django.urls import include, path, re_path
+from django.views.generic import RedirectView
 from django.views.static import serve
 
 from app.sitemaps import CourseSitemap, StaticViewSitemap
@@ -68,6 +69,8 @@ urlpatterns = [
     path("blackjack/", include("blackjack.urls", namespace="blackjack")),
     # improv is private (docs/improv/spec.md ch. 7): its gate is in the middleware.
     path("improv/", include("improv.urls", namespace="improv")),
+    # The domain opens Books (Avi, 2026-10-21); babook's main page is at /babook/ (url name "home").
+    path("", RedirectView.as_view(url="/books/", permanent=False), name="root"),
     path("", include("app.urls")),
 ]
 

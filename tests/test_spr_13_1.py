@@ -194,7 +194,7 @@ def test_the_portal_never_names_an_app_it_is_hiding(client, people, settings):
     """
     settings.CONTENT_RELEVANCE_ENABLED = False
     client.force_login(people["stranger"])
-    body = client.get("/").content.decode()
+    body = client.get("/babook/").content.decode()
     for hidden in ("/ustrip/", "/home/"):
         assert f'href="{hidden}"' not in body, f"the home page links {hidden} to a stranger"
 
@@ -274,7 +274,7 @@ def test_crashtech_is_out_until_avi_says(people):
 def _home(client, person, settings):
     settings.CONTENT_RELEVANCE_ENABLED = False
     client.force_login(person)
-    return client.get("/").content.decode()
+    return client.get("/babook/").content.decode()
 
 
 def test_the_page_shows_a_person_their_own_apps(client, people, settings):
@@ -314,7 +314,7 @@ def test_a_logged_out_visitor_sees_the_page_they_saw_before(client, db, settings
     because "add a section for signed-in people" is one careless `{% if %}`
     away from changing what a stranger sees."""
     settings.CONTENT_RELEVANCE_ENABLED = False
-    body = client.get("/").content.decode()
+    body = client.get("/babook/").content.decode()
     assert "המרחבים שלך" not in body
     for hidden in ('href="/ustrip/"', 'href="/home/"'):
         assert hidden not in body

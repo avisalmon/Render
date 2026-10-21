@@ -53,7 +53,7 @@ def test_chat_linked_from_hub_and_nav():
     body = Client().get("/community/").content.decode()
     assert "/community/chat/" in body
     # the global nav exposes the single community door
-    nav = Client().get("/").content.decode()
+    nav = Client().get("/babook/").content.decode()
     assert "/community/" in nav
 
 

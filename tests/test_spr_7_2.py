@@ -68,7 +68,7 @@ def test_unverified_banner_shown():
         "password": "StrongPass123!",
     })
     c.post("/welcome/skip/")  # finish onboarding so normal pages render
-    body = c.get("/").content.decode()
+    body = c.get("/babook/").content.decode()
     assert "אמתו את האימייל" in body
 
 
@@ -79,7 +79,7 @@ def test_google_signup_trusted_verified():
 
     from app.onboarding import handle_social_signup
     u = User.objects.create_user("googler", password="x")
-    req = RequestFactory().get("/")
+    req = RequestFactory().get("/babook/")
     req.session = {}
     handle_social_signup(req, u)
     u.profile.refresh_from_db()
@@ -96,7 +96,7 @@ def test_verify_banner_hidden_for_social_account_users():
     SocialAccount.objects.create(user=u, provider="google", uid="g-123")
     c = Client()
     c.force_login(u)
-    body = c.get("/").content.decode()
+    body = c.get("/babook/").content.decode()
     assert "אמתו את האימייל" not in body
 
 

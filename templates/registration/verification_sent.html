@@ -7,7 +7,7 @@
     {% if already %}
       <i class="bi bi-check-circle-fill mb-3" style="font-size:3rem; color:var(--accent-success,#00875a)"></i>
       <h1 class="h4">האימייל שלך כבר מאומת ✅</h1>
-      <a href="/" class="btn btn-primary mt-2">לעמוד הבית</a>
+      <a href="/babook/" class="btn btn-primary mt-2">לעמוד הבית</a>
     {% elif sent %}
       <i class="bi bi-envelope-check mb-3" style="font-size:3rem; color:var(--accent-primary)"></i>
       <h1 class="h4">שלחנו לך מייל אימות 📧</h1>
@@ -15,7 +15,7 @@
         הקישור נשלח ל-<strong dir="ltr">{{ email }}</strong>.<br>
         לחצו על הקישור שבמייל כדי לאמת את החשבון. לא רואים אותו? בדקו בתיקיית הספאם.
       </p>
-      <a href="/" class="btn btn-primary mt-2">המשך לאתר</a>
+      <a href="/babook/" class="btn btn-primary mt-2">המשך לאתר</a>
     {% else %}
       <i class="bi bi-envelope mb-3" style="font-size:3rem; color:var(--accent-primary)"></i>
       <h1 class="h4">אימות האימייל</h1>
@@ -28,7 +28,7 @@
       <form method="post" action="{% url 'resend_verification' %}">{% csrf_token %}
         <button class="btn btn-primary mt-2">שלחו לי קישור אימות</button>
       </form>
-      <div class="mt-2"><a href="/" class="small text-secondary">המשך לאתר ←</a></div>
+      <div class="mt-2"><a href="/babook/" class="small text-secondary">המשך לאתר ←</a></div>
     {% endif %}
   </div>
 </div>

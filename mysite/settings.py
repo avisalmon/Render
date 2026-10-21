@@ -433,8 +433,8 @@ LOGGING = {
     },
 }
 
-LOGIN_REDIRECT_URL = "/"
-LOGOUT_REDIRECT_URL = "/"
+LOGIN_REDIRECT_URL = "/babook/"  # the domain opens Books; babook's own sign-in returns here
+LOGOUT_REDIRECT_URL = "/babook/"
 
 # Django REST Framework (docs/building_an_app.md Rule 6: every app gets a
 # full, documented CRUD API on DRF). Session auth only — this site has no

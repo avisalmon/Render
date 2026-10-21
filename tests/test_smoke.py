@@ -22,7 +22,7 @@ pytestmark = pytest.mark.smoke
 @pytest.mark.parametrize(
     "path",
     [
-        "/",  # babook home
+        "/babook/",  # babook's main page (the domain itself opens Books)
         "/courses/",  # the catalogue
         "/join/",  # the wall every logged-out visitor meets
         "/matazim/",  # the מט״צים front door
@@ -53,7 +53,7 @@ def test_the_two_products_stay_sealed(client, db):
     Cheap enough to run on every push, and it is the rule most likely to be
     broken by accident: one convenient link is all it takes.
     """
-    babook = client.get("/").content.decode()
+    babook = client.get("/babook/").content.decode()
     assert "/matazim" not in babook
 
     matazim = client.get(reverse("matazim:home")).content.decode()
@@ -62,7 +62,7 @@ def test_the_two_products_stay_sealed(client, db):
 
 def test_memz_stays_sealed_too(client, db):
     """The same seal, for the third product (docs/memz/spec.md §1, building_an_app.md Rule 3)."""
-    babook = client.get("/").content.decode()
+    babook = client.get("/babook/").content.decode()
     assert "/memz" not in babook
 
     memz = client.get("/memz/").content.decode()
@@ -72,7 +72,7 @@ def test_memz_stays_sealed_too(client, db):
 
 def test_books_stays_sealed_too(client, db):
     """The same seal for Books (docs/books/spec.md BK1, building_an_app.md Rule 3)."""
-    babook = client.get("/").content.decode()
+    babook = client.get("/babook/").content.decode()
     assert 'href="/books' not in babook
 
     books = client.get("/books/login/").content.decode()

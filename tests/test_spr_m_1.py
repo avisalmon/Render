@@ -36,7 +36,7 @@ def _py(pkg: Path):
 
 def test_babook_home_has_no_matazim_link(client, db):
     """T-F-M.1.1-1: babook must not advertise מטצים anywhere in its chrome."""
-    html = client.get("/").content.decode()
+    html = client.get("/babook/").content.decode()
     assert "/matazim" not in html
 
 
@@ -70,7 +70,7 @@ def test_data_layer_and_entrance_engine_survive():
 
 def test_babook_still_serves(client, db):
     """T-F-M.1.1-5: RULE-4 in practice. Removing the hooks broke nothing."""
-    assert client.get("/").status_code == 200
+    assert client.get("/babook/").status_code == 200
 
 
 # ---------------------------------------------------------------- F-M.1.2

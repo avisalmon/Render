@@ -7,7 +7,7 @@ from app.models import Course
 
 @pytest.mark.django_db
 def test_home_has_no_breadcrumb_bar():
-    body = Client().get("/").content.decode()
+    body = Client().get("/babook/").content.decode()
     assert "bb-crumbbar" not in body
 
 
@@ -25,7 +25,7 @@ def test_nested_page_shows_full_hierarchy_with_links():
     assert "דוכן השוויץ" in body
     # parent crumbs are clickable links back up the tree
     assert 'href="/community/"' in body
-    assert 'href="/"' in body            # home crumb
+    assert 'href="/babook/"' in body     # home crumb: babook's main page (the domain opens Books)
 
 
 @pytest.mark.django_db

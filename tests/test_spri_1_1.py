@@ -292,7 +292,7 @@ def test_the_registry_entry_is_everyone_and_card_for_the_owner_only():
 
 def test_the_portal_does_not_name_improv_to_anyone_but_the_owner(people):
     for who in ("stranger", "member"):
-        html = _client_for(people[who]).get("/").content.decode("utf-8")
+        html = _client_for(people[who]).get("/babook/").content.decode("utf-8")
         assert 'href="/improv/"' not in html, who
 
 
