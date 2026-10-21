@@ -2,20 +2,25 @@
 
    1. The microphone, for any form on the page that has one ([data-voice-mic]
       with [data-voice-text], [data-voice-status], [data-voice-source]): tap to
-      record, tap to stop; the recording is sent once to be written down, and
-      the words land in the box to be read and fixed. The audio is not kept.
-   2. "What I think" on the reading screen (Avi, 2026-10-21): one tap on the
-      breathing button and it listens; a second tap stops, and the words come
-      back in a card with "save the thought". "Type instead" opens the same
-      card for the keyboard. Saving goes by fetch, so the timer never reloads;
-      without script the form still posts.
+      listen, tap to stop, and the words land in the box to be read and fixed.
+      It uses the phone's own speech recognition, in Hebrew, which costs
+      nothing (Avi, 2026-10-21: "don't spend my tokens"). Only where a phone
+      has none, and only if the site has paid transcription switched on
+      (data-url), it records and sends the audio once; it is never kept.
+   2. "What I think" on the reading screen: one tap on the breathing button
+      and it listens; a second tap stops, and the words come back in a card
+      with "save the thought". "Type instead" opens the same card for the
+      keyboard. Saving goes by fetch, so the timer never reloads; without
+      script the form still posts.
    3. The sheet of earlier thoughts on this book, opened from the count. */
 (function () {
   "use strict";
   var csrf = document.body.getAttribute("data-csrf");
 
   // ---- 1. the microphone ------------------------------------------------------------
+  var Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
   var canRecord = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
+  var speechLang = (document.documentElement.getAttribute("lang") || "he").indexOf("en") === 0 ? "en-US" : "he-IL";
   var stoppers = [];
   window.bkStopRecording = function () { stoppers.forEach(function (f) { f(true); }); };
 
@@ -26,23 +31,77 @@
   };
 
   document.querySelectorAll("[data-voice-mic]").forEach(function (mic) {
-    if (!canRecord) return;
     var form = mic.closest("form");
     var text = form.querySelector("[data-voice-text]");
     var status = form.querySelector("[data-voice-status]");
     var source = form.querySelector("[data-voice-source]");
     var label = mic.querySelector("[data-voice-label]");
     var attr = function (k) { return mic.getAttribute("data-" + k) || ""; };
-    var rec = null, chunks = [], stream = null, startedAt = 0, timer = 0, drop = false;
+    var paid = !!attr("url") && canRecord;
+    var engine = Speech ? "device" : (paid ? "paid" : "");
+    mic.bkCanListen = !!engine;
+    if (!engine) return;  // no way to listen here: the form keeps its keyboard
     mic.hidden = false;
     form.classList.add("has-mic");
 
-    var stop = function (discard) {
-      drop = !!discard;
-      if (rec && rec.state !== "inactive") rec.stop();
+    var startedAt = 0, timer = 0, on = false, drop = false;
+    var landing = function (words) {
+      words = (words || "").trim();
+      if (!words) { status.textContent = attr("nothing"); return; }
+      text.value = (text.value.trim() ? text.value.trim() + " " : "") + words;
+      if (source) source.value = "voice";
+      status.textContent = attr("check");
+      form.dispatchEvent(new CustomEvent("bk:voice-text"));
     };
-    stoppers.push(stop);
+    var startUi = function () {
+      on = true; drop = false; startedAt = Date.now();
+      mic.classList.add("is-on"); label.textContent = attr("stop");
+      var tick = function () {
+        var sec = Math.round((Date.now() - startedAt) / 1000);
+        if (!mic.bkHeard) status.textContent = attr("listening") + " " + Math.floor(sec / 60) + ":" + String(sec % 60).padStart(2, "0");
+        if (sec >= 120) stop(false);  // two minutes at most
+      };
+      mic.bkHeard = "";
+      tick();
+      timer = setInterval(tick, 500);
+    };
+    var endUi = function () {
+      on = false; clearInterval(timer);
+      mic.classList.remove("is-on"); label.textContent = attr("record");
+    };
 
+    // -- the phone's own recognition: free, and in Hebrew --
+    var rec = null, finals = "";
+    var startDevice = function () {
+      rec = new Speech();
+      rec.lang = speechLang;
+      rec.continuous = true;
+      rec.interimResults = true;
+      finals = "";
+      rec.onresult = function (e) {
+        var interim = "";
+        for (var i = e.resultIndex; i < e.results.length; i++) {
+          if (e.results[i].isFinal) finals += e.results[i][0].transcript + " ";
+          else interim += e.results[i][0].transcript;
+        }
+        mic.bkHeard = (finals + interim).trim();
+        if (mic.bkHeard) status.textContent = mic.bkHeard;
+      };
+      rec.onerror = function (e) {
+        if (e.error === "not-allowed" || e.error === "service-not-allowed") status.textContent = attr("mic-error");
+        else if (e.error === "no-speech") status.textContent = attr("nothing");
+      };
+      rec.onend = function () {
+        // Phones end recognition on a long silence too: either way, what was heard lands.
+        var heard = (finals || mic.bkHeard || "").trim();
+        endUi();
+        if (!drop) landing(heard);
+      };
+      try { rec.start(); startUi(); } catch (err) { status.textContent = attr("mic-error"); }
+    };
+
+    // -- paid transcription, only where a phone has no recognition and the site allows it --
+    var recorder = null, chunks = [], stream = null;
     var send = function (blob, seconds) {
       status.textContent = attr("working");
       mic.disabled = true;
@@ -55,42 +114,38 @@
         .then(function (res) {
           mic.disabled = false;
           if (!res.ok) { status.textContent = res.d.error || ""; return; }
-          text.value = (text.value.trim() ? text.value.trim() + " " : "") + res.d.text;
-          if (source) source.value = "voice";
-          status.textContent = attr("check");
-          form.dispatchEvent(new CustomEvent("bk:voice-text"));
+          landing(res.d.text);
         })
         .catch(function () { mic.disabled = false; status.textContent = ""; });
     };
+    var startPaid = function () {
+      navigator.mediaDevices.getUserMedia({audio: true}).then(function (s) {
+        stream = s; chunks = [];
+        var type = pickType();
+        recorder = type ? new MediaRecorder(s, {mimeType: type}) : new MediaRecorder(s);
+        recorder.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); };
+        recorder.onstop = function () {
+          stream.getTracks().forEach(function (t) { t.stop(); });
+          var seconds = Math.max(1, Math.round((Date.now() - startedAt) / 1000));
+          endUi();
+          if (drop || !chunks.length) { status.textContent = ""; return; }
+          send(new Blob(chunks, {type: recorder.mimeType || type || "audio/webm"}), seconds);
+        };
+        recorder.start();
+        startUi();
+      }).catch(function () { status.textContent = attr("mic-error"); });
+    };
+
+    var stop = function (discard) {
+      drop = !!discard;
+      if (engine === "device" && rec && on) rec.stop();
+      if (engine === "paid" && recorder && recorder.state !== "inactive") recorder.stop();
+    };
+    stoppers.push(stop);
 
     mic.addEventListener("click", function () {
-      if (rec && rec.state === "recording") { stop(false); return; }
-      navigator.mediaDevices.getUserMedia({audio: true}).then(function (s) {
-        stream = s; chunks = []; drop = false;
-        var type = pickType();
-        rec = type ? new MediaRecorder(s, {mimeType: type}) : new MediaRecorder(s);
-        rec.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); };
-        rec.onstop = function () {
-          clearInterval(timer);
-          stream.getTracks().forEach(function (t) { t.stop(); });
-          mic.classList.remove("is-on");
-          label.textContent = attr("record");
-          var seconds = Math.max(1, Math.round((Date.now() - startedAt) / 1000));
-          if (drop || !chunks.length) { status.textContent = ""; return; }
-          send(new Blob(chunks, {type: rec.mimeType || type || "audio/webm"}), seconds);
-        };
-        rec.start();
-        startedAt = Date.now();
-        mic.classList.add("is-on");
-        label.textContent = attr("stop");
-        var tick = function () {
-          var sec = Math.round((Date.now() - startedAt) / 1000);
-          status.textContent = attr("listening") + " " + Math.floor(sec / 60) + ":" + String(sec % 60).padStart(2, "0");
-          if (sec >= 120) stop(false);  // two minutes at most
-        };
-        tick();
-        timer = setInterval(tick, 500);
-      }).catch(function () { status.textContent = attr("mic-error"); });
+      if (on) { stop(false); return; }
+      if (engine === "device") startDevice(); else startPaid();
     });
   });
 
@@ -107,7 +162,7 @@
   var page = think.querySelector("[data-notes-page]");
   var countLink = think.querySelector("[data-notes-open]");
   var count = think.querySelector("[data-notes-count]");
-  var listens = orb.hasAttribute("data-voice-mic") && canRecord;
+  var listens = !!orb.bkCanListen;
   var sattr = function (k) { return sheet ? sheet.getAttribute("data-" + k) || "" : ""; };
 
   var currentPage = function () {

@@ -153,8 +153,8 @@ def test_a_reader_gives_the_page_count_once_and_never_overwrites_one(noa, book):
     assert reading.set_pages(book, 999) == 412  # a count already there stays
 
 
-def test_starting_a_book_asks_its_length_only_when_unknown_and_saves_it(client, noa, book):
-    """Avi, 2026-10-21: ask how many pages when starting, unless the search knew."""
+def test_starting_a_book_asks_its_length_and_saves_it(client, noa, book):
+    """Avi, 2026-10-21: ask how many pages when starting a book, every time, filled in when known."""
     from books.models import BookDetail
     client.force_login(noa.user)
     html = client.get(f"/books/read/?entry={book.pk}").content.decode()
@@ -164,7 +164,7 @@ def test_starting_a_book_asks_its_length_only_when_unknown_and_saves_it(client, 
     s = ReadingSession.objects.get(ended_at__isnull=True)
     assert 'name="total_pages"' not in client.get("/books/read/").content.decode()  # the timer never asks
     reading.end(noa, s, 30)
-    assert 'name="total_pages"' not in client.get(f"/books/read/?entry={book.pk}").content.decode()
+    assert 'name="total_pages" min="10" max="5000" inputmode="numeric" value="300"' in client.get(f"/books/read/?entry={book.pk}").content.decode()  # always asked, filled in
 
 
 def test_with_no_answer_200_is_assumed_for_progress_only(client, noa, book):
@@ -210,23 +210,84 @@ def test_home_offers_a_shelf_and_a_single_book(client, noa):
     assert 'href="/books/scan/?book=1"' in html and 'href="/books/scan/"' in html
 
 
-@pytest.mark.parametrize("single, strips", [(True, 1), (False, None)])
-def test_a_single_book_is_read_whole_and_a_shelf_in_strips(client, noa, monkeypatch, single, strips):
-    seen = {}
-
-    def fake(data, strips=None, **kw):
-        seen["strips"] = strips
-        return Reading(model="gpt-6.1-sol", books=[], calls=[])
-
-    monkeypatch.setattr(shelf, "read_shelf", fake)
+@pytest.mark.parametrize("single", [True, False])
+def test_a_single_book_is_read_whole_and_a_shelf_in_strips(client, noa, monkeypatch, single):
+    seen = []
+    monkeypatch.setattr(shelf, "read_shelf", lambda data, **kw: seen.append("shelf") or Reading(model="m", books=[], calls=[]))
+    monkeypatch.setattr(shelf, "read_single", lambda data, **kw: seen.append("single") or Reading(model="m", books=[], calls=[]))
     client.force_login(noa.user)
     data = {"photo": upload(), "default_visibility": "private"}
     if single:
         data["single"] = "1"
     r = client.post("/books/scan/", data)
     scan = ShelfScan.objects.get()
-    assert scan.is_single is single and seen["strips"] == strips
+    assert scan.is_single is single and seen == (["single"] if single else ["shelf"])
     assert ("book=1" in r["Location"]) is single
+
+
+def _single_scan(client, noa, monkeypatch, box=(0.2, 0.1, 0.8, 0.9), title="מיכאל שלי"):
+    from books.recognition import Book
+    monkeypatch.setattr(shelf, "read_single", lambda data, **kw: Reading(
+        model="m", books=[Book(title, "עמוס עוז")], calls=[], box=box))
+    client.force_login(noa.user)
+    client.post("/books/scan/", {"photo": upload(), "default_visibility": "private", "single": "1"})
+    return ShelfScan.objects.get()
+
+
+def test_a_single_book_photo_becomes_its_picture(client, noa, monkeypatch, book):
+    """Avi, 2026-10-21: I photographed the book itself; that is its picture."""
+    from books.models import CopyPhoto
+    scan = _single_scan(client, noa, monkeypatch)
+    assert scan.cover_box == "0.2,0.1,0.8,0.9"
+    item = scan.items.get()
+    client.post(f"/books/scan/{scan.pk}/item/{item.pk}/", {"action": "accept", "entry": book.pk, "visibility": "private"})
+    book.refresh_from_db()
+    photo = CopyPhoto.objects.get(copy__entry=book, kind="cover")
+    from PIL import Image
+    with photo.image.open("rb") as fh:
+        w, h = Image.open(fh).size
+    assert book.cover and 0.6 * 1600 * 0.9 < w < 0.7 * 1600 and 0.8 * 900 * 0.9 < h < 0.9 * 900  # the box, plus a margin
+
+
+def test_a_catalogue_cover_is_never_replaced_by_my_photo(client, noa, monkeypatch, book):
+    from django.core.files.base import ContentFile
+    from tests.test_books_3 import photo_bytes
+    book.cover.save("existing.jpg", ContentFile(photo_bytes()), save=True)
+    before = book.cover.name
+    scan = _single_scan(client, noa, monkeypatch)
+    item = scan.items.get()
+    client.post(f"/books/scan/{scan.pk}/item/{item.pk}/", {"action": "accept", "entry": book.pk, "visibility": "private"})
+    book.refresh_from_db()
+    assert book.cover.name == before
+
+
+def test_a_box_too_small_is_not_used(client, noa, monkeypatch):
+    from books.recognition import sane_box
+    assert sane_box({"x0": 0.5, "y0": 0.5, "x1": 0.55, "y1": 0.9}) is None
+    assert sane_box({"x0": -1, "y0": 0, "x1": 2, "y1": 1}) == (0.0, 0.0, 1.0, 1.0)
+    assert sane_box({"x0": "a"}) is None
+
+
+def test_starting_always_asks_the_length_filled_with_what_is_known(client, noa, book):
+    reading.set_pages(book, 412)
+    client.force_login(noa.user)
+    html = client.get(f"/books/read/?entry={book.pk}").content.decode()
+    assert 'name="total_pages" min="10" max="5000" inputmode="numeric" value="412"' in html and "אפשר לתקן" in html
+
+
+def test_my_own_count_is_mine_and_the_catalogue_keeps_its_own(client, noa, book):
+    from books.models import BookDetail
+    reading.set_pages(book, 412)
+    client.force_login(noa.user)
+    client.post("/books/read/start/", {"entry": book.pk, "page": "10", "total_pages": "380"})
+    assert BookDetail.objects.get(entry=book).pages == 412  # never written over
+    assert reading.total_pages(book, noa) == 380 and reading.total_pages(book) == 412
+    s = ReadingSession.objects.get(ended_at__isnull=True)
+    reading.end(noa, s, 380)
+    s.refresh_from_db()
+    assert s.finished_book  # my count says I reached the end
+    html = client.get(f"/books/read/?entry={book.pk}").content.decode()
+    assert 'value="380"' in html
 
 
 def test_the_single_book_page_speaks_of_a_book(client, noa):

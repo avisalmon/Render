@@ -1,4 +1,4 @@
-{% load books_tags %}<button type="button" class="bk-mic" data-voice-mic hidden data-url="{% url 'books:note_voice' %}"
+{% load books_tags %}<button type="button" class="bk-mic" data-voice-mic hidden{% if voice %} data-url="{% url 'books:note_voice' %}"{% endif %} data-nothing="{% t "notes.err.heard_nothing" %}"
         data-record="{% t "notes.record" %}" data-stop="{% t "notes.stop" %}" data-listening="{% t "notes.listening" %}"
         data-working="{% t "notes.working" %}" data-check="{% t "notes.check" %}" data-mic-error="{% t "notes.err.mic" %}">
   <span class="bk-mic-dot" aria-hidden="true"></span><span data-voice-label>{% t "notes.record" %}</span>

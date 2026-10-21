@@ -538,3 +538,14 @@ counts reading only. `ReadingNote.is_summary`: the note written in the
 celebration when a book is finished. Migration 0021. API: `sessions/{id}/pause`
 and `resume`.
 
+**My page count, and a single book's picture (2026-10-21, Avi asked).**
+`ReadingLog.pages`: my own count of a book's pages when it differs from
+the catalogue's; the catalogue's count is filled from a reader only where
+it is empty and never overwritten. `ShelfScan.cover_box`: for a single-book
+photo, where the book sits ("x0,y0,x1,y1" as fractions), returned by the
+same call that reads the book; when the book is confirmed, the crop becomes
+my copy's cover photo, and the catalogue's cover when it has none.
+Migration 0022. Paid voice transcription is now behind `BOOKS_VOICE_PAID`
+(off); the phone's own speech recognition, in Hebrew, is used and costs
+nothing.
+

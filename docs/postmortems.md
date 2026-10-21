@@ -17,6 +17,28 @@ Newest first.
 
 ---
 
+## PM-36 · 2026-10-21 · "Start a book" never asked how many pages
+
+**What happened.** Avi started a new book and was not asked its length,
+although he had asked for exactly that. He also asked that a photo of a
+single book become its picture, and that voice notes cost no tokens (his
+phone did not understand his Hebrew dictation while his tablet did).
+
+**Why our process let it happen.** The question showed only when the
+catalogue had no count; enrichment fills counts automatically, so for real
+books it almost never showed. The tests used blank books.
+
+**Rule.** Always ask when asked to ask, prefilled; test with filled data.
+Done in this sprint: the count is always asked and can be corrected for me
+alone; the single-book reading call returns the book's box and the crop
+becomes its picture (no extra call); voice uses the phone's own Hebrew
+recognition, and paid transcription is off behind a switch. On the phone
+dictation: the keyboard's voice typing language decides it; Hebrew must be
+added in the keyboard's voice settings.
+
+Here: docs/building_an_app.md mistake 35
+BKM: FullStackBKM 31f2bac (lesson 43)
+
 ## PM-35 · 2026-10-21 · The page slid sideways on Avi's phone
 
 **What happened.** On Avi's phone every Books page was a little wider than

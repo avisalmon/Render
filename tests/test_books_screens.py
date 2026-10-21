@@ -600,6 +600,7 @@ def test_on_a_phone_a_thought_is_saved_while_the_timer_runs(browser, live_server
 
 
 FAKE_MIC = """
+delete window.SpeechRecognition; delete window.webkitSpeechRecognition;
 navigator.mediaDevices.getUserMedia = () => Promise.resolve({getTracks: () => [{stop() {}}]});
 window.MediaRecorder = class {
   constructor(s, o) { this.state = 'inactive'; this.mimeType = 'audio/webm'; }
@@ -619,6 +620,7 @@ def test_on_a_phone_one_tap_listens_and_the_words_are_saved(browser, live_server
     from books import catalog, reading
     from books.models import Profile, ReadingNote
     settings.OPENAI_API_KEY = "sk-test"
+    settings.BOOKS_VOICE_PAID = True
     build_world()
     rp = Profile.objects.get(user__username="reader")
     e = catalog.CatalogEntry.objects.create(collection_type=catalog.book_type(), title="ספר מדבר")
@@ -796,4 +798,42 @@ def test_sign_out_lives_in_settings_too(client, db):
     client.force_login(get_user_model().objects.get(username="reader"))
     html = client.get("/books/settings/").content.decode()
     assert '<form method="post" action="/books/logout/" class="bk-signout">' in html
+
+
+FAKE_SPEECH = """
+window.webkitSpeechRecognition = window.SpeechRecognition = class {
+  start() { window.__lang = this.lang; setTimeout(() => this.onresult({resultIndex: 0, results: [Object.assign([{transcript: 'השורה על השקט'}], {isFinal: true})]}), 50); }
+  stop() { setTimeout(() => this.onend(), 10); }
+};
+"""
+
+
+def test_on_a_phone_the_phones_own_recognition_listens_in_hebrew_for_free(browser, live_server, db):
+    """Avi, 2026-10-21: no tokens for my thoughts. The phone's recognition,
+    in Hebrew; nothing is sent to the server but the saved words."""
+    from books import catalog, reading
+    from books.models import ModelCall, Profile, ReadingNote
+    build_world()
+    rp = Profile.objects.get(user__username="reader")
+    e = catalog.CatalogEntry.objects.create(collection_type=catalog.book_type(), title="ספר שקט")
+    reading.start(rp, e, 3)
+    context, page, _ = _open(browser, live_server, "reader", "/books/", PHONE, "light")
+    try:
+        page.add_init_script(FAKE_SPEECH)
+        voice_calls = []
+        page.on("request", lambda r: voice_calls.append(r.url) if "/read/voice/" in r.url else None)
+        page.goto(f"{live_server.url}/books/read/", wait_until="domcontentloaded")
+        page.click("[data-orb]")
+        page.wait_for_selector("[data-orb].is-on")
+        assert page.evaluate("window.__lang") == "he-IL"
+        page.wait_for_timeout(200)
+        page.click("[data-orb]")
+        page.wait_for_selector("[data-think-card]:not([hidden])")
+        assert page.input_value("[data-think] [data-voice-text]") == "השורה על השקט"
+        page.click("[data-think] button[type=submit]")
+        page.wait_for_function("document.querySelector('[data-think-card]').hidden")
+        assert ReadingNote.objects.get(profile=rp).source == "voice"
+        assert voice_calls == [] and not ModelCall.objects.filter(purpose="voice_note").exists()
+    finally:
+        context.close()
 

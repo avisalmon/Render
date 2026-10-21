@@ -22,6 +22,7 @@ User = get_user_model()
 def _env(settings, tmp_path, monkeypatch):
     settings.MEDIA_ROOT = str(tmp_path)
     settings.BOOKS_GCS_BUCKET = ""
+    settings.BOOKS_VOICE_PAID = True  # the paid path is a switch; these tests exercise it
     storage.reset_for_tests()
     monkeypatch.setattr(catalog, "lookup", lambda **kw: [])
     yield
@@ -157,7 +158,7 @@ def test_the_timer_page_has_the_notes_sheet_with_my_earlier_notes(client, noa, b
     html = client.get("/books/read/").content.decode()
     assert "data-orb" in html and "מחשבה מאתמול" in html and "books/notes.js" in html
     assert '<span data-notes-count>1</span>' in html and "data-candle" in html
-    assert "data-voice-mic" not in html  # no key here: the button opens the keyboard card instead
+    assert "data-voice-mic" in html and 'data-url="/books/read/voice/"' not in html  # free recognition only, no key
 
 
 def test_adding_by_fetch_answers_json_and_takes_the_running_session(client, noa, book):
@@ -364,4 +365,12 @@ def test_finishing_the_book_on_the_counting_sitting_shows_both(client, noa, book
     assert r["Location"] == f"/books/?finished={s.pk}&streak=1"
     html = client.get(r["Location"]).content.decode()
     assert 'class="bk-streak-moment"' in html and "כל הכבוד" in html
+
+
+def test_paid_voice_is_off_unless_switched_on(settings, noa):
+    settings.OPENAI_API_KEY = "sk-test"
+    settings.BOOKS_VOICE_PAID = False
+    assert notes.voice_enabled() is False
+    with pytest.raises(notes.NoteError, match="notes.err.no_voice"):
+        notes.transcribe(noa, clip(), client=FakeAudio())
 

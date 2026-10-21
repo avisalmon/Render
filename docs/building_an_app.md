@@ -878,3 +878,16 @@ the header on its own. A phone header holds three or four items at most;
 the rest (language, sign out) lives in settings. As a safety net,
 `html, body { overflow-x: clip }`, which does not break sticky bars.
 
+### 35. A question that hides when the data is known never shows once automation fills the data
+
+Avi asked to be asked how many pages a book has when he starts it. The
+question was built to appear only when the catalogue did not know; the
+automatic enrichment had already filled a count for his book, so he was
+never asked, and had no way to correct a wrong count. Tests passed because
+their books had no count.
+
+**The rule.** When the person asks to be asked, always ask, filled in with
+what is known, and let the answer stand for them alone when it differs
+from shared data. Test the question with data the automation would have
+filled, not only with blanks.
+

@@ -553,3 +553,5 @@ BOOKS_PILOT_EVERYONE_ASKS = os.environ.get("BOOKS_PILOT_EVERYONE_ASKS", "0") == 
 # Books: find unmatched books on the web as part of a scan, at most this much a day (Avi, 2026-10-20).
 BOOKS_WEB_LOOKUP = os.environ.get("BOOKS_WEB_LOOKUP", "1") == "1"
 BOOKS_WEB_DAILY_USD = os.environ.get("BOOKS_WEB_DAILY_USD", "2")
+# Paid voice transcription for reading notes; off: the phone's own recognition is used (Avi, 2026-10-21).
+BOOKS_VOICE_PAID = os.environ.get("BOOKS_VOICE_PAID", "0") == "1"

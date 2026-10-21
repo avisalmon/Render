@@ -42,7 +42,13 @@ def last_page(profile, entry):
     return s.end_page if s else 0
 
 
-def total_pages(entry):
+def total_pages(entry, profile=None):
+    """The book's length: my own count when I gave one, else the catalogue's."""
+    if profile is not None:
+        mine = ReadingLog.objects.filter(profile=profile, entry=entry, pages__isnull=False).values_list(
+            "pages", flat=True).first()
+        if mine:
+            return mine
     d = BookDetail.objects.filter(entry=entry).first()
     return d.pages if d and d.pages else None
 
@@ -51,10 +57,11 @@ MAX_BOOK_PAGES = 5000
 ASSUMED_PAGES = 200  # when nobody has told us (Avi, 2026-10-21); never written to the catalogue
 
 
-def set_pages(entry, pages, at_least=0):
+def set_pages(entry, pages, at_least=0, profile=None):
     """The book's page count, from a reader who holds it (Avi, 2026-10-21:
-    the dial needs it). Fills the catalogue only where it is empty; a count
-    already there is changed through a correction, never from here."""
+    asked every time a book is started). Fills the catalogue only where it
+    is empty; when the catalogue already says something else, the reader's
+    count is kept as theirs alone, never written over the catalogue."""
     try:
         pages = int(pages)
     except (TypeError, ValueError):
@@ -62,11 +69,16 @@ def set_pages(entry, pages, at_least=0):
     if not max(10, at_least or 0) <= pages <= MAX_BOOK_PAGES:
         return None
     detail, _ = BookDetail.objects.get_or_create(entry=entry)
-    if detail.pages:
-        return detail.pages
-    detail.pages = pages
-    detail.save(update_fields=["pages"])
-    return pages
+    if not detail.pages:
+        detail.pages = pages
+        detail.save(update_fields=["pages"])
+        if profile is not None:
+            ReadingLog.objects.filter(profile=profile, entry=entry).update(pages=None)
+        return pages
+    if profile is not None:
+        ReadingLog.objects.filter(profile=profile, entry=entry).update(pages=None if pages == detail.pages else pages)
+        return pages
+    return detail.pages
 
 
 def start(profile, entry, page=None, copy=None):
@@ -144,7 +156,7 @@ def end(profile, session, end_page, finished=False, now=None):
         session.paused_at = None
     session.ended_at = now
     session.end_page = end_page
-    pages = total_pages(session.entry)
+    pages = total_pages(session.entry, profile)
     session.finished_book = bool(finished) or bool(pages and end_page >= pages)
     session.save()
     if session.finished_book:
@@ -192,7 +204,7 @@ def pace(sessions):
 def book_progress(profile, entry):
     done = list(ReadingSession.objects.filter(profile=profile, entry=entry, ended_at__isnull=False))
     last = last_page(profile, entry)
-    known = total_pages(entry)
+    known = total_pages(entry, profile)
     pages = known or ASSUMED_PAGES
     p = pace(done)
     left = (pages - last) if last <= pages else None

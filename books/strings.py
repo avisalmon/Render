@@ -126,6 +126,7 @@ STRINGS = {
     "dial.done": {"he": "היום נספר · {n} דק׳", "en": "Today counts · {n} min"},
     "dial.book": {"he": "{n}% מהספר", "en": "{n}% of the book"},
     "read.total_pages": {"he": "כמה עמודים יש בספר? (אם לא, נניח 200)", "en": "How many pages has the book? (if not, we assume 200)"},
+    "read.total_pages_known": {"he": "כמה עמודים יש בספר? (אפשר לתקן)", "en": "How many pages has the book? (fix it if needed)"},
     "read.total_pages_hint": {"he": "לפי העמוד האחרון", "en": "The last page number"},
     "dial.book_about": {"he": "בערך {n}% מהספר", "en": "About {n}% of the book"},
     "read.pages_assumed": {"he": "(בערך: אורך הספר לא ידוע, הנחנו 200)", "en": "(roughly: the length is unknown, we assumed 200)"},

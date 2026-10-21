@@ -355,6 +355,8 @@ class ShelfScan(models.Model):
     default_offers = models.CharField(max_length=40, blank=True, help_text="comma list of lend,exchange,sell")
     # One book held up to the camera, not a shelf: read as one image, not strips (Avi, 2026-10-21).
     is_single = models.BooleanField(default=False)
+    # Where the book sits in a single-book photo, "x0,y0,x1,y1" as fractions; the crop becomes its picture.
+    cover_box = models.CharField(max_length=60, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     finished_at = models.DateTimeField(null=True, blank=True)
 
@@ -811,6 +813,8 @@ class ReadingLog(models.Model):
     started_on = models.DateField(null=True, blank=True)
     finished_on = models.DateField(null=True, blank=True)
     note = models.CharField(max_length=500, blank=True)
+    # My count of the book's pages, when it differs from the catalogue's (Avi, 2026-10-21).
+    pages = models.PositiveIntegerField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

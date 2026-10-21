@@ -133,7 +133,7 @@ def _book_ring(profile, entry, page):
 
     if entry is None or not page:
         return None
-    pages = reading.total_pages(entry)
+    pages = reading.total_pages(entry, profile)
     return {"pct": min(100, round(page * 100 / (pages or reading.ASSUMED_PAGES))), "assumed": not pages}
 
 

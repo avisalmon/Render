@@ -30,7 +30,7 @@ def read_page(request):
         return render(request, "books/read/session.html", {
             "elapsed": reading.elapsed(session),
             "session": session, "progress": reading.book_progress(me, session.entry),
-            "pages": reading.total_pages(session.entry), "error": _err(request),
+            "pages": reading.total_pages(session.entry, me), "error": _err(request),
             "notes": __import__("books.notes", fromlist=["for_book"]).for_book(me, session.entry),
             "voice": __import__("books.notes", fromlist=["voice_enabled"]).voice_enabled(),
         })
@@ -48,12 +48,14 @@ def read_page(request):
         if copy.entry_id not in seen:
             books.append({"entry": copy.entry, "page": 0})
             seen.add(copy.entry_id)
-    from .models import BookDetail
+    from .models import BookDetail, ReadingLog
 
-    known = dict(BookDetail.objects.filter(entry_id__in=[b["entry"].pk for b in books], pages__isnull=False)
-                 .values_list("entry_id", "pages"))
+    ids = [b["entry"].pk for b in books]
+    known = dict(BookDetail.objects.filter(entry_id__in=ids, pages__isnull=False).values_list("entry_id", "pages"))
+    mine = dict(ReadingLog.objects.filter(profile=me, entry_id__in=ids, pages__isnull=False)
+                .values_list("entry_id", "pages"))
     for b in books:
-        b["pages"] = known.get(b["entry"].pk)
+        b["pages"] = mine.get(b["entry"].pk) or known.get(b["entry"].pk)
     return render(request, "books/read/start.html", {
         "books": books, "picked": picked, "stats": reading.stats(me), "error": _err(request),
         "lang": _lang(request),
@@ -66,14 +68,13 @@ def start(request):
     me = request.books_profile
     entry = get_object_or_404(CatalogEntry, pk=request.POST.get("entry") or 0)
     copy = Copy.objects.filter(owner=me, entry=entry).first()
-    if request.POST.get("total_pages"):
-        reading.set_pages(entry, request.POST["total_pages"], at_least=int(request.POST.get("page") or 0)
-                          if (request.POST.get("page") or "").isdigit() else 0)
     try:
-        reading.start(me, entry, request.POST.get("page"), copy=copy)
+        session = reading.start(me, entry, request.POST.get("page"), copy=copy)
     except (reading.ReadingError, ValueError) as exc:
         key = str(exc) if isinstance(exc, reading.ReadingError) else "read.err.page"
         return redirect(f"{reverse('books:read')}?entry={entry.pk}&error={key}")
+    if request.POST.get("total_pages"):
+        reading.set_pages(entry, request.POST["total_pages"], at_least=session.start_page, profile=me)
     return redirect("books:read")
 
 

@@ -27,7 +27,7 @@ from .models import (
     ScanItem,
     ShelfScan,
 )
-from .recognition import KeyProblem, read_shelf
+from .recognition import KeyProblem, read_shelf, read_single
 from .textnorm import similarity
 
 log = logging.getLogger(__name__)
@@ -100,8 +100,8 @@ def read_job(job):
     try:
         with scan.photo.open("rb") as fh:
             data = fh.read()
-        # A single book is one cover or spine: splitting it in strips would cut it in half.
-        reading = read_shelf(data, strips=1 if scan.is_single else None)
+        # A single book is one cover or spine, read whole (never in strips), with where it sits.
+        reading = read_single(data) if scan.is_single else read_shelf(data)
     except KeyProblem as exc:
         scan.status, scan.error = ShelfScan.FAILED, "key"
         scan.save(update_fields=["status", "error"])
@@ -126,7 +126,8 @@ def read_job(job):
         scan.cost_usd = reading.cost_usd
         scan.seconds = Decimal(str(reading.seconds))
         scan.books_found = len(reading.books)
-        scan.save(update_fields=["model_name", "cost_usd", "seconds", "books_found"])
+        scan.cover_box = ",".join(str(v) for v in reading.box) if getattr(reading, "box", None) else ""
+        scan.save(update_fields=["model_name", "cost_usd", "seconds", "books_found", "cover_box"])
     for item in scan.items.all():
         try:
             find_candidates(item, created_by=scan.owner)
@@ -269,6 +270,11 @@ def accept(item, entry, visibility, offer_kinds, location_note, edited=False):
     item.copy = copy
     item.review_status = ScanItem.EDITED if edited else ScanItem.ACCEPTED
     item.save(update_fields=["copy", "review_status"])
+    if first_time and item.scan.is_single and item.scan.cover_box:
+        try:
+            use_photo_as_cover(item.scan, copy)
+        except Exception:  # noqa: BLE001
+            log.exception("books scan %s: the cover crop", item.scan.pk)
     _refresh_scan(item.scan)
     if first_time:
         from . import play, tagging
@@ -279,6 +285,54 @@ def accept(item, entry, visibility, offer_kinds, location_note, edited=False):
 
         enrich.start(entry, profile)
     return copy
+
+
+COVER_MARGIN = 0.02
+COVER_MAX_SIDE = 1400
+
+
+def crop_cover(scan):
+    """The book cut out of a single-book photo, as JPEG bytes, or None."""
+    try:
+        x0, y0, x1, y1 = (float(v) for v in scan.cover_box.split(","))
+    except ValueError:
+        return None
+    from io import BytesIO
+
+    from PIL import Image
+
+    with scan.photo.open("rb") as fh:
+        img = Image.open(BytesIO(fh.read()))
+        img.load()
+    w, h = img.size
+    box = (max(0, int((x0 - COVER_MARGIN) * w)), max(0, int((y0 - COVER_MARGIN) * h)),
+           min(w, int((x1 + COVER_MARGIN) * w)), min(h, int((y1 + COVER_MARGIN) * h)))
+    if box[2] - box[0] < 80 or box[3] - box[1] < 80:
+        return None
+    out = img.crop(box).convert("RGB")
+    out.thumbnail((COVER_MAX_SIDE, COVER_MAX_SIDE))
+    buf = BytesIO()
+    out.save(buf, format="JPEG", quality=86, optimize=True)
+    return buf.getvalue()
+
+
+def use_photo_as_cover(scan, copy):
+    """Avi, 2026-10-21: a photo of the book itself is its picture. Always my
+    copy's cover photo; the catalogue's cover too, when it has none."""
+    from .models import CopyPhoto
+
+    data = crop_cover(scan)
+    if not data:
+        return None
+    name = f"{copy.pk}-cover-{timezone.now():%Y%m%d%H%M%S}.jpg"
+    if not copy.photos.filter(kind="cover").exists():
+        photo = CopyPhoto(copy=copy, kind="cover")
+        photo.image.save(name, ContentFile(data), save=True)
+    entry = copy.entry
+    if not entry.cover:
+        entry.cover.save(f"{entry.pk}-from-photo.jpg", ContentFile(data), save=False)
+        entry.save(update_fields=["cover"])
+    return data
 
 
 def skip(item):

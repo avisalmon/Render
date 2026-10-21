@@ -619,6 +619,10 @@ charging for the web lookup.
 
 | F-R.16 | "Done reading" goes straight home (no summary in between); the sitting that makes the day count first shows the streak moment: the flame lights, the number rolls over, today's dot pops in the week | DONE |
 
+| F-R.17 | The page count is asked every time a book is started, filled in when known; my own count is mine alone (`ReadingLog.pages`) | DONE |
+| F-R.18 | A single-book photo becomes the book's picture: the reading call also returns the book's box, the crop is my copy's cover and the catalogue's when it has none | DONE |
+| F-R.19 | Voice notes use the phone's own speech recognition in Hebrew, free; paid transcription only behind `BOOKS_VOICE_PAID` | DONE |
+
 Open for later (Avi): what to do with a finished book's notes (a summary, a
 review draft, sharing some of them).
 

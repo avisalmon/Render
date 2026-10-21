@@ -84,6 +84,7 @@ class Reading:
     books: list[Book] = field(default_factory=list)
     calls: list[dict] = field(default_factory=list)  # one per strip: tokens, seconds, ok
     strip_books: list[list[Book]] = field(default_factory=list)
+    box: tuple | None = None  # single-book photos: where the book is, as fractions (x0, y0, x1, y1)
 
     @property
     def input_tokens(self):
@@ -165,6 +166,70 @@ def read_shelf(image_bytes, model=None, effort=None, strips=None, client=None) -
         results = list(pool.map(lambda part: read_strip(client, part, model, effort), parts))
     strip_books = [r[0] for r in results]
     return Reading(model=model, books=merge_strips(strip_books), calls=[r[1] for r in results], strip_books=strip_books)
+
+
+# ---- one book held up to the camera (Avi, 2026-10-21) ------------------------------
+
+SINGLE_PROMPT = """You are looking at a photo of one book (its front cover, or its spine).
+Give its title and author exactly as printed, in the original language (keep Hebrew in Hebrew).
+Use your knowledge to complete them only when the visible text clearly identifies the book.
+Also give the box around the book itself in the photo, as fractions of the image width and height
+(x0, y0 the top left corner, x1, y1 the bottom right, from 0 to 1), tight around the book, not the table or hands.
+If no book can be read, give an empty title."""
+
+SINGLE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "title": {"type": "string"}, "author": {"type": "string"},
+        "box": {"type": "object", "properties": {k: {"type": "number"} for k in ("x0", "y0", "x1", "y1")},
+                "required": ["x0", "y0", "x1", "y1"], "additionalProperties": False},
+    },
+    "required": ["title", "author", "box"], "additionalProperties": False,
+}
+
+
+def sane_box(box):
+    """Fractions in order and a box big enough to be a book, else None."""
+    try:
+        x0, y0, x1, y1 = (min(1.0, max(0.0, float(box[k]))) for k in ("x0", "y0", "x1", "y1"))
+    except (KeyError, TypeError, ValueError):
+        return None
+    if x1 - x0 < 0.1 or y1 - y0 < 0.1:
+        return None
+    return (round(x0, 4), round(y0, 4), round(x1, 4), round(y1, 4))
+
+
+def read_single(image_bytes, model=None, effort=None, client=None) -> Reading:
+    """One call, the whole photo: the book and the box around it. The box
+    costs a few dozen output tokens in the call that reads the book anyway."""
+    model = model or getattr(settings, "BOOKS_SCAN_MODEL", DEFAULT_MODEL)
+    effort = effort or getattr(settings, "BOOKS_SCAN_EFFORT", DEFAULT_EFFORT)
+    client = client or get_client()
+    image = ImageOps.exif_transpose(Image.open(io.BytesIO(image_bytes)))
+    extra = {"reasoning": {"effort": effort}} if effort else {}
+    start = time.perf_counter()
+    try:
+        response = client.responses.create(
+            model=model, **extra,
+            input=[{"role": "user", "content": [
+                {"type": "input_text", "text": SINGLE_PROMPT},
+                {"type": "input_image", "image_url": _data_url(image), "detail": IMAGE_DETAIL},
+            ]}],
+            text={"format": {"type": "json_schema", "name": "one_book", "schema": SINGLE_SCHEMA, "strict": True}},
+        )
+    except Exception as exc:  # noqa: BLE001
+        if getattr(exc, "status_code", None) == 401 or exc.__class__.__name__ == "AuthenticationError":
+            raise KeyProblem(str(exc)[:200]) from exc
+        raise
+    data = json.loads(response.output_text)
+    usage = response.usage
+    tin = usage.input_tokens if usage else 0
+    tout = usage.output_tokens if usage else 0
+    title = (data.get("title") or "").strip()
+    books = [Book(title, (data.get("author") or "").strip())] if title else []
+    return Reading(model=model, books=books, box=sane_box(data.get("box") or {}) if books else None,
+                   calls=[{"input_tokens": tin, "output_tokens": tout, "seconds": round(time.perf_counter() - start, 1),
+                           "cost_usd": cost_of(model, tin, tout)}])
 
 
 # ---- merging, exactly as measured -------------------------------------------------

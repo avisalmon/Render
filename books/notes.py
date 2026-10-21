@@ -74,7 +74,10 @@ def remove(profile, note):
 # ---- a spoken note ------------------------------------------------------------------
 
 def voice_enabled():
-    return bool(getattr(settings, "OPENAI_API_KEY", "")) and getattr(settings, "BOOKS_VOICE_NOTES", True)
+    """Paid transcription is off unless switched on (Avi, 2026-10-21: the
+    phone's own recognition is free and is used first)."""
+    return (bool(getattr(settings, "OPENAI_API_KEY", "")) and getattr(settings, "BOOKS_VOICE_NOTES", True)
+            and bool(getattr(settings, "BOOKS_VOICE_PAID", False)))
 
 
 def clips_today(profile):
