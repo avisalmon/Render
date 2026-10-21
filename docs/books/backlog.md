@@ -608,7 +608,8 @@ charging for the web lookup.
 | F-R.6 | Home says "continue reading (title)" for the book I stopped in, and one tap starts it at my page | DONE |
 | F-R.7 | Thoughts while reading: a sheet over the timer, typed or spoken (transcribed, checked, then saved), adding up per book; shown after the session and on the book's page | DONE |
 | F-R.8 | API: `sessions` and `notes` | DONE |
-| F-R.9 | The big home buttons: no icons; a look chosen by Avi from the options page | WAITING for Avi's choice |
+| F-R.9 | The big home buttons: no icons; Avi chose the reading dial: its ring is today's minutes toward five, the shelf and the book as two round pebbles | DONE |
+| F-R.10 | The dial's inner ring: how far into the book; the page count asked when starting a book it is unknown for, 200 assumed for my progress when there is no answer (marked "about", never stored, never finishing a book) | DONE |
 
 Open for later (Avi): what to do with a finished book's notes (a summary, a
 review draft, sharing some of them).

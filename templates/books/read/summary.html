@@ -11,7 +11,7 @@
     <div class="bk-stat"><b>{% if pace %}{{ pace }}{% else %}-{% endif %}</b><span>{% t "read.pages_per_minute" %}</span></div>
   </div>
   {% if s.finished_book %}<p class="bk-notice bk-notice--ok" role="status">{% t "read.finished_note" %}</p>
-  {% elif progress.pages %}<p class="bk-muted">{% t "read.progress" page=s.end_page pages=progress.pages pct=progress.percent %}{% if progress.minutes_left %} · {% t "read.left" n=progress.minutes_left %}{% endif %}</p>{% endif %}
+  {% elif progress.pages %}<p class="bk-muted">{% t "read.progress" page=s.end_page pages=progress.pages pct=progress.percent %}{% if progress.pages_assumed %} {% t "read.pages_assumed" %}{% endif %}{% if progress.minutes_left %} · {% t "read.left" n=progress.minutes_left %}{% endif %}</p>{% endif %}
 
   {% if stats.today_counts %}
   <p class="bk-notice bk-notice--ok" role="status">{% t "read.day_counts" n=stats.streak %}</p>

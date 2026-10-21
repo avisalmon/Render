@@ -73,6 +73,37 @@ def landing(request):
     return render(request, "books/landing.html", {"books_json": json.dumps(rows, ensure_ascii=False)})
 
 
+def _dial(profile):
+    """The reading dial's ring (Avi chose it, 2026-10-21): today's reading
+    toward the five minutes that count for the streak."""
+    from . import play, reading
+
+    seconds = reading.day_seconds(profile, play.today())
+    goal = reading.MIN_STREAK_SECONDS
+    return {"pct": min(100, round(seconds * 100 / goal)), "minutes": seconds // 60, "goal": goal // 60,
+            "done": seconds >= goal}
+
+
+def _dial_book(profile):
+    from . import reading
+
+    now = reading.active(profile)
+    if now:
+        return now.entry, now.start_page
+    go_on = (reading.continue_list(profile, limit=1) or [None])[0]
+    return (go_on["entry"], go_on["page"]) if go_on else (None, 0)
+
+
+def _book_ring(profile, entry, page):
+    """The dial's inner ring: how far into the book, when its length is known."""
+    from . import reading
+
+    if entry is None or not page:
+        return None
+    pages = reading.total_pages(entry)
+    return {"pct": min(100, round(page * 100 / (pages or reading.ASSUMED_PAGES))), "assumed": not pages}
+
+
 @books_page
 def _home(request):
     from . import shelf
@@ -87,6 +118,8 @@ def _home(request):
         "reading_now": __import__("books.reading", fromlist=["active"]).active(profile),
         "reading_today": __import__("books.reading", fromlist=["stats"]).stats(profile)["today_minutes"],
         "go_on": (__import__("books.reading", fromlist=["continue_list"]).continue_list(profile, limit=1) or [None])[0],
+        "dial": _dial(profile),
+        "book_pct": _book_ring(profile, *_dial_book(profile)),
     })
 
 

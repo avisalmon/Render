@@ -823,3 +823,15 @@ comes from the left. A label that is a signed number or a range (−1, +10,
 3-5) gets `dir="ltr"`. Both are checked on a right-to-left screenshot
 before shipping, not only by the tests.
 
+### 31. A ring drawn with a radial mask needs `closest-side`
+
+The reading dial's inner ring (how far into the book) passed every test and
+was invisible on the screenshot. `radial-gradient(circle, ...)` sizes the
+circle to the box's farthest corner, about 1.41 times the radius, so a
+mask stop at 90% falls outside the box and hides the whole ring. The tests
+saw the element and its numbers; only the picture showed nothing drawn.
+
+**The rule.** Rings and donuts made with a radial mask use
+`radial-gradient(circle closest-side, ...)`, so the percentages are of the
+real radius; and any new drawn shape is checked on a screenshot.
+

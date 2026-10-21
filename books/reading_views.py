@@ -46,6 +46,12 @@ def read_page(request):
         if copy.entry_id not in seen:
             books.append({"entry": copy.entry, "page": 0})
             seen.add(copy.entry_id)
+    from .models import BookDetail
+
+    known = dict(BookDetail.objects.filter(entry_id__in=[b["entry"].pk for b in books], pages__isnull=False)
+                 .values_list("entry_id", "pages"))
+    for b in books:
+        b["pages"] = known.get(b["entry"].pk)
     return render(request, "books/read/start.html", {
         "books": books, "picked": picked, "stats": reading.stats(me), "error": _err(request),
         "lang": _lang(request),
@@ -58,6 +64,9 @@ def start(request):
     me = request.books_profile
     entry = get_object_or_404(CatalogEntry, pk=request.POST.get("entry") or 0)
     copy = Copy.objects.filter(owner=me, entry=entry).first()
+    if request.POST.get("total_pages"):
+        reading.set_pages(entry, request.POST["total_pages"], at_least=int(request.POST.get("page") or 0)
+                          if (request.POST.get("page") or "").isdigit() else 0)
     try:
         reading.start(me, entry, request.POST.get("page"), copy=copy)
     except (reading.ReadingError, ValueError) as exc:
@@ -72,6 +81,8 @@ def end(request, pk):
     me = request.books_profile
     session = get_object_or_404(ReadingSession, pk=pk, profile=me)
     try:
+        if request.POST.get("total_pages"):
+            reading.set_pages(session.entry, request.POST["total_pages"], at_least=session.start_page)
         reading.end(me, session, request.POST.get("end_page"), request.POST.get("finished") == "1")
     except reading.ReadingError as exc:
         return redirect(f"{reverse('books:read')}?error={exc}")

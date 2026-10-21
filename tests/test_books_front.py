@@ -116,7 +116,7 @@ def test_home_says_continue_with_the_book_and_one_tap_starts_at_my_page(client, 
     assert "מתחילים לקרוא" in client.get("/books/").content.decode()
     read_today(noa, book, 10)  # pages 1 to 20, not finished
     html = client.get("/books/").content.decode()
-    assert "המשך לקרוא (מיכאל שלי)" in html and 'name="page" value="20"' in html
+    assert "<b>המשך לקרוא</b><i>מיכאל שלי</i>" in html and 'name="page" value="20"' in html
     client.post("/books/read/start/", {"entry": book.pk, "page": "20"})
     assert ReadingSession.objects.get(ended_at__isnull=True).start_page == 20
 
@@ -137,12 +137,69 @@ def test_the_timer_page_has_the_page_wheel(client, noa, book):
     assert 'name="end_page" min="30"' in html and "data-flip-input" in html
 
 
-def test_the_big_home_buttons_carry_no_icons(client, noa):
+def test_the_dial_and_its_pebbles_carry_no_icons(client, noa):
     client.force_login(noa.user)
     html = client.get("/books/").content.decode()
-    for line in html.splitlines():
-        if "bk-quick-tile--main" in line:
-            assert "<svg" not in line
+    zone = html[html.index('<section class="bk-dial-zone"'):html.index("</section>", html.index("bk-dial-zone"))]
+    assert "<svg" not in zone
+    assert '<a class="bk-pebble" href="/books/scan/">' in zone and '<a class="bk-pebble" href="/books/scan/?book=1">' in zone
+
+
+def test_a_reader_gives_the_page_count_once_and_never_overwrites_one(noa, book):
+    from books.models import BookDetail
+    assert reading.set_pages(book, "abc") is None and reading.set_pages(book, 3) is None
+    assert reading.set_pages(book, 80, at_least=120) is None  # fewer pages than the page I am on
+    assert reading.set_pages(book, 412) == 412 and BookDetail.objects.get(entry=book).pages == 412
+    assert reading.set_pages(book, 999) == 412  # a count already there stays
+
+
+def test_starting_a_book_asks_its_length_only_when_unknown_and_saves_it(client, noa, book):
+    """Avi, 2026-10-21: ask how many pages when starting, unless the search knew."""
+    from books.models import BookDetail
+    client.force_login(noa.user)
+    html = client.get(f"/books/read/?entry={book.pk}").content.decode()
+    assert 'name="total_pages"' in html and "נניח 200" in html
+    client.post("/books/read/start/", {"entry": book.pk, "page": "10", "total_pages": "300"})
+    assert BookDetail.objects.get(entry=book).pages == 300
+    s = ReadingSession.objects.get(ended_at__isnull=True)
+    assert 'name="total_pages"' not in client.get("/books/read/").content.decode()  # the timer never asks
+    reading.end(noa, s, 30)
+    assert 'name="total_pages"' not in client.get(f"/books/read/?entry={book.pk}").content.decode()
+
+
+def test_with_no_answer_200_is_assumed_for_progress_only(client, noa, book):
+    from books.models import BookDetail
+    client.force_login(noa.user)
+    client.post("/books/read/start/", {"entry": book.pk, "page": "1", "total_pages": ""})
+    s = ReadingSession.objects.get(ended_at__isnull=True)
+    s = reading.end(noa, s, 250)
+    assert s.finished_book is False  # page 250 of an assumed 200 does not finish the book
+    assert not BookDetail.objects.filter(entry=book, pages__isnull=False).exists()  # never written
+    progress = reading.book_progress(noa, book)
+    assert progress["pages"] == 200 and progress["pages_assumed"] and progress["percent"] == 100
+
+
+def test_the_dials_inner_ring_is_the_book(client, noa, book):
+    client.force_login(noa.user)
+    read_today(noa, book, 3)  # ends on page 20
+    html = client.get("/books/").content.decode()
+    assert "--book: 10" in html and "בערך 10% מהספר" in html  # 20 of an assumed 200
+    reading.set_pages(book, 80)
+    html = client.get("/books/").content.decode()
+    assert "--book: 25" in html and '<span class="bk-dial-book" aria-hidden="true"></span>' in html
+    assert "25% מהספר" in html and "בערך" not in html
+
+
+def test_the_dials_ring_is_todays_reading_toward_five_minutes(client, noa, book):
+    client.force_login(noa.user)
+    html = client.get("/books/").content.decode()
+    assert 'style="--goal: 0"' in html and "0/5 דק׳ היום" in html
+    read_today(noa, book, 3)
+    html = client.get("/books/").content.decode()
+    assert 'style="--goal: 60;' in html and "3/5 דק׳ היום" in html and "is-done" not in html
+    read_today(noa, book, 4)
+    html = client.get("/books/").content.decode()
+    assert 'style="--goal: 100;' in html and "bk-dial is-done" in html and "היום נספר · 7 דק׳" in html
 
 
 # ---- one book on its own -----------------------------------------------------------------

@@ -47,6 +47,28 @@ def total_pages(entry):
     return d.pages if d and d.pages else None
 
 
+MAX_BOOK_PAGES = 5000
+ASSUMED_PAGES = 200  # when nobody has told us (Avi, 2026-10-21); never written to the catalogue
+
+
+def set_pages(entry, pages, at_least=0):
+    """The book's page count, from a reader who holds it (Avi, 2026-10-21:
+    the dial needs it). Fills the catalogue only where it is empty; a count
+    already there is changed through a correction, never from here."""
+    try:
+        pages = int(pages)
+    except (TypeError, ValueError):
+        return None
+    if not max(10, at_least or 0) <= pages <= MAX_BOOK_PAGES:
+        return None
+    detail, _ = BookDetail.objects.get_or_create(entry=entry)
+    if detail.pages:
+        return detail.pages
+    detail.pages = pages
+    detail.save(update_fields=["pages"])
+    return pages
+
+
 def start(profile, entry, page=None, copy=None):
     if active(profile):
         raise ReadingError("read.err.active")
@@ -141,10 +163,12 @@ def pace(sessions):
 def book_progress(profile, entry):
     done = list(ReadingSession.objects.filter(profile=profile, entry=entry, ended_at__isnull=False))
     last = last_page(profile, entry)
-    pages = total_pages(entry)
+    known = total_pages(entry)
+    pages = known or ASSUMED_PAGES
     p = pace(done)
-    left = (pages - last) if pages and last <= pages else None
-    return {"last_page": last, "pages": pages, "percent": round(100 * last / pages) if pages and last else None,
+    left = (pages - last) if last <= pages else None
+    return {"last_page": last, "pages": pages, "pages_assumed": not known,
+            "percent": min(100, round(100 * last / pages)) if last else None,
             "sessions": len(done), "minutes": round(sum(s.seconds for s in done) / 60),
             "pace": p, "minutes_left": round(left / p) if left and p else None}
 

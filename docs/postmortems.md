@@ -17,6 +17,26 @@ Newest first.
 
 ---
 
+## PM-31 · 2026-10-21 · The dial's book ring was in the page and not on the screen
+
+**What happened.** Avi chose the reading dial and asked how it would know
+the book's progress. The inner ring added for it passed its tests (the
+element, its percentage, "25% of the book") and was invisible in the
+phone screenshot.
+
+**Why our process let it happen.** A radial mask sized by default to the
+farthest corner put every stop outside the ring; tests read markup and
+numbers, not paint. The screenshot step caught it, as it is meant to.
+
+**Rule.** Radial masks use `closest-side`; new drawn shapes are checked
+on a screenshot. Also from Avi in this sprint: the page count is asked
+when a book is started, and with no answer 200 is assumed for my progress
+only (marked "about", never written to the catalogue, never finishing a
+book by itself).
+
+Here: docs/building_an_app.md mistake 31
+BKM: FullStackBKM e6cce02 (lesson 39)
+
 ## PM-30 · 2026-10-21 · Sprint end: the page wheel ran backwards in Hebrew
 
 **What happened.** The sprint (page wheel, "continue reading", thoughts

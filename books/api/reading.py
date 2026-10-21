@@ -26,8 +26,9 @@ class ReadingSessionSerializer(serializers.ModelSerializer):
 
 
 class ReadingSessionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
-    """My sittings. POST `start` {entry, page}; POST `{id}/end` {end_page,
-    finished}; POST `{id}/discard`."""
+    """My sittings. POST `start` {entry, page, total_pages (optional, fills
+    an empty catalogue count)}; POST `{id}/end` {end_page, finished,
+    total_pages}; POST `{id}/discard`."""
 
     serializer_class = ReadingSessionSerializer
     permission_classes = [HasBooksProfile]
@@ -40,6 +41,8 @@ class ReadingSessionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, vi
         entry = CatalogEntry.objects.filter(pk=request.data.get("entry") or 0).first()
         if entry is None:
             raise ValidationError({"entry": "required"})
+        if request.data.get("total_pages"):
+            reading.set_pages(entry, request.data["total_pages"])
         try:
             s = reading.start(_me(request), entry, request.data.get("page"))
         except (reading.ReadingError, ValueError) as exc:
@@ -49,6 +52,8 @@ class ReadingSessionViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, vi
     @action(detail=True, methods=["post"])
     def end(self, request, pk=None):
         s = self.get_object()
+        if request.data.get("total_pages"):
+            reading.set_pages(s.entry, request.data["total_pages"], at_least=s.start_page)
         try:
             s = reading.end(_me(request), s, request.data.get("end_page"),
                             str(request.data.get("finished")).lower() in ("1", "true"))

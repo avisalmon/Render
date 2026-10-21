@@ -29,6 +29,7 @@
         <form method="post" action="{% url 'books:read_start' %}" class="bk-read-go">{% csrf_token %}
           <input type="hidden" name="entry" value="{{ b.entry.pk }}">
           <label class="bk-field">{% t "read.page_now" %} <input class="bk-input bk-input--big" type="number" name="page" min="0" inputmode="numeric" value="{{ b.page }}"></label>
+          {% if not b.pages %}<label class="bk-field bk-total-pages">{% t "read.total_pages" %} <input class="bk-input" type="number" name="total_pages" min="10" max="5000" inputmode="numeric" placeholder="{% t "read.total_pages_hint" %}"></label>{% endif %}
           <button type="submit" class="bk-btn bk-btn--primary bk-btn--wide bk-btn--big">{% t "read.start" %}</button>
         </form>
       </details>
