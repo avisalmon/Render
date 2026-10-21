@@ -863,3 +863,18 @@ the new code has (a class in the CSS, a string in a script), every 20 to
 30 seconds. Use the API at most once to find the deployment, and check
 an API answer for an error before reading it as a state.
 
+### 34. Test at the narrowest phones, not one convenient width
+
+Avi, 2026-10-21, on his phone: the page is a little wider than the screen
+and slides left and right. Every check ran at 390px, where the header
+(wordmark, language, the new streak flame, the bell, the name, sign out)
+just fitted; it needs about 380px, so on 360px and 375px phones, most
+Android phones and many iPhones, the whole page grew wider. The header had
+gained one item at a time, each passing at 390.
+
+**The rule.** Phone checks run at 320, 360, 375 and 412 as well as 390
+(`test_on_every_phone_width_the_page_never_slides_sideways`), and measure
+the header on its own. A phone header holds three or four items at most;
+the rest (language, sign out) lives in settings. As a safety net,
+`html, body { overflow-x: clip }`, which does not break sticky bars.
+

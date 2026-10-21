@@ -25,7 +25,7 @@
   <header class="bk-header">
     <a class="bk-wordmark" href="{% url 'books:home' %}">{% t "brand" %}</a>
     <div class="bk-account">
-      <form method="post" action="{% url 'books:set_language' request.books_other_lang|default:'en' %}">{% csrf_token %}
+      <form method="post" action="{% url 'books:set_language' request.books_other_lang|default:'en' %}"{% if user.books_profile %} class="bk-wide-only"{% endif %}>{% csrf_token %}
         <input type="hidden" name="next" value="{{ request.get_full_path }}">
         <button type="submit" class="bk-btn bk-btn--quiet" lang="{{ request.books_other_lang|default:'en' }}" aria-label="{% t "lang.switch" %}">{% t "lang.other" %}</button>
       </form>
@@ -36,7 +36,7 @@
         {% block account %}
           {% if user.books_profile %}<a class="bk-btn bk-btn--quiet bk-account-name" href="{% url 'books:settings' %}">{{ user.books_profile.display_name }}</a>{% endif %}
         {% endblock %}
-        <form method="post" action="{% url 'books:logout' %}">{% csrf_token %}
+        <form method="post" action="{% url 'books:logout' %}" class="bk-wide-only">{% csrf_token %}
           <button type="submit" class="bk-btn bk-btn--quiet">{% t "sign_out" %}</button>
         </form>
       {% else %}

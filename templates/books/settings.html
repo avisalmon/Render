@@ -48,6 +48,9 @@
   <div class="bk-stack">
     <a class="bk-btn" href="{% url 'books:plans' %}">{% t "plans.title" %}</a>
     <a class="bk-btn" href="{% url 'books:my_data' %}">{% t "data.title" %}</a>
+    <form method="post" action="{% url 'books:logout' %}" class="bk-signout">{% csrf_token %}
+      <button type="submit" class="bk-btn bk-btn--quiet bk-btn--wide">{% t "sign_out" %}</button>
+    </form>
   </div>
 </div>
 {% endblock %}

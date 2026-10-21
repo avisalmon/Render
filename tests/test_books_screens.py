@@ -757,3 +757,43 @@ def test_on_a_phone_the_streak_moment_plays_and_leaves_the_main_screen(browser, 
     finally:
         context.close()
 
+
+NARROW_PHONES = (320, 360, 375, 412)
+NARROW_PATHS = [("landing", None, "/books/"), ("login", None, "/books/login/"), ("home", "shelver", "/books/"),
+                ("library", "shelver", "/books/library/"), ("catalog", "reader", "/books/catalog/"),
+                ("entry", "reader", "/books/catalog/1001/"), ("scan", "reader", "/books/scan/"),
+                ("settings", "reader", "/books/settings/"), ("play", "reader", "/books/play/"),
+                ("club", "reader", "/books/club/"), ("near", "reader", "/books/near/"), ("read", "shelver", "/books/read/")]
+
+
+def test_on_every_phone_width_the_page_never_slides_sideways(browser, live_server, db):
+    """Avi, 2026-10-21: "a little wider than the screen, it moves left and
+    right". Checked at the narrow widths real phones have, not only at 390:
+    the page itself is never wider than the screen, and the header fits."""
+    build_world()
+    wide = []
+    for w in NARROW_PHONES:
+        for name, who, path in NARROW_PATHS:
+            ctx, page, _ = _open(browser, live_server, who, path, {"width": w, "height": 780}, "light")
+            try:
+                sw = page.evaluate("document.documentElement.scrollWidth")
+                header = page.evaluate("document.querySelector('.bk-header').scrollWidth")
+                if sw > w or header > w:
+                    wide.append(f"{name}@{w}: page {sw}, header {header}")
+                # An iPhone zooms into any field under 16px, and the zoomed page slides sideways.
+                small = page.evaluate("""[...document.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio]), select, textarea')]
+                    .filter(e => parseFloat(getComputedStyle(e).fontSize) < 16).map(e => e.name || e.className)""")
+                if small:
+                    wide.append(f"{name}@{w}: fields under 16px {small}")
+            finally:
+                ctx.close()
+    assert wide == []
+
+
+def test_sign_out_lives_in_settings_too(client, db):
+    build_world()
+    from django.contrib.auth import get_user_model
+    client.force_login(get_user_model().objects.get(username="reader"))
+    html = client.get("/books/settings/").content.decode()
+    assert '<form method="post" action="/books/logout/" class="bk-signout">' in html
+

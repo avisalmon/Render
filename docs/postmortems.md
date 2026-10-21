@@ -17,6 +17,24 @@ Newest first.
 
 ---
 
+## PM-35 · 2026-10-21 · The page slid sideways on Avi's phone
+
+**What happened.** On Avi's phone every Books page was a little wider than
+the screen and moved left and right. The header needed about 380px; every
+check ran at 390px, where it fitted.
+
+**Why our process let it happen.** All phone checks used one width, the
+one convenient for screenshots. The header grew one item at a time (the
+flame was the last), and each addition passed at 390.
+
+**Rule.** Check 320, 360, 375 and 412 too, and the header alone; phone
+headers keep three or four items, the rest goes to settings; and the page
+clips sideways overflow as a safety net. Measured after the fix: every
+main screen fits at every width.
+
+Here: docs/building_an_app.md mistake 34; tests/test_books_screens.py
+BKM: FullStackBKM a8f1583 (lesson 42)
+
 ## PM-34 · 2026-10-21 · A deploy "missing" for fifteen minutes, and the moment of the streak
 
 **What happened.** Avi asked that "done reading" go straight home, with a
