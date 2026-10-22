@@ -92,6 +92,7 @@ urlpatterns = [
     # Reading sessions (Avi, 2026-10-20).
     path("read/", reading_views.read_page, name="read"),
     path("read/start/", reading_views.start, name="read_start"),
+    path("read/continue/", reading_views.read_continue, name="read_continue"),
     path("read/<int:pk>/", reading_views.summary, name="read_summary"),
     path("read/<int:pk>/end/", reading_views.end, name="read_end"),
     path("read/<int:pk>/discard/", reading_views.discard, name="read_discard"),

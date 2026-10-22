@@ -267,3 +267,16 @@ def first_back(request, entry_pk):
     return JsonResponse({"filled": [t(f"first.got_{k}", lang) for k in done["filled"]],
                          "suggested": [t(f"first.got_{k}", lang) for k in done["suggested"]], "pages": done["pages"]})
 
+
+@books_page
+def read_continue(request):
+    """The menu's "continue reading" (Avi, 2026-10-22): the running timer, or
+    the book I stopped in, open at my page and one tap from starting."""
+    me = request.books_profile
+    if reading.active(me):
+        return redirect("books:read")
+    go_on = (reading.continue_list(me, limit=1) or [None])[0]
+    if go_on:
+        return redirect(f"{reverse('books:read')}?entry={go_on['entry'].pk}")
+    return redirect("books:read")
+

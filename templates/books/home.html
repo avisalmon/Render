@@ -45,6 +45,8 @@
       {% if books_json and books_json != "[]" %}
       <a class="bk-quick-tile" href="{% url 'books:library' %}">{% include "books/ui/_icon.html" with name="books" %}<span>{% t "lib.all_books" %}</span></a>
       {% endif %}
+      <a class="bk-quick-tile" href="{% url 'books:near' %}">{% include "books/ui/_icon.html" with name="pin" %}<span>{% t "nav.near" %}</span></a>
+      <a class="bk-quick-tile" href="{% url 'books:club' %}">{% include "books/ui/_icon.html" with name="club" %}<span>{% t "nav.club" %}</span></a>
       <a class="bk-quick-tile" href="{% url 'books:discover' %}">{% include "books/ui/_icon.html" with name="compass" %}<span>{% t "disc.title" %}</span></a>
       <a class="bk-quick-tile" href="{% url 'books:library_add' %}">{% include "books/ui/_icon.html" with name="plus" %}<span>{% t "lib.add" %}</span></a>
       <a class="bk-quick-tile" href="{% url 'books:wishlist' %}">{% include "books/ui/_icon.html" with name="heart" %}<span>{% t "lib.wishlist" %}</span></a>

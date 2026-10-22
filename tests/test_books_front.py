@@ -320,7 +320,7 @@ def test_books_menu_leads_to_the_rest_of_the_site(client, noa):
     client.force_login(noa.user)
     html = client.get("/books/").content.decode()
     assert html.count('class="bk-nav-item bk-nav-item--site" href="/babook/"') == 2  # phone bar and desktop side
-    assert "עוד באתר" in html
+    assert "עוד" in html
 
 
 # ---- beside the shelf: the spines' direction and search (Avi, 2026-10-22) --------------
@@ -365,4 +365,31 @@ def test_editing_one_fact_keeps_the_others(client, noa):
     assert r.status_code == 302
     noa.refresh_from_db()
     assert noa.display_name == "נועה כהן" and noa.language == "he"
+
+
+# ---- the menu (Avi, 2026-10-22): home, search, friends, me, more, continue reading --------
+
+def test_the_menu_has_the_six_and_nothing_else(client, noa):
+    import re
+    client.force_login(noa.user)
+    html = client.get("/books/").content.decode()
+    bar = html[html.index('<nav class="bk-nav"'):]
+    bar = bar[:bar.index("</nav>")]
+    labels = [re.sub(r"<[^>]+>", "", a).strip() for a in re.findall(r"<a [^>]*>.*?</a>", bar, re.S)]
+    assert labels == ["בית", "חיפוש", "חברים", "אני", "עוד", "המשך קריאה"]
+
+
+def test_continue_reading_goes_where_i_am(client, noa, book):
+    client.force_login(noa.user)
+    assert client.get("/books/read/continue/")["Location"] == "/books/read/"
+    read_today(noa, book, 3)  # stopped on page 20
+    assert client.get("/books/read/continue/")["Location"] == f"/books/read/?entry={book.pk}"
+    reading.start(noa, book, 20)
+    assert client.get("/books/read/continue/")["Location"] == "/books/read/"
+
+
+def test_nearby_and_the_club_stay_on_home(client, noa):
+    client.force_login(noa.user)
+    html = client.get("/books/").content.decode()
+    assert 'href="/books/near/"' in html and 'href="/books/club/"' in html
 
