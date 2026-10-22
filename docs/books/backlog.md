@@ -631,6 +631,11 @@ charging for the web lookup.
 
 | F-R.24 | Real spines on my shelf: each book cut from the shelf photo (corners from the same reading call, straightened locally); old scans re-read once in the background; a setting to show drawn spines instead | DONE |
 
+| F-R.25 | Whoever holds a copy edits the book's details; each change kept with its old value | DONE |
+| F-R.26 | Friends: my invite link (share sheet, WhatsApp, copy, email, QR), mutual following on joining, follow requests (open libraries at once), quiet removal, a friend's library under a brass plate with their spine photos; scans public by default; "only me" for a hidden book | DONE |
+
+Next on friends (Avi, 2026-10-22): "I'd love to borrow this one", seeing which friend has a book I want, a friends' feed.
+
 Open for later (Avi): what to do with a finished book's notes (a summary, a
 review draft, sharing some of them).
 

@@ -929,3 +929,16 @@ its old value as an accepted correction, so curators can see it and put it
 back. Gate by trail, not by permission, when the people are trusted and the
 change is reversible.
 
+### 39. A safety net can blind the check it backs up
+
+After the page was set to clip sideways overflow (mistake 34's safety net),
+the phone-width test still measured `document.documentElement.scrollWidth`,
+which the clip keeps equal to the screen. A new friend's-library page then
+stretched past the screen on a long shelf and the test passed; the
+screenshot caught it (the shelf inside a grid column, mistake 37 again).
+
+**The rule.** When a safety net hides a failure, move the check to where
+the net cannot reach: here every element's own position against the screen
+width, outside shelves that scroll on purpose, with enough content (a long
+shelf) to push. Prove the check by running it once against the bug.
+

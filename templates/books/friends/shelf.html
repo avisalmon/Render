@@ -1,0 +1,45 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "friends.shelf_of" name=owner.display_name %} · {% t "brand" %}{% endblock %}
+{% block screen %}friend-shelf{% endblock %}
+{% block content %}
+<div class="bk-friend-room">
+  <p class="bk-friend-back"><a href="{% url 'books:home' %}">{% t "friends.back_mine" %}</a> · <a href="{% url 'books:friends' %}">{% t "friends.title" %}</a></p>
+  {% if joined %}<p class="bk-notice bk-notice--ok" role="status">{% t "friends.joined_note" name=owner.display_name %}</p>{% endif %}
+
+  {% if level %}
+    {% t "friends.shelf_of" name=owner.display_name as plate %}
+    {% t "home.count" n=count as hint_end %}
+    {% include "books/_shelf.html" with shelf_id="friend" books_json=books_json view="lamp" plate=plate hint_end=hint_end %}
+    {% if level == "public" and status != "accepted" %}<p class="bk-help bk-friend-public">{% t "friends.public_only" name=owner.display_name %}</p>{% endif %}
+    {% if not count %}<p class="bk-muted" style="text-align: center">{% t "friends.empty_shelf" name=owner.display_name %}</p>{% endif %}
+  {% else %}
+    <h1 class="bk-plate bk-plate--closed"><span class="bk-plate-screw" aria-hidden="true"></span><span class="bk-plate-text">{% t "friends.shelf_of" name=owner.display_name %}</span><span class="bk-plate-screw" aria-hidden="true"></span></h1>
+    <div class="bk-friend-closed">
+      <p class="bk-lead" style="margin: 0">{% if status == "pending" %}{% t "friends.waiting" name=owner.display_name %}{% else %}{% t "friends.closed" name=owner.display_name %}{% endif %}</p>
+    </div>
+  {% endif %}
+
+  <section class="bk-friend-card">
+    <span class="bk-avatar bk-avatar--big" aria-hidden="true">{{ owner.display_name|slice:":1" }}</span>
+    <div class="bk-friend-card-text">
+      <b>{{ owner.display_name }}</b>
+      <span class="bk-muted">{% if owner.area_name %}{{ owner.area_name }} · {% endif %}{% t "friends.counts" following=counts.following followers=counts.followers %}</span>
+      {% if follows_me and status != "accepted" %}<span class="bk-chip-note">{% t "friends.follows_you" %}</span>{% endif %}
+    </div>
+    <div class="bk-friend-card-act">
+      {% if status == "accepted" %}
+        <details class="bk-menu">
+          <summary class="bk-btn bk-btn--small">{% t "friends.following_you" %}</summary>
+          <div class="bk-menu-pop">
+            <form method="post" action="{% url 'books:unfollow' owner.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button type="submit" class="bk-btn bk-btn--quiet bk-btn--small">{% t "friends.unfollow" %}</button></form>
+          </div>
+        </details>
+      {% elif status == "pending" %}
+        <form method="post" action="{% url 'books:unfollow' owner.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button type="submit" class="bk-btn bk-btn--small bk-btn--quiet">{% t "friends.cancel_request" %}</button></form>
+      {% else %}
+        <form method="post" action="{% url 'books:follow' owner.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button type="submit" class="bk-btn bk-btn--small bk-btn--primary">{% if follows_me %}{% t "friends.follow_back" %}{% else %}{% t "friends.follow" %}{% endif %}</button></form>
+      {% endif %}
+    </div>
+  </section>
+</div>
+{% endblock %}

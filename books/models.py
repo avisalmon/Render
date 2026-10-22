@@ -52,6 +52,10 @@ class Profile(models.Model):
     spine_text_down = models.BooleanField(default=False)
     # My shelf shows each book's real spine, cut from my shelf photo, where there is one (Avi, 2026-10-22).
     spine_photos = models.BooleanField(default=True)
+    # Friends (Avi, 2026-10-22): who brought me in, and whether my followers see my spine photos.
+    invited_by = models.ForeignKey("self", on_delete=models.SET_NULL, null=True, blank=True, related_name="invited")
+    invited_via = models.CharField(max_length=20, blank=True)
+    followers_see_spines = models.BooleanField(default=True)
     # Shown to the other side of a deal only if this person chooses to (BK5).
     phone = models.CharField(max_length=30, blank=True)
     # What a public profile shows, each opt-in on its own (BK7, spec 12.9).
@@ -422,8 +426,10 @@ class Copy(models.Model):
     """One physical book one person owns. The same row moves to a new owner
     when it changes hands (data model decision)."""
 
-    PRIVATE, PUBLIC = "private", "public"
-    VISIBILITY = [(PRIVATE, "private"), (PUBLIC, "public")]
+    # Who sees a copy (Avi, 2026-10-22): only me; my followers ("private", the
+    # default: friends see all my books); everyone.
+    HIDDEN, PRIVATE, PUBLIC = "hidden", "private", "public"
+    VISIBILITY = [(HIDDEN, "only me"), (PRIVATE, "friends"), (PUBLIC, "public")]
     WITH_OWNER, ON_LOAN_OUT, TRANSFERRED, LOST = "with_owner", "on_loan_out", "transferred", "lost"
     STATUSES = [(WITH_OWNER, "with owner"), (ON_LOAN_OUT, "on loan"), (TRANSFERRED, "transferred"), (LOST, "lost")]
     ADDED = [("scan", "scan"), ("manual", "manual"), ("import", "import"), ("received", "received")]
@@ -654,6 +660,7 @@ class Notification(models.Model):
     badge = models.ForeignKey("Badge", on_delete=models.CASCADE, null=True, blank=True, related_name="notifications")
     exhibit_item = models.ForeignKey("ExhibitItem", on_delete=models.CASCADE, null=True, blank=True,
                                      related_name="notifications")
+    person = models.ForeignKey(Profile, on_delete=models.CASCADE, null=True, blank=True, related_name="+")
     read_at = models.DateTimeField(null=True, blank=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -1150,4 +1157,37 @@ class ReadingNote(models.Model):
     class Meta:
         ordering = ["created_at"]
         indexes = [models.Index(fields=["profile", "entry"], name="books_note_profile_entry")]
+
+
+class Invite(models.Model):
+    """My personal link to Books (Avi, 2026-10-22). Whoever joins through it
+    and I follow each other at once."""
+
+    inviter = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="invites")
+    code = models.CharField(max_length=16, unique=True)
+    joined = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class Follow(models.Model):
+    """`follower` follows `followee`. Pending until the followee accepts,
+    unless the followee's books are open to everyone or it came from an
+    invite. An accepted follower sees all the followee's books but the
+    hidden ones; removing a follower is quiet (the row goes, nobody is told)."""
+
+    PENDING, ACCEPTED = "pending", "accepted"
+    REQUEST, INVITE, OPEN = "request", "invite", "open"
+
+    follower = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="following")
+    followee = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="followers")
+    status = models.CharField(max_length=8, choices=[(PENDING, "pending"), (ACCEPTED, "accepted")], default=PENDING,
+                              db_index=True)
+    source = models.CharField(max_length=8, choices=[(REQUEST, "request"), (INVITE, "invite"), (OPEN, "open")],
+                              default=REQUEST)
+    created_at = models.DateTimeField(auto_now_add=True)
+    accepted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["follower", "followee"], name="books_follow_once")]
 

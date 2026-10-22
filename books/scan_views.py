@@ -28,8 +28,8 @@ class ScanForm(_Localised, forms.Form):
     photo = forms.ImageField(widget=forms.ClearableFileInput(attrs={"accept": "image/*", "capture": "environment",
                                                                     "class": "bk-file"}))
     shelf_label = forms.CharField(max_length=120, required=False, widget=forms.TextInput(attrs={"class": "bk-input"}))
-    default_visibility = forms.ChoiceField(choices=[("private", "private"), ("public", "public")], initial="private",
-                                           widget=forms.RadioSelect)
+    default_visibility = forms.ChoiceField(choices=[("hidden", "hidden"), ("private", "private"), ("public", "public")],
+                                           initial="public", widget=forms.RadioSelect)
     default_offers = forms.MultipleChoiceField(choices=[(k, k) for k in shelf.OFFER_KINDS], required=False,
                                                widget=forms.CheckboxSelectMultiple)
 
@@ -39,7 +39,8 @@ class ScanForm(_Localised, forms.Form):
         self.fields["shelf_label"].label = self.t("scan.shelf_label")
         self.fields["shelf_label"].widget.attrs["placeholder"] = self.t("scan.shelf_label_hint")
         self.fields["default_visibility"].label = self.t("scan.default_visibility")
-        self.fields["default_visibility"].choices = [("private", self.t("status.private")), ("public", self.t("status.public"))]
+        self.fields["default_visibility"].choices = [("public", self.t("status.public")), ("private", self.t("status.private")),
+                                                     ("hidden", self.t("status.hidden"))]
         self.fields["default_offers"].label = self.t("scan.default_offers")
         self.fields["default_offers"].choices = [(k, self.t(f"status.{k}")) for k in shelf.OFFER_KINDS]
 
@@ -68,7 +69,7 @@ def new_scan(request):
     else:
         last = ShelfScan.objects.filter(owner=profile).first()
         form = ScanForm(lang=_lang(request), initial={
-            "default_visibility": last.default_visibility if last else "private",
+            "default_visibility": "public",  # Avi, 2026-10-22: my scanned books are public by default
             "default_offers": [k for k in (last.default_offers.split(",") if last else []) if k]})
     shelf.heal_all(profile)
     sent = ShelfScan.objects.filter(owner=profile, pk=request.GET.get("sent") or 0).first()

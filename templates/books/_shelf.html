@@ -15,7 +15,8 @@ The lamp, the shelf and the label (board C3). Takes:
       <ellipse class="bk-lamp-bulb" cx="60" cy="33" rx="12" ry="3"/>
     </svg>
   </div>
-  {% if kicker %}<p class="bk-kicker bk-room-kicker">{{ kicker }}</p>{% endif %}
+  {% if plate %}<h1 class="bk-plate"><span class="bk-plate-screw" aria-hidden="true"></span><span class="bk-plate-text">{{ plate }}</span><span class="bk-plate-screw" aria-hidden="true"></span></h1>
+  {% elif kicker %}<p class="bk-kicker bk-room-kicker">{{ kicker }}</p>{% endif %}
   {% if books_json and books_json != "[]" %}
     <div class="bk-shelf{% if user.books_profile.spine_text_down %} is-text-down{% endif %}{% if not user.books_profile.spine_photos %} is-drawn{% endif %}" data-shelf data-shelf-view="{{ view|default:'lamp' }}" data-shelf-source="{{ shelf_id }}-data" data-shelf-strings="{{ shelf_id }}-strings" data-shelf-label="{{ shelf_id }}-label" data-shelf-aria="{% t "shelf.your_shelf" %}" data-shelf-plate-1="{{ plate1|default:'' }}" data-shelf-plate-2="{{ plate2|default:'' }}" {% if lifted %}data-shelf-lifted="{{ lifted }}"{% endif %}></div>
     <script type="application/json" id="{{ shelf_id }}-data">{{ books_json|safe }}</script>

@@ -41,6 +41,7 @@
       {% if go_on and not reading_now %}<a class="bk-link-quiet" href="{% url 'books:read' %}">{% t "read.other_book" %}</a>{% endif %}
     </section>
     <nav class="bk-quick" aria-label="{% t "home.quick" %}">
+      <a class="bk-quick-tile bk-quick-friends" href="{% url 'books:friends' %}">{% include "books/ui/_icon.html" with name="friends" %}<span>{% t "friends.title" %}{% if friend_counts.following or friend_counts.followers %} · {{ friend_counts.following|add:friend_counts.followers }}{% endif %}</span>{% if friend_counts.requests %}<b class="bk-quick-badge">{{ friend_counts.requests }}</b>{% endif %}</a>
       {% if books_json and books_json != "[]" %}
       <a class="bk-quick-tile" href="{% url 'books:library' %}">{% include "books/ui/_icon.html" with name="books" %}<span>{% t "lib.all_books" %}</span></a>
       {% endif %}

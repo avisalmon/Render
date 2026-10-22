@@ -1,0 +1,203 @@
+"""Friends (Avi, 2026-10-22): invite links that make both sides follow each
+other, follow requests (at once for open libraries), quiet removal, and a
+friend's library: followers see everything but "only me", spine photos
+included unless turned off; strangers see only books open to everyone."""
+
+import pytest
+from django.contrib.auth import get_user_model
+
+from books import catalog, friends, shelf, storage
+from books.models import CatalogEntry, Copy, Follow, Invite, Notification, Profile
+
+pytestmark = [pytest.mark.django_db]
+User = get_user_model()
+
+
+@pytest.fixture(autouse=True)
+def _env(settings, tmp_path, monkeypatch):
+    settings.MEDIA_ROOT = str(tmp_path)
+    settings.BOOKS_GCS_BUCKET = ""
+    storage.reset_for_tests()
+    monkeypatch.setattr(catalog, "lookup", lambda **kw: [])
+    yield
+    storage.reset_for_tests()
+
+
+def person(name, **kw):
+    u = User.objects.create_user(name, f"{name}@example.com", "pw")
+    return Profile.objects.create(user=u, display_name=name, is_adult_confirmed=True, **kw)
+
+
+@pytest.fixture
+def avi(db):
+    return person("avi")
+
+
+@pytest.fixture
+def moshe(db):
+    return person("moshe")
+
+
+def shelf_of(owner, *visibilities):
+    out = []
+    for i, v in enumerate(visibilities):
+        e = CatalogEntry.objects.create(collection_type=catalog.book_type(), title=f"ספר {i} ({v})")
+        out.append(Copy.objects.create(owner=owner, entry=e, position=i, visibility=v))
+    return out
+
+
+# ---- the invite link -----------------------------------------------------------------
+
+def test_my_invite_link_is_mine_and_stays_the_same(avi):
+    a = friends.invite_for(avi)
+    assert len(a.code) == 7 and friends.invite_for(avi).pk == a.pk
+
+
+def test_a_visitor_through_my_link_joins_and_we_follow_each_other(client, avi):
+    code = friends.invite_for(avi).code
+    r = client.get(f"/books/i/{code}/?via=whatsapp")
+    assert r.status_code == 302 and r["Location"] == "/books/"
+    assert "avi הזמין/ה אותך" in client.get("/books/").content.decode()
+    u = User.objects.create_user("dana", "dana@example.com", "pw")
+    client.force_login(u)
+    r = client.post("/books/welcome/", {"display_name": "דנה", "language": "he", "is_adult_confirmed": "on",
+                                        "accept_terms": "on"})
+    assert r.status_code == 302
+    dana = Profile.objects.get(user=u)
+    assert dana.invited_by == avi and dana.invited_via == "whatsapp"
+    assert set(Follow.objects.values_list("follower__display_name", "followee__display_name", "status")) == {
+        ("דנה", "avi", "accepted"), ("avi", "דנה", "accepted")}
+    assert Notification.objects.get(profile=avi).kind == "friends.joined"
+    assert Invite.objects.get(inviter=avi).joined == 1
+
+
+def test_a_member_who_opens_my_link_follows_me_and_i_them(client, avi, moshe):
+    client.force_login(moshe.user)
+    r = client.get(f"/books/i/{friends.invite_for(avi).code}/")
+    assert r["Location"] == f"/books/people/{avi.pk}/shelf/?joined=1"
+    assert friends.status_between(moshe, avi) == "accepted" and friends.status_between(avi, moshe) == "accepted"
+
+
+def test_my_own_link_does_nothing_to_me(client, avi):
+    client.force_login(avi.user)
+    client.get(f"/books/i/{friends.invite_for(avi).code}/")
+    assert not Follow.objects.exists()
+
+
+def test_a_wrong_code_goes_home(client):
+    assert client.get("/books/i/nope123/")["Location"] == "/books/"
+
+
+# ---- following ----------------------------------------------------------------------
+
+def test_asking_to_follow_waits_for_an_answer(client, avi, moshe):
+    client.force_login(moshe.user)
+    client.post(f"/books/people/{avi.pk}/follow/")
+    row = Follow.objects.get()
+    assert row.status == Follow.PENDING and Notification.objects.get(profile=avi).kind == "friends.asked"
+    client.force_login(avi.user)
+    html = client.get("/books/friends/").content.decode()
+    assert "מבקש/ת לעקוב אחריך" in html
+    client.post(f"/books/friends/requests/{row.pk}/", {"action": "accept"})
+    row.refresh_from_db()
+    assert row.status == Follow.ACCEPTED and Notification.objects.get(profile=moshe).kind == "friends.accepted"
+
+
+def test_an_open_library_is_followed_at_once(client, avi, moshe):
+    avi.public_library = True
+    avi.save()
+    client.force_login(moshe.user)
+    client.post(f"/books/people/{avi.pk}/follow/")
+    assert Follow.objects.get().status == Follow.ACCEPTED
+    assert Notification.objects.get(profile=avi).kind == "friends.followed"
+
+
+def test_declining_and_quiet_removal_tell_nobody(client, avi, moshe):
+    friends.follow(moshe, avi)
+    Notification.objects.all().delete()
+    client.force_login(avi.user)
+    client.post(f"/books/friends/requests/{Follow.objects.get().pk}/", {"action": "decline"})
+    assert not Follow.objects.exists()
+    friends.join_through_invite(moshe, friends.invite_for(avi))
+    Notification.objects.all().delete()
+    client.post(f"/books/people/{moshe.pk}/remove/")
+    assert friends.status_between(moshe, avi) is None and friends.status_between(avi, moshe) == "accepted"
+    assert not Notification.objects.exists()
+
+
+def test_find_people_by_name(client, avi, moshe):
+    client.force_login(avi.user)
+    html = client.get("/books/friends/?q=mos").content.decode()
+    assert f'action="/books/people/{moshe.pk}/follow/"' in html
+
+
+# ---- a friend's library ---------------------------------------------------------------
+
+def test_a_follower_sees_everything_but_only_me(client, avi, moshe):
+    hidden, friends_only, public = shelf_of(avi, "hidden", "private", "public")
+    friends.join_through_invite(moshe, friends.invite_for(avi))
+    rows = shelf.shelf_books(avi, viewer=moshe)
+    assert {r["id"] for r in rows} == {friends_only.pk, public.pk}
+    assert all(r["url"].startswith("/books/catalog/") for r in rows)
+    client.force_login(moshe.user)
+    html = client.get(f"/books/people/{avi.pk}/shelf/").content.decode()
+    assert "הספרייה של avi" in html and '<h1 class="bk-plate"' in html and "(hidden)" not in html
+
+
+def test_a_stranger_sees_only_books_open_to_everyone_on_an_open_library(client, avi, moshe):
+    shelf_of(avi, "private", "public")
+    client.force_login(moshe.user)
+    html = client.get(f"/books/people/{avi.pk}/shelf/").content.decode()
+    assert "פתוח לעוקבים" in html and "(public)" not in html  # closed: ask to follow
+    avi.public_library = True
+    avi.save()
+    rows = shelf.shelf_books(avi, viewer=moshe)
+    assert [r["title"] for r in rows] == ["ספר 1 (public)"]
+
+
+def test_followers_see_spine_photos_unless_turned_off(avi, moshe):
+    friends.join_through_invite(moshe, friends.invite_for(avi))
+    assert friends.can_see_spines(moshe, avi)
+    avi.followers_see_spines = False
+    avi.save()
+    assert not friends.can_see_spines(moshe, avi)
+    assert friends.can_see_spines(avi, avi)
+
+
+def test_the_home_has_the_friends_tile_with_requests(client, avi, moshe):
+    friends.follow(moshe, avi)
+    client.force_login(avi.user)
+    html = client.get("/books/").content.decode()
+    assert 'class="bk-quick-tile bk-quick-friends" href="/books/friends/"' in html and '<b class="bk-quick-badge">1</b>' in html
+
+
+def test_the_qr_code_is_my_link(client, avi):
+    client.force_login(avi.user)
+    r = client.get("/books/friends/qr.svg")
+    assert r.status_code == 200 and r["Content-Type"] == "image/svg+xml" and b"<svg" in r.content
+
+
+# ---- scanning defaults to public; "only me" is a choice -----------------------------------
+
+def test_a_new_scan_is_public_by_default(client, avi):
+    client.force_login(avi.user)
+    html = client.get("/books/scan/").content.decode()
+    import re
+    checked = re.search(r'<input type="radio" name="default_visibility" value="(\w+)"[^>]*checked', html)
+    assert checked and checked.group(1) == "public"
+
+
+# ---- the API ------------------------------------------------------------------------
+
+def test_the_api_follows_answers_and_removes(client, avi, moshe):
+    client.force_login(moshe.user)
+    r = client.post("/books/api/follows/", {"followee": avi.pk}, content_type="application/json")
+    assert r.status_code == 201 and r.json()["status"] == "pending"
+    client.force_login(avi.user)
+    fid = r.json()["id"]
+    assert client.post(f"/books/api/follows/{fid}/accept/").json()["status"] == "accepted"
+    assert client.delete(f"/books/api/follows/{fid}/").status_code == 204  # quietly removed
+    assert not Follow.objects.exists()
+    codes = client.get("/books/api/invites/").json()
+    codes = codes["results"] if isinstance(codes, dict) else codes
+    assert len(codes) == 1 and len(codes[0]["code"]) == 7

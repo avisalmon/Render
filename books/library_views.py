@@ -112,7 +112,8 @@ class CopyForm(_Localised, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["visibility"].choices = [("private", self.t("status.private")), ("public", self.t("status.public"))]
+        self.fields["visibility"].choices = [("public", self.t("status.public")), ("private", self.t("status.private")),
+                                             ("hidden", self.t("status.hidden"))]
         self.fields["condition"].widget.choices = [("", "—")] + [(c, self.t(f"cond.{c}")) for c in CONDITIONS]
         for name in ("visibility", "location_note", "condition", "notes", "is_rare_candidate", "rarity_note",
                      "display_only", "lend", "loan_days", "exchange", "wants_note", "sell", "price"):
@@ -232,9 +233,12 @@ def spine_file(request, pk):
     """A copy's real spine, cut from my shelf photo: mine only, like the photo."""
     from .models import ScanItem
 
-    item = (ScanItem.objects.filter(copy__pk=pk, copy__owner=request.books_profile).exclude(spine="")
-            .order_by("-pk").first())
-    if item is None:
+    from . import friends
+
+    item = ScanItem.objects.filter(copy__pk=pk).exclude(spine="").select_related("copy__owner").order_by("-pk").first()
+    if item is None or not friends.can_see_spines(request.books_profile, item.copy.owner):
+        raise Http404
+    if item.copy.owner_id != request.books_profile.pk and item.copy.visibility == "hidden":
         raise Http404
     response = FileResponse(item.spine.open("rb"), content_type="image/jpeg")
     response["Cache-Control"] = "private, max-age=2592000"

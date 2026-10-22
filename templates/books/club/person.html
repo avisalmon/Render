@@ -9,6 +9,7 @@
     {% if person.area_name %}<span class="bk-muted">{{ person.area_name }}</span>{% endif %}
   </div>
   {% if me %}<p class="bk-notice" role="status">{% if person.profile_public %}{% t "person.me_note" %}{% else %}{% t "person.me_hidden" %}{% endif %} <a href="{% url 'books:settings' %}">{% t "settings" %}</a></p>{% endif %}
+  {% if not me %}<p><a class="bk-btn bk-btn--primary" href="{% url 'books:friend_shelf' person.pk %}">{% t "friends.see_shelf" name=person.display_name %}</a></p>{% endif %}
   {% if reported %}<p class="bk-notice bk-notice--ok" role="status">{% t "report.thanks" %}</p>{% endif %}
 
   <p class="bk-rep">

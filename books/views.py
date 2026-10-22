@@ -39,6 +39,9 @@ def onboarding(request):
                 from . import hub
 
                 hub.area_changed(profile)
+            from . import friends
+
+            friends.apply_pending_invite(request, profile)  # came through a friend's link: follow each other
             from urllib.parse import urlencode
 
             return redirect(f"{reverse('books:taste')}?{urlencode({'first': 1, 'next': safe_next(request)})}")
@@ -71,7 +74,11 @@ def landing(request):
         row = {"id": -(i + 1), "title": title, "author": author, "status": "public", "rare": False, "url": ""}
         row.update(shelf.spine_for(9000 + i, title))
         rows.append(row)
-    return render(request, "books/landing.html", {"books_json": json.dumps(rows, ensure_ascii=False)})
+    from . import friends
+
+    invite = friends.pending_invite(request)
+    return render(request, "books/landing.html", {"books_json": json.dumps(rows, ensure_ascii=False),
+                                                  "inviter": invite.inviter if invite else None})
 
 
 HEBREW_DAYS = ["ב", "ג", "ד", "ה", "ו", "ש", "א"]  # Monday first, as date.weekday() counts
@@ -140,9 +147,12 @@ def _book_ring(profile, entry, page):
 
 @books_page
 def _home(request):
-    from . import shelf
+    from . import friends, shelf
 
     profile = request.books_profile
+    inviter = friends.apply_pending_invite(request, profile)
+    if inviter is not None:
+        return redirect(f"{reverse('books:friend_shelf', args=[inviter.pk])}?joined=1")
     # My shelf always carries its photos, so the arrows switch the look at once.
     rows = shelf.shelf_books(profile, photos=True)
     spines_progress = None
@@ -161,6 +171,7 @@ def _home(request):
         "go_on": (__import__("books.reading", fromlist=["continue_list"]).continue_list(profile, limit=1) or [None])[0],
         "dial": _dial(profile),
         "spines_progress": spines_progress,
+        "friend_counts": friends.counts(profile),
         "has_photo_spines": any("photo" in r for r in rows),
         "just_finished": _just_finished(request, profile),
         "streak_moment": _streak_moment(request, profile),
@@ -193,7 +204,8 @@ def settings_page(request):
 PROFILE_GROUPS = [
     ("settings.about_me", ["display_name", "language", "area_name", "radius_km", "phone"]),
     ("settings.appearance", ["theme", "palette", "shelf_view", "spine_photos", "spine_text_down"]),
-    ("settings.privacy", ["profile_public", "show_points_public", "public_library", "public_reading", "public_reviews"]),
+    ("settings.privacy", ["followers_see_spines", "profile_public", "show_points_public", "public_library",
+                          "public_reading", "public_reviews"]),
 ]
 
 

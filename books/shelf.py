@@ -37,7 +37,7 @@ FREE_CAP = 1000
 SCAN_MAX_SIDE = 4000
 HIGH_CONFIDENCE = Decimal("0.85")
 CANDIDATES = 3
-VISIBILITY_CHOICES = ("private", "public")
+VISIBILITY_CHOICES = ("hidden", "private", "public")
 OFFER_KINDS = ("lend", "exchange", "sell")
 DEFAULT_LOAN_DAYS = 30
 
@@ -562,14 +562,22 @@ def drawn_width(pages, h):
     return int(max(24, min(70, round(h * ratio))))
 
 
-def shelf_books(profile, limit=400, photos=False):
+def shelf_books(profile, limit=400, photos=False, viewer=None):
     """The person's held copies as the shelf component's JSON rows. With
-    `photos`, each book with a real spine shows it (my own shelf only)."""
+    `photos`, each book with a real spine shows it. With a `viewer` who is
+    not the owner (a friend), only what they may see, linking to the books'
+    catalogue pages instead of the owner's copies."""
     from .models import BookDetail, ReadingLog
 
     rows = []
-    copies = list(Copy.objects.filter(owner=profile, status__in=Copy.HELD)
-                  .select_related("entry").prefetch_related("entry__creators", "offers")
+    other = viewer is not None and viewer.pk != profile.pk
+    if other:
+        from . import friends
+
+        base = friends.visible_copies(viewer, profile)
+    else:
+        base = Copy.objects.filter(owner=profile, status__in=Copy.HELD)
+    copies = list(base.select_related("entry").prefetch_related("entry__creators", "offers")
                   .order_by("position", "created_at")[:limit])
     spines = spine_rows(copies) if photos else {}
     ids = [c.entry_id for c in copies]
@@ -580,7 +588,8 @@ def shelf_books(profile, limit=400, photos=False):
         kinds = [o.kind for o in c.offers.all() if o.is_active]
         status = kinds[0] if kinds else ("public" if c.visibility == Copy.PUBLIC else "private")
         row = {"id": c.pk, "title": c.entry.title, "author": c.entry.creator_names, "status": status,
-               "rare": c.is_rare_candidate, "url": f"/books/copy/{c.pk}/"}
+               "rare": c.is_rare_candidate,
+               "url": f"/books/catalog/{c.entry_id}/" if other else f"/books/copy/{c.pk}/"}
         row.update(spine_for(c.entry_id, c.entry.title))
         if pages.get(c.entry_id):
             row["w"] = drawn_width(pages[c.entry_id], row["h"])

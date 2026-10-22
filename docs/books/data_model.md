@@ -572,3 +572,17 @@ served to their owner only. Migration 0024. Measured 2026-10-22 on the
 labelled shelves: 64/70 found, 2 extra, about $0.035 a shelf photo (was
 62-63/70, 3 extra, $0.025).
 
+**Friends (2026-10-22, approved by Avi in chat).** `Invite`: my personal
+link (`inviter`, `code` unique, `joined`, `is_active`). `Follow`:
+`follower`, `followee`, `status` pending / accepted, `source` request /
+invite / open, `accepted_at`; one row per pair. Joining through an invite
+makes both sides follow each other, accepted. Anyone may ask to follow
+anyone; a library open to everyone (`profile_public` or `public_library`)
+accepts at once. An accepted follower sees every copy except the new
+visibility `hidden` ("only me"); `private` now means "my followers" and
+`public` everyone. `Profile.invited_by`, `invited_via` (the channel),
+`followers_see_spines` (on). `Notification.person` (who followed, asked,
+joined). Scanning defaults to public. Removing a follower deletes the row
+without telling anyone. Migration 0026. API: `follows` (ask, accept,
+decline, unfollow, remove), `invites`.
+

@@ -17,6 +17,25 @@ Newest first.
 
 ---
 
+## PM-41 · 2026-10-22 · Friends, and a width check the safety net had blinded
+
+**What happened.** Built friends at Avi's word: invite links (mutual
+following on joining), follow requests, quiet removal, a friend's library
+under a brass plate, scans public by default, "only me" for hidden books.
+The screenshot of a friend's long shelf showed the page wider than the
+phone, while the phone-width test passed: since the page clips sideways
+overflow, its `scrollWidth` check could no longer fail.
+
+**Why our process let it happen.** The safety net and the check were
+added together; nobody asked whether the net hid the check.
+
+**Rule.** The check now measures each element against the screen (outside
+scrolling shelves), with a 30-book shelf; it was run once against the old
+layout and failed, then passed with the fix.
+
+Here: docs/building_an_app.md mistake 39; tests/test_books_screens.py
+BKM: FullStackBKM ab5fed2 (lesson 47)
+
 ## PM-40 · 2026-10-22 · Avi could not fix a wrong title
 
 **What happened.** Browsing his books, Avi found a wrong title and could

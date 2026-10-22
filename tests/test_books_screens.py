@@ -296,6 +296,15 @@ def build_world():
     return {"reader": reader, "staff": staff, "fresh": fresh}
 
 
+def _follow_and_shelf(viewer, owner):
+    """A friend's shelf: the viewer follows the owner (Avi, 2026-10-22)."""
+    from books.models import Follow, Profile
+    v = Profile.objects.get(user__username=viewer)
+    o = Profile.objects.get(user__username=owner)
+    Follow.objects.get_or_create(follower=v, followee=o, defaults={"status": Follow.ACCEPTED, "source": Follow.INVITE})
+    return f"/books/people/{o.pk}/shelf/"
+
+
 # (label, path, who, screen marker)
 SCREENS = [
     ("login", "/books/login/", None, "login"),
@@ -313,6 +322,9 @@ SCREENS = [
     ("catalog-none", "/books/catalog/?q=zzzz", "reader", "catalog"),
     ("catalog-entry", "/books/catalog/1001/", "reader", "catalog-entry"),
     ("first-read", "/books/read/first/1001/", "reader", "first-read"),
+    ("friends", "/books/friends/?q=sh", "reader", "friends"),
+    ("friend-shelf", lambda: _follow_and_shelf("reader", "shelver"), "reader", "friend-shelf"),
+    ("friend-closed", lambda: f"/books/people/{__import__('books.models', fromlist=['Profile']).Profile.objects.get(user__username='staff').pk}/shelf/", "reader", "friend-shelf"),
     ("catalog-new", "/books/catalog/new/", "reader", "catalog-new"),
     ("catalog-tag", "/books/catalog/tag/fiction/", "reader", "catalog-tag"),
     ("curate", "/books/curate/", "staff", "curate"),
@@ -772,23 +784,42 @@ NARROW_PATHS = [("landing", None, "/books/"), ("login", None, "/books/login/"), 
                 ("library", "shelver", "/books/library/"), ("catalog", "reader", "/books/catalog/"),
                 ("entry", "reader", "/books/catalog/1001/"), ("scan", "reader", "/books/scan/"),
                 ("settings", "reader", "/books/settings/"), ("play", "reader", "/books/play/"),
-                ("club", "reader", "/books/club/"), ("near", "reader", "/books/near/"), ("read", "shelver", "/books/read/")]
+                ("club", "reader", "/books/club/"), ("near", "reader", "/books/near/"), ("read", "shelver", "/books/read/"),
+                ("friends", "reader", "/books/friends/"), ("friend-shelf", "reader", None)]
 
 
 def test_on_every_phone_width_the_page_never_slides_sideways(browser, live_server, db):
     """Avi, 2026-10-21: "a little wider than the screen, it moves left and
     right". Checked at the narrow widths real phones have, not only at 390:
     the page itself is never wider than the screen, and the header fits."""
+    from books import catalog
+    from books.models import Copy, Profile
     build_world()
+    # A long shelf: wide content is what pushes a page past the screen.
+    sp = Profile.objects.get(user__username="shelver")
+    for i in range(30):
+        e = catalog.CatalogEntry.objects.create(collection_type=catalog.book_type(), title=f"ספר ארוך {i}")
+        Copy.objects.create(owner=sp, entry=e, position=300 + i, visibility="public")
     wide = []
     for w in NARROW_PHONES:
         for name, who, path in NARROW_PATHS:
+            if path is None:
+                path = _follow_and_shelf("reader", "shelver")
             ctx, page, _ = _open(browser, live_server, who, path, {"width": w, "height": 780}, "light")
             try:
                 sw = page.evaluate("document.documentElement.scrollWidth")
                 header = page.evaluate("document.querySelector('.bk-header').scrollWidth")
                 if sw > w or header > w:
                     wide.append(f"{name}@{w}: page {sw}, header {header}")
+                # The page clips sideways overflow (a safety net), which hides it from scrollWidth:
+                # look at every element itself, outside the shelves that scroll on purpose.
+                out = page.evaluate("""(w) => [...document.querySelectorAll('body *')].filter(el => {
+                    if (el.closest('.bk-shelf-scroll, .bk-sm-burst')) return false;
+                    const r = el.getBoundingClientRect();
+                    return r.height > 0 && r.width > 0 && (r.right > w + 1 || r.left < -1);
+                  }).slice(0, 4).map(el => el.tagName.toLowerCase() + '.' + String(el.className || '').split(' ')[0])""", w)
+                if out:
+                    wide.append(f"{name}@{w}: past the edge {out}")
                 # An iPhone zooms into any field under 16px, and the zoomed page slides sideways.
                 small = page.evaluate("""[...document.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio]), select, textarea')]
                     .filter(e => parseFloat(getComputedStyle(e).fontSize) < 16).map(e => e.name || e.className)""")

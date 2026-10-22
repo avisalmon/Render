@@ -8,7 +8,9 @@
   <ul class="bk-entry-list">
     {% for n in items %}
     <li class="bk-entry-row{% if not n.read_at %} bk-unread{% endif %}">
-      {% if n.deal %}<a class="bk-entry-link" href="{% url 'books:deal' n.deal.pk %}">
+      {% if n.kind == "friends.asked" %}<a class="bk-entry-link" href="{% url 'books:friends' %}?tab=requests">
+      {% elif n.person_id %}<a class="bk-entry-link" href="{% url 'books:friend_shelf' n.person_id %}">
+      {% elif n.deal %}<a class="bk-entry-link" href="{% url 'books:deal' n.deal.pk %}">
       {% elif n.exhibit_item_id %}<a class="bk-entry-link" href="{% url 'books:invitation' n.exhibit_item_id %}">
       {% elif n.kind == "rare.reviewed" and n.copy %}<a class="bk-entry-link" href="{% url 'books:copy' n.copy.pk %}#rare">
       {% elif n.badge_id %}<a class="bk-entry-link" href="{% url 'books:play' %}">

@@ -109,8 +109,9 @@
           <fieldset class="bk-fieldset">
             <legend class="bk-kicker">{% t "scan.what_to_do" %}</legend>
             <div class="bk-radio-row">
-              <label class="bk-radio"><input type="radio" name="visibility" value="private" {% if scan.default_visibility == "private" %}checked{% endif %}> {% t "status.private" %}</label>
               <label class="bk-radio"><input type="radio" name="visibility" value="public" {% if scan.default_visibility == "public" %}checked{% endif %}> {% t "status.public" %}</label>
+              <label class="bk-radio"><input type="radio" name="visibility" value="private" {% if scan.default_visibility == "private" %}checked{% endif %}> {% t "status.private" %}</label>
+              <label class="bk-radio"><input type="radio" name="visibility" value="hidden" {% if scan.default_visibility == "hidden" %}checked{% endif %}> {% t "status.hidden" %}</label>
               {% for k in offer_kinds %}<label class="bk-radio"><input type="checkbox" name="offers" value="{{ k }}" {% if k in default_offers %}checked{% endif %}> {% with key="status."|add:k %}{% t key %}{% endwith %}</label>{% endfor %}
             </div>
           </fieldset>
