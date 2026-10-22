@@ -332,11 +332,11 @@ def test_the_shelf_has_its_two_tools_and_the_direction_is_saved(client, noa):
     client.force_login(noa.user)
     html = client.get("/books/").content.decode()
     assert "data-spine-flip" in html and 'href="/books/library/?find=1"' in html
-    assert 'class="bk-shelf is-text-down"' not in html
-    assert client.post("/books/shelf/spines/", {"down": "1"}).json() == {"down": True}
+    assert "is-text-down" not in html.split('data-shelf data-shelf-view')[0].rsplit('class="bk-shelf', 1)[1]
+    assert client.post("/books/shelf/spines/", {"down": "1"}).json()["down"] is True
     noa.refresh_from_db()
     assert noa.spine_text_down is True
-    assert 'class="bk-shelf is-text-down"' in client.get("/books/").content.decode()
+    assert 'class="bk-shelf is-text-down is-drawn"' in client.get("/books/").content.decode()
 
 
 def test_search_opens_my_books_with_the_box_ready(client, noa):

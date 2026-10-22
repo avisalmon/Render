@@ -160,10 +160,25 @@ def test_the_spine_image_is_mine_alone(client, noa, dan):
 def test_the_setting_turns_them_off(client, noa):
     _shelf_with_spines(noa)
     client.force_login(noa.user)
-    assert "spine.jpg" in client.get("/books/").content.decode()
+    html = client.get("/books/").content.decode()
+    assert "spine.jpg" in html and 'class="bk-shelf" data-shelf' in html
     noa.spine_photos = False
     noa.save()
-    assert "spine.jpg" not in client.get("/books/").content.decode()
+    html = client.get("/books/").content.decode()
+    # The photos stay in the page so the arrows can bring them back at once; the shelf is drawn.
+    assert 'class="bk-shelf is-drawn" data-shelf' in html
+
+
+@pytest.mark.parametrize("mode, photos, down", [("photo", True, False), ("up", False, False), ("down", False, True)])
+def test_the_arrows_cycle_three_looks_and_remember(client, noa, mode, photos, down):
+    _shelf_with_spines(noa)
+    client.force_login(noa.user)
+    r = client.post("/books/shelf/spines/", {"mode": mode})
+    assert r.json()["mode"] == mode
+    noa.refresh_from_db()
+    assert noa.spine_photos is photos and noa.spine_text_down is down
+    html = client.get("/books/").content.decode()
+    assert f'data-mode="{mode}"' in html and 'data-has-photos="1"' in html
 
 
 def test_the_shelf_never_opens_a_spine_image_to_measure_it(noa, monkeypatch):

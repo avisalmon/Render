@@ -143,7 +143,8 @@ def _home(request):
     from . import shelf
 
     profile = request.books_profile
-    rows = shelf.shelf_books(profile, photos=profile.spine_photos)
+    # My shelf always carries its photos, so the arrows switch the look at once.
+    rows = shelf.shelf_books(profile, photos=True)
     spines_progress = None
     if profile.spine_photos:
         shelf.sweep_spines(profile)
@@ -160,6 +161,7 @@ def _home(request):
         "go_on": (__import__("books.reading", fromlist=["continue_list"]).continue_list(profile, limit=1) or [None])[0],
         "dial": _dial(profile),
         "spines_progress": spines_progress,
+        "has_photo_spines": any("photo" in r for r in rows),
         "just_finished": _just_finished(request, profile),
         "streak_moment": _streak_moment(request, profile),
         "book_pct": _book_ring(profile, *_dial_book(profile)),

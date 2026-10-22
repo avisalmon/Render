@@ -880,3 +880,28 @@ def test_on_a_computer_the_mouse_pans_the_shelf_and_the_wheel_slides_it(browser,
     finally:
         context.close()
 
+
+def test_a_tapped_book_grows_and_the_next_tap_puts_it_back(browser, live_server, db):
+    """Avi, 2026-10-22: tap a book and it grows so I can see it; tap again
+    and it is its size again; tap another and the first shrinks as it grows."""
+    build_world()
+    context, page, _ = _open(browser, live_server, "shelver", "/books/", PHONE, "light")
+    try:
+        spines = page.locator(".bk-shelf-row .bk-spine")
+        first, second = spines.nth(0), spines.nth(2)  # a book still in sight beside the enlarged one
+        row_h = page.evaluate("document.querySelector('.bk-shelf-row').offsetHeight")
+        scale = "(el) => { const m = new DOMMatrix(getComputedStyle(el).transform); return Math.hypot(m.a, m.b); }"
+        first.click()
+        page.wait_for_timeout(900)
+        assert first.evaluate(scale) > 1.25
+        assert page.evaluate("document.querySelector('.bk-shelf-row').offsetHeight") > row_h + 100
+        second.click()
+        page.wait_for_timeout(900)
+        assert abs(first.evaluate(scale) - 1) < 0.02 and second.evaluate(scale) > 1.25
+        second.click()
+        page.wait_for_timeout(900)
+        assert abs(second.evaluate(scale) - 1) < 0.02
+        assert page.evaluate("document.querySelector('.bk-shelf-row').offsetHeight") == row_h
+    finally:
+        context.close()
+

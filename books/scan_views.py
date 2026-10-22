@@ -219,11 +219,17 @@ def reorder_shelf(request):
 @books_page
 @require_POST
 def spine_direction(request):
-    """Which way the titles on the spines read (Avi, 2026-10-22)."""
+    """How my shelf's spines look (Avi, 2026-10-22): photographed, drawn with
+    the titles reading up, or drawn with them reading down. Remembered."""
     me = request.books_profile
-    me.spine_text_down = request.POST.get("down") == "1"
-    me.save(update_fields=["spine_text_down"])
-    return JsonResponse({"down": me.spine_text_down})
+    mode = request.POST.get("mode") or ("down" if request.POST.get("down") == "1" else "up")
+    if mode == "photo":
+        me.spine_photos = True
+    else:
+        me.spine_photos = False
+        me.spine_text_down = mode == "down"
+    me.save(update_fields=["spine_photos", "spine_text_down"])
+    return JsonResponse({"mode": mode, "down": me.spine_text_down, "photos": me.spine_photos})
 
 
 @books_page

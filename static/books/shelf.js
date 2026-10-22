@@ -31,6 +31,8 @@
   var GAP = 3;                 // px between standing books
   var LIFT = -14;              // px a tapped book rises
   var HOLD_LIFT = -18;         // px a held book rises
+  var ZOOM_ROOM = 150;         // px the row grows upward while a tapped book is enlarged (Avi, 2026-10-22)
+  var ZOOM_MAX = 2.2;
   var LONG_PRESS = 320;        // ms to pick a book up outside the living view
   var REDUCED = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -161,7 +163,7 @@
       self.el.appendChild(btn);
       self.state[id] = { el: btn, w: p.w, h: p.h, rest: p.lean,
                          x: p.left, vx: 0, tx: p.left, a: p.lean, va: 0, ta: p.lean, y: 0, vy: 0, ty: 0,
-                         origin: "" };
+                         z: 1, vz: 0, tz: 1, origin: "" };
       btn.style.setProperty("--spine-left", p.left + "px");
     });
     this.draw();
@@ -171,7 +173,10 @@
     var self = this;
     this.ids.forEach(function (id) {
       var s = self.state[id];
-      if (!s.el.classList.contains("bk-spine--photo")) fitTitle(s.el.querySelector(".bk-spine-title"), s.w);
+      // A photographed spine shows no text, unless the shelf is set to drawn spines.
+      if (!s.el.classList.contains("bk-spine--photo") || self.shelf.root.classList.contains("is-drawn")) {
+        fitTitle(s.el.querySelector(".bk-spine-title"), s.w);
+      }
     });
   };
 
@@ -192,7 +197,7 @@
       var o = originFor(s, s.held);
       if (o !== s.origin) { s.el.style.transformOrigin = o; s.origin = o; }
       s.el.style.transform = "translate3d(" + s.x.toFixed(2) + "px," + s.y.toFixed(2) + "px,0) rotate(" +
-        (s.a + tip).toFixed(2) + "deg)";
+        (s.a + tip).toFixed(2) + "deg)" + (Math.abs(s.z - 1) > 0.001 ? " scale(" + s.z.toFixed(3) + ")" : "");
     });
   };
 
@@ -211,8 +216,10 @@
           r = step(s.y, s.vy, s.ty, 240, 0.45, dt); s.y = r[0]; s.vy = r[1];
         }
         var q = step(s.a, s.va, s.ta, s.held ? 90 : 210, s.held ? 0.35 : 0.42, dt); s.a = q[0]; s.va = q[1];
+        var zq = step(s.z, s.vz, s.tz, 180, 0.62, dt); s.z = zq[0]; s.vz = zq[1];
         if (Math.abs(s.tx - s.x) > 0.3 || Math.abs(s.vx) > 2 || Math.abs(s.ta - s.a) > 0.15 || Math.abs(s.va) > 1 ||
-            Math.abs(s.ty - s.y) > 0.3 || Math.abs(s.vy) > 2 || s.held) busy = true;
+            Math.abs(s.ty - s.y) > 0.3 || Math.abs(s.vy) > 2 || Math.abs(s.tz - s.z) > 0.002 || Math.abs(s.vz) > 0.01 ||
+            s.held) busy = true;
       });
       self.draw();
       if (busy) requestAnimationFrame(frame); else { self.running = false; self.settle(); }
@@ -225,7 +232,7 @@
     this.ids.forEach(function (id) {
       var s = self.state[id];
       if (!s.held) { s.x = s.tx; s.y = s.ty; }
-      s.a = s.ta; s.vx = s.vy = s.va = 0;
+      s.a = s.ta; s.z = s.tz; s.vx = s.vy = s.va = s.vz = 0;
     });
     this.draw();
   };
@@ -234,7 +241,7 @@
     var self = this;
     this.ids.forEach(function (id) {
       var s = self.state[id];
-      s.x = s.tx; s.y = s.ty; s.a = s.ta; s.vx = s.vy = s.va = 0;
+      s.x = s.tx; s.y = s.ty; s.a = s.ta; s.z = s.tz; s.vx = s.vy = s.va = s.vz = 0;
     });
     this.draw();
   };
@@ -269,13 +276,19 @@
     this.kick();
   };
 
+  // A tapped book rises, stands straight and grows to fill the room the row
+  // makes for it above the shelf; tapped again, or another tapped, it shrinks back.
   Row.prototype.liftOnly = function (id) {
     var self = this;
+    var base = this.baseHeight || (this.baseHeight = this.el.offsetHeight || 214);
+    this.el.classList.toggle("is-zoomed", id !== null);
+    this.el.style.setProperty("--zoom-room", ZOOM_ROOM + "px");
     this.ids.forEach(function (k) {
       var s = self.state[k];
       s.lifted = k === id;
       s.ty = s.lifted ? LIFT : 0;
       s.ta = s.lifted ? 0 : s.rest;
+      s.tz = s.lifted ? Math.max(1.3, Math.min(ZOOM_MAX, (base + ZOOM_ROOM + LIFT - 14) / s.h)) : 1;
     });
     this.kick();
   };
@@ -498,7 +511,12 @@
       s.classList.remove("is-lifted"); s.setAttribute("aria-pressed", "false");
     });
     this.rows.forEach(function (r) { r.liftOnly(null); });
-    if (already && !force) { this.liftedId = null; this.showLabel(null); return; }
+    if (already && !force) {
+      this.liftedId = null; this.showLabel(null);
+      var back = this.root.querySelector('.bk-spine[data-book="' + id + '"]');
+      if (back) setTimeout(function () { back.style.zIndex = ""; }, 450);
+      return;
+    }
     var btn = this.root.querySelector('.bk-spine[data-book="' + id + '"]');
     if (!btn) return;
     btn.classList.add("is-lifted"); btn.setAttribute("aria-pressed", "true");
@@ -506,6 +524,8 @@
     if (row) row.liftOnly(String(id));
     this.liftedId = String(id);
     if (!force) btn.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
+    btn.style.zIndex = "6";
+    this.root.querySelectorAll(".bk-spine").forEach(function (s) { if (s !== btn) s.style.zIndex = ""; });
     this.showLabel(this.byId(id));
     this.root.dispatchEvent(new CustomEvent("bkshelf:lift", { detail: { id: id, book: self.byId(id) } }));
   };
@@ -533,4 +553,6 @@
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
   window.BkShelf = Shelf;
+  // The looks switched from outside (the arrows beside the shelf): fit the titles again.
+  Shelf.prototype.refit = function () { this.rows.forEach(function (r) { r.fit(); }); };
 })();

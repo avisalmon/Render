@@ -7,7 +7,7 @@
     {% if books_json and books_json != "[]" %}<h1 class="bk-visually-hidden">{% t "home.title" %}</h1>{% endif %}
     {% t "home.shelf_of" name=profile.display_name as kicker %}
     {% t "home.count" n=count as hint_end %}
-    {% include "books/_shelf.html" with shelf_id="home" books_json=books_json view=request.books_shelf_view kicker=kicker hint_end=hint_end tools=True %}
+    {% include "books/_shelf.html" with shelf_id="home" books_json=books_json view=request.books_shelf_view kicker=kicker hint_end=hint_end tools=True has_photos=has_photo_spines %}
     {% if spines_progress %}<p class="bk-help bk-spines-progress" role="status">{% t "spines.progress" done=spines_progress.done total=spines_progress.total %}</p>{% endif %}
     {% if not books_json or books_json == "[]" %}
     <div class="bk-empty bk-narrow">
@@ -78,15 +78,27 @@
   m.querySelector('[data-streak-close]').focus({preventScroll: true});
 })();
 (function () {
-  // Which way the spine titles read: flipped at once, saved for every device (Avi, 2026-10-22).
+  // The spines' look, one button through all of them (Avi, 2026-10-22): photographed,
+  // drawn reading up, drawn reading down. Switched at once, remembered on every device.
   var b = document.querySelector('[data-spine-flip]');
   var shelf = document.querySelector('[data-shelf]');
+  var look = document.querySelector('[data-spine-look]');
   if (!b || !shelf) return;
+  var order = b.getAttribute('data-has-photos') === '1' ? ['photo', 'up', 'down'] : ['up', 'down'];
+  var hide = 0;
   b.addEventListener('click', function () {
-    var down = !shelf.classList.contains('is-text-down');
-    shelf.classList.toggle('is-text-down', down);
-    b.setAttribute('aria-pressed', down ? 'true' : 'false');
-    var body = new URLSearchParams(); body.append('down', down ? '1' : '0');
+    var now = b.getAttribute('data-mode');
+    var next = order[(order.indexOf(now) + 1) % order.length];
+    b.setAttribute('data-mode', next);
+    shelf.classList.toggle('is-drawn', next !== 'photo');
+    if (next !== 'photo') shelf.classList.toggle('is-text-down', next === 'down');
+    b.setAttribute('aria-pressed', next === 'down' ? 'true' : 'false');
+    if (shelf._bkShelf && shelf._bkShelf.refit) shelf._bkShelf.refit();
+    if (look) {
+      look.textContent = b.getAttribute('data-label-' + next);
+      clearTimeout(hide); hide = setTimeout(function () { look.textContent = ''; }, 2200);
+    }
+    var body = new URLSearchParams(); body.append('mode', next);
     fetch(b.getAttribute('data-url'), {method: 'POST', body: body, headers: {'X-CSRFToken': document.body.getAttribute('data-csrf')}});
   });
 })();
