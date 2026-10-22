@@ -71,6 +71,22 @@ def find_by_identifier(scheme, value):
     return entry.merged_into or entry
 
 
+def may_edit(user, profile, entry):
+    """Who may fix a catalogue record directly (Avi, 2026-10-22: "I found a
+    wrong title and could not change it"): staff; whoever added it by hand
+    while it is unverified; and anyone who holds a copy of the book. Every
+    direct edit is logged as an accepted correction, so curators see it."""
+    from .models import Copy
+
+    if user.is_staff:
+        return True
+    if profile is None:
+        return False
+    if entry.created_by_id == profile.pk and not entry.is_verified:
+        return True
+    return Copy.objects.filter(owner=profile, entry=entry).exists()
+
+
 def add_identifier(entry, scheme, value):
     if not value:
         return

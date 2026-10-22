@@ -3,10 +3,10 @@
 {% block screen %}catalog-new{% endblock %}
 {% block content %}
 <div class="bk-narrow">
-  <p><a href="{% url 'books:catalog' %}">{% t "catalog.title" %}</a></p>
+  <p><a href="{% if existing %}{% url 'books:catalog_entry' existing.pk %}{% else %}{% url 'books:catalog' %}{% endif %}">{% if existing %}{{ existing.title }}{% else %}{% t "catalog.title" %}{% endif %}</a></p>
   <h1 class="bk-title">{% if existing %}{% t "entry.edit_title" %}{% else %}{% t "entry.new_title" %}{% endif %}</h1>
-  {% if not existing %}<p class="bk-lead">{% t "entry.new_lead" %}</p>{% endif %}
-  <form method="post" class="bk-card bk-form" novalidate>
+  {% if existing %}<p class="bk-help">{% t "entry.edit_lead" %}</p>{% else %}<p class="bk-lead">{% t "entry.new_lead" %}</p>{% endif %}
+  <form method="post" enctype="multipart/form-data" class="bk-card bk-form" novalidate>
     {% csrf_token %}
     {% for field in form %}
       {% if field.name == "tags" %}
@@ -14,6 +14,13 @@
           <legend class="bk-field">{{ field.label }}</legend>
           <div class="bk-radio-row">{% for cb in field %}<label class="bk-radio">{{ cb.tag }} {{ cb.choice_label }}</label>{% endfor %}</div>
         </fieldset>
+      {% elif field.name == "cover" %}
+        <div class="bk-field">{{ field.label }}
+          <div class="bk-edit-cover">
+            {% if existing.cover %}<img src="{{ existing.cover.url }}" alt="{% t "entry.cover" %}: {{ existing.title }}" data-cover-preview>{% else %}<img alt="" data-cover-preview hidden>{% endif %}
+            <label class="bk-btn bk-file-button">{% include "books/ui/_icon.html" with name="camera" %} {% if existing.cover %}{% t "entry.cover_replace" %}{% else %}{% t "entry.cover_add" %}{% endif %}{{ field }}</label>
+          </div>
+        </div>
       {% else %}
         <label class="bk-field">{{ field.label }} {{ field }}{% if field.help_text %}<span class="bk-help">{{ field.help_text }}</span>{% endif %}</label>
       {% endif %}
@@ -22,4 +29,17 @@
     <button type="submit" class="bk-btn bk-btn--primary bk-btn--wide">{% t "entry.save" %}</button>
   </form>
 </div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  var input = document.querySelector('input[name=cover]');
+  var img = document.querySelector('[data-cover-preview]');
+  if (!input || !img) return;
+  input.addEventListener('change', function () {
+    var f = input.files && input.files[0];
+    if (f) { img.src = URL.createObjectURL(f); img.hidden = false; }
+  });
+})();
+</script>
 {% endblock %}

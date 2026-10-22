@@ -3,9 +3,11 @@ the curator's desk. Every page is a consumer of books/catalog.py, the same
 functions the API uses."""
 
 from django import forms
+from django.core.files.base import ContentFile
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from . import catalog
@@ -31,12 +33,19 @@ class EntryForm(_Localised, forms.Form):
     publisher = forms.CharField(max_length=200, required=False, widget=forms.TextInput(attrs={"class": "bk-input"}))
     identifier = forms.CharField(max_length=40, required=False,
                                  widget=forms.TextInput(attrs={"class": "bk-input", "inputmode": "numeric"}))
+    pages = forms.IntegerField(required=False, min_value=10, max_value=5000,
+                               widget=forms.NumberInput(attrs={"class": "bk-input", "inputmode": "numeric"}))
+    description = forms.CharField(max_length=4000, required=False,
+                                  widget=forms.Textarea(attrs={"class": "bk-textarea bk-input", "rows": 4}))
     tags = forms.ModelMultipleChoiceField(queryset=Tag.objects.filter(kind="genre"), required=False,
                                           widget=forms.CheckboxSelectMultiple)
+    cover = forms.ImageField(required=False, widget=forms.ClearableFileInput(attrs={"class": "bk-visually-hidden",
+                                                                                     "accept": "image/*"}))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        for name in ("title", "subtitle", "creators", "language", "year", "publisher", "identifier", "tags"):
+        for name in ("title", "subtitle", "creators", "language", "year", "publisher", "identifier", "tags",
+                     "pages", "description", "cover"):
             self.fields[name].label = self.t(f"entry.{name}")
         self.fields["creators"].help_text = self.t("entry.creators_help")
         self.fields["identifier"].help_text = self.t("entry.identifier_help")
@@ -113,7 +122,7 @@ def entry(request, pk):
         form = CorrectionForm(lang=_lang(request))
     editions = obj.editions.filter(merged_into__isnull=True)
     siblings = obj.parent.editions.exclude(pk=obj.pk).filter(merged_into__isnull=True) if obj.parent_id else []
-    can_edit = request.user.is_staff or (obj.created_by_id == request.books_profile.pk and not obj.is_verified)
+    can_edit = catalog.may_edit(request.user, request.books_profile, obj)
     from . import community
     from .models import ReadingLog, Review, Thread
 
@@ -131,7 +140,7 @@ def entry(request, pk):
         "notes": __import__("books.notes", fromlist=["for_book"]).for_book(me, obj),
         "club_error": community.CommunityError and (request.GET.get("error") or ""),
         "entry": obj, "detail": detail, "form": form, "sent": sent, "editions": list(editions) + list(siblings),
-        "can_edit": can_edit, "lang": _lang(request),
+        "can_edit": can_edit, "lang": _lang(request), "edited": request.GET.get("edited") == "1",
         "my_copy": obj.copies.filter(owner=request.books_profile, status__in=("with_owner", "on_loan_out")).first(),
         # My own shelf photo of this book, if it came from one of my scans (Avi: mine alone).
         "my_scan_item": __import__("books.models", fromlist=["ScanItem"]).ScanItem.objects.filter(
@@ -147,20 +156,29 @@ def new_entry(request, pk=None):
     existing = None
     if pk is not None:
         existing = get_object_or_404(CatalogEntry, pk=pk)
-        if not (request.user.is_staff or (existing.created_by_id == request.books_profile.pk and not existing.is_verified)):
+        if not catalog.may_edit(request.user, request.books_profile, existing):
             raise Http404
     if request.method == "POST":
-        form = EntryForm(request.POST, lang=_lang(request))
+        form = EntryForm(request.POST, request.FILES, lang=_lang(request))
         if form.is_valid():
             d = form.cleaned_data
+            before = _facts(existing) if existing is not None else None
             if existing is None:
                 obj = CatalogEntry.objects.create(
                     collection_type=catalog.book_type(), title=d["title"], subtitle=d["subtitle"], language=d["language"],
-                    year=d["year"], source="manual", created_by=request.books_profile)
+                    year=d["year"], description=d["description"], source="manual", created_by=request.books_profile)
             else:
                 obj = existing
                 obj.title, obj.subtitle, obj.language, obj.year = d["title"], d["subtitle"], d["language"], d["year"]
+                obj.description = d["description"]
                 obj.save()
+            if d.get("cover"):
+                from . import images
+
+                prepared = images.prepare(d["cover"], max_side=1400)
+                obj.cover.save(f"{obj.pk}-edit-{timezone.now():%Y%m%d%H%M%S}.jpg", ContentFile(prepared.data), save=False)
+                obj.cover_source_url = ""
+                obj.save(update_fields=["cover", "cover_source_url"])
             catalog.set_creators(obj, [n.strip() for n in d["creators"].split(",") if n.strip()])
             obj.tags.set(d["tags"])
             from . import tagging
@@ -171,21 +189,58 @@ def new_entry(request, pk=None):
                 tagging.ensure_tagged(obj, request.books_profile)
             detail, _ = BookDetail.objects.get_or_create(entry=obj)
             detail.publisher = d["publisher"]
-            detail.save(update_fields=["publisher"])
+            if d["pages"]:
+                detail.pages = d["pages"]
+            detail.save(update_fields=["publisher", "pages"])
             if d["identifier"]:
                 catalog.add_identifier(obj, *d["identifier"])
-            return redirect("books:catalog_entry", pk=obj.pk)
+            if before is not None and not request.user.is_staff:
+                _log_direct_edit(request.books_profile, obj, before, bool(d.get("cover")))
+            return redirect(f"{reverse('books:catalog_entry', args=[obj.pk])}?edited=1" if existing else
+                            reverse("books:catalog_entry", args=[obj.pk]))
     else:
         initial = {}
         if existing is not None:
             detail = BookDetail.objects.filter(entry=existing).first()
             initial = {"title": existing.title, "subtitle": existing.subtitle, "language": existing.language,
                        "year": existing.year, "creators": existing.creator_names, "tags": existing.tags.all(),
-                       "publisher": detail.publisher if detail else ""}
+                       "publisher": detail.publisher if detail else "", "pages": detail.pages if detail else None,
+                       "description": existing.description}
         elif request.GET.get("q"):
             initial = {"title": request.GET["q"]}
         form = EntryForm(initial=initial, lang=_lang(request))
     return render(request, "books/catalog/new.html", {"form": form, "existing": existing})
+
+
+FACT_FIELDS = {"title": "title", "subtitle": "subtitle", "creators": "creators", "year": "year",
+               "language": "language", "publisher": "publisher", "pages": "other", "description": "other"}
+
+
+def _facts(entry):
+    detail = BookDetail.objects.filter(entry=entry).first()
+    return {"title": entry.title, "subtitle": entry.subtitle, "creators": entry.creator_names, "year": entry.year,
+            "language": entry.language, "publisher": detail.publisher if detail else "",
+            "pages": detail.pages if detail else None, "description": entry.description}
+
+
+def _log_direct_edit(profile, entry, before, cover_changed):
+    """A holder's direct edit, kept as accepted corrections with the old value,
+    so the curators see every change and can put one back."""
+    entry.refresh_from_db()
+    after = _facts(entry)
+    now = timezone.now()
+    for key, field in FACT_FIELDS.items():
+        old, new = before.get(key), after.get(key)
+        if (old or "") == (new or ""):
+            continue
+        EntryCorrection.objects.create(
+            entry=entry, profile=profile, field=field, value=str(new or "")[:300],
+            note=(f"{key}: edited directly by a holder; was: {old or ''}")[:500],
+            status=EntryCorrection.ACCEPTED, handled_by=profile, handled_at=now)
+    if cover_changed:
+        EntryCorrection.objects.create(entry=entry, profile=profile, field="cover", value="(a new photo)",
+                                       note="cover: replaced directly by a holder", status=EntryCorrection.ACCEPTED,
+                                       handled_by=profile, handled_at=now)
 
 
 # ---- the curator's desk (staff) -----------------------------------------------

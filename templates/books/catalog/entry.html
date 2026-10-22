@@ -24,12 +24,13 @@
         {% else %}<form method="post" action="{% url 'books:have' entry.pk %}">{% csrf_token %}<button type="submit" class="bk-btn bk-btn--small">{% t "add.have" %}</button></form>{% endif %}
         {% if wished %}<span class="bk-chip-note">{% t "wish.wanted" %}</span>
         {% elif not my_copy %}<form method="post" action="{% url 'books:wish_entry' entry.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button type="submit" class="bk-btn bk-btn--small">{% t "wish.want" %}</button></form>{% endif %}
-        {% if can_edit %}<a class="bk-btn bk-btn--small bk-btn--quiet" href="{% url 'books:catalog_edit' entry.pk %}">{% t "catalog.edit" %}</a>{% endif %}
+        {% if can_edit %}<a class="bk-btn bk-btn--small" href="{% url 'books:catalog_edit' entry.pk %}">{% include "books/ui/_icon.html" with name="pencil" %} {% t "catalog.edit" %}</a>{% endif %}
       </div>
       {% if read_progress.sessions %}<p class="bk-muted" style="margin: 8px 0 0">{% if read_progress.percent %}<span class="bk-progress" aria-hidden="true"><span style="width: {{ read_progress.percent }}%"></span></span>{% if read_progress.pages_assumed %}~{% endif %}{{ read_progress.percent }}% · {% endif %}{% t "read.book_minutes" n=read_progress.minutes s=read_progress.sessions %}{% if read_progress.pace %} · {% t "read.pace" n=read_progress.pace %}{% endif %}{% if read_progress.minutes_left %} · {% t "read.left" n=read_progress.minutes_left %}{% endif %}</p>{% endif %}
     </div>
   </div>
 
+  {% if edited %}<p class="bk-notice bk-notice--ok" role="status">{% t "entry.edited" %}</p>{% endif %}
   {% if my_scan_item %}
   <details class="bk-filterbox" id="shelf-photo">
     <summary>{% t "copy.shelf_photo" %}{% if my_scan_item.scan.shelf_label %} · <b>{{ my_scan_item.scan.shelf_label }}</b>{% endif %}</summary>

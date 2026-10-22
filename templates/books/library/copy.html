@@ -29,6 +29,7 @@
       <div class="bk-row" style="margin-top: 8px">
         <a class="bk-btn bk-btn--small bk-btn--primary" href="{% url 'books:read' %}?entry={{ entry.pk }}">{% t "read.start" %}</a>
         <a class="bk-btn bk-btn--small" href="{% url 'books:catalog_entry' entry.pk %}">{% t "copy.record" %}</a>
+        <a class="bk-btn bk-btn--small" href="{% url 'books:catalog_edit' entry.pk %}">{% include "books/ui/_icon.html" with name="pencil" %} {% t "catalog.edit" %}</a>
       </div>
     </div>
   </div>

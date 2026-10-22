@@ -916,3 +916,16 @@ it.
 made (`ScanItem.spine_w`, `spine_h`), and never touch `ImageField.width` or
 `.height` on a page; a test makes that access fail.
 
+### 38. Whoever sees a mistake in shared data needs a way to fix it
+
+Avi found a wrong title on a book and could not change it. Direct edits
+were open to staff and to whoever had typed the book in by hand; books from
+shelf photos are created by the system, so almost nobody could fix them,
+only file a suggestion that waits for a curator.
+
+**The rule.** The people closest to a shared record (here, whoever holds a
+copy of the book) can fix it directly, and every direct change is kept with
+its old value as an accepted correction, so curators can see it and put it
+back. Gate by trail, not by permission, when the people are trusted and the
+change is reversible.
+

@@ -17,6 +17,24 @@ Newest first.
 
 ---
 
+## PM-40 · 2026-10-22 · Avi could not fix a wrong title
+
+**What happened.** Browsing his books, Avi found a wrong title and could
+not change it: editing a catalogue record was open to staff and to whoever
+added it by hand, and books from shelf photos are added by the system.
+
+**Why our process let it happen.** The edit rule was written for
+hand-typed books (BK2) and never revisited when scans became the main way
+books arrive.
+
+**Rule.** Whoever holds a copy may edit the book's record (title, authors,
+year, language, publisher, pages, description, cover); each change is
+logged as an accepted correction with its old value. The edit is a clear
+button on the book's page and on the copy's page.
+
+Here: docs/building_an_app.md mistake 38; tests/test_books_editing.py
+BKM: FullStackBKM 635df81 (lesson 46)
+
 ## PM-39 · 2026-10-22 · The mouse moved the books; the shelf measured every spine image
 
 **What happened.** On a computer, dragging with the mouse moved the books
