@@ -1044,4 +1044,6 @@ html[dir="rtl"] .bk-prop > summary { padding: 6px 14px 6px 6px; }
 .bk-shelf.is-drawn .bk-spine--photo .bk-spine-band, .bk-shelf.is-drawn .bk-spine--photo .bk-spine-title,
 .bk-shelf.is-drawn .bk-spine--photo .bk-spine-author { visibility: visible; }
 .bk-shelf-look { font-size: 12px; color: var(--bk-muted); white-space: nowrap; min-width: 0; }
+/* A photographed spine keeps its true width; a thumb still gets 24px or more to tap. */
+.bk-spine--photo::before { content: ""; position: absolute; top: 0; bottom: 0; left: calc(min(0px, (var(--spine-w, 24px) - 24px) / 2)); right: calc(min(0px, (var(--spine-w, 24px) - 24px) / 2)); }
 

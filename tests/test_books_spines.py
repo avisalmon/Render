@@ -144,7 +144,7 @@ def test_my_shelf_rows_carry_the_real_spine(noa):
     shown = {r["id"]: r for r in shelf.shelf_books(noa, photos=True)}
     first = shown[rows[0][0].pk]
     assert first["photo"] == f"/books/copy/{rows[0][0].pk}/spine.jpg?v={rows[0][1].pk}"
-    assert 24 <= first["w"] < first["h"] and 130 <= first["h"] <= 215
+    assert 8 <= first["w"] < first["h"] and 130 <= first["h"] <= 215
     assert all("photo" not in r for r in shelf.shelf_books(noa))  # without photos: drawn
 
 
@@ -202,4 +202,30 @@ def test_home_says_while_old_photos_are_being_cut(client, noa, settings):
     client.force_login(noa.user)
     html = client.get("/books/").content.decode()
     assert "מכינים את השדרות מהצילומים שלך: 1 מתוך 2" in html
+
+
+def test_a_photo_keeps_the_books_true_proportions(noa):
+    rows = _shelf_with_spines(noa)
+    item = rows[0][1]
+    item.refresh_from_db()
+    row = next(r for r in shelf.shelf_books(noa, photos=True) if r["id"] == rows[0][0].pk)
+    assert abs(row["w"] / row["h"] - item.spine_w / item.spine_h) < 0.03
+
+
+def test_a_drawn_spine_is_as_thick_as_its_pages(noa):
+    from books.models import BookDetail
+    thin = CatalogEntry.objects.create(collection_type=catalog.book_type(), title="דק")
+    thick = CatalogEntry.objects.create(collection_type=catalog.book_type(), title="עבה")
+    BookDetail.objects.create(entry=thin, pages=96)
+    BookDetail.objects.create(entry=thick, pages=900)
+    Copy.objects.create(owner=noa, entry=thin, position=1)
+    Copy.objects.create(owner=noa, entry=thick, position=2)
+    rows = {r["title"]: r for r in shelf.shelf_books(noa)}
+    assert rows["דק"]["w"] == 24  # never too thin for its title
+    assert rows["עבה"]["w"] > 60 and rows["עבה"]["w"] / rows["עבה"]["h"] == pytest.approx((900 * 0.08 + 3) / 215, abs=0.03)
+
+
+def test_new_people_see_photographed_spines_by_default(db):
+    from books.models import Profile as P
+    assert P._meta.get_field("spine_photos").default is True
 

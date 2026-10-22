@@ -300,4 +300,7 @@ def test_shelf_js_implements_the_three_views():
     js = Path("static/books/shelf.js").read_text(encoding="utf-8")
     assert 'this.view === "bookcase"' in js and 'this.view === "living"' in js
     assert "pointerdown" in js and "bkshelf:reorder" in js
-    assert "Math.max(b.w || 28, 24)" in js  # a thumb needs at least 24px of spine
+    assert "Math.max(b.w || 28, 24)" in js  # a thumb needs at least 24px of a drawn spine
+    # A photographed spine keeps its true width, and its tap area is widened to 24px around it.
+    css = Path("static/books/books.css").read_text(encoding="utf-8")
+    assert ".bk-spine--photo::before" in css and "var(--spine-w, 24px) - 24px" in css

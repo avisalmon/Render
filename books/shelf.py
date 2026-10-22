@@ -550,25 +550,46 @@ def spine_for(entry_id, title):
     return {"color": color, "ink": ink, "w": w, "h": h, "lean": lean}
 
 
+PAGE_MM = 0.08      # one leaf of ordinary book paper is about 0.08mm per page
+COVERS_MM = 3.0
+BOOK_HEIGHT_MM = 215
+
+
+def drawn_width(pages, h):
+    """A drawn spine as thick as its page count makes it, at least wide
+    enough for its title (Avi, 2026-10-22: keep the book's proportions)."""
+    ratio = (pages * PAGE_MM + COVERS_MM) / BOOK_HEIGHT_MM
+    return int(max(24, min(70, round(h * ratio))))
+
+
 def shelf_books(profile, limit=400, photos=False):
     """The person's held copies as the shelf component's JSON rows. With
     `photos`, each book with a real spine shows it (my own shelf only)."""
+    from .models import BookDetail, ReadingLog
+
     rows = []
     copies = list(Copy.objects.filter(owner=profile, status__in=Copy.HELD)
                   .select_related("entry").prefetch_related("entry__creators", "offers")
                   .order_by("position", "created_at")[:limit])
     spines = spine_rows(copies) if photos else {}
+    ids = [c.entry_id for c in copies]
+    pages = dict(BookDetail.objects.filter(entry_id__in=ids, pages__isnull=False).values_list("entry_id", "pages"))
+    pages.update(ReadingLog.objects.filter(profile=profile, entry_id__in=ids, pages__isnull=False)
+                 .values_list("entry_id", "pages"))
     for c in copies:
         kinds = [o.kind for o in c.offers.all() if o.is_active]
         status = kinds[0] if kinds else ("public" if c.visibility == Copy.PUBLIC else "private")
         row = {"id": c.pk, "title": c.entry.title, "author": c.entry.creator_names, "status": status,
                "rare": c.is_rare_candidate, "url": f"/books/copy/{c.pk}/"}
         row.update(spine_for(c.entry_id, c.entry.title))
+        if pages.get(c.entry_id):
+            row["w"] = drawn_width(pages[c.entry_id], row["h"])
         real = spines.get(c.pk)
         if real:
             # The real book: its own proportions, its height against its neighbours in the photo.
+            # A thin one stays thin; its tap area is widened around it instead (books.css).
             row["h"] = int(max(130, min(215, 172 * real["rel"])))
-            row["w"] = int(max(24, min(90, row["h"] * real["ratio"])))  # 24px: a thumb must be able to tap it
+            row["w"] = int(max(8, min(90, round(row["h"] * real["ratio"]))))
             row["photo"] = real["url"]
         rows.append(row)
     return rows

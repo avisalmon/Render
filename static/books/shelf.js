@@ -86,8 +86,12 @@
     return null;
   };
 
-  function dims(b) {
-    return { w: Math.max(b.w || 28, 24), h: b.h || 170, lean: b.lean || 0 };  // a thumb needs 24px, photo or not
+  function dims(b, drawn) {
+    // A drawn spine is at least 24px (its title, a thumb). A photographed one keeps the
+    // book's true width; its tap area is widened around it in CSS (.bk-spine--photo::before).
+    // When the shelf is set to drawn spines, a photographed book needs room for its title too.
+    var real = b.photo && !drawn;
+    return { w: real ? Math.max(b.w || 28, 8) : Math.max(b.w || 28, 24), h: b.h || 170, lean: b.lean || 0 };
   }
 
   // Where every book of a row stands at rest, with an optional gap (a book
@@ -98,7 +102,7 @@
     var x = startX, map = {}, self = this;
     ids.forEach(function (id, i) {
       if (gapAt === i) x += gapW + GAP;
-      var d = dims(self.byId(id));
+      var d = dims(self.byId(id), self.root.classList.contains("is-drawn"));
       // A book at either end of the row has nothing on its outer side: it
       // leans inward, against its neighbour, or it would fall.
       if (i === ids.length - 1 && d.lean > 0 && ids.length > 1) d.lean = -d.lean;
@@ -118,17 +122,29 @@
       type: "button", "data-book": b.id, "aria-pressed": "false",
       "aria-label": (b.title || "") + (b.author ? ", " + b.author : "")
     });
-    var d = dims(b);
+    var d = dims(b, this.root.classList.contains("is-drawn"));
     btn.style.setProperty("--spine-w", d.w + "px");
     btn.style.setProperty("--spine-h", d.h + "px");
     btn.style.setProperty("--spine-bg", b.color || "#3A3128");
     btn.style.setProperty("--spine-ink", b.ink || "#EFE6D2");
     btn.style.setProperty("--spine-font", (d.w >= 32 ? 15 : 13) + "px");
     // The real book, as photographed (Avi, 2026-10-22); its title stays for screen readers and the card.
-    if (b.photo) btn.style.setProperty("--spine-img", 'url("' + String(b.photo).replace(/"/g, "") + '")');
     btn.appendChild(el("span", "bk-spine-band"));
     var title = el("span", "bk-spine-title"); title.textContent = b.title || ""; btn.appendChild(title);
     var author = el("span", "bk-spine-author"); author.textContent = b.author || ""; btn.appendChild(author);
+    if (b.photo) {
+      var url = String(b.photo).replace(/"/g, "");
+      btn.style.setProperty("--spine-img", 'url("' + url + '")');
+      // No picture after all (not cut yet, or it failed): the book shows its title instead.
+      var probe = new Image();
+      probe.onerror = function () {
+        btn.classList.remove("bk-spine--photo");
+        btn.style.removeProperty("--spine-img");
+        if (btn.offsetWidth < 24) btn.style.setProperty("--spine-w", "24px");
+        fitTitle(title, Math.max(btn.offsetWidth, 24));
+      };
+      probe.src = url;
+    }
     return btn;
   };
 
@@ -554,5 +570,19 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
   window.BkShelf = Shelf;
   // The looks switched from outside (the arrows beside the shelf): fit the titles again.
-  Shelf.prototype.refit = function () { this.rows.forEach(function (r) { r.fit(); }); };
+  // The books take their new widths and slide to their places (the springs do the rest).
+  Shelf.prototype.refit = function () {
+    var shelf = this, drawn = this.root.classList.contains("is-drawn");
+    this.rows.forEach(function (r) {
+      r.ids.forEach(function (id) {
+        var s = r.state[id], d = dims(shelf.byId(id), drawn);
+        s.w = d.w;
+        s.el.style.setProperty("--spine-w", d.w + "px");
+      });
+      var lay = shelf.layout(r.ids, 16);
+      r.el.style.width = lay.width + "px";
+      r.retarget(null, null);
+      r.fit();
+    });
+  };
 })();
