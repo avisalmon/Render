@@ -549,3 +549,13 @@ Migration 0022. Paid voice transcription is now behind `BOOKS_VOICE_PAID`
 (off); the phone's own speech recognition, in Hebrew, is used and costs
 nothing.
 
+**The first time with a book, and the spines (2026-10-22, Avi asked).**
+No new model for the first-time screen: it is shown when I have no
+`ReadingSession` for the book. My cover photo is a `CopyPhoto` (kind cover)
+and fills the catalogue's cover when it is missing or under 400px wide; the
+back cover is read once on request (`ModelCall` purpose `back_cover`,
+`BOOKS_BACK_DAILY_USD`, default $1) and fills only empty facts
+(description, an ISBN `EntryIdentifier`, publisher, year, pages); where it
+differs it files an `EntryCorrection`. `Profile.spine_text_down`: spine
+titles read top to bottom. Migration 0023.
+

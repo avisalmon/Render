@@ -17,12 +17,20 @@ The lamp, the shelf and the label (board C3). Takes:
   </div>
   {% if kicker %}<p class="bk-kicker bk-room-kicker">{{ kicker }}</p>{% endif %}
   {% if books_json and books_json != "[]" %}
-    <div class="bk-shelf" data-shelf data-shelf-view="{{ view|default:'lamp' }}" data-shelf-source="{{ shelf_id }}-data" data-shelf-strings="{{ shelf_id }}-strings" data-shelf-label="{{ shelf_id }}-label" data-shelf-aria="{% t "shelf.your_shelf" %}" data-shelf-plate-1="{{ plate1|default:'' }}" data-shelf-plate-2="{{ plate2|default:'' }}" {% if lifted %}data-shelf-lifted="{{ lifted }}"{% endif %}></div>
+    <div class="bk-shelf{% if user.books_profile.spine_text_down %} is-text-down{% endif %}" data-shelf data-shelf-view="{{ view|default:'lamp' }}" data-shelf-source="{{ shelf_id }}-data" data-shelf-strings="{{ shelf_id }}-strings" data-shelf-label="{{ shelf_id }}-label" data-shelf-aria="{% t "shelf.your_shelf" %}" data-shelf-plate-1="{{ plate1|default:'' }}" data-shelf-plate-2="{{ plate2|default:'' }}" {% if lifted %}data-shelf-lifted="{{ lifted }}"{% endif %}></div>
     <script type="application/json" id="{{ shelf_id }}-data">{{ books_json|safe }}</script>
     <script type="application/json" id="{{ shelf_id }}-strings">{"shelf.from_yours": "{% t "shelf.from_yours" %}", "shelf.rare": "{% t "shelf.rare" %}", "status.private": "{% t "status.private" %}", "status.public": "{% t "status.public" %}", "status.lend": "{% t "status.lend" %}", "status.exchange": "{% t "status.exchange" %}", "status.sell": "{% t "status.sell" %}"}</script>
     <div class="bk-shelf-hints">
       <span>{% if view == "living" %}{% t "shelf.drag_hint" %}{% else %}{% t "shelf.swipe_hint" %}{% endif %}</span>
-      <span>{{ hint_end|default:'' }}</span>
+      <span class="bk-shelf-hints-end">{{ hint_end|default:'' }}
+        {% if tools %}
+        <button type="button" class="bk-shelf-tool" data-spine-flip data-url="{% url 'books:spine_direction' %}"
+                aria-pressed="{% if user.books_profile.spine_text_down %}true{% else %}false{% endif %}" aria-label="{% t "shelf.flip_text" %}" title="{% t "shelf.flip_text" %}">
+          <svg class="bk-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4v16M8 20l-3-3M8 20l3-3M16 20V4M16 4l-3 3M16 4l3 3"/></svg>
+        </button>
+        <a class="bk-shelf-tool" href="{% url 'books:library' %}?find=1" aria-label="{% t "shelf.find" %}" title="{% t "shelf.find" %}">{% include "books/ui/_icon.html" with name="search" %}</a>
+        {% endif %}
+      </span>
     </div>
     <div class="bk-card bk-label-card" id="{{ shelf_id }}-label" hidden style="margin-top: 12px">
       <span class="bk-kicker" data-label-kind></span>

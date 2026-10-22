@@ -118,7 +118,7 @@ def test_start_read_and_finish_through_the_pages(client, noa, book):
     login(client, noa)
     page = client.get(f"/books/read/?entry={book.pk}").content.decode()
     assert 'name="page"' in page and "מיכאל שלי" in page
-    r = client.post("/books/read/start/", {"entry": book.pk, "page": 120})
+    r = client.post("/books/read/start/", {"first_done": "1", "entry": book.pk, "page": 120})
     assert r["Location"] == "/books/read/"
     s = ReadingSession.objects.get()
     assert s.start_page == 120 and s.ended_at is None

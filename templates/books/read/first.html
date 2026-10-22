@@ -1,0 +1,61 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{{ entry.title }} · {% t "brand" %}{% endblock %}
+{% block screen %}first-read{% endblock %}
+{% block content %}
+<div class="bk-narrow bk-first" data-first>
+  <p class="bk-kicker" style="margin: 0">{% t "first.kicker" %}</p>
+  <h1 class="bk-title" style="margin: 4px 0 2px">{{ entry.title }}</h1>
+  <p class="bk-muted" style="margin: 0 0 14px">{{ entry.creator_names }}</p>
+
+  <section class="bk-first-step" aria-labelledby="first-cover-h">
+    <div class="bk-first-cover{% if not cover %} bk-cover-drawn{% endif %}" data-first-cover{% if not cover %} style="{% spine_style entry %}"{% endif %}>
+      {% if cover.copy_photo %}<img src="{% url 'books:copy_photo' cover.copy.pk cover.copy_photo.pk %}" alt="{% t "entry.cover" %}: {{ entry.title }}">
+      {% elif cover.url %}<img src="{{ cover.url }}" alt="{% t "entry.cover" %}: {{ entry.title }}">
+      {% else %}<span class="bk-cover-title">{{ entry.title }}</span><span class="bk-cover-by">{{ entry.creator_names }}</span>{% endif %}
+    </div>
+    <div class="bk-first-text">
+      <h2 class="bk-h2" id="first-cover-h" style="margin-top: 0">{% if cover %}{% t "first.cover_have" %}{% else %}{% t "first.cover_none" %}{% endif %}</h2>
+      <p class="bk-help" style="margin: 0 0 8px">{% t "first.cover_help" %}</p>
+      <label class="bk-btn bk-file-button">
+        {% include "books/ui/_icon.html" with name="camera" %} {% if cover %}{% t "first.cover_replace" %}{% else %}{% t "first.cover_take" %}{% endif %}
+        <input class="bk-visually-hidden" type="file" accept="image/*" capture="environment" data-first-cover-input
+               data-url="{% url 'books:first_cover' entry.pk %}">
+      </label>
+      <p class="bk-help" data-first-cover-status aria-live="polite" style="margin: 6px 0 0"></p>
+    </div>
+  </section>
+
+  {% if back %}
+  <section class="bk-first-step bk-first-back" aria-labelledby="first-back-h">
+    <div>
+      <h2 class="bk-h2" id="first-back-h" style="margin-top: 0">{% t "first.back_h" %}</h2>
+      <p class="bk-help" style="margin: 0 0 8px">{% t "first.back_help" %}</p>
+      <label class="bk-btn bk-file-button">
+        {% include "books/ui/_icon.html" with name="book" %} {% t "first.back_take" %}
+        <input class="bk-visually-hidden" type="file" accept="image/*" capture="environment" data-first-back-input
+               data-url="{% url 'books:first_back' entry.pk %}" data-working="{% t "first.back_working" %}"
+               data-filled="{% t "first.back_filled" %}" data-suggested="{% t "first.back_suggested" %}" data-nothing="{% t "first.back_nothing" %}">
+      </label>
+      <p class="bk-help" data-first-back-status aria-live="polite" style="margin: 6px 0 0"></p>
+    </div>
+  </section>
+  {% endif %}
+
+  <form method="post" action="{% url 'books:read_start' %}" class="bk-card bk-form bk-first-go">
+    {% csrf_token %}
+    <input type="hidden" name="entry" value="{{ entry.pk }}">
+    <input type="hidden" name="first_done" value="1">
+    <label class="bk-field">{% t "first.pages_q" %}
+      <input class="bk-input bk-input--big" type="number" name="total_pages" min="10" max="5000" inputmode="numeric" value="{{ pages }}" placeholder="200" data-first-pages>
+      <span class="bk-help">{% t "first.pages_help" %}</span>
+    </label>
+    <label class="bk-field">{% t "read.page_now" %}
+      <input class="bk-input" type="number" name="page" min="0" inputmode="numeric" value="{{ page }}">
+    </label>
+    <button type="submit" class="bk-btn bk-btn--primary bk-btn--wide bk-btn--big">{% t "read.start" %}</button>
+  </form>
+</div>
+{% endblock %}
+{% block scripts %}
+{% load static %}<script src="{% static 'books/first.js' %}" defer></script>
+{% endblock %}

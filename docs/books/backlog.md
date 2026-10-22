@@ -625,6 +625,10 @@ charging for the web lookup.
 
 | F-R.20 | babook.co.il opens Books (Avi, 2026-10-21: Books is the site); babook's main page moved to /babook/ (url name "home"), and Books' menu has one door to it, "more on the site" | DONE |
 
+| F-R.21 | The first time with a book: its cover (my photo, cut to a book's shape on the phone), its length, its back cover read once (blurb, ISBN, publisher, year, pages; free barcode on Android), then start | DONE |
+| F-R.22 | Beside the shelf: which way the spine titles read (saved for every device), and a magnifier to my books with the search ready | DONE |
+| F-R.23 | "Me" shows facts, each with a small edit button, instead of one long form | DONE |
+
 Open for later (Avi): what to do with a finished book's notes (a summary, a
 review draft, sharing some of them).
 

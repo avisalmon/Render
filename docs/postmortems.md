@@ -17,6 +17,24 @@ Newest first.
 
 ---
 
+## PM-37 · 2026-10-22 · Sprint end: the first time with a book, the spines, "me"
+
+**What happened.** Built at Avi's word: the first time a book is started it
+stops at a short screen (its cover from my photo, cut to a book's shape on
+the phone; its length; its back cover read once on request, filling only
+what is missing and suggesting corrections where it differs); a toggle for
+which way the spine titles read and a magnifier to my books beside the
+shelf; and "me" as facts with a small edit button each. The guards caught
+two things on their own: two unstyled classes, and the new profile fields
+without labels for screen readers. Both fixed before the push.
+
+**Why our process let it happen.** Nothing slipped through.
+
+**Rule.** Nothing new.
+
+Here: this file
+BKM: deferred - nothing new; the guards did their job
+
 ## PM-36 · 2026-10-21 · "Start a book" never asked how many pages
 
 **What happened.** Avi started a new book and was not asked its length,

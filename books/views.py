@@ -2,6 +2,7 @@
 
 import json
 
+from django import forms
 from django.http import Http404, HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -176,7 +177,37 @@ def settings_page(request):
     else:
         form = SettingsForm(instance=profile, lang=_lang(request))
         saved = request.GET.get("saved") == "1"
-    return render(request, "books/settings.html", {"form": form, "profile": profile, "saved": saved})
+    return render(request, "books/settings.html", {"form": form, "profile": profile, "saved": saved,
+                                                   "groups": _profile_groups(form, profile, _lang(request))})
+
+
+PROFILE_GROUPS = [
+    ("settings.about_me", ["display_name", "language", "area_name", "radius_km", "phone"]),
+    ("settings.appearance", ["theme", "palette", "shelf_view", "spine_text_down"]),
+    ("settings.privacy", ["profile_public", "show_points_public", "public_library", "public_reading", "public_reviews"]),
+]
+
+
+def _profile_groups(form, profile, lang):
+    """Avi, 2026-10-22: "me" shows facts, each with a small edit button, not a form."""
+    groups = []
+    for title, names in PROFILE_GROUPS:
+        rows = []
+        for name in names:
+            field = form.fields[name]
+            value = getattr(profile, name)
+            if isinstance(field, forms.BooleanField):
+                shown, kind = t("ui.yes" if value else "ui.no", lang), "check"
+            elif getattr(field, "choices", None):
+                shown, kind = dict(field.choices).get(value, value), "choice"
+            else:
+                shown, kind = ("" if value in (None, "") else str(value)), "text"
+                if name == "radius_km" and value:
+                    shown = t("settings.km", lang, n=value)
+            rows.append({"name": name, "label": field.label, "value": shown, "kind": kind, "bound": form[name],
+                         "open": bool(form.errors.get(name))})
+        groups.append({"title": title, "rows": rows})
+    return groups
 
 
 @require_POST

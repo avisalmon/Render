@@ -7,7 +7,7 @@
     {% if books_json and books_json != "[]" %}<h1 class="bk-visually-hidden">{% t "home.title" %}</h1>{% endif %}
     {% t "home.shelf_of" name=profile.display_name as kicker %}
     {% t "home.count" n=count as hint_end %}
-    {% include "books/_shelf.html" with shelf_id="home" books_json=books_json view=request.books_shelf_view kicker=kicker hint_end=hint_end %}
+    {% include "books/_shelf.html" with shelf_id="home" books_json=books_json view=request.books_shelf_view kicker=kicker hint_end=hint_end tools=True %}
     {% if not books_json or books_json == "[]" %}
     <div class="bk-empty bk-narrow">
       <h1 class="bk-title">{% t "home.empty_title" %}</h1>
@@ -75,6 +75,19 @@
   var close = function () { m.classList.add('is-leaving'); setTimeout(function () { m.remove(); }, 260); };
   m.querySelector('[data-streak-close]').addEventListener('click', close);
   m.querySelector('[data-streak-close]').focus({preventScroll: true});
+})();
+(function () {
+  // Which way the spine titles read: flipped at once, saved for every device (Avi, 2026-10-22).
+  var b = document.querySelector('[data-spine-flip]');
+  var shelf = document.querySelector('[data-shelf]');
+  if (!b || !shelf) return;
+  b.addEventListener('click', function () {
+    var down = !shelf.classList.contains('is-text-down');
+    shelf.classList.toggle('is-text-down', down);
+    b.setAttribute('aria-pressed', down ? 'true' : 'false');
+    var body = new URLSearchParams(); body.append('down', down ? '1' : '0');
+    fetch(b.getAttribute('data-url'), {method: 'POST', body: body, headers: {'X-CSRFToken': document.body.getAttribute('data-csrf')}});
+  });
 })();
 (function () {
   // The living shelf's drag is saved as the shelf's order.

@@ -41,6 +41,7 @@ urlpatterns = [
     path("scan/<int:pk>/accept-confident/", scan_views.accept_confident, name="scan_accept_confident"),
     path("scan/<int:pk>/add/", scan_views.add_missed, name="scan_add"),
     path("shelf/reorder/", scan_views.reorder_shelf, name="shelf_reorder"),
+    path("shelf/spines/", scan_views.spine_direction, name="spine_direction"),
     # The hub (BK5).
     path("near/", hub_views.near, name="near"),
     path("near/<int:pk>/", hub_views.offered, name="offered"),
@@ -90,6 +91,9 @@ urlpatterns = [
     path("read/notes/<int:entry_pk>/add/", reading_views.note_add, name="note_add"),
     path("read/notes/<int:pk>/delete/", reading_views.note_delete, name="note_delete"),
     path("read/voice/", reading_views.note_voice, name="note_voice"),
+    path("read/first/<int:entry_pk>/", reading_views.first_read, name="first_read"),
+    path("read/first/<int:entry_pk>/cover/", reading_views.first_cover, name="first_cover"),
+    path("read/first/<int:entry_pk>/back/", reading_views.first_back, name="first_back"),
     # Tiers (BK11).
     path("plans/", plans_views.plans, name="plans"),
     # Play (BK8).

@@ -68,6 +68,14 @@ def start(request):
     me = request.books_profile
     entry = get_object_or_404(CatalogEntry, pk=request.POST.get("entry") or 0)
     copy = Copy.objects.filter(owner=me, entry=entry).first()
+    from . import firstread
+
+    if request.POST.get("first_done") != "1" and firstread.is_first_time(me, entry):
+        # The book is in my hands: first its cover, its length, its back cover (Avi, 2026-10-22).
+        from urllib.parse import urlencode
+
+        q = urlencode({k: request.POST.get(k, "") for k in ("page", "total_pages") if request.POST.get(k)})
+        return redirect(f"{reverse('books:first_read', args=[entry.pk])}{'?' + q if q else ''}")
     try:
         session = reading.start(me, entry, request.POST.get("page"), copy=copy)
     except (reading.ReadingError, ValueError) as exc:
@@ -209,4 +217,53 @@ def note_voice(request):
     except notes.NoteError as exc:
         return JsonResponse({"error": t(str(exc), _lang(request))}, status=400)
     return JsonResponse({"text": text})
+
+
+# ---- the first time with a book (Avi, 2026-10-22) -----------------------------------
+
+@books_page
+def first_read(request, entry_pk):
+    from . import firstread
+
+    me = request.books_profile
+    entry = get_object_or_404(CatalogEntry, pk=entry_pk)
+    if reading.active(me):
+        return redirect("books:read")
+    page = request.GET.get("page") or reading.last_page(me, entry) or 0
+    return render(request, "books/read/first.html", {
+        "entry": entry, "cover": firstread.cover_for(me, entry), "page": page,
+        "pages": request.GET.get("total_pages") or reading.total_pages(entry, me) or "",
+        "back": firstread.back_enabled(), "has_copy": firstread.my_copy(me, entry) is not None,
+    })
+
+
+@books_page
+@require_POST
+def first_cover(request, entry_pk):
+    from . import firstread
+
+    entry = get_object_or_404(CatalogEntry, pk=entry_pk)
+    try:
+        done = firstread.save_cover(request.books_profile, entry, request.FILES.get("photo"))
+    except firstread.FirstReadError as exc:
+        return JsonResponse({"error": t(str(exc), _lang(request))}, status=400)
+    return JsonResponse({"ok": True, **done})
+
+
+@books_page
+@require_POST
+def first_back(request, entry_pk):
+    from . import firstread
+
+    entry = get_object_or_404(CatalogEntry, pk=entry_pk)
+    try:
+        done = firstread.read_back(request.books_profile, entry, request.FILES.get("photo"),
+                                   isbn_hint=request.POST.get("isbn", ""))
+    except firstread.FirstReadError as exc:
+        return JsonResponse({"error": t(str(exc), _lang(request))}, status=400)
+    except Exception:  # noqa: BLE001
+        return JsonResponse({"error": t("first.err.back_failed", _lang(request))}, status=400)
+    lang = _lang(request)
+    return JsonResponse({"filled": [t(f"first.got_{k}", lang) for k in done["filled"]],
+                         "suggested": [t(f"first.got_{k}", lang) for k in done["suggested"]], "pages": done["pages"]})
 

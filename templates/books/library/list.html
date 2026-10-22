@@ -31,10 +31,10 @@
   </div>
   <p class="bk-pagehead-sub">{% t "lib.count" n=total %}{% if left is not None and left < 100 %} · {% t "scan.left" left=left %}{% endif %}</p>
 
-  <details class="bk-filterbox" {% if q or where or show or tag %}open{% endif %}>
+  <details class="bk-filterbox" {% if q or where or show or tag or request.GET.find %}open{% endif %}>
     <summary>{% include "books/ui/_icon.html" with name="search" %} {% t "ui.search_filter" %}{% if q %} · <b>{{ q }}</b>{% endif %}{% if where %} · <b>{{ where }}</b>{% endif %}</summary>
   <form method="get" class="bk-filter" role="search">
-    <label class="bk-field">{% t "lib.search" %} <input class="bk-input" type="search" name="q" value="{{ q }}"></label>
+    <label class="bk-field">{% t "lib.search" %} <input class="bk-input" type="search" name="q" value="{{ q }}"{% if request.GET.find %} autofocus{% endif %}></label>
     <label class="bk-field">{% t "lib.where" %}
       <select class="bk-select" name="where"><option value="">{% t "lib.where_all" %}</option>{% for p in places %}<option value="{{ p }}" {% if p == where %}selected{% endif %}>{{ p }}</option>{% endfor %}</select>
     </label>

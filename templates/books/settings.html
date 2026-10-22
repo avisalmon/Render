@@ -3,49 +3,47 @@
 {% block screen %}settings{% endblock %}
 {% block content %}
 <div class="bk-narrow">
-  <h1 class="bk-title">{% t "settings" %}</h1>
+  <section class="bk-me">
+    <span class="bk-me-initial" aria-hidden="true">{{ profile.display_name|slice:":1" }}</span>
+    <div>
+      <h1 class="bk-title" style="margin: 0">{{ profile.display_name }}</h1>
+      <p class="bk-muted" style="margin: 2px 0 0">{% if profile.area_name %}{{ profile.area_name }} · {% endif %}{% t "settings.since" date=profile.created_at|date:"m.Y" %}</p>
+      {% if profile.pk %}<a class="bk-me-link" href="{% url 'books:person' profile.pk %}">{% t "settings.see_my_page" %}</a>{% endif %}
+    </div>
+  </section>
   {% if saved %}<p class="bk-notice bk-notice--ok" role="status">{% t "settings.saved" %}</p>{% endif %}
-  <form method="post" class="bk-card bk-form" novalidate>
+
+  <form method="post" class="bk-props" novalidate>
     {% csrf_token %}
-    <label class="bk-field">{{ form.display_name.label }} {{ form.display_name }}</label>
-    {% if form.display_name.errors %}<p class="bk-error" role="alert">{{ form.display_name.errors.0 }}</p>{% endif %}
-
-    <fieldset class="bk-field" style="border: 0; padding: 0; margin: 0">
-      <legend class="bk-field">{{ form.language.label }}</legend>
-      <div class="bk-radio-row">{% for radio in form.language %}<label class="bk-radio">{{ radio.tag }} {{ radio.choice_label }}</label>{% endfor %}</div>
-    </fieldset>
-
-    <label class="bk-field">{{ form.area_name.label }} {{ form.area_name }}<span class="bk-help">{% t "onb.area_help" %}</span></label>
-    <label class="bk-field">{{ form.radius_km.label }} {{ form.radius_km }}</label>
-    <label class="bk-field">{{ form.phone.label }} {{ form.phone }}</label>
-    {% if form.radius_km.errors %}<p class="bk-error" role="alert">{{ form.radius_km.errors.0 }}</p>{% endif %}
-
-    <h2 class="bk-h2">{% t "settings.appearance" %}</h2>
-    <fieldset class="bk-field" style="border: 0; padding: 0; margin: 0">
-      <legend class="bk-field">{{ form.theme.label }}</legend>
-      <div class="bk-radio-row">{% for radio in form.theme %}<label class="bk-radio">{{ radio.tag }} {{ radio.choice_label }}</label>{% endfor %}</div>
-    </fieldset>
-    <fieldset class="bk-field" style="border: 0; padding: 0; margin: 0">
-      <legend class="bk-field">{{ form.palette.label }}</legend>
-      <div class="bk-radio-row">{% for radio in form.palette %}<label class="bk-radio">{{ radio.tag }} {{ radio.choice_label }}</label>{% endfor %}</div>
-    </fieldset>
-    <fieldset class="bk-field" style="border: 0; padding: 0; margin: 0">
-      <legend class="bk-field">{{ form.shelf_view.label }}</legend>
-      <div class="bk-radio-row">{% for radio in form.shelf_view %}<label class="bk-radio">{{ radio.tag }} {{ radio.choice_label }}</label>{% endfor %}</div>
-    </fieldset>
-
-    <h2 class="bk-h2">{% t "settings.privacy" %}</h2>
-    <label class="bk-check">{{ form.profile_public }} <span>{{ form.profile_public.label }}</span></label>
-    <label class="bk-check">{{ form.show_points_public }} <span>{{ form.show_points_public.label }}</span></label>
-    <p class="bk-help" style="margin: 4px 0 0">{% t "settings.public_parts" %}</p>
-    <label class="bk-check">{{ form.public_library }} <span>{{ form.public_library.label }}</span></label>
-    <label class="bk-check">{{ form.public_reading }} <span>{{ form.public_reading.label }}</span></label>
-    <label class="bk-check">{{ form.public_reviews }} <span>{{ form.public_reviews.label }}</span></label>
-    {% if form.instance.pk %}<p class="bk-help" style="margin: 4px 0 0"><a href="{% url 'books:person' form.instance.pk %}">{% t "settings.see_my_page" %}</a></p>{% endif %}
-
-    <button type="submit" class="bk-btn bk-btn--primary bk-btn--wide">{% t "settings.save" %}</button>
+    {% for g in groups %}
+    <h2 class="bk-h2">{% t g.title %}</h2>
+    {% if g.title == "settings.privacy" %}<p class="bk-help" style="margin: -4px 0 8px">{% t "settings.public_parts" %}</p>{% endif %}
+    <div class="bk-prop-list">
+      {% for r in g.rows %}
+      <details class="bk-prop" id="prop-{{ r.name }}" {% if r.open %}open{% endif %}>
+        <summary>
+          <span class="bk-prop-label">{{ r.label }}</span>
+          <span class="bk-prop-value{% if not r.value %} is-empty{% endif %}">{% if r.value %}{{ r.value }}{% else %}{% t "settings.not_set" %}{% endif %}</span>
+          <span class="bk-prop-edit" aria-hidden="true"><svg class="bk-icon" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4"/></svg></span>
+          <span class="bk-visually-hidden">{% t "settings.edit" %}</span>
+        </summary>
+        <div class="bk-prop-body">
+          {% if r.kind == "check" %}<label class="bk-check">{{ r.bound }} <span>{{ r.label }}</span></label>
+          {% elif r.kind == "choice" %}<div class="bk-radio-row">{% for radio in r.bound %}<label class="bk-radio">{{ radio.tag }} {{ radio.choice_label }}</label>{% endfor %}</div>
+          {% else %}<label class="bk-field"><span class="bk-visually-hidden">{{ r.label }}</span>{{ r.bound }}</label>{% if r.name == "area_name" %}<span class="bk-help">{% t "onb.area_help" %}</span>{% endif %}{% endif %}
+          {% if r.bound.errors %}<p class="bk-error" role="alert">{{ r.bound.errors.0 }}</p>{% endif %}
+          <div class="bk-prop-actions">
+            <button type="submit" class="bk-btn bk-btn--primary bk-btn--small">{% t "settings.save" %}</button>
+            <button type="button" class="bk-btn bk-btn--quiet bk-btn--small" data-prop-cancel>{% t "think.cancel" %}</button>
+          </div>
+        </div>
+      </details>
+      {% endfor %}
+    </div>
+    {% endfor %}
   </form>
-  <div class="bk-stack">
+
+  <div class="bk-stack" style="margin-top: 18px">
     <a class="bk-btn" href="{% url 'books:plans' %}">{% t "plans.title" %}</a>
     <a class="bk-btn" href="{% url 'books:my_data' %}">{% t "data.title" %}</a>
     <form method="post" action="{% url 'books:logout' %}" class="bk-signout">{% csrf_token %}
@@ -53,4 +51,27 @@
     </form>
   </div>
 </div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  // One fact open at a time; "cancel" puts the value back and closes it.
+  var props = document.querySelectorAll('.bk-prop');
+  props.forEach(function (d) {
+    var start = null;
+    d.addEventListener('toggle', function () {
+      if (!d.open) return;
+      props.forEach(function (o) { if (o !== d) o.open = false; });
+      start = new FormData(d.closest('form'));
+    });
+    var cancel = d.querySelector('[data-prop-cancel]');
+    cancel.addEventListener('click', function () {
+      d.querySelectorAll('input, select, textarea').forEach(function (el) {
+        if (el.type === 'radio' || el.type === 'checkbox') el.checked = el.defaultChecked; else el.value = el.defaultValue;
+      });
+      d.open = false;
+    });
+  });
+})();
+</script>
 {% endblock %}

@@ -117,7 +117,7 @@ def test_home_says_continue_with_the_book_and_one_tap_starts_at_my_page(client, 
     read_today(noa, book, 10)  # pages 1 to 20, not finished
     html = client.get("/books/").content.decode()
     assert "<b>המשך לקרוא</b><i>מיכאל שלי</i>" in html and 'name="page" value="20"' in html
-    client.post("/books/read/start/", {"entry": book.pk, "page": "20"})
+    client.post("/books/read/start/", {"first_done": "1", "entry": book.pk, "page": "20"})
     assert ReadingSession.objects.get(ended_at__isnull=True).start_page == 20
 
 
@@ -159,7 +159,7 @@ def test_starting_a_book_asks_its_length_and_saves_it(client, noa, book):
     client.force_login(noa.user)
     html = client.get(f"/books/read/?entry={book.pk}").content.decode()
     assert 'name="total_pages"' in html and "נניח 200" in html
-    client.post("/books/read/start/", {"entry": book.pk, "page": "10", "total_pages": "300"})
+    client.post("/books/read/start/", {"first_done": "1", "entry": book.pk, "page": "10", "total_pages": "300"})
     assert BookDetail.objects.get(entry=book).pages == 300
     s = ReadingSession.objects.get(ended_at__isnull=True)
     assert 'name="total_pages"' not in client.get("/books/read/").content.decode()  # the timer never asks
@@ -170,7 +170,7 @@ def test_starting_a_book_asks_its_length_and_saves_it(client, noa, book):
 def test_with_no_answer_200_is_assumed_for_progress_only(client, noa, book):
     from books.models import BookDetail
     client.force_login(noa.user)
-    client.post("/books/read/start/", {"entry": book.pk, "page": "1", "total_pages": ""})
+    client.post("/books/read/start/", {"first_done": "1", "entry": book.pk, "page": "1", "total_pages": ""})
     s = ReadingSession.objects.get(ended_at__isnull=True)
     s = reading.end(noa, s, 250)
     assert s.finished_book is False  # page 250 of an assumed 200 does not finish the book
@@ -279,7 +279,7 @@ def test_my_own_count_is_mine_and_the_catalogue_keeps_its_own(client, noa, book)
     from books.models import BookDetail
     reading.set_pages(book, 412)
     client.force_login(noa.user)
-    client.post("/books/read/start/", {"entry": book.pk, "page": "10", "total_pages": "380"})
+    client.post("/books/read/start/", {"first_done": "1", "entry": book.pk, "page": "10", "total_pages": "380"})
     assert BookDetail.objects.get(entry=book).pages == 412  # never written over
     assert reading.total_pages(book, noa) == 380 and reading.total_pages(book) == 412
     s = ReadingSession.objects.get(ended_at__isnull=True)
@@ -321,4 +321,48 @@ def test_books_menu_leads_to_the_rest_of_the_site(client, noa):
     html = client.get("/books/").content.decode()
     assert html.count('class="bk-nav-item bk-nav-item--site" href="/babook/"') == 2  # phone bar and desktop side
     assert "עוד באתר" in html
+
+
+# ---- beside the shelf: the spines' direction and search (Avi, 2026-10-22) --------------
+
+def test_the_shelf_has_its_two_tools_and_the_direction_is_saved(client, noa):
+    from books.models import CatalogEntry, Copy
+    e = CatalogEntry.objects.create(collection_type=catalog.book_type(), title="ספר על המדף")
+    Copy.objects.create(owner=noa, entry=e)
+    client.force_login(noa.user)
+    html = client.get("/books/").content.decode()
+    assert "data-spine-flip" in html and 'href="/books/library/?find=1"' in html
+    assert 'class="bk-shelf is-text-down"' not in html
+    assert client.post("/books/shelf/spines/", {"down": "1"}).json() == {"down": True}
+    noa.refresh_from_db()
+    assert noa.spine_text_down is True
+    assert 'class="bk-shelf is-text-down"' in client.get("/books/").content.decode()
+
+
+def test_search_opens_my_books_with_the_box_ready(client, noa):
+    client.force_login(noa.user)
+    html = client.get("/books/library/?find=1").content.decode()
+    assert '<details class="bk-filterbox" open>' in html and 'name="q" value="" autofocus' in html
+
+
+# ---- "me" is facts with a small edit button (Avi, 2026-10-22) ----------------------------
+
+def test_me_shows_facts_not_a_form(client, noa):
+    client.force_login(noa.user)
+    html = client.get("/books/settings/").content.decode()
+    assert '<span class="bk-prop-value">נועה</span>' in html
+    assert html.count('class="bk-prop"') >= 14 and "bk-prop-edit" in html
+    assert '<span class="bk-prop-value is-empty">לא הוזן</span>' in html  # no phone yet
+
+
+def test_editing_one_fact_keeps_the_others(client, noa):
+    client.force_login(noa.user)
+    page = client.get("/books/settings/")
+    form = page.context["form"]
+    data = {k: v for k, v in form.initial.items() if v not in (None, False)}
+    data["display_name"] = "נועה כהן"
+    r = client.post("/books/settings/", data)
+    assert r.status_code == 302
+    noa.refresh_from_db()
+    assert noa.display_name == "נועה כהן" and noa.language == "he"
 

@@ -312,6 +312,7 @@ SCREENS = [
     ("catalog-results", "/books/catalog/?q=עוז", "reader", "catalog"),
     ("catalog-none", "/books/catalog/?q=zzzz", "reader", "catalog"),
     ("catalog-entry", "/books/catalog/1001/", "reader", "catalog-entry"),
+    ("first-read", "/books/read/first/1001/", "reader", "first-read"),
     ("catalog-new", "/books/catalog/new/", "reader", "catalog-new"),
     ("catalog-tag", "/books/catalog/tag/fiction/", "reader", "catalog-tag"),
     ("curate", "/books/curate/", "staff", "curate"),
@@ -559,6 +560,11 @@ def test_on_a_phone_a_reader_can_find_a_book_start_and_finish(browser, live_serv
         assert start.count() == 1 and start.is_visible()
         page.locator(".bk-read-row:not([hidden]) input[name=page]").fill("12")
         start.click()
+        # A book read for the first time stops at its first screen (Avi, 2026-10-22): cover, length, go.
+        page.wait_for_selector("[data-first]")
+        assert page.input_value("[data-first] input[name=page]") == "12"
+        page.fill("[data-first-pages]", "240")
+        page.click(".bk-first-go button[type=submit]")
         page.wait_for_selector("[data-timer]")
         assert ReadingSession.objects.get(ended_at__isnull=True, profile=rp).start_page == 12
         page.fill("input[name=end_page]", "20")

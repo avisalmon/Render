@@ -217,6 +217,16 @@ def reorder_shelf(request):
 
 
 @books_page
+@require_POST
+def spine_direction(request):
+    """Which way the titles on the spines read (Avi, 2026-10-22)."""
+    me = request.books_profile
+    me.spine_text_down = request.POST.get("down") == "1"
+    me.save(update_fields=["spine_text_down"])
+    return JsonResponse({"down": me.spine_text_down})
+
+
+@books_page
 def scan_photo(request, pk):
     """The shelf photo, to its owner only (privacy page: never shown to anyone
     else). Served through Books rather than /media/, which is public."""

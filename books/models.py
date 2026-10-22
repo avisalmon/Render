@@ -48,6 +48,8 @@ class Profile(models.Model):
     theme = models.CharField(max_length=8, choices=THEMES, default="light")
     palette = models.CharField(max_length=8, choices=PALETTES, default="lamplit")
     shelf_view = models.CharField(max_length=10, choices=SHELF_VIEWS, default="lamp")
+    # Spine titles read top to bottom instead of bottom to top (Avi, 2026-10-22).
+    spine_text_down = models.BooleanField(default=False)
     # Shown to the other side of a deal only if this person chooses to (BK5).
     phone = models.CharField(max_length=30, blank=True)
     # What a public profile shows, each opt-in on its own (BK7, spec 12.9).
