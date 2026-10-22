@@ -228,6 +228,20 @@ def photo_delete(request, pk, photo_pk):
 
 
 @books_page
+def spine_file(request, pk):
+    """A copy's real spine, cut from my shelf photo: mine only, like the photo."""
+    from .models import ScanItem
+
+    item = (ScanItem.objects.filter(copy__pk=pk, copy__owner=request.books_profile).exclude(spine="")
+            .order_by("-pk").first())
+    if item is None:
+        raise Http404
+    response = FileResponse(item.spine.open("rb"), content_type="image/jpeg")
+    response["Cache-Control"] = "private, max-age=2592000"
+    return response
+
+
+@books_page
 def photo_file(request, pk, photo_pk):
     photo = get_object_or_404(CopyPhoto, pk=photo_pk, copy__owner=request.books_profile, copy_id=pk)
     response = FileResponse(photo.image.open("rb"), content_type="image/jpeg")

@@ -559,3 +559,16 @@ back cover is read once on request (`ModelCall` purpose `back_cover`,
 differs it files an `EntryCorrection`. `Profile.spine_text_down`: spine
 titles read top to bottom. Migration 0023.
 
+**Real spines on my shelf (2026-10-22, Avi asked).** The shelf-reading call
+now also returns each spine's four corners (a leaning spine is a
+parallelogram); neighbours that overlap split the overlap. `ScanItem.spine`
+(the spine cut and straightened from the photo, at most 640px tall) and
+`ScanItem.spine_height` (its height in the photo, in pixels, for real
+relative heights); `ShelfScan.spines_done`; `Profile.spine_photos` (on by
+default: my shelf shows the photographed spine where there is one, drawn
+otherwise). Old scans are read again once, in the background, from the
+owner's shelf page (`ModelCall` purpose `spine_backfill`). Spine images are
+served to their owner only. Migration 0024. Measured 2026-10-22 on the
+labelled shelves: 64/70 found, 2 extra, about $0.035 a shelf photo (was
+62-63/70, 3 extra, $0.025).
+

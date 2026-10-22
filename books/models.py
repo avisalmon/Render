@@ -50,6 +50,8 @@ class Profile(models.Model):
     shelf_view = models.CharField(max_length=10, choices=SHELF_VIEWS, default="lamp")
     # Spine titles read top to bottom instead of bottom to top (Avi, 2026-10-22).
     spine_text_down = models.BooleanField(default=False)
+    # My shelf shows each book's real spine, cut from my shelf photo, where there is one (Avi, 2026-10-22).
+    spine_photos = models.BooleanField(default=True)
     # Shown to the other side of a deal only if this person chooses to (BK5).
     phone = models.CharField(max_length=30, blank=True)
     # What a public profile shows, each opt-in on its own (BK7, spec 12.9).
@@ -359,6 +361,8 @@ class ShelfScan(models.Model):
     is_single = models.BooleanField(default=False)
     # Where the book sits in a single-book photo, "x0,y0,x1,y1" as fractions; the crop becomes its picture.
     cover_box = models.CharField(max_length=60, blank=True)
+    # Every book in the photo has its spine cut out (new reads do it at once; old scans once, in the background).
+    spines_done = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     finished_at = models.DateTimeField(null=True, blank=True)
 
@@ -383,6 +387,9 @@ class ScanItem(models.Model):
     confidence = models.DecimalField(max_digits=4, decimal_places=3, default=0)
     review_status = models.CharField(max_length=8, choices=REVIEW, default=PENDING, db_index=True)
     copy = models.ForeignKey("Copy", on_delete=models.SET_NULL, null=True, blank=True, related_name="scan_items")
+    # The book's real spine, cut and straightened from the shelf photo; its height there, in pixels.
+    spine = models.ImageField(upload_to="spines/%Y/%m/", storage=books_storage, blank=True)
+    spine_height = models.PositiveIntegerField(default=0)
 
     class Meta:
         ordering = ["position"]

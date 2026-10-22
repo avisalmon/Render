@@ -629,6 +629,8 @@ charging for the web lookup.
 | F-R.22 | Beside the shelf: which way the spine titles read (saved for every device), and a magnifier to my books with the search ready | DONE |
 | F-R.23 | "Me" shows facts, each with a small edit button, instead of one long form | DONE |
 
+| F-R.24 | Real spines on my shelf: each book cut from the shelf photo (corners from the same reading call, straightened locally); old scans re-read once in the background; a setting to show drawn spines instead | DONE |
+
 Open for later (Avi): what to do with a finished book's notes (a summary, a
 review draft, sharing some of them).
 

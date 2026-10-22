@@ -143,7 +143,9 @@ def _home(request):
     from . import shelf
 
     profile = request.books_profile
-    rows = shelf.shelf_books(profile)
+    rows = shelf.shelf_books(profile, photos=profile.spine_photos)
+    if profile.spine_photos:
+        shelf.sweep_spines(profile)
     from . import play
 
     return render(request, "books/home.html", {
@@ -183,7 +185,7 @@ def settings_page(request):
 
 PROFILE_GROUPS = [
     ("settings.about_me", ["display_name", "language", "area_name", "radius_km", "phone"]),
-    ("settings.appearance", ["theme", "palette", "shelf_view", "spine_text_down"]),
+    ("settings.appearance", ["theme", "palette", "shelf_view", "spine_photos", "spine_text_down"]),
     ("settings.privacy", ["profile_public", "show_points_public", "public_library", "public_reading", "public_reviews"]),
 ]
 

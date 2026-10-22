@@ -23,6 +23,7 @@ from .models import (
     Copy,
     ModelCall,
     Offer,
+    Profile,
     ScanCandidate,
     ScanItem,
     ShelfScan,
@@ -120,14 +121,21 @@ def read_job(job):
                                  duration_ms=int(call["seconds"] * 1000))
     with transaction.atomic():
         scan.items.all().delete()
+        cut = []
         for i, book in enumerate(reading.books):
-            ScanItem.objects.create(scan=scan, position=i, raw_title=book.title[:300], raw_author=book.author[:200])
+            item = ScanItem.objects.create(scan=scan, position=i, raw_title=book.title[:300], raw_author=book.author[:200])
+            if getattr(book, "corners", None):
+                cut.append((item, book.corners))
         scan.model_name = reading.model
         scan.cost_usd = reading.cost_usd
         scan.seconds = Decimal(str(reading.seconds))
         scan.books_found = len(reading.books)
         scan.cover_box = ",".join(str(v) for v in reading.box) if getattr(reading, "box", None) else ""
         scan.save(update_fields=["model_name", "cost_usd", "seconds", "books_found", "cover_box"])
+    try:
+        cut_spines(scan, cut)
+    except Exception:  # noqa: BLE001
+        log.exception("books scan %s: cutting spines", scan.pk)
     for item in scan.items.all():
         try:
             find_candidates(item, created_by=scan.owner)
@@ -287,6 +295,144 @@ def accept(item, entry, visibility, offer_kinds, location_note, edited=False):
     return copy
 
 
+# ---- real spines on my shelf (Avi, 2026-10-22) ----------------------------------------
+#
+# The call that reads a shelf also gives each spine's four corners; the spine
+# is cut out and straightened here (Pillow, nothing spent) and my shelf shows
+# it instead of the drawn one. Old scans are read again once, in the
+# background, the first time their owner opens the shelf.
+
+SPINE_MAX_HEIGHT = 640
+SPINES_PER_SWEEP = 25
+SPINE_SWEEP_EVERY = 600  # seconds
+
+
+def cut_spines(scan, pairs):
+    """pairs: [(ScanItem, corners as photo fractions)]. Marks the scan done."""
+    from io import BytesIO
+
+    from PIL import Image
+
+    if pairs:
+        with scan.photo.open("rb") as fh:
+            img = Image.open(BytesIO(fh.read()))
+            img.load()
+        img = img.convert("RGB")
+        w, h = img.size
+        for item, (tl, tr, ty, bl, br, by) in pairs:
+            width = int(((tr - tl) + (br - bl)) / 2 * w)
+            height = int((by - ty) * h)
+            if width < 4 or height < 20:
+                continue
+            # QUAD: the source's upper-left, lower-left, lower-right, upper-right corners.
+            spine = img.transform((width, height), Image.QUAD,
+                                  (tl * w, ty * h, bl * w, by * h, br * w, by * h, tr * w, ty * h), Image.BICUBIC)
+            spine.thumbnail((SPINE_MAX_HEIGHT, SPINE_MAX_HEIGHT))
+            buf = BytesIO()
+            spine.save(buf, format="JPEG", quality=84, optimize=True)
+            if item.spine:
+                item.spine.delete(save=False)
+            item.spine.save(f"{scan.pk}-{item.pk}.jpg", ContentFile(buf.getvalue()), save=False)
+            item.spine_height = height
+            item.save(update_fields=["spine", "spine_height"])
+    scan.spines_done = True
+    scan.save(update_fields=["spines_done"])
+
+
+def spines_for_old_scan(scan, job=None):
+    """Read an old shelf photo again for its spines, and give each confirmed
+    book the spine that matches its title. Its books stay as they are."""
+    from .recognition import similarity
+
+    if scan.is_single:
+        scan.spines_done = True
+        scan.save(update_fields=["spines_done"])
+        return 0
+    with scan.photo.open("rb") as fh:
+        data = fh.read()
+    reading = read_shelf(data)
+    for call in reading.calls:
+        ModelCall.objects.create(profile=scan.owner, job=job, provider="openai", model=reading.model,
+                                 purpose="spine_backfill", input_tokens=call["input_tokens"],
+                                 output_tokens=call["output_tokens"], cost_usd=call["cost_usd"],
+                                 duration_ms=int(call["seconds"] * 1000))
+    found = [b for b in reading.books if b.corners]
+    used, pairs = set(), []
+    for item in scan.items.order_by("position"):
+        best, score = None, 0.0
+        for i, book in enumerate(found):
+            if i in used:
+                continue
+            s = similarity(item.raw_title, book.title)
+            if s > score:
+                best, score = i, s
+        if best is not None and score >= 0.6:
+            used.add(best)
+            pairs.append((item, found[best].corners))
+    cut_spines(scan, pairs)
+    return len(pairs)
+
+
+@jobs.job("scan.spines_batch")
+def spines_batch_job(job):
+    profile = Profile.objects.filter(pk=job.profile_id).first() if job.profile_id else None
+    scans = ShelfScan.objects.filter(spines_done=False, status__in=(ShelfScan.REVIEW, ShelfScan.DONE))
+    if profile is not None:
+        scans = scans.filter(owner=profile)
+    for scan in scans.order_by("created_at")[:SPINES_PER_SWEEP]:
+        try:
+            spines_for_old_scan(scan, job=job)
+        except KeyProblem:
+            log.error("books spines: the OpenAI key needs replacing")
+            return
+        except Exception:  # noqa: BLE001
+            log.exception("books spines: scan %s", scan.pk)
+            scan.spines_done = True  # one try per scan: never a loop of paid calls
+            scan.save(update_fields=["spines_done"])
+
+
+def sweep_spines(profile):
+    """From my own shelf page, at most every ten minutes: old scans get their spines."""
+    from django.conf import settings
+    from django.core.cache import cache
+
+    if not getattr(settings, "BOOKS_SPINE_SWEEP", True) or not getattr(settings, "OPENAI_API_KEY", ""):
+        return False
+    try:
+        waiting = ShelfScan.objects.filter(owner=profile, spines_done=False, is_single=False,
+                                           status__in=(ShelfScan.REVIEW, ShelfScan.DONE))
+        if waiting.exists() and cache.add(f"books:spines:{profile.pk}", True, SPINE_SWEEP_EVERY):
+            jobs.enqueue("scan.spines_batch", profile=profile)
+            return True
+    except Exception:  # noqa: BLE001
+        log.exception("books: spine sweep")
+    return False
+
+
+def spine_rows(copies):
+    """For my shelf: each copy's real spine (url, width over height, height
+    against the other books in its photo), where it has one."""
+    items = (ScanItem.objects.filter(copy__in=copies).exclude(spine="")
+             .only("pk", "copy_id", "scan_id", "spine", "spine_height"))
+    by_scan, out = {}, {}
+    for it in items:
+        by_scan.setdefault(it.scan_id, []).append(it)
+    for scan_items in by_scan.values():
+        heights = sorted(i.spine_height for i in scan_items if i.spine_height)
+        median = heights[len(heights) // 2] if heights else 0
+        for it in scan_items:
+            try:
+                w, h = it.spine.width, it.spine.height
+            except Exception:  # noqa: BLE001
+                continue
+            if not h:
+                continue
+            rel = (it.spine_height / median) if median and it.spine_height else 1.0
+            out[it.copy_id] = {"url": f"/books/copy/{it.copy_id}/spine.jpg?v={it.pk}", "ratio": w / h,
+                               "rel": max(0.75, min(1.25, rel))}
+    return out
+
+
 COVER_MARGIN = 0.02
 COVER_MAX_SIDE = 1400
 
@@ -393,17 +539,26 @@ def spine_for(entry_id, title):
     return {"color": color, "ink": ink, "w": w, "h": h, "lean": lean}
 
 
-def shelf_books(profile, limit=400):
-    """The person's held copies as the shelf component's JSON rows."""
+def shelf_books(profile, limit=400, photos=False):
+    """The person's held copies as the shelf component's JSON rows. With
+    `photos`, each book with a real spine shows it (my own shelf only)."""
     rows = []
-    copies = (Copy.objects.filter(owner=profile, status__in=Copy.HELD)
-              .select_related("entry").prefetch_related("entry__creators", "offers").order_by("position", "created_at")[:limit])
+    copies = list(Copy.objects.filter(owner=profile, status__in=Copy.HELD)
+                  .select_related("entry").prefetch_related("entry__creators", "offers")
+                  .order_by("position", "created_at")[:limit])
+    spines = spine_rows(copies) if photos else {}
     for c in copies:
         kinds = [o.kind for o in c.offers.all() if o.is_active]
         status = kinds[0] if kinds else ("public" if c.visibility == Copy.PUBLIC else "private")
         row = {"id": c.pk, "title": c.entry.title, "author": c.entry.creator_names, "status": status,
                "rare": c.is_rare_candidate, "url": f"/books/copy/{c.pk}/"}
         row.update(spine_for(c.entry_id, c.entry.title))
+        real = spines.get(c.pk)
+        if real:
+            # The real book: its own proportions, its height against its neighbours in the photo.
+            row["h"] = int(max(130, min(215, 172 * real["rel"])))
+            row["w"] = int(max(24, min(90, row["h"] * real["ratio"])))  # 24px: a thumb must be able to tap it
+            row["photo"] = real["url"]
         rows.append(row)
     return rows
 

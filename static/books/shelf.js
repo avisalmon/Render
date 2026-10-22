@@ -85,7 +85,7 @@
   };
 
   function dims(b) {
-    return { w: Math.max(b.w || 28, 24), h: b.h || 170, lean: b.lean || 0 };
+    return { w: Math.max(b.w || 28, 24), h: b.h || 170, lean: b.lean || 0 };  // a thumb needs 24px, photo or not
   }
 
   // Where every book of a row stands at rest, with an optional gap (a book
@@ -112,7 +112,7 @@
   // ---- spines -------------------------------------------------------------------------------
 
   Shelf.prototype.spine = function (b) {
-    var btn = el("button", "bk-spine" + (b.rare ? " bk-spine--rare" : ""), {
+    var btn = el("button", "bk-spine" + (b.rare ? " bk-spine--rare" : "") + (b.photo ? " bk-spine--photo" : ""), {
       type: "button", "data-book": b.id, "aria-pressed": "false",
       "aria-label": (b.title || "") + (b.author ? ", " + b.author : "")
     });
@@ -122,6 +122,8 @@
     btn.style.setProperty("--spine-bg", b.color || "#3A3128");
     btn.style.setProperty("--spine-ink", b.ink || "#EFE6D2");
     btn.style.setProperty("--spine-font", (d.w >= 32 ? 15 : 13) + "px");
+    // The real book, as photographed (Avi, 2026-10-22); its title stays for screen readers and the card.
+    if (b.photo) btn.style.setProperty("--spine-img", 'url("' + String(b.photo).replace(/"/g, "") + '")');
     btn.appendChild(el("span", "bk-spine-band"));
     var title = el("span", "bk-spine-title"); title.textContent = b.title || ""; btn.appendChild(title);
     var author = el("span", "bk-spine-author"); author.textContent = b.author || ""; btn.appendChild(author);
@@ -169,7 +171,7 @@
     var self = this;
     this.ids.forEach(function (id) {
       var s = self.state[id];
-      fitTitle(s.el.querySelector(".bk-spine-title"), s.w);
+      if (!s.el.classList.contains("bk-spine--photo")) fitTitle(s.el.querySelector(".bk-spine-title"), s.w);
     });
   };
 

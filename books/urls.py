@@ -112,6 +112,7 @@ urlpatterns = [
     path("copy/<int:pk>/delete/", library_views.copy_delete, name="copy_delete"),
     path("copy/<int:pk>/photo/", library_views.photo_add, name="copy_photo_add"),
     path("copy/<int:pk>/photo/<int:photo_pk>.jpg", library_views.photo_file, name="copy_photo"),
+    path("copy/<int:pk>/spine.jpg", library_views.spine_file, name="copy_spine"),
     path("copy/<int:pk>/photo/<int:photo_pk>/delete/", library_views.photo_delete, name="copy_photo_delete"),
     path("wishlist/", library_views.wishlist, name="wishlist"),
     path("wishlist/add/<int:entry_pk>/", library_views.wish_entry, name="wish_entry"),

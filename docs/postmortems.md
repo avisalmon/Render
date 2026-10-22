@@ -17,6 +17,25 @@ Newest first.
 
 ---
 
+## PM-38 · 2026-10-22 · Real spines: a spike first, then the build
+
+**What happened.** Avi asked whether the shelf could show each book as it
+was photographed. A spike on four labelled shelves measured it before any
+build: boxes from the model looked right on upright books and messy on
+leaning ones; asking for four corners and straightening locally, plus
+splitting overlaps between neighbours, made every shelf clean. Built that,
+re-measured recognition with the new prompt (64/70, better than before),
+and Avi set a standing rule on cost: optimise what real users cost in
+production; experiments and backfills may cost what they cost.
+
+**Why our process let it happen.** Nothing went wrong; the spike-first
+order and the accuracy gate did their job.
+
+**Rule.** Nothing new (recorded in memory: cost is about production).
+
+Here: this file
+BKM: deferred - nothing new; spike before build is already practice
+
 ## PM-37 · 2026-10-22 · Sprint end: the first time with a book, the spines, "me"
 
 **What happened.** Built at Avi's word: the first time a book is started it

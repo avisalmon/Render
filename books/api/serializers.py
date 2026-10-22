@@ -14,7 +14,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         model = Profile
         fields = ["id", "display_name", "language", "tier", "area_name", "area_lat", "area_lng", "radius_km", "phone",
                   "is_adult_confirmed", "accepted_terms_at", "profile_public", "show_points_public",
-                  "theme", "palette", "shelf_view", "spine_text_down", "created_at"]
+                  "theme", "palette", "shelf_view", "spine_photos", "spine_text_down", "created_at"]
         # The tier is what a person may do; nobody sets their own (spec 12.11).
         # Age and terms are set once, by onboarding.
         read_only_fields = ["tier", "is_adult_confirmed", "accepted_terms_at", "created_at"]

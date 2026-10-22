@@ -50,14 +50,21 @@ List every book whose spine or cover you can read, from left to right.
 For each book give the title and author exactly as printed, in the original language
 (many books are in Hebrew; keep Hebrew titles in Hebrew, do not translate).
 Use your knowledge to complete a title or author only when the visible text clearly identifies the book.
-Skip books you cannot read. Do not invent books."""
+Skip books you cannot read. Do not invent books.
+Also give the four corners of the book's spine in this image, as fractions of the image width and height
+(0 is left or top, 1 is right or bottom). Books may lean, so give each edge at the top and at the bottom:
+top_left_x, top_right_x, top_y (the spine's top), bottom_left_x, bottom_right_x, bottom_y (the spine's bottom).
+Be tight to the spine itself, not its neighbours."""
+
+CORNER_KEYS = ("top_left_x", "top_right_x", "top_y", "bottom_left_x", "bottom_right_x", "bottom_y")
 
 SCHEMA = {
     "type": "object",
     "properties": {"books": {"type": "array", "items": {
         "type": "object",
-        "properties": {"title": {"type": "string"}, "author": {"type": "string"}},
-        "required": ["title", "author"], "additionalProperties": False}}},
+        "properties": {"title": {"type": "string"}, "author": {"type": "string"},
+                       **{k: {"type": "number"} for k in CORNER_KEYS}},
+        "required": ["title", "author", *CORNER_KEYS], "additionalProperties": False}}},
     "required": ["books"], "additionalProperties": False,
 }
 
@@ -76,6 +83,9 @@ class KeyProblem(Exception):
 class Book:
     title: str
     author: str = ""
+    # Where its spine is in the whole photo, as fractions: (top_left_x, top_right_x, top_y,
+    # bottom_left_x, bottom_right_x, bottom_y). A leaning spine is a parallelogram (Avi, 2026-10-22).
+    corners: tuple | None = field(default=None, compare=False)
 
 
 @dataclass
@@ -123,14 +133,46 @@ def _data_url(image):
     return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
 
 
+def strip_bounds(width, strips, overlap=STRIP_OVERLAP):
+    step = width / strips
+    pad = int(step * overlap)
+    return [(max(0, int(i * step) - pad), min(width, int((i + 1) * step) + pad)) for i in range(strips)]
+
+
 def split_strips(image, strips, overlap=STRIP_OVERLAP):
     w, h = image.size
-    step = w / strips
-    pad = int(step * overlap)
-    return [image.crop((max(0, int(i * step) - pad), 0, min(w, int((i + 1) * step) + pad), h)) for i in range(strips)]
+    return [image.crop((a, 0, b, h)) for a, b in strip_bounds(w, strips, overlap)]
 
 
-def read_strip(client, image, model, effort):
+def corners_in_photo(raw, strip_left, strip_width, photo_width):
+    """A strip's corner fractions as fractions of the whole photo, or None."""
+    try:
+        tl, tr, ty, bl, br, by = (min(1.0, max(0.0, float(raw[k]))) for k in CORNER_KEYS)
+    except (KeyError, TypeError, ValueError):
+        return None
+    if tr <= tl or br <= bl or by - ty < 0.05:
+        return None
+    x = lambda f: (strip_left + f * strip_width) / photo_width  # noqa: E731
+    return (x(tl), x(tr), ty, x(bl), x(br), by)
+
+
+def separate(books):
+    """Neighbours whose spines overlap split the overlap in the middle, at the
+    top and at the bottom, so no slice of the photo belongs to two books."""
+    placed = sorted((b for b in books if b.corners), key=lambda b: sum(b.corners[i] for i in (0, 1, 3, 4)))
+    for left, right in zip(placed, placed[1:]):
+        lc, rc = list(left.corners), list(right.corners)
+        for li, ri in ((1, 0), (4, 3)):
+            if lc[li] > rc[ri]:
+                lc[li] = rc[ri] = (lc[li] + rc[ri]) / 2
+        if lc[1] > lc[0] and lc[4] > lc[3]:
+            left.corners = tuple(lc)
+        if rc[1] > rc[0] and rc[4] > rc[3]:
+            right.corners = tuple(rc)
+    return books
+
+
+def read_strip(client, image, model, effort, frame=None):
     extra = {"reasoning": {"effort": effort}} if effort else {}
     start = time.perf_counter()
     try:
@@ -150,7 +192,9 @@ def read_strip(client, image, model, effort):
     usage = response.usage
     tin = usage.input_tokens if usage else 0
     tout = usage.output_tokens if usage else 0
-    books = [Book(b["title"].strip(), b["author"].strip()) for b in data.get("books", []) if b.get("title", "").strip()]
+    books = [Book(b["title"].strip(), b["author"].strip(),
+                  corners_in_photo(b, *frame) if frame else None)
+             for b in data.get("books", []) if b.get("title", "").strip()]
     return books, {"input_tokens": tin, "output_tokens": tout, "seconds": round(time.perf_counter() - start, 1),
                    "cost_usd": cost_of(model, tin, tout)}
 
@@ -161,11 +205,14 @@ def read_shelf(image_bytes, model=None, effort=None, strips=None, client=None) -
     strips = strips or DEFAULT_STRIPS
     client = client or get_client()
     image = ImageOps.exif_transpose(Image.open(io.BytesIO(image_bytes)))
-    parts = split_strips(image, strips) if strips > 1 else [image]
+    w = image.width
+    bounds = strip_bounds(w, strips) if strips > 1 else [(0, w)]
+    parts = [(image.crop((a, 0, b, image.height)), (a, b - a, w)) for a, b in bounds]
     with ThreadPoolExecutor(max_workers=len(parts)) as pool:
-        results = list(pool.map(lambda part: read_strip(client, part, model, effort), parts))
+        results = list(pool.map(lambda p: read_strip(client, p[0], model, effort, frame=p[1]), parts))
     strip_books = [r[0] for r in results]
-    return Reading(model=model, books=merge_strips(strip_books), calls=[r[1] for r in results], strip_books=strip_books)
+    return Reading(model=model, books=separate(merge_strips(strip_books)), calls=[r[1] for r in results],
+                   strip_books=strip_books)
 
 
 # ---- one book held up to the camera (Avi, 2026-10-21) ------------------------------

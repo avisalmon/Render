@@ -1021,3 +1021,9 @@ html[dir="rtl"] .bk-prop > summary { padding: 6px 14px 6px 6px; }
 .bk-first-go { margin-top: 4px; }
 .bk-first { padding-bottom: 8px; }
 .bk-first-text { min-width: 0; }
+/* ---- the real spine, cut from my shelf photo (Avi, 2026-10-22) --------------------- */
+.bk-spine--photo { background-color: var(--spine-bg); background-image: var(--spine-img); background-size: 100% 100%; background-repeat: no-repeat; }
+.bk-spine--photo .bk-spine-band, .bk-spine--photo .bk-spine-title, .bk-spine--photo .bk-spine-author { visibility: hidden; }
+.bk-spine--photo::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(90deg, rgba(0, 0, 0, .18), rgba(255, 255, 255, .06) 30%, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, .22)); }
+
