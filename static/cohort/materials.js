@@ -144,13 +144,20 @@
     drag.raf = requestAnimationFrame(autoscroll);
   }
 
+  // The cards sit in a grid that reads right to left, so a card goes before
+  // the first card that is in a lower row, or in the same row and to the
+  // left of the pointer's half of it.
+  var rtl = getComputedStyle(root).direction === "rtl";
+
   function place() {
     drag.card.style.top = (drag.y - drag.offset) + "px";
+    drag.card.style.left = (drag.x - drag.offsetX) + "px";
     var others = cards(drag.list).filter(function (c) { return c !== drag.card; });
     var target = null;
     for (var i = 0; i < others.length; i++) {
       var r = others[i].getBoundingClientRect();
-      if (drag.y < r.top + r.height / 2) { target = others[i]; break; }
+      var mid = r.left + r.width / 2;
+      if (drag.y < r.top || (drag.y <= r.bottom && (rtl ? drag.x > mid : drag.x < mid))) { target = others[i]; break; }
     }
     if (target) drag.list.insertBefore(drag.holder, target);
     else drag.list.appendChild(drag.holder);
@@ -168,7 +175,8 @@
     holder.className = "cb-placeholder";
     holder.style.height = r.height + "px";
     list.insertBefore(holder, card);
-    drag = { card: card, list: list, holder: holder, before: order(list), offset: e.clientY - r.top, y: e.clientY, id: e.pointerId };
+    drag = { card: card, list: list, holder: holder, before: order(list), id: e.pointerId,
+             offset: e.clientY - r.top, offsetX: e.clientX - r.left, y: e.clientY, x: e.clientX };
     card.classList.add("is-dragging");
     card.style.width = r.width + "px";
     card.style.left = r.left + "px";
@@ -182,6 +190,7 @@
     if (!drag || e.pointerId !== drag.id) return;
     e.preventDefault();
     drag.y = e.clientY;
+    drag.x = e.clientX;
     place();
   });
 
@@ -200,6 +209,45 @@
   window.addEventListener("pointerup", end);
   window.addEventListener("pointercancel", end);
 
+  /* ---------- a video plays in its card ---------- */
+
+  root.addEventListener("click", function (e) {
+    var thumb = e.target.closest("[data-embed]");
+    if (!thumb) return;
+    var box = document.createElement("div");
+    box.className = "cb-video";
+    var frame = document.createElement("iframe");
+    frame.src = "https://www.youtube-nocookie.com/embed/" + thumb.dataset.embed + "?autoplay=1";
+    frame.title = thumb.getAttribute("aria-label");
+    frame.allow = "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen";
+    frame.allowFullscreen = true;
+    frame.referrerPolicy = "strict-origin-when-cross-origin";
+    box.appendChild(frame);
+    thumb.replaceWith(box);
+  });
+
+  /* ---------- delete ---------- */
+
+  root.addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-delete]");
+    if (!btn || btn.disabled) return;
+    if (!confirm("למחוק את \"" + btn.dataset.title + "\"?")) return;
+    btn.disabled = true;
+    var card = btn.closest(".cb-material");
+    var list = card.parentNode;
+    api("DELETE", "materials/" + btn.dataset.delete + "/").then(function () {
+      card.remove();
+      if (list.dataset.shelf === "mine") {
+        var count = document.getElementById("cb-mine-count");
+        count.textContent = String(Math.max(0, parseInt(count.textContent, 10) - 1));
+      } else {
+        var c = document.querySelector("#tab-course .cb-tab-count");
+        c.textContent = String(Math.max(0, parseInt(c.textContent, 10) - 1));
+      }
+      say("נמחק");
+    }).catch(function (err) { btn.disabled = false; say(err.message); });
+  });
+
   /* ---------- keep a course item on my shelf ---------- */
 
   root.addEventListener("click", function (e) {
@@ -207,7 +255,8 @@
     if (!btn || btn.disabled) return;
     btn.disabled = true;
     api("POST", "materials/" + btn.dataset.keep + "/keep/").then(function (r) {
-      btn.textContent = "נשמר אצלך";
+      btn.title = "נשמר אצלך";
+      btn.setAttribute("aria-label", "נשמר אצלך");
       stale = true;
       if (r.created) {
         var count = document.getElementById("cb-mine-count");

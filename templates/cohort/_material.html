@@ -1,42 +1,55 @@
-{# One item on a shelf. shelf: "course" or "mine"; can_sort, can_edit, show_keep decide the controls. #}
+{# One item on a shelf, as a small card. shelf: "course" or "mine"; can_sort, can_edit, show_keep decide the controls. #}
 <article class="cb-paper cb-material{% if shelf == 'mine' %} is-mine{% endif %}" id="m{{ m.pk }}" data-id="{{ m.pk }}">
   <span class="cb-pin" aria-hidden="true"></span>
-  {% if can_sort %}
-    <div class="cb-sort">
-      <button type="button" class="cb-handle" aria-label="גרירה לשינוי הסדר" title="אוחזים כאן וגוררים">
-        <svg viewBox="0 0 12 20" aria-hidden="true"><circle cx="3" cy="4" r="1.7"/><circle cx="9" cy="4" r="1.7"/><circle cx="3" cy="10" r="1.7"/><circle cx="9" cy="10" r="1.7"/><circle cx="3" cy="16" r="1.7"/><circle cx="9" cy="16" r="1.7"/></svg>
-      </button>
-      <button type="button" class="cb-move" data-move="up" aria-label="להזיז את {{ m.title }} למעלה">
-        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3l6 7H2z"/></svg>
-      </button>
-      <button type="button" class="cb-move" data-move="down" aria-label="להזיז את {{ m.title }} למטה">
-        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 13L2 6h12z"/></svg>
-      </button>
-    </div>
+  {% if m.kind == "video" and m.youtube_id %}
+    <button type="button" class="cb-thumb" data-embed="{{ m.youtube_id }}" aria-label="לנגן את {{ m.title }}">
+      <img src="https://i.ytimg.com/vi/{{ m.youtube_id }}/mqdefault.jpg" alt="" loading="lazy">
+      <span class="cb-play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
+    </button>
   {% endif %}
   <div class="cb-material-tags">
     <span class="cb-tag cb-tag-{{ m.kind }}">{{ m.get_kind_display }}</span>
     {% if shelf == 'mine' %}
-      <span class="cb-private"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 7V5a4 4 0 0 1 8 0v2h1v8H3V7zm2 0h4V5a2 2 0 0 0-4 0z"/></svg>רק את/ה רואה</span>
+      <span class="cb-private" title="רק את/ה רואה"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 7V5a4 4 0 0 1 8 0v2h1v8H3V7zm2 0h4V5a2 2 0 0 0-4 0z"/></svg>רק את/ה רואה</span>
     {% endif %}
   </div>
-  <h2 class="cb-h2">{{ m.title }}</h2>
-  <p>{{ m.line }}</p>
-  {% if m.kind == "video" and m.youtube_id %}
-    <div class="cb-video">
-      <iframe src="https://www.youtube-nocookie.com/embed/{{ m.youtube_id }}" title="{{ m.title }}" loading="lazy"
-              allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+  <h2 class="cb-material-title">
+    {% if m.kind == "video" and m.youtube_id %}<a href="https://www.youtube.com/watch?v={{ m.youtube_id }}" target="_blank" rel="noopener noreferrer" title="לפתוח ביוטיוב">{{ m.title }}</a>
+    {% elif m.kind == "file" and m.file %}<a href="/cohort/files/{{ m.file.name }}" target="_blank" rel="noopener" title="לפתוח את המסמך">{{ m.title }}</a>
+    {% elif m.url %}<a href="{{ m.url }}" target="_blank" rel="noopener noreferrer" title="{% if m.kind == 'course' %}להדרכה ב-babook{% else %}לפתוח{% endif %}">{{ m.title }}</a>
+    {% else %}{{ m.title }}{% endif %}
+  </h2>
+  <p class="cb-material-line">{{ m.line }}</p>
+  {% if can_sort or can_edit or show_keep %}
+    <div class="cb-material-foot">
+      {% if can_sort %}
+        <span class="cb-sort">
+          <button type="button" class="cb-icon cb-handle" aria-label="גרירה לשינוי הסדר" title="אוחזים כאן וגוררים">
+            <svg viewBox="0 0 12 20" aria-hidden="true"><circle cx="3" cy="4" r="1.7"/><circle cx="9" cy="4" r="1.7"/><circle cx="3" cy="10" r="1.7"/><circle cx="9" cy="10" r="1.7"/><circle cx="3" cy="16" r="1.7"/><circle cx="9" cy="16" r="1.7"/></svg>
+          </button>
+          <button type="button" class="cb-icon cb-move" data-move="up" aria-label="להקדים את {{ m.title }}" title="להקדים">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13 8L6 14V2z"/></svg>
+          </button>
+          <button type="button" class="cb-icon cb-move" data-move="down" aria-label="לאחר את {{ m.title }}" title="לאחר">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8l7-6v12z"/></svg>
+          </button>
+        </span>
+      {% endif %}
+      <span class="cb-acts">
+        {% if show_keep %}
+          <button type="button" class="cb-icon cb-keep" data-keep="{{ m.pk }}" aria-label="לשמור אצלי: {{ m.title }}" title="לשמור אצלי">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 1.5h9v13L8 11l-4.5 3.5z"/></svg>
+          </button>
+        {% endif %}
+        {% if can_edit %}
+          <a class="cb-icon" href="{% url 'cohort:material_edit' m.pk %}" aria-label="עריכה: {{ m.title }}" title="עריכה">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M11.3 1.3l3.4 3.4-9 9H2.3v-3.4zM10 4.4l1.6 1.6"/></svg>
+          </a>
+          <button type="button" class="cb-icon cb-delete" data-delete="{{ m.pk }}" data-title="{{ m.title }}" aria-label="מחיקה: {{ m.title }}" title="מחיקה">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4h11M6 4V2.5h4V4M4 4l.8 10h6.4L12 4M6.6 6.5v5M9.4 6.5v5"/></svg>
+          </button>
+        {% endif %}
+      </span>
     </div>
-    <a class="cb-btn cb-btn-quiet" href="https://www.youtube.com/watch?v={{ m.youtube_id }}" target="_blank" rel="noopener noreferrer">לפתוח ביוטיוב</a>
-  {% elif m.kind == "file" and m.file %}
-    <a class="cb-btn" href="/cohort/files/{{ m.file.name }}" target="_blank" rel="noopener">לפתוח את המסמך</a>
-  {% elif m.url %}
-    <a class="cb-btn" href="{{ m.url }}" target="_blank" rel="noopener noreferrer">{% if m.kind == "course" %}להדרכה ב-babook{% else %}לפתוח{% endif %}</a>
-  {% endif %}
-  {% if can_edit or show_keep %}
-    <p class="cb-material-foot">
-      {% if show_keep %}<button type="button" class="cb-link" data-keep="{{ m.pk }}">לשמור אצלי</button>{% endif %}
-      {% if can_edit %}<a href="{% url 'cohort:material_edit' m.pk %}">עריכה</a>{% endif %}
-    </p>
   {% endif %}
 </article>

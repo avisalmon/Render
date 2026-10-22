@@ -14,5 +14,6 @@ sprints built the same day, in dev, awaiting his review and his word to deploy.
 | SPR-C.5 | Course materials: video, file, course, Avi's editing | REQ-C.30 to C.34 | **DONE 2026-10-21** |
 | SPR-C.6 | The REST API complete, phone walk-through of every task, screen contract, dashboard | REQ-C.40, C.41, C.44 | **DONE 2026-10-21** |
 | SPR-C.7 | Two shelves: the course's and a private one per person (Avi too); order by dragging with mouse or finger, or arrows; keep a course item; room for files. API: `shelf` on create, `POST materials/reorder/`, `POST materials/{id}/keep/` | REQ-C.33, C.35, C.36 | **DONE 2026-10-22** |
+| SPR-C.8 | Small cards in a grid (two a row on a phone), video plays in its card, delete icon | REQ-C.37 | **DONE 2026-10-22** |
 
 **Tests.** `tests/test_cohort_door.py`, `test_cohort_exhibition.py`, `test_cohort_tracks.py`, and `test_cohort_browser.py` (a teacher's whole job on a 390px phone; no sideways scroll and the disclaimer on screen after scrolling, at 390 and 1280; the board in the top half of a phone). No test makes a network call: screenshots come from a fake.

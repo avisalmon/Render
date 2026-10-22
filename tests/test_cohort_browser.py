@@ -150,6 +150,8 @@ def test_on_a_phone_a_teacher_joins_hangs_a_site_and_talks_about_it(browser, liv
     page.click("text=מגמה דמיונית: אלקטרוניקה")
     assert page.locator(".cb-pending").count() == 3
     page.click("text=חומרים")
+    assert page.locator(".cb-video iframe").count() == 0
+    page.click(".cb-thumb")
     assert page.locator(".cb-video iframe").count() == 1
     assert errors == []
     ctx.close()
@@ -189,27 +191,29 @@ def test_no_page_scrolls_sideways_and_the_disclaimer_stays_on_screen(browser, li
 
 
 def _titles(page, shelf):
-    return page.eval_on_selector_all(f'[data-shelf="{shelf}"] > .cb-material .cb-h2', "els => els.map(e => e.textContent)")
+    return page.eval_on_selector_all(f'[data-shelf="{shelf}"] > .cb-material .cb-material-title', "els => els.map(e => e.textContent.trim())")
 
 
 def _drag(page, handle, target, touch=None):
-    """Hold the handle and move, in steps, onto the lower half of target."""
+    """Hold the handle and move, in steps, onto the far (left, in Hebrew)
+    half of target, so the card lands right after it."""
     a = page.locator(handle).bounding_box()
     b = page.locator(target).bounding_box()
     x0, y0 = a["x"] + a["width"] / 2, a["y"] + a["height"] / 2
-    y1 = b["y"] + b["height"] * 0.75
+    x1, y1 = b["x"] + b["width"] * 0.25, b["y"] + b["height"] / 2
     steps = 12
+    at = lambda i: (x0 + (x1 - x0) * i / steps, y0 + (y1 - y0) * i / steps)
     if touch is None:
         page.mouse.move(x0, y0)
         page.mouse.down()
         for i in range(1, steps + 1):
-            page.mouse.move(x0, y0 + (y1 - y0) * i / steps)
+            page.mouse.move(*at(i))
         page.mouse.up()
         return
-    point = lambda y: [{"x": x0, "y": y, "id": 1}]
-    touch.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": point(y0)})
+    point = lambda xy: [{"x": xy[0], "y": xy[1], "id": 1}]
+    touch.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": point((x0, y0))})
     for i in range(1, steps + 1):
-        touch.send("Input.dispatchTouchEvent", {"type": "touchMove", "touchPoints": point(y0 + (y1 - y0) * i / steps)})
+        touch.send("Input.dispatchTouchEvent", {"type": "touchMove", "touchPoints": point(at(i))})
     touch.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
 
 
@@ -265,6 +269,20 @@ def test_on_a_phone_a_teacher_orders_her_own_shelf_by_finger_and_by_mouse(browse
     page.reload()
     assert page.locator("#panel-mine").is_visible(), "the tab is remembered"
     assert _titles(page, "mine") == ["שני", "ראשון", "שלישי"]
+
+    # Two small cards in a row on a phone (Avi, 2026-10-22).
+    first, second = (page.locator(f"{cards}:nth-child({n})").bounding_box() for n in (1, 2))
+    assert abs(first["y"] - second["y"]) < 2 and second["x"] < first["x"]
+    assert first["width"] < 390 / 2
+
+    page.on("dialog", lambda d: d.accept())
+    with page.expect_response(lambda r: "/api/materials/" in r.url and r.request.method == "DELETE") as r:
+        page.click(f"{cards}:nth-child(1) [data-delete]")
+    assert r.value.status == 204
+    page.wait_for_selector("#cb-toast:not([hidden])")
+    assert _titles(page, "mine") == ["ראשון", "שלישי"]
+    assert [m.title for m in shelves.mine(ronit)] == ["ראשון", "שלישי"]
+    assert page.locator("#cb-mine-count").inner_text() == "2"
     assert errors == []
     ctx.close()
 

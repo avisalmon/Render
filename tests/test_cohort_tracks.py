@@ -150,7 +150,7 @@ def test_only_avi_adds_materials_and_everyone_inside_sees_them_in_order(client, 
     client.force_login(people["eli"].user)
     html = client.get("/cohort/materials/").content.decode()
     assert html.index("מבוא לסוכנים") < html.index("מצגת המפגש") < html.index("הדרכת פייתון")
-    assert 'src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ"' in html
+    assert 'data-embed="dQw4w9WgXcQ"' in html   # plays in the card when tapped
     assert 'href="https://www.youtube.com/watch?v=dQw4w9WgXcQ"' in html
     assert 'href="https://babook.co.il/courses/python/"' in html
     doc = Material.objects.get(kind="file")

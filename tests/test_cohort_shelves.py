@@ -70,6 +70,12 @@ def test_a_private_item_is_seen_by_its_owner_and_by_nobody_else(client, people):
         assert client.get(f"/cohort/files/{doc.file.name}").status_code == 404, other
     assert Material.objects.filter(pk=secret.pk, title="הסוד של דנה").exists()
 
+    client.force_login(people["dana"].user)
+    html = client.get("/cohort/materials/").content.decode()
+    assert f'data-delete="{secret.pk}"' in html
+    assert client.delete(f"/cohort/api/materials/{secret.pk}/").status_code == 204
+    assert not Material.objects.filter(pk=secret.pk).exists()
+
 
 def test_avi_has_a_private_shelf_like_everyone_and_a_course_shelf_for_all(client, people):
     """Avi, 2026-10-22: what I put as admin everybody sees; what I put as
