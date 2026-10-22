@@ -942,3 +942,44 @@ the net cannot reach: here every element's own position against the screen
 width, outside shelves that scroll on purpose, with enough content (a long
 shelf) to push. Prove the check by running it once against the bug.
 
+### 40. Walk the newcomer's road as the newcomer, from the link to the first screen that pays off
+
+Avi, 2026-10-22, after sharing his invite: "the experience of an invited
+user is not good." Every page of friends had its tests, and the invited
+person's road through them had none: the welcome page barely said who
+invited them, sign-in and the form said nothing, the taste survey stood
+between joining and the friend's shelf, the shelf arrived light while the
+inviter's was dark, and the spine pictures were still loading so the shelf
+looked empty.
+
+**The rule.** For every way a new person can arrive (an invite link, a
+share, search), one browser test walks the whole road as that person,
+with a fresh account and the defaults a newcomer gets, from the link to
+the first screen that pays off; and that screen is checked with its data
+actually loaded (here: the picture class appears only once the image has
+arrived). Build the road so each step names the reason to go on.
+
+### 41. Image work inside the web process: decode small, a few at a time, let go
+
+Render restarted the web service for exceeding 512MB. The background job
+that re-read old shelf photos decoded each 4000px photo two or three times
+at once (about 180MB at the peak) inside the one gunicorn worker, 25
+photos in a row, while pages were served.
+
+**The rule.** Image work that runs inside the web process decodes at the
+size it needs (JPEG draft mode), closes what it opens, collects garbage
+after each item, and takes a few items per pass. One API client per
+process, not a new connection pool per call. Watch the host's memory
+graph after shipping such a job.
+
+### 42. Many small private images go to the browser from storage, not through the one web worker
+
+Avi: "the spine pictures load slowly." Each of twenty pictures was streamed
+from the bucket through the single sync worker, one after another, on
+every visit.
+
+**The rule.** Serve many small private images with links signed for the
+day (same link all day, so the browser caches them), straight from the
+bucket, in parallel; keep the app's own endpoint as the fallback for the
+disk. And while a picture loads, show the text it will replace.
+

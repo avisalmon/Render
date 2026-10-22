@@ -427,6 +427,33 @@ def spines_waiting(profile):
     return scans.filter(spines_done=False).count(), scans.count()
 
 
+def spine_url(item):
+    """Where the browser gets a spine picture. On the bucket: a link signed
+    for the rest of the day, straight from Google's storage, so twenty
+    pictures download in parallel and the browser caches them (through the
+    one web worker they came one by one: Avi, 2026-10-22, "the pictures
+    load slowly"). On the disk (dev): Books' own endpoint."""
+    from . import storage as books_store
+
+    store = books_store.books_storage()
+    bucket = getattr(store, "bucket", None)
+    fallback = f"/books/copy/{item.copy_id}/spine.jpg?v={item.pk}"
+    if bucket is None:
+        return fallback
+    try:
+        from datetime import date, datetime, time, timedelta, timezone as tz
+
+        from storages.utils import clean_name
+
+        # The same link all day: a v2 signature depends only on the name and the expiry.
+        expires = datetime.combine(date.today() + timedelta(days=1), time(1, 0), tzinfo=tz.utc)
+        name = store._normalize_name(clean_name(item.spine.name))
+        return bucket.blob(name).generate_signed_url(expiration=expires, version="v2")
+    except Exception:  # noqa: BLE001
+        log.exception("books: signing a spine link")
+        return fallback
+
+
 def spine_rows(copies):
     """For my shelf: each copy's real spine (url, width over height, height
     against the other books in its photo), where it has one."""
@@ -450,8 +477,7 @@ def spine_rows(copies):
             if not h:
                 continue
             rel = (it.spine_height / median) if median and it.spine_height else 1.0
-            out[it.copy_id] = {"url": f"/books/copy/{it.copy_id}/spine.jpg?v={it.pk}", "ratio": w / h,
-                               "rel": max(0.75, min(1.25, rel))}
+            out[it.copy_id] = {"url": spine_url(it), "ratio": w / h, "rel": max(0.75, min(1.25, rel))}
     return out
 
 
@@ -573,7 +599,7 @@ def drawn_width(pages, h):
     return int(max(24, min(70, round(h * ratio))))
 
 
-def shelf_books(profile, limit=400, photos=False, viewer=None):
+def shelf_books(profile, limit=400, photos=False, viewer=None, teaser=False):
     """The person's held copies as the shelf component's JSON rows. With
     `photos`, each book with a real spine shows it. With a `viewer` who is
     not the owner (a friend), only what they may see, linking to the books'
@@ -582,7 +608,12 @@ def shelf_books(profile, limit=400, photos=False, viewer=None):
 
     rows = []
     other = viewer is not None and viewer.pk != profile.pk
-    if other:
+    if teaser:
+        # For someone invited who has not joined yet: the shelf a follower will
+        # see, drawn (no photos), with no doors into the books (Avi, 2026-10-22).
+        base = Copy.objects.filter(owner=profile, status__in=Copy.HELD).exclude(visibility=Copy.HIDDEN)
+        photos = False
+    elif other:
         from . import friends
 
         base = friends.visible_copies(viewer, profile)
@@ -600,7 +631,7 @@ def shelf_books(profile, limit=400, photos=False, viewer=None):
         status = kinds[0] if kinds else ("public" if c.visibility == Copy.PUBLIC else "private")
         row = {"id": c.pk, "title": c.entry.title, "author": c.entry.creator_names, "status": status,
                "rare": c.is_rare_candidate,
-               "url": f"/books/catalog/{c.entry_id}/" if other else f"/books/copy/{c.pk}/"}
+               "url": "" if teaser else (f"/books/catalog/{c.entry_id}/" if other else f"/books/copy/{c.pk}/")}
         row.update(spine_for(c.entry_id, c.entry.title))
         if pages.get(c.entry_id):
             row["w"] = drawn_width(pages[c.entry_id], row["h"])

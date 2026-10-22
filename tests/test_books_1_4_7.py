@@ -47,7 +47,7 @@ def test_the_manifest_is_valid_and_scoped_to_books(client):
 def test_every_page_links_the_manifest_and_icons(client):
     html = client.get("/books/login/").content.decode()
     assert 'rel="manifest"' in html and 'rel="apple-touch-icon"' in html
-    assert 'name="theme-color" content="#EFE6D6"' in html
+    assert 'name="theme-color" content="#120F0C"' in html  # dark by default for whoever is new (Avi, 2026-10-22)
 
 
 # ---- BK1.5: storage ----------------------------------------------------------
@@ -261,12 +261,12 @@ def test_bad_appearance_values_are_refused(client, reader):
     r = client.post("/books/settings/", {"display_name": "נועה", "language": "he", "radius_km": 10,
                                          "theme": "neon", "palette": "lamplit", "shelf_view": "lamp"})
     assert r.status_code == 200
-    assert Profile.objects.get(user=reader).theme == "light"
+    assert Profile.objects.get(user=reader).theme == "dark"
 
 
 def test_the_defaults_are_the_ones_avi_chose(reader):
     p = Profile.objects.get(user=reader)
-    assert (p.theme, p.palette, p.shelf_view) == ("light", "lamplit", "lamp")
+    assert (p.theme, p.palette, p.shelf_view) == ("dark", "lamplit", "lamp")  # dark since 2026-10-22 (Avi)
 
 
 def test_system_theme_renders_and_the_css_handles_it(client, reader):

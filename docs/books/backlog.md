@@ -634,6 +634,8 @@ charging for the web lookup.
 | F-R.25 | Whoever holds a copy edits the book's details; each change kept with its old value | DONE |
 | F-R.26 | Friends: my invite link (share sheet, WhatsApp, copy, email, QR), mutual following on joining, follow requests (open libraries at once), quiet removal, a friend's library under a brass plate with their spine photos; scans public by default; "only me" for a hidden book | DONE |
 
+| F-R.27 | The invited person's road: the inviter's shelf from afar on the welcome page, sign-in and onboarding naming the inviter, straight to the friend's shelf with "friends now" and "your turn"; dark by default for new people; spines show their title until the picture loads; spine pictures by day-signed links from the bucket; the backfill light on memory | DONE |
+
 Next on friends (Avi, 2026-10-22): "I'd love to borrow this one", seeing which friend has a book I want, a friends' feed.
 
 Open for later (Avi): what to do with a finished book's notes (a summary, a

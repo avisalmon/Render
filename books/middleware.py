@@ -57,7 +57,7 @@ def appearance_for(request):
     if theme not in THEMES:
         theme = session.get(THEME_SESSION_KEY) if session is not None else None
     if theme not in THEMES:
-        theme = "light"
+        theme = "dark"  # new people and visitors start dark (Avi, 2026-10-22)
     if palette not in PALETTES:
         palette = "lamplit"
     if shelf_view not in SHELF_VIEWS:

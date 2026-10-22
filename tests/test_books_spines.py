@@ -229,3 +229,52 @@ def test_new_people_see_photographed_spines_by_default(db):
     from books.models import Profile as P
     assert P._meta.get_field("spine_photos").default is True
 
+
+class FakeBucketStore:
+    """Looks like django-storages' GoogleCloudStorage as far as spine_url needs."""
+
+    class _Blob:
+        def __init__(self, name):
+            self.name = name
+
+        def generate_signed_url(self, expiration, version):
+            assert version == "v2" and expiration.hour == 1
+            return f"https://storage.googleapis.com/books/{self.name}?Expires={int(expiration.timestamp())}&Signature=x"
+
+    class _Bucket:
+        def blob(self, name):
+            return FakeBucketStore._Blob(name)
+
+    bucket = _Bucket()
+
+    def _normalize_name(self, name):
+        return f"books/{name}"
+
+
+def test_on_the_bucket_a_spine_link_is_signed_for_the_day_and_the_same_all_day(noa, monkeypatch):
+    from books import storage as books_store
+    rows = _shelf_with_spines(noa)
+    item = rows[0][1]
+    monkeypatch.setattr(books_store, "books_storage", lambda: FakeBucketStore())
+    url = shelf.spine_url(item)
+    assert url.startswith("https://storage.googleapis.com/books/books/spines/") and "Signature=" in url
+    assert shelf.spine_url(item) == url  # the browser can cache it
+    assert shelf.shelf_books(noa, photos=True)[0]["photo"] == url
+
+
+def test_on_the_disk_a_spine_link_is_books_own(noa):
+    rows = _shelf_with_spines(noa)
+    assert shelf.spine_url(rows[0][1]) == f"/books/copy/{rows[0][0].pk}/spine.jpg?v={rows[0][1].pk}"
+
+
+def test_a_signing_problem_falls_back_to_books_own_link(noa, monkeypatch):
+    from books import storage as books_store
+    rows = _shelf_with_spines(noa)
+
+    class Broken(FakeBucketStore):
+        def _normalize_name(self, name):
+            raise RuntimeError("no key")
+
+    monkeypatch.setattr(books_store, "books_storage", lambda: Broken())
+    assert shelf.spine_url(rows[0][1]).startswith("/books/copy/")
+

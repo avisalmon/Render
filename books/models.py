@@ -45,7 +45,7 @@ class Profile(models.Model):
     accepted_terms_at = models.DateTimeField(null=True, blank=True)
     profile_public = models.BooleanField(default=False)
     show_points_public = models.BooleanField(default=False)
-    theme = models.CharField(max_length=8, choices=THEMES, default="light")
+    theme = models.CharField(max_length=8, choices=THEMES, default="dark")  # Avi, 2026-10-22: new people start dark
     palette = models.CharField(max_length=8, choices=PALETTES, default="lamplit")
     shelf_view = models.CharField(max_length=10, choices=SHELF_VIEWS, default="lamp")
     # Spine titles read top to bottom instead of bottom to top (Avi, 2026-10-22).

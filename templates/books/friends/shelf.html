@@ -4,12 +4,18 @@
 {% block content %}
 <div class="bk-friend-room">
   <p class="bk-friend-back"><a href="{% url 'books:home' %}">{% t "friends.back_mine" %}</a> · <a href="{% url 'books:friends' %}">{% t "friends.title" %}</a></p>
-  {% if joined %}<p class="bk-notice bk-notice--ok" role="status">{% t "friends.joined_note" name=owner.display_name %}</p>{% endif %}
+  {% if joined %}
+  <section class="bk-joined" role="status">
+    <p class="bk-joined-title">{% t "friends.joined_title" name=owner.display_name %}</p>
+    <p class="bk-joined-text">{% t "friends.joined_text" name=owner.display_name %}</p>
+    {% if my_shelf_empty %}<a class="bk-btn bk-btn--primary" href="{% url 'books:scan_new' %}">{% include "books/ui/_icon.html" with name="camera" %} {% t "friends.your_turn" %}</a>{% endif %}
+  </section>
+  {% endif %}
 
   {% if level %}
     {% t "friends.shelf_of" name=owner.display_name as plate %}
     {% t "home.count" n=count as hint_end %}
-    {% include "books/_shelf.html" with shelf_id="friend" books_json=books_json view="lamp" plate=plate hint_end=hint_end %}
+    {% include "books/_shelf.html" with shelf_id="friend" books_json=books_json view=view plate=plate hint_end=hint_end %}
     {% if level == "public" and status != "accepted" %}<p class="bk-help bk-friend-public">{% t "friends.public_only" name=owner.display_name %}</p>{% endif %}
     {% if not count %}<p class="bk-muted" style="text-align: center">{% t "friends.empty_shelf" name=owner.display_name %}</p>{% endif %}
   {% else %}

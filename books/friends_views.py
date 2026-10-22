@@ -91,8 +91,13 @@ def friend_shelf(request, pk):
         return redirect("books:home")
     level = friends.library_level(me, owner)
     rows = shelf.shelf_books(owner, photos=friends.can_see_spines(me, owner), viewer=me) if level else []
+    from .models import Copy
+
     return render(request, "books/friends/shelf.html", {
         "owner": owner, "level": level, "status": friends.status_between(me, owner),
+        # Their shelf as they see it themselves (the living view's drag is theirs alone).
+        "view": owner.shelf_view if owner.shelf_view in ("lamp", "bookcase") else "lamp",
+        "my_shelf_empty": not Copy.objects.filter(owner=me, status__in=Copy.HELD).exists(),
         "follows_me": Follow.objects.filter(follower=owner, followee=me, status=Follow.ACCEPTED).exists(),
         "books_json": json.dumps(rows, ensure_ascii=False), "count": len(rows),
         "has_photos": any("photo" in r for r in rows), "joined": request.GET.get("joined") == "1",

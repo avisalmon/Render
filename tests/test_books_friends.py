@@ -212,3 +212,49 @@ def test_the_invitation_is_one_share_button_in_english(client, avi):
     assert "Come see my bookshelf" in html and "Hi! I put my bookshelf on Books." in html
     assert "data-qr-open" in html
 
+
+# ---- the invited person's way in (Avi, 2026-10-22) ----------------------------------------
+
+def test_the_invited_welcome_shows_the_inviters_shelf_from_afar(client, avi):
+    import json
+    shelf_of(avi, "hidden", "private", "public")
+    html = client.get(f"/books/i/{friends.invite_for(avi).code}/").content.decode()
+    assert 'data-theme="dark"' in html  # new people and visitors start dark
+    assert "avi מזמין/ה אותך להציץ במדף" in html and "מצטרפים ורואים את המדף של avi" in html
+    assert '<h1 class="bk-plate"' in html and "הספרייה של avi" in html
+    rows = json.loads(html.split('id="demo-data">')[1].split("</script>")[0])
+    assert [r["title"] for r in rows] == ["ספר 1 (private)", "ספר 2 (public)"]  # what a follower will see, not "only me"
+    assert all(r["url"] == "" and "photo" not in r for r in rows)  # from afar: drawn, no doors
+
+
+def test_sign_in_and_onboarding_say_who_invited_me(client, avi):
+    client.get(f"/books/i/{friends.invite_for(avi).code}/")
+    assert "avi הזמין/ה אותך" in client.get("/books/login/").content.decode()
+    u = User.objects.create_user("dana", "dana@example.com", "pw")
+    client.force_login(u)
+    assert "עוד צעד אחד והמדף של avi פתוח לך" in client.get("/books/welcome/").content.decode()
+
+
+def test_joining_lands_on_the_friends_shelf_in_the_dark(client, avi):
+    shelf_of(avi, "public")
+    client.get(f"/books/i/{friends.invite_for(avi).code}/")
+    u = User.objects.create_user("dana", "dana@example.com", "pw")
+    client.force_login(u)
+    r = client.post("/books/welcome/", {"display_name": "דנה", "language": "he", "is_adult_confirmed": "on",
+                                        "accept_terms": "on"})
+    assert r["Location"] == f"/books/people/{avi.pk}/shelf/?joined=1"  # no survey in the way
+    assert Profile.objects.get(user=u).theme == "dark"
+    html = client.get(r["Location"]).content.decode()
+    assert 'data-theme="dark"' in html and "את/ה וavi חברים עכשיו" in html
+    assert "עכשיו תורך: צילום המדף שלי" in html  # my own shelf is still empty
+
+
+def test_a_friends_shelf_wears_their_own_look(client, avi, moshe):
+    shelf_of(avi, "public")
+    friends.join_through_invite(moshe, friends.invite_for(avi))
+    client.force_login(moshe.user)
+    for mine, shown in (("bookcase", "bookcase"), ("living", "lamp"), ("lamp", "lamp")):
+        avi.shelf_view = mine
+        avi.save()
+        assert f'data-shelf-view="{shown}"' in client.get(f"/books/people/{avi.pk}/shelf/").content.decode()
+

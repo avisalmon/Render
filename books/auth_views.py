@@ -41,6 +41,14 @@ class LoginView(_LangForm, auth.LoginView):
     def get_default_redirect_url(self):
         return safe_next(self.request)
 
+    def get_context_data(self, **kwargs):
+        from . import friends
+
+        ctx = super().get_context_data(**kwargs)
+        invite = friends.pending_invite(self.request)
+        ctx["inviter"] = invite.inviter if invite else None  # the way in says who is waiting (Avi, 2026-10-22)
+        return ctx
+
 
 class LogoutView(auth.LogoutView):
     next_page = reverse_lazy("books:login")

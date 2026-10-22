@@ -41,14 +41,21 @@ def onboarding(request):
                 hub.area_changed(profile)
             from . import friends
 
-            friends.apply_pending_invite(request, profile)  # came through a friend's link: follow each other
+            inviter = friends.apply_pending_invite(request, profile)  # came through a friend's link: follow each other
+            if inviter is not None:
+                # Straight to the friend's shelf (Avi, 2026-10-22); the taste survey waits in Discover.
+                return redirect(f"{reverse('books:friend_shelf', args=[inviter.pk])}?joined=1")
             from urllib.parse import urlencode
 
             return redirect(f"{reverse('books:taste')}?{urlencode({'first': 1, 'next': safe_next(request)})}")
     else:
         guess = request.user.first_name or request.user.get_username().split("@")[0]
         form = OnboardingForm(initial={"display_name": guess, "language": _lang(request)}, lang=_lang(request))
-    return render(request, "books/onboarding.html", {"form": form, "next": safe_next(request, default="")})
+    from . import friends
+
+    invite = friends.pending_invite(request)
+    return render(request, "books/onboarding.html", {"form": form, "next": safe_next(request, default=""),
+                                                     "inviter": invite.inviter if invite else None})
 
 
 def home(request):
@@ -79,6 +86,9 @@ def landing(request, invite=None):
     from . import friends
 
     pending = invite or friends.pending_invite(request)
+    teaser = []
+    if pending is not None:
+        teaser = shelf.shelf_books(pending.inviter, limit=80, teaser=True)
     og = None
     if invite is not None:
         # The preview a pasted link shows, in English (Avi, 2026-10-22).
@@ -86,8 +96,9 @@ def landing(request, invite=None):
               "description": t("friends.og_description", "en"),
               "image": request.build_absolute_uri(static("books/og-invite.png")),
               "url": request.build_absolute_uri(request.path)}
-    return render(request, "books/landing.html", {"books_json": json.dumps(rows, ensure_ascii=False),
-                                                  "inviter": pending.inviter if pending else None, "og": og})
+    return render(request, "books/landing.html", {
+        "books_json": json.dumps(teaser or rows, ensure_ascii=False), "og": og,
+        "inviter": pending.inviter if pending else None, "teaser_count": len(teaser)})
 
 
 HEBREW_DAYS = ["ב", "ג", "ד", "ה", "ו", "ש", "א"]  # Monday first, as date.weekday() counts

@@ -4,8 +4,9 @@
 {% block signin %}{% endblock %}
 {% block content %}
 <div class="bk-narrow bk-login">
+  {% if inviter %}<p class="bk-invited"><span class="bk-avatar" aria-hidden="true">{{ inviter.display_name|slice:":1" }}</span> {% t "invited.login" name=inviter.display_name %}</p>{% endif %}
   <h1 class="bk-title">{% t "login.welcome" %}</h1>
-  <p class="bk-lead">{% t "login.lead" %}</p>
+  <p class="bk-lead">{% if inviter %}{% t "invited.login_lead" name=inviter.display_name %}{% else %}{% t "login.lead" %}{% endif %}</p>
   <a class="bk-btn bk-btn--primary bk-btn--wide bk-google" href="/accounts/google/login/?process=login&amp;next={{ next|default:'/books/'|urlencode }}">
     <svg class="bk-icon bk-icon--fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.35 11.1h-9.17v2.98h5.4c-.23 1.36-1.6 4-5.4 4-3.25 0-5.9-2.7-5.9-6s2.65-6 5.9-6c1.85 0 3.09.79 3.8 1.47l2.6-2.5C17.02 3.46 14.9 2.5 12.18 2.5 6.98 2.5 2.78 6.7 2.78 12s4.2 9.5 9.4 9.5c5.42 0 9.02-3.8 9.02-9.16 0-.62-.07-1.09-.15-1.24z"/></svg>
     {% t "login.google" %}

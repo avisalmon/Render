@@ -1,5 +1,5 @@
 {% extends "books/base.html" %}{% load books_tags %}
-{% block title %}{% t "brand" %} · {% t "landing.title" %}{% endblock %}
+{% block title %}{% t "brand" %} · {% if inviter %}{% t "friends.og_title" name=inviter.display_name %}{% else %}{% t "landing.title" %}{% endif %}{% endblock %}
 {% block screen %}landing{% endblock %}
 {% block meta %}{% if og %}
   <meta property="og:type" content="website">
@@ -15,8 +15,25 @@
 {% endif %}{% endblock %}
 {% block content %}
 <div class="bk-landing">
+  {% if inviter %}
+  <section class="bk-hero bk-hero--invited">
+    <span class="bk-avatar bk-avatar--big bk-hero-avatar" aria-hidden="true">{{ inviter.display_name|slice:":1" }}</span>
+    <p class="bk-kicker">{% t "invited.kicker" %}</p>
+    <h1 class="bk-hero-title">{% t "invited.title" name=inviter.display_name %}</h1>
+    <p class="bk-hero-lead">{% if teaser_count %}{% t "invited.lead" n=teaser_count %}{% else %}{% t "invited.lead_empty" name=inviter.display_name %}{% endif %}</p>
+    <a class="bk-btn bk-btn--primary bk-hero-cta" href="{% url 'books:login' %}?next=/books/">{% t "invited.start" name=inviter.display_name %}</a>
+    <p class="bk-help" style="margin: 8px 0 0">{% t "landing.free" %}</p>
+  </section>
+  {% if teaser_count %}
+    {% t "friends.shelf_of" name=inviter.display_name as plate %}
+    {% t "home.count" n=teaser_count as hint_end %}
+    {% include "books/_shelf.html" with shelf_id="demo" books_json=books_json view="lamp" plate=plate hint_end=hint_end %}
+    <p class="bk-help bk-teaser-note">{% t "invited.teaser_note" %}</p>
+  {% else %}
+    {% include "books/_shelf.html" with shelf_id="demo" books_json=books_json view="lamp" %}
+  {% endif %}
+  {% else %}
   <section class="bk-hero">
-    {% if inviter %}<p class="bk-invited">{% t "friends.invited_by" name=inviter.display_name %}</p>{% endif %}
     <p class="bk-kicker">{% t "landing.kicker" %}</p>
     <h1 class="bk-hero-title">{% t "landing.title" %}</h1>
     <p class="bk-hero-lead">{% t "landing.lead" %}</p>
@@ -25,6 +42,7 @@
   </section>
 
   {% include "books/_shelf.html" with shelf_id="demo" books_json=books_json view="lamp" %}
+  {% endif %}
 
   <section class="bk-features" aria-label="{% t "landing.how" %}">
     <article class="bk-feature">
@@ -45,8 +63,8 @@
   </section>
 
   <section class="bk-hero bk-hero--end">
-    <h2 class="bk-h2" style="margin-top: 0">{% t "landing.end_h" %}</h2>
-    <a class="bk-btn bk-btn--primary bk-hero-cta" href="{% url 'books:login' %}?next=/books/">{% t "landing.start" %}</a>
+    <h2 class="bk-h2" style="margin-top: 0">{% if inviter %}{% t "invited.end_h" name=inviter.display_name %}{% else %}{% t "landing.end_h" %}{% endif %}</h2>
+    <a class="bk-btn bk-btn--primary bk-hero-cta" href="{% url 'books:login' %}?next=/books/">{% if inviter %}{% t "invited.start" name=inviter.display_name %}{% else %}{% t "landing.start" %}{% endif %}</a>
   </section>
 </div>
 {% endblock %}

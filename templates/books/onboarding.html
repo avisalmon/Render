@@ -4,6 +4,7 @@
 {% block account %}{% endblock %}
 {% block content %}
 <div class="bk-narrow">
+  {% if inviter %}<p class="bk-invited"><span class="bk-avatar" aria-hidden="true">{{ inviter.display_name|slice:":1" }}</span> {% t "invited.onboarding" name=inviter.display_name %}</p>{% endif %}
   <h1 class="bk-title">{% t "onb.title" %}</h1>
   <p class="bk-lead">{% t "onb.lead" %}</p>
   <form method="post" class="bk-card bk-form" novalidate>

@@ -17,6 +17,33 @@ Newest first.
 
 ---
 
+## PM-43 · 2026-10-22 · The invited person's road, a memory restart, slow pictures
+
+**What happened.** Avi walked his own invite as a newcomer and found it
+poor: the inviter barely named, a survey in the way, a light shelf where
+his is dark, and the friend's shelf looking empty because its pictures
+were still coming. Render restarted the web service for memory (the spine
+backfill decoding 4000px photos inside the one worker). The pictures were
+slow because each streamed through that worker.
+
+**Why our process let it happen.** Each page had tests; the newcomer's
+whole road, with a newcomer's defaults, had none. The backfill was built
+for correctness and cost, never measured for memory on the host. The
+picture endpoint copied the shelf-photo endpoint without asking how many
+pictures a page needs.
+
+**Rule.** Mistakes 40, 41, 42. Done: the invited welcome shows the
+inviter's shelf from afar under their name plate; sign-in and the form name
+the inviter; joining lands on the friend's shelf with "friends now" and
+"your turn"; dark is the default for new people and visitors; the friend's
+shelf wears the owner's own view; spines show their title until the
+picture arrives; on the bucket, spine pictures come by day-signed links
+straight from Google; the backfill decodes small, 6 photos a pass. One
+browser test walks the whole road.
+
+Here: docs/building_an_app.md mistakes 40-42; tests/test_books_screens.py
+BKM: FullStackBKM 570a8ce (lessons 49-51)
+
 ## PM-42 · 2026-10-22 · A whole app's suite on every change
 
 **What happened.** For two days I ran the whole Books suite (about 20

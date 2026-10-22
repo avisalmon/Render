@@ -118,7 +118,7 @@
   // ---- spines -------------------------------------------------------------------------------
 
   Shelf.prototype.spine = function (b) {
-    var btn = el("button", "bk-spine" + (b.rare ? " bk-spine--rare" : "") + (b.photo ? " bk-spine--photo" : ""), {
+    var btn = el("button", "bk-spine" + (b.rare ? " bk-spine--rare" : ""), {
       type: "button", "data-book": b.id, "aria-pressed": "false",
       "aria-label": (b.title || "") + (b.author ? ", " + b.author : "")
     });
@@ -133,13 +133,20 @@
     var title = el("span", "bk-spine-title"); title.textContent = b.title || ""; btn.appendChild(title);
     var author = el("span", "bk-spine-author"); author.textContent = b.author || ""; btn.appendChild(author);
     if (b.photo) {
+      // The title shows until the picture has arrived (Avi, 2026-10-22: the
+      // pictures load slowly); then the picture takes over with a short fade.
       var url = String(b.photo).replace(/"/g, "");
-      btn.style.setProperty("--spine-img", 'url("' + url + '")');
-      // No picture after all (not cut yet, or it failed): the book shows its title instead.
+      btn.classList.remove("bk-spine--photo");
+      btn.classList.add("bk-spine--loading");
       var probe = new Image();
+      probe.onload = function () {
+        btn.style.setProperty("--spine-img", 'url("' + url + '")');
+        btn.classList.remove("bk-spine--loading");
+        btn.classList.add("bk-spine--photo", "is-photo-in");
+      };
       probe.onerror = function () {
-        btn.classList.remove("bk-spine--photo");
-        btn.style.removeProperty("--spine-img");
+        // No picture after all (not cut yet, or it failed): the book keeps its title.
+        btn.classList.remove("bk-spine--loading");
         if (btn.offsetWidth < 24) btn.style.setProperty("--spine-w", "24px");
         fitTitle(title, Math.max(btn.offsetWidth, 24));
       };
@@ -191,6 +198,7 @@
       var s = self.state[id];
       // A photographed spine shows no text, unless the shelf is set to drawn spines.
       if (!s.el.classList.contains("bk-spine--photo") || self.shelf.root.classList.contains("is-drawn")) {
+        // (a spine still waiting for its picture fits its title too: it shows meanwhile)
         fitTitle(s.el.querySelector(".bk-spine-title"), s.w);
       }
     });

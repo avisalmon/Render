@@ -307,7 +307,10 @@ def _follow_and_shelf(viewer, owner):
 
 # (label, path, who, screen marker)
 SCREENS = [
+    ("landing", "/books/", None, "landing"),
+    ("landing-invited", lambda: f"/books/i/{__import__('books.friends', fromlist=['invite_for']).invite_for(__import__('books.models', fromlist=['Profile']).Profile.objects.get(user__username='shelver')).code}/", None, "landing"),
     ("login", "/books/login/", None, "login"),
+    ("scan-book", "/books/scan/?book=1", "reader", "scan-new"),
     ("signup", "/books/signup/", None, "signup"),
     ("reset", "/books/password/reset/", None, "password-reset"),
     ("404", "/books/nope/", None, "404"),
@@ -933,6 +936,64 @@ def test_a_tapped_book_grows_and_the_next_tap_puts_it_back(browser, live_server,
         page.wait_for_timeout(900)
         assert abs(second.evaluate(scale) - 1) < 0.02
         assert page.evaluate("document.querySelector('.bk-shelf-row').offsetHeight") == row_h
+    finally:
+        context.close()
+
+
+def test_on_a_phone_an_invited_person_lands_on_the_friends_shelf_with_its_pictures(browser, live_server, db):
+    """Avi, 2026-10-22: the invited person's journey, made amazing. Open a
+    friend's link: dark, the friend's name, their shelf from afar. Join with
+    an email, one short form that still names the friend, and land on their
+    shelf: friends now, dark, the real spine pictures loaded, and "your turn"."""
+    from books import friends, shelf
+    from books.models import Copy, Profile, ScanItem, ShelfScan
+    from tests.test_books_spines import CORNERS, TITLES, shelf_photo
+    from django.core.files.base import ContentFile
+    build_world()
+    sp = Profile.objects.get(user__username="shelver")
+    sp.display_name = "משה"
+    sp.save()
+    scan = ShelfScan(owner=sp, status=ShelfScan.DONE, spines_done=True)
+    scan.photo.save("s.jpg", ContentFile(shelf_photo()), save=False)
+    scan.save()
+    from books import catalog
+    pairs = []
+    for i, t in enumerate(TITLES):
+        e = catalog.CatalogEntry.objects.create(collection_type=catalog.book_type(), title=t)
+        copy = Copy.objects.create(owner=sp, entry=e, position=i, visibility="private")
+        pairs.append((ScanItem.objects.create(scan=scan, position=i, raw_title=t, copy=copy), CORNERS[i]))
+    shelf.cut_spines(scan, pairs)
+    code = friends.invite_for(sp).code
+    context = browser.new_context(viewport=PHONE, device_scale_factor=1, is_mobile=True, has_touch=True, locale="he-IL")
+    page = context.new_page()
+    try:
+        page.goto(f"{live_server.url}/books/i/{code}/?via=whatsapp", wait_until="domcontentloaded")
+        assert page.get_attribute("html", "data-theme") == "dark"
+        assert "משה" in page.text_content("h1.bk-hero-title") and "משה" in page.text_content("h1.bk-plate")
+        assert page.locator("#demo-data").count() == 1 and page.locator(".bk-shelf-row .bk-spine").count() >= 3
+        page.click(".bk-hero-cta")
+        page.wait_for_url("**/books/login/**")
+        assert "משה הזמין/ה אותך" in page.text_content(".bk-invited")
+        page.click(".bk-login-other > summary")
+        page.click('a[href^="/books/signup/"]')
+        page.wait_for_url("**/books/signup/**")
+        page.fill("input[name=email]", "dana@example.com")
+        page.fill("input[name=password1]", "Shelf-Lamp-2026!")
+        page.fill("input[name=password2]", "Shelf-Lamp-2026!")
+        page.click("form.bk-form button[type=submit]")
+        page.wait_for_url("**/books/welcome/**")
+        assert "משה" in page.text_content(".bk-invited")
+        page.fill("input[name=display_name]", "דנה")
+        page.check("input[name=is_adult_confirmed]")
+        page.check("input[name=accept_terms]")
+        page.click("form.bk-form button[type=submit]")
+        page.wait_for_url(f"**/books/people/{sp.pk}/shelf/?joined=1")
+        assert page.get_attribute("html", "data-theme") == "dark"
+        assert "חברים עכשיו" in page.text_content(".bk-joined-title")
+        assert page.locator(".bk-joined a[href='/books/scan/']").count() == 1  # your turn
+        page.wait_for_selector(".bk-spine--photo")  # the picture arrived through the real endpoint
+        assert page.locator(".bk-spine--photo").count() == 3
+        assert friends.status_between(Profile.objects.get(display_name="דנה"), sp) == "accepted"
     finally:
         context.close()
 
