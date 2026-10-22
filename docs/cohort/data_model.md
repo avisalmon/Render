@@ -15,11 +15,13 @@ User (babook's, shared) ──1:1── Member ── status: pending / approved
           │                                            author,
           └── screenshot                               reply_to)
 
-Material (Avi's shelf): video | file | course
+Material: video | file | course | link
+   owner null  = the course shelf (Avi's, everybody sees it)
+   owner = M   = M's private shelf (only M sees it)
 ```
 
-Six things a participant meets, one thing only Avi touches (Material), and one
-row per person that decides everything they may see (Member).
+The things a participant meets, a shelf of materials that is Avi's or their
+own, and one row per person that decides everything they may see (Member).
 
 ## 2. Models
 
@@ -112,18 +114,26 @@ an existing track is never touched by the seed).
 
 ### Material
 
-Avi's shelf.
+One item on a shelf. Added 2026-10-22: `owner` and `position` (migration
+0006), so there are two kinds of shelf (REQ-C.35, C.36).
 
 | Field | Type | Notes |
 |---|---|---|
-| kind | choice | `video`, `file`, `course` |
+| owner | FK → Member, null | null: the course shelf. Set: that member's private shelf, seen by nobody else, admins included. Cascade |
+| position | int | order within its shelf; rewritten as 10, 20, 30... on every reorder; a new item goes to the bottom |
+| kind | choice | `video`, `file`, `course`, `link` |
 | title | char 160 | |
 | line | char 280 | one short line of explanation |
-| url | URL, blank | YouTube link, or the babook course link |
+| url | URL, blank | YouTube link, the babook course link, or any page |
 | youtube_id | char 20, blank | taken from the URL when saved, for the embedded player |
-| file | file, blank | an uploaded document (kind `file`) |
-| created_at | datetime | the order shown |
+| file | file, blank | an uploaded document (kind `file`). A copy kept from the course shelf points at the same file; the file is deleted only when no item points at it |
+| created_at | datetime | ties in position |
 | created_by | FK → User | |
+
+All the shelf rules live in `cohort/shelves.py`: who sees what, who changes
+what, reorder, keep, remove, and the room for files (25MB a file, 200MB a
+person). A materials file is served only to someone who can see an item
+pointing at it.
 
 ## 3. What is shared, and what is not
 

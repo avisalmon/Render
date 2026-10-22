@@ -5,7 +5,7 @@ to change is a refusal, never a quiet success."""
 from django.utils import timezone
 from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 
 from . import access, mail, shots
@@ -242,17 +242,72 @@ class TrackViewSet(viewsets.ModelViewSet):
 
 
 class MaterialViewSet(viewsets.ModelViewSet):
+    """Both shelves (REQ-C.35, C.36). You see the course shelf and your own,
+    never anybody else's. The course shelf is written by admins; your shelf by
+    you. `shelf` on create says which ("course" or "mine")."""
+
     serializer_class = MaterialSerializer
-    permission_classes = [AdminWrites]
-    queryset = Material.objects.all()
+    permission_classes = [Inside]
+
+    def get_queryset(self):
+        from . import shelves
+
+        return shelves.visible(me(self.request))
 
     def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
+        from . import shelves
+
+        member = me(self.request)
+        shelf = self.request.data.get("shelf", "course")
+        if shelf not in ("course", "mine"):
+            raise ValidationError({"shelf": "course או mine."})
+        if shelf == "course" and not member.admin:
+            raise PermissionDenied("רק אבי מוסיף לחומרי ההשתלמות. אפשר להוסיף ללוח הפרטי שלך.")
+        owner = member if shelf == "mine" else None
+        upload = serializer.validated_data.get("file")
+        if upload and owner is not None:
+            try:
+                shelves.check_quota(member, upload.size)
+            except shelves.Refused as why:
+                raise ValidationError({"file": str(why)})
+        serializer.save(created_by=self.request.user, owner=owner, position=shelves.next_position(owner))
+
+    def perform_update(self, serializer):
+        from . import shelves
+
+        if not shelves.may_change(me(self.request), serializer.instance):
+            raise PermissionDenied("אין לך הרשאה לשנות את החומר הזה.")
+        serializer.save()
 
     def perform_destroy(self, instance):
-        if instance.file:
-            instance.file.delete(save=False)
-        instance.delete()
+        from . import shelves
+
+        if not shelves.may_change(me(self.request), instance):
+            raise PermissionDenied("אין לך הרשאה למחוק את החומר הזה.")
+        shelves.remove(instance)
+
+    @action(detail=False, methods=["post"])
+    def reorder(self, request):
+        from . import shelves
+
+        member = me(request)
+        if request.data.get("shelf") == "course" and not member.admin:
+            return Response({"detail": "רק אבי קובע את סדר חומרי ההשתלמות."}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            ids = shelves.reorder(member, request.data.get("shelf"), request.data.get("order") or [])
+        except shelves.Refused as why:
+            return Response({"detail": str(why)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"order": ids})
+
+    @action(detail=True, methods=["post"])
+    def keep(self, request, pk=None):
+        from . import shelves
+
+        try:
+            copy, created = shelves.keep(me(request), self.get_object())
+        except shelves.Refused as why:
+            return Response({"detail": str(why)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"id": copy.pk, "created": created}, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
 
 ROUTES = [

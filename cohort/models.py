@@ -178,7 +178,10 @@ def youtube_id(url):
 
 
 class Material(models.Model):
-    """Avi's shelf (REQ-C.30 to C.34), in the order he added it."""
+    """Two shelves (REQ-C.30 to C.36). With no owner, the course shelf: Avi's,
+    seen by everybody inside, in the order he sets. With an owner, that
+    person's private shelf: seen by them alone, Avi included, in their order.
+    Avi has a private shelf of his own like anybody else (2026-10-22)."""
 
     VIDEO, FILE, COURSE, LINK = "video", "file", "course", "link"
     KINDS = [(VIDEO, "סרטון"), (FILE, "מסמך"), (COURSE, "הדרכה ב-babook"), (LINK, "קישור")]
@@ -189,11 +192,17 @@ class Material(models.Model):
     url = models.URLField(max_length=500, blank=True)
     youtube_id = models.CharField(max_length=20, blank=True)
     file = models.FileField(upload_to=material_path, storage=private_storage, blank=True)
+    owner = models.ForeignKey(Member, null=True, blank=True, on_delete=models.CASCADE, related_name="materials")
+    position = models.PositiveIntegerField(default=0, db_index=True)
     created_at = models.DateTimeField(default=timezone.now)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL, related_name="+")
 
     class Meta:
-        ordering = ["created_at", "id"]
+        ordering = ["position", "created_at", "id"]
+
+    @property
+    def on_course_shelf(self):
+        return self.owner_id is None
 
     def save(self, *args, **kwargs):
         self.youtube_id = youtube_id(self.url) if self.kind == self.VIDEO else ""

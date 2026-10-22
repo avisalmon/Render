@@ -188,6 +188,87 @@ def test_no_page_scrolls_sideways_and_the_disclaimer_stays_on_screen(browser, li
     assert not broken, "\n".join(broken)
 
 
+def _titles(page, shelf):
+    return page.eval_on_selector_all(f'[data-shelf="{shelf}"] > .cb-material .cb-h2', "els => els.map(e => e.textContent)")
+
+
+def _drag(page, handle, target, touch=None):
+    """Hold the handle and move, in steps, onto the lower half of target."""
+    a = page.locator(handle).bounding_box()
+    b = page.locator(target).bounding_box()
+    x0, y0 = a["x"] + a["width"] / 2, a["y"] + a["height"] / 2
+    y1 = b["y"] + b["height"] * 0.75
+    steps = 12
+    if touch is None:
+        page.mouse.move(x0, y0)
+        page.mouse.down()
+        for i in range(1, steps + 1):
+            page.mouse.move(x0, y0 + (y1 - y0) * i / steps)
+        page.mouse.up()
+        return
+    point = lambda y: [{"x": x0, "y": y, "id": 1}]
+    touch.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": point(y0)})
+    for i in range(1, steps + 1):
+        touch.send("Input.dispatchTouchEvent", {"type": "touchMove", "touchPoints": point(y0 + (y1 - y0) * i / steps)})
+    touch.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
+
+
+@pytest.mark.django_db(transaction=True)
+def test_on_a_phone_a_teacher_orders_her_own_shelf_by_finger_and_by_mouse(browser, live_server, world):
+    """REQ-C.35, C.36: drag the handle with a mouse or a finger, or use the
+    arrows; the order is saved at once and is still there after a reload."""
+    from cohort import shelves
+    from cohort.models import Material
+
+    ronit = world["people"][0]
+    for i, t in enumerate(["ראשון", "שני", "שלישי"]):
+        Material.objects.create(kind=Material.LINK, title=t, line="שורה", url=f"https://example.com/{i}", owner=ronit, position=(i + 1) * 10)
+    Material.objects.create(kind=Material.LINK, title="של שירה", line="פרטי", url="https://example.com/s", owner=world["people"][4], position=10)
+
+    # Tall, so all three cards are on screen and the drag never autoscrolls.
+    ctx = browser.new_context(viewport={"width": 390, "height": 1700}, device_scale_factor=1, has_touch=True)
+    ctx.add_cookies([{"name": "sessionid", "value": _session(ronit.user), "domain": "localhost", "path": "/"}])
+    page = ctx.new_page()
+    errors = []
+    page.on("pageerror", lambda exc: errors.append(str(exc)))
+    page.goto(live_server.url + "/cohort/materials/")
+    assert page.locator("#panel-course").is_visible() and not page.locator("#panel-mine").is_visible()
+    assert page.locator('[data-shelf="course"] .cb-handle').count() == 0, "the course order is Avi's"
+    page.click("#tab-mine")
+    assert page.locator("#panel-mine").is_visible()
+    assert _titles(page, "mine") == ["ראשון", "שני", "שלישי"]
+    assert "של שירה" not in page.content()
+    assert page.evaluate(OVERFLOW, 390) <= 1
+
+    def saved(action):
+        with page.expect_response(lambda r: r.url.endswith("/materials/reorder/") and r.request.method == "POST") as r:
+            action()
+        assert r.value.status == 200
+        page.wait_for_selector("#cb-toast:not([hidden])")
+
+    cards = '[data-shelf="mine"] > .cb-material'
+    saved(lambda: _drag(page, f"{cards}:nth-child(1) .cb-handle", f"{cards}:nth-child(3)"))
+    assert _titles(page, "mine") == ["שני", "שלישי", "ראשון"]
+    assert [m.title for m in shelves.mine(ronit)] == ["שני", "שלישי", "ראשון"]
+
+    touch = ctx.new_cdp_session(page)
+    saved(lambda: _drag(page, f"{cards}:nth-child(3) .cb-handle", f"{cards}:nth-child(1)", touch=touch))
+    # onto the lower half of the first card: it lands second
+    assert [m.title for m in shelves.mine(ronit)] == ["שני", "ראשון", "שלישי"]
+
+    saved(lambda: page.click(f"{cards}:nth-child(2) [data-move='up']"))
+    assert [m.title for m in shelves.mine(ronit)] == ["ראשון", "שני", "שלישי"]
+
+    saved(lambda: page.click("#cb-toast-undo"))
+    assert [m.title for m in shelves.mine(ronit)] == ["שני", "ראשון", "שלישי"]
+
+    page.reload()
+    assert page.locator("#panel-mine").is_visible(), "the tab is remembered"
+    assert _titles(page, "mine") == ["שני", "ראשון", "שלישי"]
+    assert errors == []
+    ctx.close()
+
+
 @pytest.mark.django_db(transaction=True)
 def test_on_a_phone_the_board_comes_first_and_buttons_fit_a_thumb(browser, live_server, world):
     """Methodology 25 and REQ-C.40."""

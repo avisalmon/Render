@@ -118,12 +118,17 @@ class MaterialSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Material
-        fields = ["id", "kind", "title", "line", "url", "youtube_id", "file", "file_url", "created_at"]
-        read_only_fields = ["id", "youtube_id", "file_url", "created_at"]
+        fields = ["id", "kind", "title", "line", "url", "youtube_id", "file", "file_url", "shelf", "position", "created_at"]
+        read_only_fields = ["id", "youtube_id", "file_url", "shelf", "position", "created_at"]
         extra_kwargs = {"file": {"write_only": True, "required": False}}
+
+    shelf = serializers.SerializerMethodField()
 
     def get_file_url(self, obj):
         return f"/cohort/files/{obj.file.name}" if obj.file else None
+
+    def get_shelf(self, obj):
+        return "course" if obj.owner_id is None else "mine"
 
     def validate(self, attrs):
         _http(attrs.get("url") or "")

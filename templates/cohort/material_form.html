@@ -1,11 +1,14 @@
 {% extends "cohort/base.html" %}
 {% block title %}{% if item %}עריכת חומר{% else %}חומר חדש{% endif %} · השתלמות AI{% endblock %}
 {% block content %}
-<p class="cb-back"><a href="{% url 'cohort:materials' %}">חזרה לחומרים</a></p>
-<article class="cb-paper cb-form-paper">
+<p class="cb-back"><a href="{{ back }}">חזרה לחומרים</a></p>
+<article class="cb-paper cb-form-paper{% if shelf == 'mine' %} is-mine{% endif %}">
   <span class="cb-pin" aria-hidden="true"></span>
-  <h1 class="cb-h1">{% if item %}עריכת {{ item.title }}{% else %}חומר חדש{% endif %}</h1>
-  <p class="cb-muted">סרטון: קישור ליוטיוב. מסמך: קובץ שנשמר באתר. הדרכה: קישור להדרכה ב-babook. קישור: כל דף אחר.</p>
+  <h1 class="cb-h1">{% if item %}עריכת {{ item.title }}{% elif shelf == 'mine' %}חומר חדש ללוח שלי{% else %}חומר חדש לכולם{% endif %}</h1>
+  <p class="cb-muted">
+    {% if shelf == 'mine' %}רק את/ה תראה את החומר הזה.{% else %}כל המשתתפים יראו את החומר הזה.{% endif %}
+    סרטון: קישור ליוטיוב. מסמך: קובץ שנשמר באתר{% if shelf == 'mine' %} (עד 25MB){% endif %}. הדרכה: קישור להדרכה ב-babook. קישור: כל דף אחר.
+  </p>
   <form method="post" enctype="multipart/form-data" class="cb-form">
     {% csrf_token %}
     {% for field in form %}

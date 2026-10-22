@@ -69,8 +69,10 @@ coordinator prepares elsewhere. The pages are **containers of links**.
 | REQ-C.30 | Avi's shelf | Only Avi adds, edits and removes materials. Participants see them. | DONE |
 | REQ-C.31 | Three kinds | A YouTube video (plays inside the page, with a link to open it on YouTube), a document Avi uploads (kept in the site), and a babook course (a link into babook). | DONE |
 | REQ-C.32 | Title and a line | Every item has a title and one short line of explanation from Avi. | DONE |
-| REQ-C.33 | In the order added | No sessions, no topics: the order Avi added them. No notifications; Avi tells the group himself. | DONE |
+| REQ-C.33 | In the order Avi sets | No sessions, no topics. New items go to the bottom; Avi can then change the order (REQ-C.36). No notifications; Avi tells the group himself. | DONE (changed 2026-10-22) |
 | REQ-C.34 | The one link out | Linking into babook's courses is a deliberate exception to Rule 3, asked for by Avi: the participants are babook users and do the courses there. | DONE |
+| REQ-C.35 | Two shelves | Avi, 2026-10-22. Two tabs: the course's materials (Avi decides what is on it and in what order, everybody inside sees it) and "my materials", a private shelf for every person, Avi included. Only its owner sees it, adds to it, orders it and deletes from it; an admin does not see anybody else's. Anything on the course shelf can be copied to one's own with "keep it". Private files: up to 25MB each, 200MB a person; a kept copy shares the course file and costs nothing. | DONE |
+| REQ-C.36 | Order by dragging | Avi on the course shelf, everybody on their own: drag the handle with a mouse or a finger (the rest of the card still scrolls the page), or use the up and down arrows. Saved at once, with a "saved" note and an undo. The site remembers the order and which tab was open. | DONE |
 
 ## Chapter 6: How it must behave
 

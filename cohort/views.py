@@ -157,6 +157,11 @@ def private_file(request, path):
     full = Path(PRIVATE.path(str(clean)))
     if not full.is_file():
         raise Http404
+    if clean.parts[0] == "materials":
+        from . import shelves
+
+        if not shelves.file_visible_to(request.cohort_member, str(clean)):
+            raise Http404
     kind = mimetypes.guess_type(full.name)[0] or "application/octet-stream"
     download = clean.parts[0] == "materials"
     response = FileResponse(open(full, "rb"), content_type=kind, as_attachment=False)
@@ -209,34 +214,64 @@ def track_edit(request, slug):
 # ---------------------------------------------------------------- materials
 
 
+@ensure_csrf_cookie
 @access.inside
 def materials(request):
+    """Two shelves (REQ-C.30 to C.36): the course's, and the reader's own."""
+    from . import shelves
+
+    member = request.cohort_member
     return render(request, "cohort/materials.html", {
-        "items": Material.objects.all(), "section": "materials", "is_admin": request.cohort_member.admin,
+        "course_items": shelves.course(), "my_items": shelves.mine(member),
+        "section": "materials", "is_admin": member.admin, "space": shelves.total(member),
     })
 
 
-@access.admin_only
+@access.inside
 def material_edit(request, pk=None):
-    item = get_object_or_404(Material, pk=pk) if pk else None
+    from . import shelves
+    from .models import PRIVATE
+
+    member = request.cohort_member
+    item = get_object_or_404(shelves.visible(member), pk=pk) if pk else None
+    shelf = ("course" if item.owner_id is None else "mine") if item else request.GET.get("shelf", "course")
+    if shelf not in ("course", "mine"):
+        raise Http404
+    if item and not shelves.may_change(member, item):
+        raise Http404
+    if not item and shelf == "course" and not member.admin:
+        raise Http404
     form = MaterialForm(request.POST or None, request.FILES or None, instance=item)
+    back = "/cohort/materials/" + ("#mine" if shelf == "mine" else "")
     if request.method == "POST":
         if item and request.POST.get("action") == "delete":
-            if item.file:
-                item.file.delete(save=False)
-            item.delete()
+            shelves.remove(item)
             messages.success(request, "החומר הוסר.")
-            return redirect("cohort:materials")
+            return redirect(back)
+        if form.is_valid():
+            upload = request.FILES.get("file")
+            if upload and shelf == "mine":
+                try:
+                    shelves.check_quota(member, upload.size, but=item)
+                except shelves.Refused as why:
+                    form.add_error("file", str(why))
         if form.is_valid():
             m = form.save(commit=False)
             if not item:
                 m.created_by = request.user
+                m.owner = member if shelf == "mine" else None
+                m.position = shelves.next_position(m.owner)
             if m.kind != Material.FILE and m.file:
-                m.file.delete(save=False)
+                old = m.file.name
                 m.file = ""
+                m.save()
+                if not Material.objects.filter(file=old).exists():
+                    PRIVATE.delete(old)
             m.save()
-            return redirect("cohort:materials")
-    return render(request, "cohort/material_form.html", {"form": form, "item": item, "section": "materials"})
+            return redirect(back)
+    return render(request, "cohort/material_form.html", {
+        "form": form, "item": item, "section": "materials", "shelf": shelf, "back": back,
+    })
 
 
 # ---------------------------------------------------------------- requests (Avi)

@@ -1,34 +1,62 @@
 {% extends "cohort/base.html" %}
+{% load static %}
 {% block title %}חומרים · השתלמות AI{% endblock %}
 {% block content %}
-<div class="cb-head">
-  <h1 class="cb-title">חומרי ההשתלמות</h1>
-  {% if is_admin %}<a class="cb-btn" href="{% url 'cohort:material_new' %}" id="cb-material-add">+ חומר חדש</a>{% endif %}
-</div>
-{% if items %}
-  <div class="cb-materials">
-    {% for m in items %}
-      <article class="cb-paper cb-material" id="m{{ m.pk }}">
-        <span class="cb-pin" aria-hidden="true"></span>
-        <span class="cb-tag cb-tag-{{ m.kind }}">{{ m.get_kind_display }}</span>
-        <h2 class="cb-h2">{{ m.title }}</h2>
-        <p>{{ m.line }}</p>
-        {% if m.kind == "video" and m.youtube_id %}
-          <div class="cb-video">
-            <iframe src="https://www.youtube-nocookie.com/embed/{{ m.youtube_id }}" title="{{ m.title }}" loading="lazy"
-                    allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
-          </div>
-          <a class="cb-btn cb-btn-quiet" href="https://www.youtube.com/watch?v={{ m.youtube_id }}" target="_blank" rel="noopener noreferrer">לפתוח ביוטיוב</a>
-        {% elif m.kind == "file" and m.file %}
-          <a class="cb-btn" href="/cohort/files/{{ m.file.name }}" target="_blank" rel="noopener">לפתוח את המסמך</a>
-        {% elif m.url %}
-          <a class="cb-btn" href="{{ m.url }}" target="_blank" rel="noopener noreferrer">{% if m.kind == "course" %}להדרכה ב-babook{% else %}לפתוח{% endif %}</a>
-        {% endif %}
-        {% if is_admin %}<p class="cb-small"><a href="{% url 'cohort:material_edit' m.pk %}">עריכה</a></p>{% endif %}
-      </article>
-    {% endfor %}
+{% comment %}
+  REQ-C.30 to C.36. Two shelves in tabs: the course's (Avi decides what is on it
+  and in what order) and the reader's own (only they see it, add to it and
+  order it). Order is changed by dragging the handle, with a mouse or a finger,
+  or with the arrows; it is saved at once, with an undo.
+{% endcomment %}
+<div id="cb-shelves">
+  <div class="cb-head"><h1 class="cb-title">חומרים</h1></div>
+
+  <div class="cb-tabs" role="tablist" aria-label="לוחות החומרים">
+    <button type="button" role="tab" class="cb-tab" id="tab-course" data-tab="course" aria-controls="panel-course" aria-selected="true">
+      חומרי ההשתלמות <span class="cb-tab-count">{{ course_items|length }}</span>
+    </button>
+    <button type="button" role="tab" class="cb-tab" id="tab-mine" data-tab="mine" aria-controls="panel-mine" aria-selected="false" tabindex="-1">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 7V5a4 4 0 0 1 8 0v2h1v8H3V7zm2 0h4V5a2 2 0 0 0-4 0z"/></svg>
+      החומרים שלי <span class="cb-tab-count" id="cb-mine-count">{{ my_items|length }}</span>
+    </button>
   </div>
-{% else %}
-  <article class="cb-paper cb-empty"><p>עוד אין חומרים. אבי יוסיף כאן סרטונים, מסמכים והדרכות לאורך הקורס.</p></article>
-{% endif %}
+
+  <section class="cb-panel" role="tabpanel" id="panel-course" aria-labelledby="tab-course">
+    <div class="cb-panel-head">
+      <p class="cb-intro">{% if is_admin %}הלוח של כולם. מה שתשים כאן, כל המשתתפים רואים, בסדר שתקבע.{% else %}החומרים שאבי שם לכל המשתתפים. מוצאים משהו שרוצים לשמור? "לשמור אצלי" מעתיק אותו ללוח הפרטי שלך.{% endif %}</p>
+      {% if is_admin %}<a class="cb-btn" href="{% url 'cohort:material_new' %}" id="cb-material-add">+ חומר לכולם</a>{% endif %}
+    </div>
+    {% if course_items %}
+      <div class="cb-materials" data-shelf="course"{% if is_admin %} data-sortable="1"{% endif %}>
+        {% for m in course_items %}{% include "cohort/_material.html" with shelf="course" can_sort=is_admin can_edit=is_admin show_keep=True %}{% endfor %}
+      </div>
+    {% else %}
+      <article class="cb-paper cb-empty"><p>עוד אין חומרים. אבי יוסיף כאן סרטונים, מסמכים והדרכות לאורך הקורס.</p></article>
+    {% endif %}
+  </section>
+
+  <section class="cb-panel" role="tabpanel" id="panel-mine" aria-labelledby="tab-mine" hidden>
+    <div class="cb-panel-head">
+      <p class="cb-intro">הלוח הפרטי שלך. רק את/ה רואה אותו{% if is_admin %}, גם אתה כמנהל: זה לוח של משתמש רגיל{% endif %}. סרטונים, מסמכים וקישורים שחשובים לך, בסדר שנוח לך.
+        {% if space.used %}<span class="cb-small">({{ space.used_mb }}MB מתוך 200MB של קבצים)</span>{% endif %}</p>
+      <a class="cb-btn" href="{% url 'cohort:material_new' %}?shelf=mine" id="cb-mine-add">+ הוספת חומר</a>
+    </div>
+    {% if my_items %}
+      <div class="cb-materials" data-shelf="mine" data-sortable="1">
+        {% for m in my_items %}{% include "cohort/_material.html" with shelf="mine" can_sort=True can_edit=True show_keep=False %}{% endfor %}
+      </div>
+    {% else %}
+      <article class="cb-paper cb-empty is-mine" id="cb-mine-empty">
+        <p><b>הלוח שלך עוד ריק.</b> מוסיפים כאן סרטון, מסמך או קישור, ורק את/ה רואה אותם. אפשר גם ללחוץ "לשמור אצלי" על חומר מחומרי ההשתלמות.</p>
+        <a class="cb-btn" href="{% url 'cohort:material_new' %}?shelf=mine">+ הוספת החומר הראשון</a>
+      </article>
+    {% endif %}
+  </section>
+
+  <div class="cb-toast" id="cb-toast" role="status" aria-live="polite" hidden>
+    <span id="cb-toast-text"></span>
+    <button type="button" class="cb-toast-btn" id="cb-toast-undo" hidden>ביטול</button>
+  </div>
+</div>
+<script src="{% static 'cohort/materials.js' %}" defer></script>
 {% endblock %}
