@@ -164,3 +164,27 @@ def test_the_setting_turns_them_off(client, noa):
     noa.spine_photos = False
     noa.save()
     assert "spine.jpg" not in client.get("/books/").content.decode()
+
+
+def test_the_shelf_never_opens_a_spine_image_to_measure_it(noa, monkeypatch):
+    rows = _shelf_with_spines(noa)
+    item = rows[0][1]
+    item.refresh_from_db()
+    assert item.spine_w and item.spine_h
+    from django.db.models.fields.files import ImageFieldFile
+
+    def boom(self):
+        raise AssertionError("the shelf opened an image to measure it")
+
+    monkeypatch.setattr(ImageFieldFile, "width", property(boom))
+    assert all("photo" in r for r in shelf.shelf_books(noa, photos=True)[:3])
+
+
+def test_home_says_while_old_photos_are_being_cut(client, noa, settings):
+    settings.OPENAI_API_KEY = ""  # no sweep runs here: the scans stay waiting
+    make_scan(noa)
+    make_scan(noa, done=True)
+    client.force_login(noa.user)
+    html = client.get("/books/").content.decode()
+    assert "מכינים את השדרות מהצילומים שלך: 1 מתוך 2" in html
+

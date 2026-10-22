@@ -8,6 +8,7 @@
     {% t "home.shelf_of" name=profile.display_name as kicker %}
     {% t "home.count" n=count as hint_end %}
     {% include "books/_shelf.html" with shelf_id="home" books_json=books_json view=request.books_shelf_view kicker=kicker hint_end=hint_end tools=True %}
+    {% if spines_progress %}<p class="bk-help bk-spines-progress" role="status">{% t "spines.progress" done=spines_progress.done total=spines_progress.total %}</p>{% endif %}
     {% if not books_json or books_json == "[]" %}
     <div class="bk-empty bk-narrow">
       <h1 class="bk-title">{% t "home.empty_title" %}</h1>

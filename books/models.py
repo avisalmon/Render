@@ -390,6 +390,9 @@ class ScanItem(models.Model):
     # The book's real spine, cut and straightened from the shelf photo; its height there, in pixels.
     spine = models.ImageField(upload_to="spines/%Y/%m/", storage=books_storage, blank=True)
     spine_height = models.PositiveIntegerField(default=0)
+    # The cut image's own size, kept so the shelf never opens the image to measure it.
+    spine_w = models.PositiveIntegerField(default=0)
+    spine_h = models.PositiveIntegerField(default=0)
 
     class Meta:
         ordering = ["position"]

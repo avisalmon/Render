@@ -306,20 +306,59 @@
       self.retarget(drag.slot, id);
     }
 
+    // A mouse has no swipe (Avi, 2026-10-22): dragging pans the shelf, with a
+    // glide after release, and holding still picks a book up, as on a phone.
+    var pan = null, glide = 0;
+    function startPan(e) {
+      var sc = scroller();
+      if (!sc) return;
+      cancelAnimationFrame(glide);
+      pan = { sc: sc, x: e.clientX, left: sc.scrollLeft, lastX: e.clientX, lastT: performance.now(), v: 0 };
+      self.el.classList.add("is-panning");
+    }
+    function endPan() {
+      if (!pan) return;
+      var p = pan; pan = null;
+      self.el.classList.remove("is-panning");
+      self.el._dragMoved = true;
+      setTimeout(function () { self.el._dragMoved = false; }, 0);
+      var v = p.v;
+      var step = function () {
+        if (Math.abs(v) < 0.3) return;
+        p.sc.scrollLeft -= v;
+        v *= 0.92;
+        glide = requestAnimationFrame(step);
+      };
+      glide = requestAnimationFrame(step);
+    }
+
     self.el.addEventListener("pointerdown", function (e) {
       var btn = e.target.closest(".bk-spine");
-      if (!btn || (e.pointerType === "mouse" && e.button !== 0)) return;
+      var mouse = e.pointerType === "mouse";
+      if (mouse && e.button !== 0) return;
       self.el._dragMoved = false;
-      if (immediate) { begin(e, btn); return; }
-      pending = { btn: btn, x: e.clientX, y: e.clientY, e: e,
+      if (mouse) e.preventDefault();  // no text selection while panning
+      if (!btn) { if (mouse) { startPan(e); pending = { pan: true, x: e.clientX, y: e.clientY }; } return; }
+      if (immediate && !mouse) { begin(e, btn); return; }
+      pending = { btn: btn, x: e.clientX, y: e.clientY, e: e, mouse: mouse,
                   timer: setTimeout(function () { var p = pending; pending = null; if (p) begin(p.e, p.btn); }, LONG_PRESS) };
     });
 
     self.el.addEventListener("pointermove", function (e) {
       if (pending) {
         if (Math.abs(e.clientX - pending.x) > 8 || Math.abs(e.clientY - pending.y) > 8) {
-          clearTimeout(pending.timer); pending = null;  // a swipe: let the shelf scroll
+          clearTimeout(pending.timer);
+          var wasMouse = pending.mouse || pending.pan;
+          pending = null;  // a swipe: the shelf scrolls (by itself under a finger, by us under a mouse)
+          if (wasMouse && !pan) startPan(e);
         }
+        if (!pan) return;
+      }
+      if (pan) {
+        var now = performance.now();
+        pan.v = 0.8 * ((e.clientX - pan.lastX) / Math.max(1, now - pan.lastT) * 16) + 0.2 * pan.v;
+        pan.lastX = e.clientX; pan.lastT = now;
+        pan.sc.scrollLeft = pan.left - (e.clientX - pan.x);
         return;
       }
       if (!drag) return;
@@ -348,6 +387,7 @@
 
     function finish() {
       if (pending) { clearTimeout(pending.timer); pending = null; }
+      if (pan) { endPan(); return; }
       if (!drag) return;
       var d = drag; drag = null;
       var s = self.state[d.id];
@@ -367,6 +407,15 @@
     }
     self.el.addEventListener("pointerup", finish);
     self.el.addEventListener("pointercancel", finish);
+    window.addEventListener("pointerup", function () { if (pan) endPan(); });
+    // The mouse wheel slides the shelf sideways while there is more of it to see.
+    self.el.addEventListener("wheel", function (e) {
+      var sc = scroller();
+      if (!sc || sc.scrollWidth <= sc.clientWidth + 1 || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+      var before = sc.scrollLeft;
+      sc.scrollLeft += e.deltaY;
+      if (sc.scrollLeft !== before) e.preventDefault();
+    }, { passive: false });
   };
 
   // ---- the shelf ------------------------------------------------------------------------------

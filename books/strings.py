@@ -214,6 +214,7 @@ STRINGS = {
     "settings.edit": {"he": "עריכה", "en": "Edit"},
     "settings.km": {"he": "{n} ק״מ", "en": "{n} km"},
     "settings.since": {"he": "חבר/ה מאז {date}", "en": "Member since {date}"},
+    "spines.progress": {"he": "מכינים את השדרות מהצילומים שלך: {done} מתוך {total}. זה קורה ברקע, רעננו בעוד דקה.", "en": "Cutting your spines from your shelf photos: {done} of {total}. It runs in the background; refresh in a minute."},
     "settings.spine_photos": {"he": "השדרות במדף שלי כמו בצילום", "en": "My shelf shows the spines as photographed"},
     "settings.spine_text_down": {"he": "כיתוב השדרות מלמעלה למטה", "en": "Spine titles read top to bottom"},
     "ui.yes": {"he": "כן", "en": "Yes"},

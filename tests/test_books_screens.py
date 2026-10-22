@@ -504,6 +504,7 @@ def test_the_bookcase_and_living_views_render_their_spines(browser, live_server,
         b1, b3 = first.bounding_box(), third.bounding_box()
         page.mouse.move(b1["x"] + b1["width"] / 2, b1["y"] + b1["height"] / 2)
         page.mouse.down()
+        page.wait_for_timeout(450)  # with a mouse, hold to pick a book up; a drag pans (Avi, 2026-10-22)
         page.mouse.move(b3["x"] + b3["width"] + 10, b1["y"] + b1["height"] / 2, steps=8)
         page.mouse.up()
         page.wait_for_timeout(400)
@@ -840,6 +841,42 @@ def test_on_a_phone_the_phones_own_recognition_listens_in_hebrew_for_free(browse
         page.wait_for_function("document.querySelector('[data-think-card]').hidden")
         assert ReadingNote.objects.get(profile=rp).source == "voice"
         assert voice_calls == [] and not ModelCall.objects.filter(purpose="voice_note").exists()
+    finally:
+        context.close()
+
+
+def test_on_a_computer_the_mouse_pans_the_shelf_and_the_wheel_slides_it(browser, live_server, db):
+    """Avi, 2026-10-22: on a computer the mouse moved the books, not the shelf.
+    A drag pans the shelf and leaves the books where they are; the wheel slides
+    it sideways; holding still is what picks a book up."""
+    from books import catalog
+    from books.models import Copy, Profile
+    build_world()
+    sp = Profile.objects.get(user__username="shelver")
+    for i in range(40):
+        e = catalog.CatalogEntry.objects.create(collection_type=catalog.book_type(), title=f"ספר מדף {i}")
+        Copy.objects.create(owner=sp, entry=e, position=200 + i)
+    context, page, _ = _open(browser, live_server, "shelver", "/books/", DESKTOP, "light")
+    try:
+        sc = page.locator(".bk-shelf-scroll").first
+        page.wait_for_timeout(300)
+        assert page.evaluate("document.querySelector('.bk-shelf-scroll').scrollWidth > document.querySelector('.bk-shelf-scroll').clientWidth")
+        order = "() => [...document.querySelectorAll('.bk-shelf-row .bk-spine')].map(s => s.dataset.book).join(',')"
+        before_order = page.evaluate(order)
+        start = page.evaluate("document.querySelector('.bk-shelf-scroll').scrollLeft")
+        box = sc.bounding_box()
+        y = box["y"] + box["height"] * 0.6
+        page.mouse.move(box["x"] + box["width"] * 0.3, y)
+        page.mouse.down()
+        page.mouse.move(box["x"] + box["width"] * 0.7, y, steps=10)
+        page.mouse.up()
+        page.wait_for_timeout(600)
+        after_drag = page.evaluate("document.querySelector('.bk-shelf-scroll').scrollLeft")
+        assert abs(after_drag - start) > 100 and page.evaluate(order) == before_order
+        page.mouse.move(box["x"] + box["width"] * 0.5, y)
+        page.mouse.wheel(0, 300)
+        page.wait_for_timeout(300)
+        assert page.evaluate("document.querySelector('.bk-shelf-scroll').scrollLeft") != after_drag
     finally:
         context.close()
 

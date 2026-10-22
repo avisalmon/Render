@@ -891,3 +891,28 @@ what is known, and let the answer stand for them alone when it differs
 from shared data. Test the question with data the automation would have
 filled, not only with blanks.
 
+### 36. Every way of pointing: a finger, a mouse, a wheel
+
+Avi, 2026-10-22, on a computer: the mouse moved the books and not the
+shelf. On a phone a swipe is the browser's own scrolling and a long press
+picks a book up; a mouse has no swipe, so a drag either did nothing or, in
+the living view, grabbed a book at once. Every shelf test used a phone or a
+mouse that picked books up; none panned with a mouse.
+
+**The rule.** A widget that scrolls or drags is tested with each pointer
+it will meet: a finger on a phone, a mouse drag and the wheel on a
+computer. With a mouse, a drag pans and holding still picks up, the same
+gesture as a long press (`test_on_a_computer_the_mouse_pans_the_shelf_...`).
+
+### 37. Never measure an image while drawing a page
+
+The first build of real spines read each spine's width and height from the
+image file while building the shelf. On Render the files live in cloud
+storage, so every visit to the home page fetched every spine image just to
+measure it. Found by reading the code after the push, before anyone felt
+it.
+
+**The rule.** Keep an image's width and height in the database when it is
+made (`ScanItem.spine_w`, `spine_h`), and never touch `ImageField.width` or
+`.height` on a page; a test makes that access fail.
+

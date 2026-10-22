@@ -334,7 +334,8 @@ def cut_spines(scan, pairs):
                 item.spine.delete(save=False)
             item.spine.save(f"{scan.pk}-{item.pk}.jpg", ContentFile(buf.getvalue()), save=False)
             item.spine_height = height
-            item.save(update_fields=["spine", "spine_height"])
+            item.spine_w, item.spine_h = spine.size
+            item.save(update_fields=["spine", "spine_height", "spine_w", "spine_h"])
     scan.spines_done = True
     scan.save(update_fields=["spines_done"])
 
@@ -409,11 +410,17 @@ def sweep_spines(profile):
     return False
 
 
+def spines_waiting(profile):
+    """Old shelf photos still to be cut into spines: (waiting, all)."""
+    scans = ShelfScan.objects.filter(owner=profile, is_single=False, status__in=(ShelfScan.REVIEW, ShelfScan.DONE))
+    return scans.filter(spines_done=False).count(), scans.count()
+
+
 def spine_rows(copies):
     """For my shelf: each copy's real spine (url, width over height, height
     against the other books in its photo), where it has one."""
     items = (ScanItem.objects.filter(copy__in=copies).exclude(spine="")
-             .only("pk", "copy_id", "scan_id", "spine", "spine_height"))
+             .only("pk", "copy_id", "scan_id", "spine", "spine_height", "spine_w", "spine_h"))
     by_scan, out = {}, {}
     for it in items:
         by_scan.setdefault(it.scan_id, []).append(it)
@@ -421,10 +428,14 @@ def spine_rows(copies):
         heights = sorted(i.spine_height for i in scan_items if i.spine_height)
         median = heights[len(heights) // 2] if heights else 0
         for it in scan_items:
-            try:
-                w, h = it.spine.width, it.spine.height
-            except Exception:  # noqa: BLE001
-                continue
+            w, h = it.spine_w, it.spine_h
+            if not (w and h):
+                # Cut before its size was kept: measured once, then never again.
+                try:
+                    w, h = it.spine.width, it.spine.height
+                    ScanItem.objects.filter(pk=it.pk).update(spine_w=w, spine_h=h)
+                except Exception:  # noqa: BLE001
+                    continue
             if not h:
                 continue
             rel = (it.spine_height / median) if median and it.spine_height else 1.0

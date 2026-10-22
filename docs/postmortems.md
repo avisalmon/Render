@@ -17,6 +17,27 @@ Newest first.
 
 ---
 
+## PM-39 · 2026-10-22 · The mouse moved the books; the shelf measured every spine image
+
+**What happened.** On a computer, dragging with the mouse moved the books
+instead of the shelf (Avi). Separately, the real spines just pushed read each
+spine image's size from cloud storage on every home page view: a slow page
+waiting to happen, found by reading the code after the push. Avi also
+asked whether the spine experiment had run; the backfill runs in the
+background and the page did not say so, so it now shows its progress.
+
+**Why our process let it happen.** Shelf tests covered touch, and a mouse
+only for picking books up, never for panning. The spine code used Django's
+`ImageField.width`, which quietly opens the file.
+
+**Rule.** Test each pointer a widget will meet (finger, mouse drag, wheel);
+store image sizes when the image is made and never measure on a page.
+Background work a person is waiting for says where it is (mistake 30 in
+FullStackBKM, applied again).
+
+Here: docs/building_an_app.md mistakes 36 and 37
+BKM: FullStackBKM 8e587c2 (lessons 44 and 45)
+
 ## PM-38 · 2026-10-22 · Real spines: a spike first, then the build
 
 **What happened.** Avi asked whether the shelf could show each book as it

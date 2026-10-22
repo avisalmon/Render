@@ -1026,4 +1026,10 @@ html[dir="rtl"] .bk-prop > summary { padding: 6px 14px 6px 6px; }
 .bk-spine--photo .bk-spine-band, .bk-spine--photo .bk-spine-title, .bk-spine--photo .bk-spine-author { visibility: hidden; }
 .bk-spine--photo::after { content: ""; position: absolute; inset: 0; pointer-events: none;
   background: linear-gradient(90deg, rgba(0, 0, 0, .18), rgba(255, 255, 255, .06) 30%, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, .22)); }
+/* A mouse pans the shelf by dragging (Avi, 2026-10-22). */
+@media (hover: hover) and (pointer: fine) {
+  .bk-shelf-row { cursor: grab; }
+  .bk-shelf-row.is-panning, .bk-shelf-row.is-panning .bk-spine { cursor: grabbing; user-select: none; }
+}
+.bk-spines-progress { margin: 6px 0 0; text-align: center; }
 

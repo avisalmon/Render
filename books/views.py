@@ -144,8 +144,12 @@ def _home(request):
 
     profile = request.books_profile
     rows = shelf.shelf_books(profile, photos=profile.spine_photos)
+    spines_progress = None
     if profile.spine_photos:
         shelf.sweep_spines(profile)
+        waiting, total = shelf.spines_waiting(profile)
+        if waiting:
+            spines_progress = {"done": total - waiting, "total": total}
     from . import play
 
     return render(request, "books/home.html", {
@@ -155,6 +159,7 @@ def _home(request):
         "reading_today": __import__("books.reading", fromlist=["stats"]).stats(profile)["today_minutes"],
         "go_on": (__import__("books.reading", fromlist=["continue_list"]).continue_list(profile, limit=1) or [None])[0],
         "dial": _dial(profile),
+        "spines_progress": spines_progress,
         "just_finished": _just_finished(request, profile),
         "streak_moment": _streak_moment(request, profile),
         "book_pct": _book_ring(profile, *_dial_book(profile)),
