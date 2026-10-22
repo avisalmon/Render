@@ -303,8 +303,9 @@ def accept(item, entry, visibility, offer_kinds, location_note, edited=False):
 # background, the first time their owner opens the shelf.
 
 SPINE_MAX_HEIGHT = 640
-SPINES_PER_SWEEP = 25
+SPINES_PER_SWEEP = 6     # a pass is a few minutes, not half an hour of a busy web process
 SPINE_SWEEP_EVERY = 600  # seconds
+CUT_MAX_SIDE = 2000      # spines are at most 640px tall: no need to decode the 4000px photo
 
 
 def cut_spines(scan, pairs):
@@ -316,8 +317,12 @@ def cut_spines(scan, pairs):
     if pairs:
         with scan.photo.open("rb") as fh:
             img = Image.open(BytesIO(fh.read()))
+            # JPEG draft mode decodes at a quarter of the size for a quarter of the memory
+            # (a 4000px photo is 36MB decoded; the web process has 512MB for everything).
+            img.draft("RGB", (CUT_MAX_SIDE, CUT_MAX_SIDE))
             img.load()
-        img = img.convert("RGB")
+        if img.mode != "RGB":
+            img = img.convert("RGB")
         w, h = img.size
         for item, (tl, tr, ty, bl, br, by) in pairs:
             width = int(((tr - tl) + (br - bl)) / 2 * w)
@@ -336,6 +341,8 @@ def cut_spines(scan, pairs):
             item.spine_height = height
             item.spine_w, item.spine_h = spine.size
             item.save(update_fields=["spine", "spine_height", "spine_w", "spine_h"])
+            spine.close()
+        img.close()
     scan.spines_done = True
     scan.save(update_fields=["spines_done"])
 
@@ -380,6 +387,8 @@ def spines_batch_job(job):
     scans = ShelfScan.objects.filter(spines_done=False, status__in=(ShelfScan.REVIEW, ShelfScan.DONE))
     if profile is not None:
         scans = scans.filter(owner=profile)
+    import gc
+
     for scan in scans.order_by("created_at")[:SPINES_PER_SWEEP]:
         try:
             spines_for_old_scan(scan, job=job)
@@ -390,6 +399,8 @@ def spines_batch_job(job):
             log.exception("books spines: scan %s", scan.pk)
             scan.spines_done = True  # one try per scan: never a loop of paid calls
             scan.save(update_fields=["spines_done"])
+        finally:
+            gc.collect()  # the decoded photo and its strips go now, not when Python gets round to it
 
 
 def sweep_spines(profile):

@@ -118,13 +118,21 @@ def cost_of(model, input_tokens, output_tokens):
     return Decimal(str((input_tokens * p_in + output_tokens * p_out) / 1_000_000)).quantize(Decimal("0.00001"))
 
 
+_clients = {}
+
+
 def get_client():
+    """One client per key for the whole process: each OpenAI() carries its own
+    connection pool, and a new one per call piled them up (memory, 2026-10-22)."""
     key = getattr(settings, "OPENAI_API_KEY", "")
     if not key:
         raise KeyProblem("OPENAI_API_KEY is not set")
-    from openai import OpenAI
+    client = _clients.get(key)
+    if client is None:
+        from openai import OpenAI
 
-    return OpenAI(api_key=key)
+        client = _clients[key] = OpenAI(api_key=key)
+    return client
 
 
 def _data_url(image):
