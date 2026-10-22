@@ -17,6 +17,26 @@ Newest first.
 
 ---
 
+## PM-42 · 2026-10-22 · A whole app's suite on every change
+
+**What happened.** For two days I ran the whole Books suite (about 20
+minutes) before nearly every push, although Avi's rule (2026-10-10) was:
+only the tests for what changed, the full regression when he asks. Avi:
+"Stop running full regression on every change. Just check what you done.
+Twice a day or when I ask."
+
+**Why our process let it happen.** I read "full regression" as the
+site-wide suite and treated one app's whole suite as scoped, and a note of
+my own ("run the whole Books suite when the shared base template changes")
+overrode his rule.
+
+**Rule.** An app's whole suite is a full regression too: at most twice a
+day or on request. After a change: the changed tests, the guards and the
+browser checks for the touched screens, then push. Recorded in memory.
+
+Here: memory (full regression only on request)
+BKM: FullStackBKM e5b1166 (lesson 48)
+
 ## PM-41 · 2026-10-22 · Friends, and a width check the safety net had blinded
 
 **What happened.** Built friends at Avi's word: invite links (mutual

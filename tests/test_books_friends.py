@@ -56,8 +56,10 @@ def test_my_invite_link_is_mine_and_stays_the_same(avi):
 def test_a_visitor_through_my_link_joins_and_we_follow_each_other(client, avi):
     code = friends.invite_for(avi).code
     r = client.get(f"/books/i/{code}/?via=whatsapp")
-    assert r.status_code == 302 and r["Location"] == "/books/"
-    assert "avi הזמין/ה אותך" in client.get("/books/").content.decode()
+    html = r.content.decode()
+    # The link is the welcome page itself, with its own preview for WhatsApp and the rest, in English.
+    assert r.status_code == 200 and 'property="og:title" content="avi invited you to Books"' in html
+    assert "books/og-invite" in html and "avi הזמין/ה אותך" in html
     u = User.objects.create_user("dana", "dana@example.com", "pw")
     client.force_login(u)
     r = client.post("/books/welcome/", {"display_name": "דנה", "language": "he", "is_adult_confirmed": "on",
@@ -201,3 +203,12 @@ def test_the_api_follows_answers_and_removes(client, avi, moshe):
     codes = client.get("/books/api/invites/").json()
     codes = codes["results"] if isinstance(codes, dict) else codes
     assert len(codes) == 1 and len(codes[0]["code"]) == 7
+
+
+def test_the_invitation_is_one_share_button_in_english(client, avi):
+    client.force_login(avi.user)
+    html = client.get("/books/friends/").content.decode()
+    assert html.count("data-share=") == 1 and "wa.me" not in html and "mailto:" not in html
+    assert "Come see my bookshelf" in html and "Hi! I put my bookshelf on Books." in html
+    assert "data-qr-open" in html
+

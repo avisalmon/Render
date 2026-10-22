@@ -37,7 +37,11 @@ def invite_link(request, code):
     friends.remember_invite(request, code, channel)
     if request.user.is_authenticated:
         return redirect("books:onboarding")
-    return redirect("books:home")
+    # The welcome page itself, at the link: so WhatsApp and the rest show the
+    # invitation's own title, words and picture when the link is pasted.
+    from .views import landing
+
+    return landing(request, invite=invite)
 
 
 @books_page
@@ -52,10 +56,11 @@ def friends_page(request):
         found = [{"p": p, "status": status.get(p.pk)} for p in friends.find_people(me, q)]
     url = _invite_url(request, invite)
     lang = _lang(request)
-    message = t("friends.share_text", lang, name=me.display_name, url=url)
+    # The invitation goes out in English (Avi, 2026-10-22), whatever my own language.
+    message = t("friends.share_text", "en", name=me.display_name)
     return render(request, "books/friends/friends.html", {
         "tab": tab, "q": q, "found": found, "invite": invite, "invite_url": url, "share_text": message,
-        "share_json": json.dumps({"title": t("brand", lang), "text": message, "url": url}, ensure_ascii=False),
+        "share_json": json.dumps({"title": t("friends.share_title", "en"), "text": message, "url": url}, ensure_ascii=False),
         "following": friends.following(me), "followers": friends.followers(me),
         "requests": friends.requests_for(me), "counts": friends.counts(me),
         "followed_back": set(Follow.objects.filter(follower=me, status=Follow.ACCEPTED).values_list("followee_id", flat=True)),
@@ -69,7 +74,7 @@ def invite_qr(request):
     import qrcode.image.svg
 
     url = _invite_url(request, friends.invite_for(request.books_profile)) + "?via=qr"
-    img = qrcode.make(url, image_factory=qrcode.image.svg.SvgPathImage, box_size=12, border=2)
+    img = qrcode.make(url, image_factory=qrcode.image.svg.SvgPathFillImage, box_size=12, border=3)  # white behind black
     response = HttpResponse(img.to_string(), content_type="image/svg+xml")
     response["Cache-Control"] = "private, max-age=86400"
     return response

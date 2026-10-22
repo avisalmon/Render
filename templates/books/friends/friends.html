@@ -8,15 +8,11 @@
   <section class="bk-invite" aria-labelledby="invite-h">
     <h2 class="bk-invite-title" id="invite-h">{% t "friends.invite_h" %}</h2>
     <p class="bk-invite-lead">{% t "friends.invite_lead" %}</p>
-    <button type="button" class="bk-btn bk-btn--primary bk-btn--wide bk-invite-share" data-share='{{ share_json }}' hidden>
-      {% include "books/ui/_icon.html" with name="share" %} {% t "friends.share" %}
+    <button type="button" class="bk-btn bk-btn--primary bk-btn--wide bk-invite-share" data-share='{{ share_json }}'
+            data-copied="{% t "friends.copied_note" %}">
+      {% include "books/ui/_icon.html" with name="share" %} <span data-share-label>{% t "friends.share" %}</span>
     </button>
-    <div class="bk-invite-ways">
-      <a class="bk-invite-way" href="https://wa.me/?text={{ share_text|urlencode }}%3Fvia%3Dwhatsapp" target="_blank" rel="noopener">{% t "friends.via_whatsapp" %}</a>
-      <a class="bk-invite-way" href="mailto:?subject={{ "friends.mail_subject"|stringformat:"s" }}&amp;body={{ share_text|urlencode }}%3Fvia%3Demail" data-mail-subject="{% t "friends.mail_subject" %}">{% t "friends.via_email" %}</a>
-      <button type="button" class="bk-invite-way" data-copy="{{ invite_url }}?via=copy" data-done="{% t "friends.copied" %}">{% t "friends.via_copy" %}</button>
-      <button type="button" class="bk-invite-way" data-qr-open aria-expanded="false">{% t "friends.via_qr" %}</button>
-    </div>
+    <button type="button" class="bk-invite-way" data-qr-open aria-expanded="false">{% t "friends.via_qr" %}</button>
     <div class="bk-invite-qr" data-qr hidden>
       <img src="{% url 'books:invite_qr' %}" alt="{% t "friends.qr_alt" %}" width="220" height="220" loading="lazy">
       <p class="bk-help" style="margin: 6px 0 0">{% t "friends.qr_help" %}</p>
@@ -97,24 +93,20 @@
 {% block scripts %}
 <script>
 (function () {
-  // The phone's own share sheet first; the other ways stay for everyone else.
+  // One share button (Avi, 2026-10-22): the phone's own share sheet (WhatsApp,
+  // mail, everything); where there is none, the invitation is copied.
   var share = document.querySelector('[data-share]');
-  if (share && navigator.share) {
-    share.hidden = false;
-    share.addEventListener('click', function () {
-      var d = JSON.parse(share.getAttribute('data-share'));
-      d.url = d.url + '?via=share';
-      d.text = d.text.replace(/https?:\S+$/, '').trim();
-      navigator.share(d).catch(function () {});
-    });
-  }
-  var copy = document.querySelector('[data-copy]');
-  if (copy) copy.addEventListener('click', function () {
-    var done = function () { var t = copy.textContent; copy.textContent = copy.getAttribute('data-done'); setTimeout(function () { copy.textContent = t; }, 1800); };
-    if (navigator.clipboard) navigator.clipboard.writeText(copy.getAttribute('data-copy')).then(done).catch(function () {});
+  if (share) share.addEventListener('click', function () {
+    var d = JSON.parse(share.getAttribute('data-share'));
+    if (navigator.share) {
+      navigator.share({title: d.title, text: d.text, url: d.url + '?via=share'}).catch(function () {});
+      return;
+    }
+    var label = share.querySelector('[data-share-label]'), was = label.textContent;
+    var done = function () { label.textContent = share.getAttribute('data-copied'); setTimeout(function () { label.textContent = was; }, 2200); };
+    var all = d.text + ' ' + d.url + '?via=copy';
+    if (navigator.clipboard) navigator.clipboard.writeText(all).then(done).catch(function () {});
   });
-  var mail = document.querySelector('[data-mail-subject]');
-  if (mail) mail.href = mail.href.replace(/subject=[^&]*/, 'subject=' + encodeURIComponent(mail.getAttribute('data-mail-subject')));
   var qrOpen = document.querySelector('[data-qr-open]'), qr = document.querySelector('[data-qr]');
   if (qrOpen && qr) qrOpen.addEventListener('click', function () {
     qr.hidden = !qr.hidden;

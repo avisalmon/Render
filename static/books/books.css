@@ -14,6 +14,8 @@ html[data-palette="lamplit"] {
   --bk-brass: #7A5518;
   --bk-on-brass: #FFF8EA;
   --bk-flame: #E8590C;
+  --bk-qr-bg: #FFFFFF;
+  --bk-qr-ink: #111111;
   --bk-flame-core: #FFB020;
   --bk-wax: #F3E9D2;
   --bk-wax-edge: #D2BF97;
@@ -51,6 +53,8 @@ html[data-palette="den"] {
   --bk-brass: #D8B46A;
   --bk-on-brass: #15120F;
   --bk-flame: #FF7A2E;
+  --bk-qr-bg: #FFFFFF;
+  --bk-qr-ink: #111111;
   --bk-flame-core: #FFC84A;
   --bk-wax: #E9DCC0;
   --bk-wax-edge: #B5A27C;
@@ -80,6 +84,8 @@ html[data-palette="den"] {
     --bk-brass: #D8B46A;
     --bk-on-brass: #15120F;
     --bk-flame: #FF7A2E;
+    --bk-qr-bg: #FFFFFF;
+    --bk-qr-ink: #111111;
     --bk-flame-core: #FFC84A;
     --bk-wax: #E9DCC0;
     --bk-wax-edge: #B5A27C;
@@ -113,6 +119,8 @@ html[data-palette="warm"]:not([data-theme="dark"]) {
   --bk-brass: #B4532A;
   --bk-on-brass: #FFFDF8;
   --bk-flame: #E8590C;
+  --bk-qr-bg: #FFFFFF;
+  --bk-qr-ink: #111111;
   --bk-flame-core: #FFB020;
   --bk-wax: #F3E9D2;
   --bk-wax-edge: #D2BF97;
@@ -136,6 +144,8 @@ html[data-palette="bright"]:not([data-theme="dark"]) {
   --bk-brass: #4A2FD6;
   --bk-on-brass: #FFFFFF;
   --bk-flame: #E8590C;
+  --bk-qr-bg: #FFFFFF;
+  --bk-qr-ink: #111111;
   --bk-flame-core: #FFB020;
   --bk-wax: #F3E9D2;
   --bk-wax-edge: #D2BF97;
@@ -1055,11 +1065,11 @@ html[dir="rtl"] .bk-prop > summary { padding: 6px 14px 6px 6px; }
 .bk-invite-title { font-family: var(--bk-serif); font-size: 24px; margin: 0; }
 .bk-invite-lead { margin: 0; color: var(--bk-muted); line-height: 1.5; }
 .bk-invite-share { min-height: 52px; font-size: 17px; gap: 8px; }
-.bk-invite-ways { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .bk-invite-way { display: flex; align-items: center; justify-content: center; min-height: 48px; border-radius: 12px; border: 1px solid var(--bk-line);
   background: var(--bk-ground); color: var(--bk-ink); font: inherit; font-weight: 600; text-decoration: none; cursor: pointer; }
 .bk-invite-way:hover { border-color: var(--bk-brass); color: var(--bk-ink); }
-.bk-invite-qr { justify-self: center; text-align: center; background: var(--bk-on-brass); padding: 12px; border-radius: 12px; }
+.bk-invite-qr { justify-self: center; text-align: center; background: var(--bk-qr-bg); color: var(--bk-qr-ink); padding: 14px; border-radius: 12px; }
+.bk-invite-qr .bk-help { color: var(--bk-qr-ink); }
 .bk-invite-qr img { display: block; width: 220px; height: 220px; }
 .bk-invite-link { margin: 0; font-size: 12px; color: var(--bk-muted); text-align: center; overflow-wrap: anywhere; }
 .bk-friend-search { margin: 0 0 10px; }

@@ -19,6 +19,7 @@
   <meta name="theme-color" content="{{ request.books_theme_color|default:'' }}">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="{% t "brand" %}">
+  {% block meta %}{% endblock %}
 </head>
 <body class="bk" data-screen="{% block screen %}page{% endblock %}" data-csrf="{{ csrf_token }}">
   <a class="bk-skip" href="#bk-content">{% t "skip" %}</a>

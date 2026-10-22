@@ -1,6 +1,18 @@
 {% extends "books/base.html" %}{% load books_tags %}
 {% block title %}{% t "brand" %} · {% t "landing.title" %}{% endblock %}
 {% block screen %}landing{% endblock %}
+{% block meta %}{% if og %}
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Books">
+  <meta property="og:title" content="{{ og.title }}">
+  <meta property="og:description" content="{{ og.description }}">
+  <meta property="og:image" content="{{ og.image }}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:url" content="{{ og.url }}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="description" content="{{ og.description }}">
+{% endif %}{% endblock %}
 {% block content %}
 <div class="bk-landing">
   <section class="bk-hero">

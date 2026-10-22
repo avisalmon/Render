@@ -66,7 +66,7 @@ DEMO_SHELF = [
 ]
 
 
-def landing(request):
+def landing(request, invite=None):
     from . import shelf
 
     rows = []
@@ -74,11 +74,20 @@ def landing(request):
         row = {"id": -(i + 1), "title": title, "author": author, "status": "public", "rare": False, "url": ""}
         row.update(shelf.spine_for(9000 + i, title))
         rows.append(row)
+    from django.templatetags.static import static
+
     from . import friends
 
-    invite = friends.pending_invite(request)
+    pending = invite or friends.pending_invite(request)
+    og = None
+    if invite is not None:
+        # The preview a pasted link shows, in English (Avi, 2026-10-22).
+        og = {"title": t("friends.og_title", "en", name=invite.inviter.display_name),
+              "description": t("friends.og_description", "en"),
+              "image": request.build_absolute_uri(static("books/og-invite.png")),
+              "url": request.build_absolute_uri(request.path)}
     return render(request, "books/landing.html", {"books_json": json.dumps(rows, ensure_ascii=False),
-                                                  "inviter": invite.inviter if invite else None})
+                                                  "inviter": pending.inviter if pending else None, "og": og})
 
 
 HEBREW_DAYS = ["ב", "ג", "ד", "ה", "ו", "ש", "א"]  # Monday first, as date.weekday() counts
