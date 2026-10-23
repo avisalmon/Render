@@ -1189,4 +1189,6 @@ html[dir="rtl"] .bk-prop > summary { padding: 6px 14px 6px 6px; }
 .bk-timeline-facts { font-size: 12.5px; color: var(--bk-muted); }
 .bk-sittings { margin-top: 10px; }
 .bk-sittings-list { margin: 0; padding-inline-start: 18px; font-size: 14px; color: var(--bk-muted); display: grid; gap: 4px; }
+/* ---- the straightened cover's way back (Avi, 2026-10-23) ---------------------------------- */
+.bk-cover-undo { display: block; min-height: 44px; background: none; border: 0; padding: 0; font: inherit; text-align: start; color: var(--bk-brass); text-decoration: underline; cursor: pointer; }
 

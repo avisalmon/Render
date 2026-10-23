@@ -1026,3 +1026,22 @@ often, search for every place that inferred an event from its absence
 (here: the day without this sitting was under five minutes, and the screen
 did not already celebrate it). Test the event along the new path too.
 
+### 46. Build an image feature against made-up photos with known answers, from a real camera
+
+Avi asked for the cover photo to be found and straightened on the phone.
+There were no angled cover photos to test with, so photos were made up:
+covers on wood, plain, dark and cloth tables, with a hand on the edge in
+some. The first made-up angles were not a real camera's (a turn plus a
+shear), and the proportion formula, which is right for a real camera,
+looked wrong on them. With a true 3D camera the same formula was right in
+nearly every case. Tuned on 60 photos, it was then judged on 100 it had
+never seen: 93 within 2%.
+
+**The rule.** For an image feature without real samples, generate photos
+whose true answer is known, with the physics of the real thing (a real
+camera projection, real-looking surfaces, a hand in the way), measure every
+change on the same set, keep a second set aside for the verdict, and put a
+small version of the set in the test suite. Look at the failures as
+pictures, with the true answer drawn over the guess, before changing
+anything.
+

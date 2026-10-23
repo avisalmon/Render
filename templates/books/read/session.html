@@ -19,7 +19,7 @@
     </span>
     <label class="bk-btn bk-btn--small bk-file-button">
       {% include "books/ui/_icon.html" with name="camera" %} {% t "read.cover_take" %}
-      <input class="bk-visually-hidden" type="file" accept="image/*" capture="environment" data-first-cover-input
+      <input class="bk-visually-hidden" type="file" accept="image/*" capture="environment" data-first-cover-input data-working="{% t "first.cover_working" %}" data-straight="{% t "first.cover_straight" %}" data-saved="{% t "first.cover_saved" %}" data-undo="{% t "first.cover_undo" %}"
              data-url="{% url 'books:first_cover' session.entry_id %}">
     </label>
     {% if back %}
@@ -160,6 +160,7 @@
 <script src="{% static 'books/notes.js' %}" defer></script>
 <script src="{% static 'books/sky.js' %}" defer></script>
 <script src="{% static 'books/finish.js' %}" defer></script>
+<script src="{% static 'books/rectify.js' %}" defer></script>
 <script src="{% static 'books/first.js' %}" defer></script>
 <script>
 window.addEventListener('DOMContentLoaded', function () {

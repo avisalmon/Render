@@ -104,14 +104,26 @@ def test_my_cover_fills_an_empty_catalogue_cover_and_my_copy(noa, book):
     assert CopyPhoto.objects.get(copy=copy).kind == "cover"
 
 
-def test_my_cover_replaces_a_small_catalogue_cover_but_never_a_good_one(noa, book):
+def test_my_cover_replaces_a_small_catalogue_cover_but_never_someone_elses_good_one(noa, book):
     book.cover.save("small.jpg", ContentFile(jpeg(200, 300)), save=True)
     assert firstread.save_cover(noa, book, photo())["catalogue"] is True
     book.refresh_from_db()
     good = book.cover.name
-    assert firstread.save_cover(noa, book, photo())["catalogue"] is False  # mine is 800 wide now: it stays
+    dan = Profile.objects.create(user=User.objects.create_user("dan", "dan@example.com", "pw"), display_name="dan",
+                                 is_adult_confirmed=True)
+    assert firstread.save_cover(dan, book, photo())["catalogue"] is False  # noa's is 800 wide now: it stays
     book.refresh_from_db()
     assert book.cover.name == good
+
+
+def test_i_can_replace_my_own_photo_of_the_cover(noa, book):
+    """Avi, 2026-10-23: a straightened cover that came out wrong is kept as shot, or taken again."""
+    firstread.save_cover(noa, book, photo())
+    book.refresh_from_db()
+    first = book.cover.name
+    assert firstread.save_cover(noa, book, photo())["catalogue"] is True
+    book.refresh_from_db()
+    assert book.cover.name != first
 
 
 def test_a_second_photo_replaces_my_first(noa, book):
@@ -199,7 +211,8 @@ def test_the_reading_screen_lets_me_photograph_both_covers(client, settings, noa
     reading.start(noa, book, 12)
     client.force_login(noa.user)
     html = client.get("/books/read/").content.decode()
-    assert f'data-first-cover-input\n             data-url="/books/read/first/{book.pk}/cover/"' in html
+    assert "data-first-cover-input" in html and f'data-url="/books/read/first/{book.pk}/cover/"' in html
+    assert "books/rectify.js" in html and "לא יצא טוב? לשמור כמו שצולם" in html
     assert f'data-first-back-input\n             data-url="/books/read/first/{book.pk}/back/"' in html
     assert "books/first.js" in html and "צילום הכריכה" in html and "צילום הגב" in html
     r = client.post(f"/books/read/first/{book.pk}/cover/", {"photo": photo()})

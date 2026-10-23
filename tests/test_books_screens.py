@@ -1144,3 +1144,38 @@ def test_a_screen_left_open_asks_and_stops_the_clock_when_nobody_answers(browser
         assert s.paused_at is None and ReadingSession.objects.get(pk=s.pk).ended_at is None
     finally:
         context.close()
+
+
+def test_an_angled_cover_photo_is_found_and_straightened_and_can_be_undone(browser, live_server, db, tmp_path):
+    """Avi, 2026-10-23: "I always shoot at an angle; find the book and square
+    it, in proportion." On the phone, nothing sent but the finished cover."""
+    from PIL import Image
+
+    from books import catalog, reading
+    from tests._cover_scenes import scene
+    build_world()
+    rp = _fresh_reader()
+    e = catalog.CatalogEntry.objects.create(collection_type=catalog.book_type(), title="ספר בזווית")
+    reading.start(rp, e, 3)
+    data, _, ratio = scene(1002, "dark")
+    photo = tmp_path / "angled.jpg"
+    photo.write_bytes(data)
+    context, page, _ = _open(browser, live_server, "reader", "/books/read/", PHONE, "light")
+    try:
+        page.set_input_files("[data-first-cover-input]", str(photo))
+        page.wait_for_selector("[data-first-cover-undo]", timeout=15000)
+        assert "יושרה" in page.text_content("[data-first-cover-status]")
+        e.refresh_from_db()
+        with e.cover.open("rb") as fh:
+            w, h = Image.open(fh).size
+        assert abs(w / h - ratio) <= 0.05  # the book's own proportion, not 2 by 3
+        first = e.cover.name
+        page.click("[data-first-cover-undo]")
+        page.wait_for_function("document.querySelector('[data-first-cover-status]').textContent.trim() === 'נשמרה.'")
+        e.refresh_from_db()
+        assert e.cover.name != first
+        with e.cover.open("rb") as fh:
+            w, h = Image.open(fh).size
+        assert abs(w / h - 2 / 3) < 0.01  # as taken: the middle of the photo
+    finally:
+        context.close()

@@ -17,6 +17,33 @@ Newest first.
 
 ---
 
+## PM-47 · 2026-10-23 · Straightening a photographed cover
+
+**What happened.** Avi: "I always shoot the cover at an angle and it does
+not fill the photo; find the book and square it, in proportion." Built on
+the phone (rectify.js): edges, straight lines voted by how different the
+two sides are, every two across with every two up as candidate shapes,
+judged by edges running the same way as each side and by colour inside
+against outside, each side refitted to its own edge pixels, the true
+proportion from the camera (Zhang and He). On 100 unseen made-up photos,
+93 within 2% of the diagonal and the proportion right in all but one of
+those. When it is wrong, one tap keeps the photo as it was taken.
+
+**Why our process could have gone wrong.** No real samples; the first
+made-up angles were not a real camera's and made correct maths look wrong.
+And the "keep as taken" tap first did nothing to the catalogue cover: an
+earlier rule (a reader's photo never replaces a good cover) also stopped
+me replacing my own photo. A test of that rule caught the first fix, which
+would have let anyone replace anyone's.
+
+**Rule.** Mistake 46. Done: made-up photos from a real 3D camera
+(tests/_cover_scenes.py), a held-out set, the detector test in the suite,
+and the whole flow tested on the reading screen. My own photo can replace
+my own earlier photo; someone else's good cover stays.
+
+Here: docs/building_an_app.md mistake 46; tests/test_books_rectify.py, tests/test_books_screens.py, tests/test_books_firstread.py
+BKM: FullStackBKM c11373d (lesson 55)
+
 ## PM-46 · 2026-10-23 · The streak screen stopped appearing after the heartbeat fix
 
 **What happened.** Found while building Avi's five-minute moment: since

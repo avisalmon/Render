@@ -646,6 +646,8 @@ charging for the web lookup.
 | F-R.33 | The five minutes that earn the day: a ping, fireworks, the flame lights up, the clock goes on | DONE |
 | F-R.34 | A screen left open: "still reading?" after 20 minutes without a touch, no answer stops the clock where the question came; "count only up to my last touch"; a silent screen stops one heartbeat after its last | DONE |
 
+| F-R.35 | A photographed cover is found and straightened on the phone, in its own proportion; one tap keeps it as taken | DONE |
+
 Next on friends (Avi, 2026-10-22): "I'd love to borrow this one", seeing which friend has a book I want, a friends' feed.
 
 Open for later (Avi): what to do with a finished book's notes (a summary, a

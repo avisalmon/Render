@@ -69,6 +69,11 @@ def _cover_is_small(entry):
         return True
 
 
+def _mine(entry, profile):
+    """The catalogue's cover is a photo I took (its file name says whose)."""
+    return bool(entry.cover) and not entry.cover_source_url and f"{entry.pk}-reader-{profile.pk}-" in entry.cover.name
+
+
 def save_cover(profile, entry, upload):
     """My photo of the front cover. Returns {"catalogue": bool}."""
     if upload is None or not upload.size:
@@ -85,9 +90,12 @@ def save_cover(profile, entry, upload):
         copy.photos.filter(kind="cover").delete()
         photo = CopyPhoto(copy=copy, kind="cover")
         photo.image.save(f"{copy.pk}-cover-{stamp}.jpg", ContentFile(prepared.data), save=True)
-    catalogue = _cover_is_small(entry)
+    # My photo also replaces my own earlier photo (Avi, 2026-10-23: a straightened
+    # cover that came out wrong is taken again, or kept as shot); anyone else's good
+    # cover stays.
+    catalogue = _cover_is_small(entry) or _mine(entry, profile)
     if catalogue:
-        entry.cover.save(f"{entry.pk}-reader-{stamp}.jpg", ContentFile(prepared.data), save=False)
+        entry.cover.save(f"{entry.pk}-reader-{profile.pk}-{stamp}.jpg", ContentFile(prepared.data), save=False)
         entry.cover_source_url = ""
         entry.save(update_fields=["cover", "cover_source_url"])
     return {"catalogue": catalogue, "copy": copy is not None}

@@ -1,6 +1,9 @@
 /* The first time with a book (Avi, 2026-10-22).
-   The cover: the photo is cut to a book's shape (2 by 3) here on the phone,
-   shown at once and sent; nothing is spent on a model.
+   The cover: the book is found in the photo and straightened to its own
+   proportions here on the phone (rectify.js, Avi 2026-10-23: "I always shoot
+   at an angle"); shown at once and sent; nothing is spent on a model. If no
+   book is found, the middle of the photo is cut to 2 by 3, as before, and a
+   straightening that came out wrong can be undone with one tap.
    The back cover: Android phones read the barcode themselves (free) and the
    ISBN goes along; the server reads the rest once, on request. */
 (function () {
@@ -15,7 +18,11 @@
       img.src = URL.createObjectURL(file);
     });
   };
-  var toBookShape = function (img) {
+  var straighten = function (img) {
+    if (window.bkRectify) return window.bkRectify(img);
+    return {canvas: plain(img), found: false};
+  };
+  var plain = function (img) {
     var w = img.naturalWidth, h = img.naturalHeight, cw = w, ch = h;
     if (w / h > 2 / 3) cw = Math.round(h * 2 / 3); else ch = Math.round(w * 3 / 2);
     var scale = Math.min(1, 1400 / Math.max(cw, ch));
@@ -36,25 +43,49 @@
   var coverInput = document.querySelector("[data-first-cover-input]");
   var coverBox = document.querySelector("[data-first-cover]");
   var coverStatus = document.querySelector("[data-first-cover-status]");
+  var cattr = function (k) { return coverInput.getAttribute("data-" + k) || ""; };
+  var showAndSend = function (c, done) {
+    coverBox.classList.remove("bk-cover-drawn");
+    coverBox.removeAttribute("style");
+    coverBox.innerHTML = "";
+    var shown = new Image();
+    shown.alt = "";
+    shown.src = c.toDataURL("image/jpeg", 0.85);
+    coverBox.appendChild(shown);
+    c.toBlob(function (blob) {
+      send(coverInput.getAttribute("data-url"), blob, "cover.jpg").then(function (res) {
+        if (!res.ok) { coverStatus.textContent = res.d.error || ""; return; }
+        done();
+      });
+    }, "image/jpeg", 0.88);
+  };
   if (coverInput) coverInput.addEventListener("change", function () {
     var f = coverInput.files && coverInput.files[0];
     if (!f) return;
+    coverStatus.textContent = cattr("working");
     loadImage(f).then(function (img) {
-      var c = toBookShape(img);
-      coverBox.classList.remove("bk-cover-drawn");
-      coverBox.removeAttribute("style");
-      coverBox.innerHTML = "";
-      var shown = new Image();
-      shown.alt = "";
-      shown.src = c.toDataURL("image/jpeg", 0.85);
-      coverBox.appendChild(shown);
-      coverStatus.textContent = "";
-      c.toBlob(function (blob) {
-        send(coverInput.getAttribute("data-url"), blob, "cover.jpg").then(function (res) {
-          coverStatus.textContent = res.ok ? (document.documentElement.lang === "en" ? "Saved." : "נשמר.") : (res.d.error || "");
+      setTimeout(function () {  // let "straightening" show before the work starts
+        var r = straighten(img);
+        coverInput.setAttribute("data-found", r.found ? "1" : "0");
+        showAndSend(r.canvas, function () {
+          coverStatus.textContent = r.found ? cattr("straight") : cattr("saved");
+          if (!r.found) return;
+          // Came out wrong? One tap keeps the photo as it was taken.
+          var undo = document.createElement("button");
+          undo.type = "button";
+          undo.className = "bk-cover-undo";
+          undo.setAttribute("data-first-cover-undo", "");
+          undo.textContent = cattr("undo");
+          undo.addEventListener("click", function () {
+            undo.remove();
+            coverStatus.textContent = cattr("working");
+            showAndSend(plain(img), function () { coverStatus.textContent = cattr("saved"); });
+          });
+          coverStatus.appendChild(document.createTextNode(" "));
+          coverStatus.appendChild(undo);
         });
-      }, "image/jpeg", 0.88);
-    });
+      }, 30);
+    }).catch(function () { coverStatus.textContent = ""; });
   });
 
   // ---- the back cover ----

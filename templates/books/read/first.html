@@ -18,7 +18,7 @@
       <p class="bk-help" style="margin: 0 0 8px">{% t "first.cover_help" %}</p>
       <label class="bk-btn bk-file-button">
         {% include "books/ui/_icon.html" with name="camera" %} {% if cover %}{% t "first.cover_replace" %}{% else %}{% t "first.cover_take" %}{% endif %}
-        <input class="bk-visually-hidden" type="file" accept="image/*" capture="environment" data-first-cover-input
+        <input class="bk-visually-hidden" type="file" accept="image/*" capture="environment" data-first-cover-input data-working="{% t "first.cover_working" %}" data-straight="{% t "first.cover_straight" %}" data-saved="{% t "first.cover_saved" %}" data-undo="{% t "first.cover_undo" %}"
                data-url="{% url 'books:first_cover' entry.pk %}">
       </label>
       <p class="bk-help" data-first-cover-status aria-live="polite" style="margin: 6px 0 0"></p>
@@ -57,5 +57,6 @@
 </div>
 {% endblock %}
 {% block scripts %}
-{% load static %}<script src="{% static 'books/first.js' %}" defer></script>
+{% load static %}<script src="{% static 'books/rectify.js' %}" defer></script>
+<script src="{% static 'books/first.js' %}" defer></script>
 {% endblock %}
