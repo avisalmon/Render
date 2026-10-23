@@ -879,6 +879,61 @@ def test_on_a_phone_the_phones_own_recognition_listens_in_hebrew_for_free(browse
         context.close()
 
 
+FAKE_ANDROID_SPEECH = """
+(() => {
+  const r = (t, fin) => Object.assign([{transcript: t}], {isFinal: fin});
+  // What Chrome on Android sends: finals sent again on every update, growing,
+  // with resultIndex stuck at 0 (Avi, 2026-10-23: each thought written 3-4 times).
+  const waves = [
+    [r('אני חושב', false)],
+    [r('אני חושב', true)],
+    [r('אני חושב', true), r('אני חושב שהספר', true)],
+    [r('אני חושב', true), r('אני חושב שהספר', true), r('אני חושב שהספר יפה', false)],
+    [r('אני חושב', true), r('אני חושב שהספר', true), r('אני חושב שהספר יפה', true)],
+  ];
+  window.__speechText = null;
+  window.webkitSpeechRecognition = window.SpeechRecognition = class {
+    start() {
+      const own = window.__speechText;
+      const list = own ? [[r(own, true)], [r(own, true)], [r(own, true)]] : waves;
+      list.forEach((w, i) => setTimeout(() => this.onresult({resultIndex: 0, results: w}), 20 + i * 20));
+    }
+    stop() { setTimeout(() => this.onend(), 10); }
+  };
+})();
+"""
+
+
+def test_a_spoken_thought_on_android_is_written_once_and_thoughts_add_up(browser, live_server, db):
+    """Avi, 2026-10-23: whatever I said came back three or four times. Each
+    thought is written once, and each saved thought joins the book's list."""
+    from books import catalog, reading
+    from books.models import Profile, ReadingNote
+    build_world()
+    rp = Profile.objects.get(user__username="reader")
+    e = catalog.CatalogEntry.objects.create(collection_type=catalog.book_type(), title="ספר מדבר")
+    reading.start(rp, e, 3)
+    context, page, _ = _open(browser, live_server, "reader", "/books/", PHONE, "light")
+    try:
+        page.add_init_script(FAKE_ANDROID_SPEECH)
+        page.goto(f"{live_server.url}/books/read/", wait_until="domcontentloaded")
+        for said in (None, "ועוד מחשבה על הסוף"):
+            page.evaluate("t => { window.__speechText = t; }", said)
+            page.click("[data-orb]")
+            page.wait_for_selector("[data-orb].is-on")
+            page.wait_for_timeout(250)
+            page.click("[data-orb]")
+            page.wait_for_selector("[data-think-card]:not([hidden])")
+            assert page.input_value("[data-think] [data-voice-text]") == (said or "אני חושב שהספר יפה")
+            page.click("[data-think] button[type=submit]")
+            page.wait_for_function("document.querySelector('[data-think-card]').hidden")
+        notes = list(ReadingNote.objects.filter(profile=rp, entry=e).order_by("pk").values_list("body", flat=True))
+        assert notes == ["אני חושב שהספר יפה", "ועוד מחשבה על הסוף"]
+        assert page.text_content("[data-notes-count]") == "2"
+    finally:
+        context.close()
+
+
 def test_on_a_computer_the_mouse_pans_the_shelf_and_the_wheel_slides_it(browser, live_server, db):
     """Avi, 2026-10-22: on a computer the mouse moved the books, not the shelf.
     A drag pans the shelf and leaves the books where they are; the wheel slides

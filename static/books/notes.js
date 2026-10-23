@@ -22,6 +22,23 @@
   var canRecord = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
   var speechLang = (document.documentElement.getAttribute("lang") || "he").indexOf("en") === 0 ? "en-US" : "he-IL";
   var stoppers = [];
+
+  // What was heard so far, from the whole list of results; onlyFinal leaves out
+  // the phrase still being spoken. A phrase equal to, inside, or grown from the
+  // one before it is the same phrase again (Android), not a new one.
+  window.bkJoinHeard = function (results, onlyFinal) {
+    var parts = [];
+    for (var i = 0; i < results.length; i++) {
+      if (onlyFinal && !results[i].isFinal) continue;
+      var t = ((results[i][0] || {}).transcript || "").replace(/\s+/g, " ").trim();
+      if (!t) continue;
+      var last = parts.length ? parts[parts.length - 1] : "";
+      if (last && t.indexOf(last) === 0) parts[parts.length - 1] = t;  // grown from the one before
+      else if (last && last.indexOf(t) >= 0) continue;                 // already in it
+      else parts.push(t);
+    }
+    return parts.join(" ");
+  };
   window.bkStopRecording = function () { stoppers.forEach(function (f) { f(true); }); };
 
   var pickType = function () {
@@ -71,6 +88,11 @@
     };
 
     // -- the phone's own recognition: free, and in Hebrew --
+    // Every update is read whole, from the first result, never added to what came
+    // before: Android sends results it already finalized again, and its finals grow
+    // ("I think", "I think this", "I think this book"). Adding them up wrote each
+    // thought three or four times (Avi, 2026-10-23). So each phrase is taken once,
+    // and a phrase that only repeats or extends the one before replaces it.
     var rec = null, finals = "";
     var startDevice = function () {
       rec = new Speech();
@@ -79,12 +101,8 @@
       rec.interimResults = true;
       finals = "";
       rec.onresult = function (e) {
-        var interim = "";
-        for (var i = e.resultIndex; i < e.results.length; i++) {
-          if (e.results[i].isFinal) finals += e.results[i][0].transcript + " ";
-          else interim += e.results[i][0].transcript;
-        }
-        mic.bkHeard = (finals + interim).trim();
+        finals = window.bkJoinHeard(e.results, true);
+        mic.bkHeard = window.bkJoinHeard(e.results, false);
         if (mic.bkHeard) status.textContent = mic.bkHeard;
       };
       rec.onerror = function (e) {
@@ -93,7 +111,7 @@
       };
       rec.onend = function () {
         // Phones end recognition on a long silence too: either way, what was heard lands.
-        var heard = (finals || mic.bkHeard || "").trim();
+        var heard = (mic.bkHeard || finals || "").trim();
         endUi();
         if (!drop) landing(heard);
       };

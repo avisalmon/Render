@@ -639,6 +639,8 @@ charging for the web lookup.
 | F-R.28 | Both covers from the reading screen; the back cover's words join the description | DONE |
 | F-R.29 | An open sitting's time counts: saved on every pause and by a heartbeat; "that's it for now" says the time is kept | DONE |
 
+| F-R.30 | A spoken thought is written once on Android (results repeat and grow there); thoughts add up per book | DONE |
+
 Next on friends (Avi, 2026-10-22): "I'd love to borrow this one", seeing which friend has a book I want, a friends' feed.
 
 Open for later (Avi): what to do with a finished book's notes (a summary, a

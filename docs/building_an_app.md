@@ -997,3 +997,17 @@ forgotten button never loses it. And the button that ends a sitting says
 it is only a break ("that's it for now"), with the reassurance that the
 time is kept, so nobody avoids pressing it or thinks they finished.
 
+### 44. A browser API is tested with the events the real device sends, not the ones the spec describes
+
+Avi recorded a thought on his phone and got it three or four times. The
+voice notes added every "final" result of each update to what was already
+heard. That is right by the spec, and wrong on Android Chrome, which sends
+results it already finalized again on every update, growing ("I think",
+"I think this", "I think this book"). Our fake recognizer sent one clean
+result, so the test passed.
+
+**The rule.** A fake for a device API plays back what the real device
+sends, the worst one we support (here Android), not the tidy case. And
+code reading a stream of updates rebuilds the whole from each update
+rather than adding to a running total.
+

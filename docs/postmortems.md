@@ -17,6 +17,25 @@ Newest first.
 
 ---
 
+## PM-45 · 2026-10-23 · A spoken thought written three or four times
+
+**What happened.** On the reading screen, whatever Avi said came back
+three or four times in the box. The code added the final results of each
+update to a running text; Android Chrome resends finalized results on
+every update, and they grow.
+
+**Why our process let it happen.** The fake recognizer in the browser test
+sent one clean final result, the case from the spec. Nobody played back
+what an Android phone actually sends.
+
+**Rule.** Mistake 44. Done: every update is read whole from the first
+result; a phrase that repeats or extends the one before replaces it. The
+browser test now plays Android's growing, repeated finals and saves two
+thoughts in a row on the same book: each is written once, the list counts 2.
+
+Here: docs/building_an_app.md mistake 44; tests/test_books_screens.py
+BKM: FullStackBKM c7b4767 (lesson 53)
+
 ## PM-44 · 2026-10-23 · Ten minutes read, nothing saved, no streak
 
 **What happened.** Avi read ten minutes, left the screen without pressing
