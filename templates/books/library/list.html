@@ -2,17 +2,6 @@
 {% block title %}{% t "lib.title" %} · {% t "brand" %}{% endblock %}
 {% block scripts %}
 {% load static %}<script src="{% static 'books/library.js' %}" defer></script>
-<script>
-(function () {
-  // The bulk bar appears once a book is ticked, so it never hides the list.
-  var form = document.querySelector('[data-bulk]');
-  if (!form) return;
-  var bar = form.querySelector('[data-bulk-bar]');
-  form.addEventListener('change', function () {
-    bar.hidden = !form.querySelector('input[name=copy]:checked');
-  });
-})();
-</script>
 {% endblock %}
 {% block screen %}library{% endblock %}
 {% block content %}
@@ -58,44 +47,31 @@
   </details>
 
   {% if copies %}
-  <form method="post" action="{% url 'books:library_bulk' %}" data-bulk>
-    {% csrf_token %}
-    <input type="hidden" name="next" value="{{ request.get_full_path }}">
-    <ul class="bk-entry-list" data-flag-list>
-      {% for c in copies %}
-      <li class="bk-entry-row bk-copy-row" data-copy-row>
-        <label class="bk-copy-pick"><input type="checkbox" name="copy" value="{{ c.pk }}"><span class="bk-visually-hidden">{% t "lib.select" title=c.entry.title %}</span></label>
-        <a class="bk-entry-link" href="{% url 'books:copy' c.pk %}">
-          <span class="bk-entry-cover" aria-hidden="true"{% if not c.entry.cover %} style="{% spine_style c.entry %}"{% endif %}>{% if c.entry.cover %}<img src="{{ c.entry.cover.url }}" alt="">{% endif %}</span>
-          <span class="bk-entry-text">
-            <span class="bk-entry-title">{{ c.entry.title }}</span>
-            <span class="bk-muted">{{ c.entry.creator_names }}{% if c.location_note %} · {{ c.location_note }}{% endif %}</span>
-            <span class="bk-kicker"><span data-copy-status>{% copy_status c %}</span>{% if c.is_rare_candidate %} · {% t "shelf.rare" %}{% endif %}</span>
-          </span>
-        </a>
-        {% copy_flags c as f %}
-        <span class="bk-copy-flags" data-copy-flags data-url="{% url 'books:copy-flags' c.pk %}">
-          <label class="bk-flag" title="{% t "flag.show_help" %}"><input type="checkbox" data-flag="show" {% if f.show %}checked{% endif %}><span>{% t "flag.show" %}</span></label>
-          <label class="bk-flag" title="{% t "flag.give_help" %}"><input type="checkbox" data-flag="give" {% if f.give %}checked{% endif %}><span>{% t "flag.give" %}</span></label>
-          <label class="bk-flag" title="{% t "flag.lend_help" %}"><input type="checkbox" data-flag="lend" {% if f.lend %}checked{% endif %}><span>{% t "flag.lend" %}</span></label>
-          <label class="bk-flag" title="{% t "flag.sell_help" %}"><input type="checkbox" data-flag="sell" {% if f.sell %}checked{% endif %}><span>{% t "flag.sell" %}</span></label>
+  <ul class="bk-entry-list" data-flag-list>
+    {% for c in copies %}
+    <li class="bk-entry-row bk-copy-row" data-copy-row>
+      <a class="bk-entry-link" href="{% url 'books:copy' c.pk %}">
+        <span class="bk-entry-cover" aria-hidden="true"{% if not c.entry.cover %} style="{% spine_style c.entry %}"{% endif %}>{% if c.entry.cover %}<img src="{{ c.entry.cover.url }}" alt="">{% endif %}</span>
+        <span class="bk-entry-text">
+          <span class="bk-entry-title">{{ c.entry.title }}</span>
+          <span class="bk-muted">{{ c.entry.creator_names }}{% if c.location_note %} · {{ c.location_note }}{% endif %}</span>
+          <span class="bk-kicker"><span data-copy-status>{% copy_status c %}</span>{% if c.is_rare_candidate %} · {% t "shelf.rare" %}{% endif %}</span>
         </span>
-      </li>
-      {% endfor %}
-    </ul>
-    <div class="bk-card bk-card--tight bk-bulk" data-bulk-bar hidden>
-      <p class="bk-kicker" style="margin: 0">{% t "lib.bulk_title" %}</p>
-      <div class="bk-row">
-        <label class="bk-field" style="flex: 1 1 180px">{% t "lib.bulk_move" %} <input class="bk-input" name="location_note" list="bk-places"></label>
-        <datalist id="bk-places">{% for p in places %}<option value="{{ p }}">{% endfor %}</datalist>
-        <button type="submit" class="bk-btn" name="action" value="move">{% t "lib.bulk_move_go" %}</button>
-      </div>
-      <div class="bk-row">
-        <button type="submit" class="bk-btn bk-btn--small" name="action" value="private">{% t "lib.bulk_private" %}</button>
-        <button type="submit" class="bk-btn bk-btn--small" name="action" value="public">{% t "lib.bulk_public" %}</button>
-      </div>
-    </div>
-  </form>
+      </a>
+      {% copy_flags c as f %}
+      <span class="bk-copy-flags" data-copy-flags data-url="{% url 'books:copy-flags' c.pk %}">
+        <label class="bk-flag" title="{% t "flag.show_help" %}"><input type="checkbox" data-flag-show {% if f.show %}checked{% endif %}><span>{% t "flag.show" %}</span></label>
+        <select class="bk-select bk-flag-select" data-flag-offer data-was="{{ f.offer }}" aria-label="{% t "flag.offer" %}" title="{% t "flag.offer_help" %}"{% if not f.show %} hidden{% endif %}>
+          <option value="" {% if not f.offer %}selected{% endif %}>{% t "flag.offer_none" %}</option>
+          <option value="give" {% if f.offer == "give" %}selected{% endif %}>{% t "status.give" %}</option>
+          <option value="lend" {% if f.offer == "lend" %}selected{% endif %}>{% t "status.lend" %}</option>
+          <option value="exchange" {% if f.offer == "exchange" %}selected{% endif %}>{% t "status.exchange" %}</option>
+          <option value="sell" {% if f.offer == "sell" %}selected{% endif %}>{% t "status.sell" %}</option>
+        </select>
+      </span>
+    </li>
+    {% endfor %}
+  </ul>
   {% elif total %}
     <p class="bk-lead">{% t "lib.none" %}</p>
   {% else %}

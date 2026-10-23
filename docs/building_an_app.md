@@ -1059,3 +1059,19 @@ by stashing the sprint's changes and running the same test (mistake 11).
 autouse fixture, keyed or not; a test of the source itself replaces the
 stub with its own fake.
 
+### 48. The control follows the shape of the decision, not the word the person used
+
+Avi asked for "checkboxes" on every row of his library: show, give, lend,
+sell. Four boxes went in, side by side. He looked and said: the box by the
+title means nothing, take it out; and the real shape is one box, show or
+not, and under it one small menu of how the book is offered. The data had
+said so all along: "show" is a gate, and the ways of offering are one
+choice at a time.
+
+**The rule.** Before drawing a row of controls, write the decision down as
+the person makes it: which parts are a gate (yes or no), which are one
+choice among several, which are many at once. A gate is a box; one choice
+among several is a menu or radios; only "many at once" is a row of boxes.
+And a control that already sits on the row for another reason (here, a
+bulk pick box) is removed when the row's job changes, not left to confuse.
+

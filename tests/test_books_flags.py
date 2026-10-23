@@ -1,5 +1,6 @@
-"""My library's rows (spec BK5b, SPR-G.3): show / give / lend / sell on every
-book, saved the moment one is tapped, with no page reload."""
+"""My library's rows (spec BK5b, SPR-G.3, Avi's second word 2026-10-23): one
+"show" box per book, and when it is on, a small menu of how it is offered;
+saved the moment it is touched, with no page reload."""
 
 import json
 
@@ -42,58 +43,62 @@ def book(owner, title, visibility=Copy.PUBLIC, *kinds):
     return c
 
 
-def test_each_switch_does_one_thing_and_the_four_stay_consistent(noa):
+def test_the_show_box_and_the_offer_menu_keep_one_consistent_state(noa):
     c = book(noa, "ספר", Copy.HIDDEN)
-    f = shelf.set_flag(c, "give", True)  # an offer on a hidden book shows it to the friends
-    assert f["give"] and f["show"] and f["visibility"] == "private" and f["label"] == "למסירה"
-    f = shelf.set_flag(c, "lend", True)
-    assert Offer.objects.get(copy=c, kind="lend").loan_days == shelf.DEFAULT_LOAN_DAYS and f["label"] == "למסירה · להשאלה"
-    f = shelf.set_flag(c, "lend", False)
-    assert not f["lend"] and f["give"] and not Offer.objects.filter(copy=c, kind="lend").exists()
-    f = shelf.set_flag(c, "show", False)  # "only me": the offers go with it
-    assert f == {**f, "show": False, "give": False, "lend": False, "sell": False, "visibility": "hidden", "label": "רק אני"}
-    assert not c.offers.exists()
+    f = shelf.set_flag(c, "offer", "give")  # an offer on a hidden book shows it to the friends
+    assert f == {"show": True, "offer": "give", "visibility": "private", "label": "למסירה"}
+    f = shelf.set_flag(c, "offer", "lend")  # one way at a time
+    assert f["offer"] == "lend" and [o.kind for o in c.offers.all()] == ["lend"]
+    assert Offer.objects.get(copy=c).loan_days == shelf.DEFAULT_LOAN_DAYS and f["label"] == "להשאלה"
+    f = shelf.set_flag(c, "offer", "")
+    assert f == {"show": True, "offer": "", "visibility": "private", "label": "לחברים"}
+    shelf.set_flag(c, "offer", "sell")
+    f = shelf.set_flag(c, "show", False)  # "only me": the offer goes with it
+    assert f == {"show": False, "offer": "", "visibility": "hidden", "label": "רק אני"} and not c.offers.exists()
     f = shelf.set_flag(c, "show", True)
-    assert f["visibility"] == "private" and f["label"] == "לחברים"
-    public = book(noa, "פומבי", Copy.PUBLIC)
-    assert shelf.set_flag(public, "sell", True)["label"] == "למכירה"
-    f = shelf.set_flag(public, "sell", False)
-    assert f["visibility"] == "public" and f["label"] == "גלוי, לא מוצע"  # a switch off never hides the book
+    assert f["visibility"] == "private" and f["offer"] == ""
+    public = book(noa, "פומבי", Copy.PUBLIC, "lend", "sell")
+    assert shelf.flags_of(public)["offer"] == "lend"  # several old offers: the first in the menu's order shows
+    f = shelf.set_flag(public, "offer", "")
+    assert f["visibility"] == "public" and f["label"] == "גלוי, לא מוצע"  # the menu never hides the book
     with pytest.raises(ValueError):
-        shelf.set_flag(public, "exchange", True)
+        shelf.set_flag(public, "offer", "steal")
+    with pytest.raises(ValueError):
+        shelf.set_flag(public, "give", True)
 
 
-def test_the_api_saves_one_switch_and_answers_with_all_four(client, noa):
+def test_the_api_saves_the_box_or_the_menu_and_answers_with_the_row(client, noa):
     c = book(noa, "ספר", Copy.HIDDEN)
     other = book(person("דן", "dan@example.com"), "של דן")
     client.force_login(noa.user)
     url = f"/books/api/copies/{c.pk}/flags/"
-    r = client.post(url, json.dumps({"flag": "give", "on": True}), content_type="application/json")
-    assert r.status_code == 200 and r.json()["give"] is True and r.json()["show"] is True
+    r = client.post(url, json.dumps({"flag": "offer", "on": "give"}), content_type="application/json")
+    assert r.status_code == 200 and r.json() == {"show": True, "offer": "give", "visibility": "private", "label": "למסירה"}
     r = client.post(url, json.dumps({"flag": "show", "on": False}), content_type="application/json")
-    assert r.json() == {**r.json(), "show": False, "give": False, "visibility": "hidden"}
-    assert client.post(url, json.dumps({"flag": "exchange", "on": True}), content_type="application/json").status_code == 400
-    assert client.post(f"/books/api/copies/{other.pk}/flags/", json.dumps({"flag": "give", "on": True}),
+    assert r.json()["show"] is False and r.json()["offer"] == ""
+    assert client.post(url, json.dumps({"flag": "offer", "on": "steal"}), content_type="application/json").status_code == 400
+    assert client.post(url, json.dumps({"flag": "give", "on": True}), content_type="application/json").status_code == 400
+    assert client.post(f"/books/api/copies/{other.pk}/flags/", json.dumps({"flag": "offer", "on": "give"}),
                        content_type="application/json").status_code == 404
-    other.refresh_from_db()
     assert not other.offers.exists()
 
 
-def test_every_row_of_my_library_carries_the_four_switches_as_they_stand(client, noa):
-    a = book(noa, "אלף", Copy.PUBLIC, "give", "sell")
-    b = book(noa, "בית", Copy.HIDDEN)
+def test_every_row_of_my_library_has_the_show_box_and_the_menu_and_no_pick_box(client, noa):
+    a = book(noa, "אלף", Copy.PUBLIC, "give")
+    book(noa, "בית", Copy.HIDDEN)
     client.force_login(noa.user)
     html = client.get("/books/library/").content.decode()
     assert "books/library.js" in html and "data-flag-list" in html
+    assert "bk-copy-pick" not in html and "data-bulk" not in html  # the pick box by the title is gone
     rows = html.split("data-copy-row")[1:]
     assert len(rows) == 2
     row_a = next(r for r in rows if "אלף" in r)
     row_b = next(r for r in rows if "בית" in r)
     assert f'data-url="/books/api/copies/{a.pk}/flags/"' in row_a
-    assert 'data-flag="show" checked' in row_a and 'data-flag="give" checked' in row_a and 'data-flag="sell" checked' in row_a
-    assert 'data-flag="lend" checked' not in row_a and "<span data-copy-status>למסירה · למכירה</span>" in row_a
-    assert 'data-flag="show" checked' not in row_b and "<span data-copy-status>רק אני</span>" in row_b
-    assert row_a.count("<label") == 5  # the pick box and the four switches
-    assert "לתצוגה" in row_a and "למסירה" in row_a and "להשאלה" in row_a and "למכירה" in row_a
-    assert "data-flag" not in html.split("data-flag-list")[0]  # nowhere else
-    _ = b
+    assert "data-flag-show checked" in row_a and '<option value="give" selected>' in row_a
+    select_a = row_a.split("<select")[1].split(">")[0]
+    select_b = row_b.split("<select")[1].split(">")[0]
+    assert " hidden" not in select_a and " hidden" in select_b  # no menu while the book is only mine
+    assert "<span data-copy-status>למסירה</span>" in row_a and row_a.count("<label") == 1
+    assert "data-flag-show checked" not in row_b and "<span data-copy-status>רק אני</span>" in row_b
+    assert "לא מוצע" in row_a and "למסירה" in row_a and "להשאלה" in row_a and "להחלפה" in row_a and "למכירה" in row_a

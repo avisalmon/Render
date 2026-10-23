@@ -664,7 +664,7 @@ Spec BK5b. Three sprints, each pushed when done (Books rule).
 | --- | --- | --- |
 | SPR-G.1 | The rules: `give`; the pilot gift (everyone Pro, with the note); friends first for 48 hours; a free person's four with friends; a friend asks for an unoffered book; the line of askers in order; "went to someone else" with where else to find it; every step and message by email; the terms | DONE |
 | SPR-G.2 | The screens: one tap from a friend's shelf and the book's page (which friends hold it); the request as a conversation (chat first, the one next action on top, the rest folded, messages sent without reload); "went to someone else" on the asker's screen | DONE |
-| SPR-G.3 | My library: every row carries show / give / lend / sell, saved as tapped, no reload, phone and computer | DONE |
+| SPR-G.3 | My library: every row carries a "show" box and, when on, a menu of how it is offered (Avi's second word replaced four boxes); saved as touched, no reload; the pick box by the title is gone | DONE |
 
 Open (needs Avi): whether a free person's four count per year or for good (built: for good).
 

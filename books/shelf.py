@@ -39,7 +39,8 @@ HIGH_CONFIDENCE = Decimal("0.85")
 CANDIDATES = 3
 VISIBILITY_CHOICES = ("hidden", "private", "public")
 OFFER_KINDS = ("lend", "exchange", "sell", "give")
-ROW_FLAGS = ("show", "give", "lend", "sell")  # the switches on every row of my library (Avi, 2026-10-23)
+ROW_FLAGS = ("show", "offer")  # every row of my library: a "show" box, then how it is offered (Avi, 2026-10-23)
+OFFER_ORDER = ("give", "lend", "exchange", "sell")
 
 
 def flags_of(copy):
@@ -47,8 +48,8 @@ def flags_of(copy):
     from .models import Copy
 
     kinds = {o.kind for o in copy.offers.all() if o.is_active}
-    return {"show": copy.visibility != Copy.HIDDEN, "give": "give" in kinds, "lend": "lend" in kinds,
-            "sell": "sell" in kinds, "exchange": "exchange" in kinds, "visibility": copy.visibility,
+    offer = next((k for k in OFFER_ORDER if k in kinds), "")
+    return {"show": copy.visibility != Copy.HIDDEN, "offer": offer, "visibility": copy.visibility,
             "label": status_words(copy, kinds, copy.owner.language)}
 
 
@@ -59,21 +60,20 @@ def status_words(copy, kinds=None, lang="he"):
     if kinds is None:
         kinds = {o.kind for o in copy.offers.all() if o.is_active}
     if kinds:
-        return " · ".join(t(f"status.{k}", lang) for k in ("give", "lend", "exchange", "sell") if k in kinds)
+        return " · ".join(t(f"status.{k}", lang) for k in OFFER_ORDER if k in kinds)
     if copy.visibility == Copy.HIDDEN:
         return t("status.hidden", lang)
     return t("status.public_only", lang) if copy.visibility == Copy.PUBLIC else t("status.private", lang)
 
 
-def set_flag(copy, flag, on):
-    """One switch on one row. "show" off hides the book and withdraws its offers;
-    an offer on a hidden book shows it to the friends first."""
+def set_flag(copy, flag, value):
+    """One row's "show" box, or its offer menu. "show" off hides the book and
+    withdraws its offer; an offer on a hidden book shows it to the friends.
+    The menu holds one way at a time (Avi, 2026-10-23: simple)."""
     from .models import Copy, Offer
 
-    if flag not in ROW_FLAGS:
-        raise ValueError(flag)
-    on = bool(on)
     if flag == "show":
+        on = bool(value) and str(value).lower() not in ("false", "0", "")
         if on and copy.visibility == Copy.HIDDEN:
             copy.visibility = Copy.PRIVATE
             copy.save(update_fields=["visibility"])
@@ -81,17 +81,22 @@ def set_flag(copy, flag, on):
             copy.offers.all().delete()
             copy.visibility = Copy.HIDDEN
             copy.save(update_fields=["visibility"])
-    elif on:
-        if copy.visibility == Copy.HIDDEN:
-            copy.visibility = Copy.PRIVATE
-            copy.save(update_fields=["visibility"])
-        offer, _ = Offer.objects.get_or_create(copy=copy, kind=flag, defaults={
-            "loan_days": DEFAULT_LOAN_DAYS if flag == "lend" else None})
-        if not offer.is_active:
-            offer.is_active = True
-            offer.save(update_fields=["is_active"])
+    elif flag == "offer":
+        kind = (value or "").strip() if isinstance(value, str) else ""
+        if kind and kind not in OFFER_ORDER:
+            raise ValueError(kind)
+        copy.offers.exclude(kind=kind).delete()
+        if kind:
+            if copy.visibility == Copy.HIDDEN:
+                copy.visibility = Copy.PRIVATE
+                copy.save(update_fields=["visibility"])
+            offer, _ = Offer.objects.get_or_create(copy=copy, kind=kind, defaults={
+                "loan_days": DEFAULT_LOAN_DAYS if kind == "lend" else None})
+            if not offer.is_active:
+                offer.is_active = True
+                offer.save(update_fields=["is_active"])
     else:
-        copy.offers.filter(kind=flag).delete()
+        raise ValueError(flag)
     copy.refresh_from_db()
     return flags_of(copy)
 DEFAULT_LOAN_DAYS = 30

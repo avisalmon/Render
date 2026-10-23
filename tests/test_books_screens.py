@@ -1295,7 +1295,8 @@ def test_on_a_phone_the_request_is_a_conversation_that_sends_and_receives_withou
 
 def test_on_a_phone_a_row_switch_saves_without_reloading_the_list(browser, live_server, db):
     """Avi, 2026-10-23: "when I tick a box in a long list, don't refresh the page
-    and send me back to the top." The switch saves by itself; the list stays."""
+    and send me back to the top." One "show" box; when on, a menu of how the
+    book is offered; both save by themselves and the list stays where it was."""
     from books import catalog
     from books.models import Copy, Offer, Profile
     build_world()
@@ -1307,24 +1308,29 @@ def test_on_a_phone_a_row_switch_saves_without_reloading_the_list(browser, live_
     target = copies[-1]  # far down the list
     Offer.objects.filter(copy=target).delete()
     Copy.objects.filter(pk=target.pk).update(visibility=Copy.HIDDEN)
+    sel = f'[data-url="/books/api/copies/{target.pk}/flags/"]'
     context, page, _ = _open(browser, live_server, "shelver", "/books/library/", PHONE, "dark")
     try:
+        assert page.locator(".bk-copy-pick").count() == 0  # the pick box by the title is gone
         page.evaluate("window.__stayed = 1")
-        box = page.locator(f'[data-url="/books/api/copies/{target.pk}/flags/"]')
+        box = page.locator(sel)
         box.scroll_into_view_if_needed()
         y = page.evaluate("window.scrollY")
         assert y > 0
-        assert not box.locator('[data-flag="show"]').is_checked()
-        box.locator('[data-flag="give"]').check()
-        page.wait_for_selector(f'[data-url="/books/api/copies/{target.pk}/flags/"].is-saved')
+        assert not box.locator("[data-flag-show]").is_checked() and box.locator("[data-flag-offer]").is_hidden()
+        box.locator("[data-flag-show]").check()
+        page.wait_for_selector(sel + ".is-saved")
         assert page.evaluate("window.__stayed") == 1  # no reload
         assert abs(page.evaluate("window.scrollY") - y) < 40  # and no jump to the top
-        assert box.locator('[data-flag="show"]').is_checked()  # an offer shows the book
+        assert box.locator("[data-flag-offer]").is_visible()  # the menu appears once the book shows
         target.refresh_from_db()
-        assert target.visibility == Copy.PRIVATE and [o.kind for o in target.offers.all()] == ["give"]
-        assert box.locator("xpath=..").locator("[data-copy-status]").text_content() == "למסירה"
-        box.locator('[data-flag="show"]').uncheck()
-        page.wait_for_function(f"!document.querySelector('[data-url=\"/books/api/copies/{target.pk}/flags/\"] [data-flag=give]').checked")
+        assert target.visibility == Copy.PRIVATE and not target.offers.exists()
+        box.locator("[data-flag-offer]").select_option("give")
+        page.wait_for_function(f"document.querySelector('{sel} [data-copy-status], {sel}').closest('[data-copy-row]').querySelector('[data-copy-status]').textContent === 'למסירה'")
+        target.refresh_from_db()
+        assert [o.kind for o in target.offers.all()] == ["give"]
+        box.locator("[data-flag-show]").uncheck()
+        page.wait_for_function(f"document.querySelector('{sel} [data-flag-offer]').hidden")
         target.refresh_from_db()
         assert target.visibility == Copy.HIDDEN and not target.offers.exists()
         assert page.evaluate("window.__stayed") == 1

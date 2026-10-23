@@ -286,16 +286,19 @@ class CopyViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post"])
     def flags(self, request, pk=None):
-        """POST {flag: show|give|lend|sell, on: bool}: one switch on one of my
-        books, answered with all four (Avi, 2026-10-23: the library's rows)."""
+        """POST {flag: "show", on: bool} or {flag: "offer", on: ""|give|lend|exchange|sell}:
+        one row of my library, answered with its whole state (Avi, 2026-10-23)."""
         copy = self.get_object()
         flag = request.data.get("flag")
         if flag not in shelf_service.ROW_FLAGS:
-            raise ValidationError({"flag": "show, give, lend or sell"})
-        on = request.data.get("on")
-        if isinstance(on, str):
-            on = on.lower() in ("1", "true", "on", "yes")
-        return Response(shelf_service.set_flag(copy, flag, on))
+            raise ValidationError({"flag": "show or offer"})
+        value = request.data.get("on")
+        if flag == "show" and isinstance(value, str):
+            value = value.lower() in ("1", "true", "on", "yes")
+        try:
+            return Response(shelf_service.set_flag(copy, flag, value))
+        except ValueError:
+            raise ValidationError({"on": "give, lend, exchange, sell or empty"}) from None
 
 
 class OfferViewSet(viewsets.ModelViewSet):

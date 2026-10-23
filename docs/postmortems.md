@@ -17,6 +17,24 @@ Newest first.
 
 ---
 
+## PM-52 · 2026-10-23 · Four boxes where a gate and a menu belonged
+
+**What happened.** Avi, on the library rows just shipped: the pick box by
+the title has no meaning, remove it; and instead of four boxes, one
+"show" box and, when it is on, a small menu of how the book is offered.
+
+**Why our process let it happen.** He had said "checkboxes" and I drew
+checkboxes, without first writing the decision as he makes it: show is a
+gate, the way of offering is one choice. The old bulk pick box stayed
+because nothing asked whether it still earned its place.
+
+**Rule.** Mistake 48. Done: one box and a menu, saved as touched; the
+pick box and the bulk bar are gone from the list (the bulk endpoint
+stays for the API).
+
+Here: docs/building_an_app.md mistake 48; tests/test_books_flags.py
+BKM: FullStackBKM 2bf668d (lesson 57)
+
 ## PM-51 · 2026-10-23 · SPR-G.3, the row switches; a screen test on the network
 
 **What happened.** Sprint end: show / give / lend / sell on every row of
