@@ -1045,3 +1045,17 @@ small version of the set in the test suite. Look at the failures as
 pictures, with the true answer drawn over the guess, before changing
 anything.
 
+### 47. A screen test stubs every outside source, keyless ones too
+
+The library's "add a book" screen test searched Google Books for real on
+every run: no key is needed, so mistake 26's guard (blank the paid key) did
+not catch it. One day Google answered 429, the lookup's thread was still
+writing when the test ended, and four screen tests failed with "database
+table is locked" in the middle of an unrelated sprint. Proved pre-existing
+by stashing the sprint's changes and running the same test (mistake 11).
+
+**The rule.** A module that drives real pages stubs every outside source
+(`catalog.lookup`, and whatever the next app's equivalent is) in its
+autouse fixture, keyed or not; a test of the source itself replaces the
+stub with its own fake.
+

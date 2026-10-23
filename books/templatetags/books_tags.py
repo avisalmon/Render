@@ -55,6 +55,20 @@ def books_unread(context):
     return unread_count(profile)
 
 
+@register.simple_tag
+def copy_flags(copy):
+    from ..shelf import flags_of
+
+    return flags_of(copy)
+
+
+@register.simple_tag(takes_context=True)
+def copy_status(context, copy):
+    from ..shelf import status_words
+
+    return status_words(copy, lang=_language(context))
+
+
 @register.simple_tag(takes_context=True)
 def notification_text(context, n):
     """One notification in the reader's language, built from its kind."""

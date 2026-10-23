@@ -39,6 +39,61 @@ HIGH_CONFIDENCE = Decimal("0.85")
 CANDIDATES = 3
 VISIBILITY_CHOICES = ("hidden", "private", "public")
 OFFER_KINDS = ("lend", "exchange", "sell", "give")
+ROW_FLAGS = ("show", "give", "lend", "sell")  # the switches on every row of my library (Avi, 2026-10-23)
+
+
+def flags_of(copy):
+    """The four switches as they stand, plus the row's status words."""
+    from .models import Copy
+
+    kinds = {o.kind for o in copy.offers.all() if o.is_active}
+    return {"show": copy.visibility != Copy.HIDDEN, "give": "give" in kinds, "lend": "lend" in kinds,
+            "sell": "sell" in kinds, "exchange": "exchange" in kinds, "visibility": copy.visibility,
+            "label": status_words(copy, kinds, copy.owner.language)}
+
+
+def status_words(copy, kinds=None, lang="he"):
+    from .models import Copy
+    from .strings import text as t
+
+    if kinds is None:
+        kinds = {o.kind for o in copy.offers.all() if o.is_active}
+    if kinds:
+        return " · ".join(t(f"status.{k}", lang) for k in ("give", "lend", "exchange", "sell") if k in kinds)
+    if copy.visibility == Copy.HIDDEN:
+        return t("status.hidden", lang)
+    return t("status.public_only", lang) if copy.visibility == Copy.PUBLIC else t("status.private", lang)
+
+
+def set_flag(copy, flag, on):
+    """One switch on one row. "show" off hides the book and withdraws its offers;
+    an offer on a hidden book shows it to the friends first."""
+    from .models import Copy, Offer
+
+    if flag not in ROW_FLAGS:
+        raise ValueError(flag)
+    on = bool(on)
+    if flag == "show":
+        if on and copy.visibility == Copy.HIDDEN:
+            copy.visibility = Copy.PRIVATE
+            copy.save(update_fields=["visibility"])
+        elif not on and copy.visibility != Copy.HIDDEN:
+            copy.offers.all().delete()
+            copy.visibility = Copy.HIDDEN
+            copy.save(update_fields=["visibility"])
+    elif on:
+        if copy.visibility == Copy.HIDDEN:
+            copy.visibility = Copy.PRIVATE
+            copy.save(update_fields=["visibility"])
+        offer, _ = Offer.objects.get_or_create(copy=copy, kind=flag, defaults={
+            "loan_days": DEFAULT_LOAN_DAYS if flag == "lend" else None})
+        if not offer.is_active:
+            offer.is_active = True
+            offer.save(update_fields=["is_active"])
+    else:
+        copy.offers.filter(kind=flag).delete()
+    copy.refresh_from_db()
+    return flags_of(copy)
 DEFAULT_LOAN_DAYS = 30
 
 # Spine colours for the home shelf, from the approved board. A book's colour

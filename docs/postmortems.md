@@ -17,6 +17,24 @@ Newest first.
 
 ---
 
+## PM-51 · 2026-10-23 · SPR-G.3, the row switches; a screen test on the network
+
+**What happened.** Sprint end: show / give / lend / sell on every row of
+my library, saved by the API as tapped, no reload (browser test: a long
+list, the scroll stays, the row's words update). While checking the
+library screens, four "add a book" screen checks failed with "database
+table is locked": the page searched Google Books for real, got 429, and
+its thread was still writing at teardown.
+
+**Why our process let it happen.** Mistake 26 blanks the paid key; this
+source needs none. The screens module never stubbed the catalogue lookup.
+
+**Rule.** Mistake 47: a screen-driving module stubs every outside source.
+Done in `tests/test_books_screens.py`'s autouse fixture.
+
+Here: docs/building_an_app.md mistake 47; tests/test_books_screens.py, tests/test_books_flags.py
+BKM: FullStackBKM aa909e8 (lesson 56)
+
 ## PM-50 · 2026-10-23 · SPR-G.2, one tap and the conversation
 
 **What happened.** Sprint end. One tap on a friend's book (the label under
