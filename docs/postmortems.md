@@ -17,6 +17,31 @@ Newest first.
 
 ---
 
+## PM-46 · 2026-10-23 · The streak screen stopped appearing after the heartbeat fix
+
+**What happened.** Found while building Avi's five-minute moment: since
+PM-44 the day is counted by the heartbeat while reading, so "done" almost
+always found it counted already and home no longer showed the streak
+screen. Live since this morning.
+
+**Why our process let it happen.** The moment was decided by "not counted
+before this request, counted after". PM-44 changed when the day is
+counted and we did not look for who read that change as an event. The
+moment's tests end a sitting with no heartbeat in between.
+
+**Rule.** Mistake 45. Done: the moment is defined by the sitting itself
+(the day without it was under five minutes) and is skipped when the
+reading screen already celebrated it. The reading screen now celebrates
+at the moment the five minutes are reached (a ping, fireworks, the
+header's flame lights up), and the screen asks "still reading?" after
+twenty minutes without a touch; no answer stops the clock where the
+question came up; a screen that went silent stops one heartbeat after its
+last one. Also from Avi: the book's details from the reading screen, and
+"my history", a timeline of the books read.
+
+Here: docs/building_an_app.md mistake 45; tests/test_books_history.py, tests/test_books_screens.py
+BKM: FullStackBKM 0a05ad8 (lesson 54)
+
 ## PM-45 · 2026-10-23 · A spoken thought written three or four times
 
 **What happened.** On the reading screen, whatever Avi said came back

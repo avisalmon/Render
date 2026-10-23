@@ -25,6 +25,8 @@ from .models import BookDetail, ReadingCheckin, ReadingLog, ReadingSession
 
 MIN_STREAK_SECONDS = 5 * 60
 MAX_SESSION_SECONDS = 4 * 3600
+BEAT_SECONDS = 90  # the reading screen's heartbeat
+STALE_SECONDS = 5 * 60  # no heartbeat this long: the screen is gone (closed, crashed, battery)
 
 
 class ReadingError(Exception):
@@ -92,8 +94,9 @@ def start(profile, entry, page=None, copy=None):
     log = ReadingLog.objects.filter(profile=profile, entry=entry).first()
     if log is None or log.status != ReadingLog.READING:
         community.log_reading(profile, entry, ReadingLog.READING)
-    return ReadingSession.objects.create(profile=profile, entry=entry, copy=copy, started_at=timezone.now(),
-                                         start_page=page)
+    now = timezone.now()
+    return ReadingSession.objects.create(profile=profile, entry=entry, copy=copy, started_at=now,
+                                         start_page=page, last_beat_at=now)
 
 
 def _day(dt):
@@ -121,14 +124,32 @@ def elapsed(session, now=None):
     return int(min(MAX_SESSION_SECONDS, max(0, (now - session.started_at).total_seconds() - paused)))
 
 
+def settle(session, now=None):
+    """A screen that went silent without saying goodbye (the browser closed or
+    crashed, the battery died) stops counting one heartbeat after its last
+    one, so coming back a day later does not find a day on the clock
+    (Avi, 2026-10-23). Returns True when it stopped the clock."""
+    if session.ended_at is not None or session.paused_at is not None or session.last_beat_at is None:
+        return False
+    now = now or timezone.now()
+    if (now - session.last_beat_at).total_seconds() <= STALE_SECONDS:
+        return False
+    session.paused_at = session.last_beat_at + timedelta(seconds=BEAT_SECONDS)
+    session.seconds = elapsed(session, now)
+    session.save(update_fields=["paused_at", "seconds"])
+    return True
+
+
 def heartbeat(profile, session, now=None):
     """Every minute or two while I read, and the moment I leave: the time so
     far is saved on the sitting and the day is counted. So ten minutes read
     and a closed app still make the streak (Avi, 2026-10-23)."""
     if session.profile_id != profile.pk or session.ended_at is not None:
         return session
+    now = now or timezone.now()
     session.seconds = elapsed(session, now)
-    session.save(update_fields=["seconds"])
+    session.last_beat_at = now
+    session.save(update_fields=["seconds", "last_beat_at"])
     _count_the_day(profile, _day(session.started_at))
     return session
 
@@ -152,7 +173,35 @@ def resume(profile, session, now=None):
     now = now or timezone.now()
     session.paused_seconds += int(max(0, (now - session.paused_at).total_seconds()))
     session.paused_at = None
-    session.save(update_fields=["paused_at", "paused_seconds"])
+    session.last_beat_at = now
+    session.save(update_fields=["paused_at", "paused_seconds", "last_beat_at"])
+    return session
+
+
+def trim(profile, session, seconds, now=None):
+    """Count this sitting only up to `seconds` (Avi, 2026-10-23: a reading
+    screen left open by mistake must not count). The clock stops; time is
+    only ever taken away, never added. When this sitting alone had earned
+    the day and no longer does, the day is not earned after all."""
+    if session.profile_id != profile.pk or session.ended_at is not None:
+        return session
+    try:
+        seconds = int(seconds)
+    except (TypeError, ValueError):
+        return session
+    now = now or timezone.now()
+    pause(profile, session, now)
+    target = max(0, min(elapsed(session, now), seconds))
+    # While paused, elapsed = (paused_at - started_at) - paused_seconds.
+    session.paused_seconds = max(session.paused_seconds,
+                                 int((session.paused_at - session.started_at).total_seconds()) - target)
+    session.seconds = elapsed(session, now)
+    session.save(update_fields=["paused_seconds", "seconds"])
+    day = _day(session.started_at)
+    if day_seconds(profile, day) < MIN_STREAK_SECONDS:
+        ReadingCheckin.objects.filter(profile=profile, day=day, created_at__gte=session.started_at).delete()
+    else:
+        _count_the_day(profile, day)
     return session
 
 
@@ -168,6 +217,7 @@ def end(profile, session, end_page, finished=False, now=None):
     if end_page < session.start_page:
         raise ReadingError("read.err.backwards")
     now = now or timezone.now()
+    settle(session, now)
     session.seconds = elapsed(session, now)
     if session.paused_at is not None:
         session.paused_seconds += int(max(0, (now - session.paused_at).total_seconds()))

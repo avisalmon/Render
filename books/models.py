@@ -1123,6 +1123,9 @@ class ReadingSession(models.Model):
     # Leaving the reading screen pauses the clock (Avi, 2026-10-21).
     paused_at = models.DateTimeField(null=True, blank=True)
     paused_seconds = models.PositiveIntegerField(default=0)
+    # The reading screen's last sign of life (Avi, 2026-10-23): a screen that went
+    # silent stops counting a little after its last heartbeat.
+    last_beat_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ["-started_at"]

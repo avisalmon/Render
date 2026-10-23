@@ -1,0 +1,44 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "history.title" %} · {% t "brand" %}{% endblock %}
+{% block screen %}history{% endblock %}
+{% block content %}
+<div class="bk-narrow bk-history">
+  <p class="bk-kicker" style="margin: 0">{% t "history.kicker" %}</p>
+  <h1 class="bk-title" style="margin-top: 4px">{% t "history.title" %}</h1>
+  {% if months %}
+  <dl class="bk-history-totals">
+    <div><dt>{% t "history.t_books" %}</dt><dd>{{ total_books }}</dd></div>
+    <div><dt>{% t "history.t_finished" %}</dt><dd>{{ total_finished }}</dd></div>
+    <div><dt>{% t "history.t_minutes" %}</dt><dd>{{ total_minutes }}</dd></div>
+    <div><dt>{% t "history.t_sittings" %}</dt><dd>{{ total_sittings }}</dd></div>
+  </dl>
+  <ol class="bk-timeline">
+    {% for m in months %}
+    <li class="bk-timeline-month">
+      <h2 class="bk-timeline-when">{{ m.name }}</h2>
+      <ol class="bk-timeline-books">
+        {% for r in m.books %}
+        <li class="bk-timeline-book{% if r.finished %} is-finished{% endif %}{% if r.now %} is-now{% endif %}">
+          <a class="bk-timeline-card" href="{% url 'books:catalog_entry' r.entry.pk %}" data-history-book="{{ r.entry.pk }}">
+            <span class="bk-entry-cover" aria-hidden="true"{% if not r.entry.cover %} style="{% spine_style r.entry %}"{% endif %}>{% if r.entry.cover %}<img src="{{ r.entry.cover.url }}" alt="" loading="lazy">{% endif %}</span>
+            <span class="bk-timeline-text">
+              <span class="bk-entry-title">{{ r.entry.title }}</span>
+              {% if r.entry.creator_names %}<span class="bk-muted">{{ r.entry.creator_names }}</span>{% endif %}
+              <span class="bk-timeline-state">{% if r.now %}{% t "history.now" %}{% elif r.finished %}{% t "history.finished" date=r.finished|date:"d.m.Y" %}{% elif r.marked %}{% t "history.marked" %}{% else %}{% t "history.last" date=r.day|date:"d.m.Y" %}{% endif %}</span>
+              {% if r.sittings %}<span class="bk-timeline-facts">{% t "read.book_minutes" n=r.minutes s=r.sittings %}{% if r.pages %} · {% t "history.pages" n=r.pages %}{% endif %}{% if r.pace %} · {% t "read.pace" n=r.pace %}{% endif %}{% if r.notes %} · {% t "notes.n" n=r.notes %}{% endif %}</span>{% elif r.notes %}<span class="bk-timeline-facts">{% t "notes.n" n=r.notes %}</span>{% endif %}
+            </span>
+          </a>
+        </li>
+        {% endfor %}
+      </ol>
+    </li>
+    {% endfor %}
+  </ol>
+  {% else %}
+  <div class="bk-empty">
+    <p class="bk-lead">{% t "history.empty" %}</p>
+    <a class="bk-btn bk-btn--primary bk-btn--wide" href="{% url 'books:read' %}">{% t "read.start" %}</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

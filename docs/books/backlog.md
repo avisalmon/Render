@@ -641,6 +641,11 @@ charging for the web lookup.
 
 | F-R.30 | A spoken thought is written once on Android (results repeat and grow there); thoughts add up per book | DONE |
 
+| F-R.31 | The book's details from the reading screen | DONE |
+| F-R.32 | My history: a timeline of every book read, by month, with minutes, pages, pace, thoughts; my sittings on the book's page | DONE |
+| F-R.33 | The five minutes that earn the day: a ping, fireworks, the flame lights up, the clock goes on | DONE |
+| F-R.34 | A screen left open: "still reading?" after 20 minutes without a touch, no answer stops the clock where the question came; "count only up to my last touch"; a silent screen stops one heartbeat after its last | DONE |
+
 Next on friends (Avi, 2026-10-22): "I'd love to borrow this one", seeing which friend has a book I want, a friends' feed.
 
 Open for later (Avi): what to do with a finished book's notes (a summary, a

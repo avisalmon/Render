@@ -27,6 +27,14 @@
         {% if can_edit %}<a class="bk-btn bk-btn--small" href="{% url 'books:catalog_edit' entry.pk %}">{% include "books/ui/_icon.html" with name="pencil" %} {% t "catalog.edit" %}</a>{% endif %}
       </div>
       {% if read_progress.sessions %}<p class="bk-muted" style="margin: 8px 0 0">{% if read_progress.percent %}<span class="bk-progress" aria-hidden="true"><span style="width: {{ read_progress.percent }}%"></span></span>{% if read_progress.pages_assumed %}~{% endif %}{{ read_progress.percent }}% · {% endif %}{% t "read.book_minutes" n=read_progress.minutes s=read_progress.sessions %}{% if read_progress.pace %} · {% t "read.pace" n=read_progress.pace %}{% endif %}{% if read_progress.minutes_left %} · {% t "read.left" n=read_progress.minutes_left %}{% endif %}</p>{% endif %}
+      {% if my_sittings %}
+      <details class="bk-filterbox bk-sittings">
+        <summary>{% t "history.sittings" %} · <b>{{ my_sittings|length }}</b></summary>
+        <ol class="bk-sittings-list bk-filterbox-body">
+          {% for s in my_sittings %}<li>{% t "history.sitting_row" date=s.started_at|date:"d.m.Y" m=s.minutes|floatformat:"0" %}{% if s.end_page is not None and s.end_page > s.start_page %} · {% t "history.sitting_pages" a=s.start_page b=s.end_page %}{% endif %}{% if s.finished_book %} · {% t "finish.kicker" %}{% endif %}</li>{% endfor %}
+        </ol>
+      </details>
+      {% endif %}
     </div>
   </div>
 

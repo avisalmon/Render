@@ -138,6 +138,9 @@ def entry(request, pk):
         "near_count": __import__("books.discover", fromlist=["x"]).available_near(obj, me),
         "read_progress": __import__("books.reading", fromlist=["x"]).book_progress(me, obj),
         "notes": __import__("books.notes", fromlist=["for_book"]).for_book(me, obj),
+        # Every sitting with this book, for the history's tap (Avi, 2026-10-23).
+        "my_sittings": __import__("books.models", fromlist=["ReadingSession"]).ReadingSession.objects.filter(
+            profile=me, entry=obj, ended_at__isnull=False)[:60],
         "club_error": community.CommunityError and (request.GET.get("error") or ""),
         "entry": obj, "detail": detail, "form": form, "sent": sent, "editions": list(editions) + list(siblings),
         "can_edit": can_edit, "lang": _lang(request), "edited": request.GET.get("edited") == "1",

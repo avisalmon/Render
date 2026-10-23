@@ -380,6 +380,7 @@ SCREENS = [
     ("plans-plus", "/books/plans/?redeemed=1", "shelver", "plans"),
     ("read-start", "/books/read/", "reader", "read"),
     ("read-session", "/books/read/", "staff", "read-session"),
+    ("history", "/books/history/", "reader", "history"),
     ("read-summary", lambda: f"/books/read/{__import__('books.models', fromlist=['ReadingSession']).ReadingSession.objects.filter(ended_at__isnull=False).order_by('-ended_at').first().pk}/", "reader", "read-summary"),
     ("person-me", lambda: f"/books/people/{__import__('books.models', fromlist=['Profile']).Profile.objects.get(user__username='reader').pk}/", "reader", "person"),
 ]
@@ -788,7 +789,8 @@ NARROW_PATHS = [("landing", None, "/books/"), ("login", None, "/books/login/"), 
                 ("entry", "reader", "/books/catalog/1001/"), ("scan", "reader", "/books/scan/"),
                 ("settings", "reader", "/books/settings/"), ("play", "reader", "/books/play/"),
                 ("club", "reader", "/books/club/"), ("near", "reader", "/books/near/"), ("read", "shelver", "/books/read/"),
-                ("friends", "reader", "/books/friends/"), ("friend-shelf", "reader", None)]
+                ("friends", "reader", "/books/friends/"), ("history", "reader", "/books/history/"),
+                ("friend-shelf", "reader", None)]
 
 
 def test_on_every_phone_width_the_page_never_slides_sideways(browser, live_server, db):
@@ -1052,3 +1054,93 @@ def test_on_a_phone_an_invited_person_lands_on_the_friends_shelf_with_its_pictur
     finally:
         context.close()
 
+
+
+def _fresh_reader():
+    """The reader with no reading yet today, so the day's five minutes are still ahead."""
+    from books.models import Profile, ReadingCheckin, ReadingSession
+    rp = Profile.objects.get(user__username="reader")
+    ReadingSession.objects.filter(profile=rp).delete()
+    ReadingCheckin.objects.filter(profile=rp).delete()
+    return rp
+
+
+def test_the_five_minutes_that_earn_the_day_ping_and_light_up_and_the_clock_goes_on(browser, live_server, db):
+    """Avi, 2026-10-23: when the first five minutes are reached, a ping and
+    fireworks with "another day on the streak", then the count goes on."""
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    from books import catalog, reading
+    from books.models import ReadingCheckin, ReadingSession
+    build_world()
+    rp = _fresh_reader()
+    e = catalog.CatalogEntry.objects.create(collection_type=catalog.book_type(), title="ספר של חמש דקות")
+    earlier = reading.start(rp, e, 1)
+    ReadingSession.objects.filter(pk=earlier.pk).update(started_at=timezone.now() - timedelta(seconds=288))
+    earlier.refresh_from_db()
+    reading.end(rp, earlier, 3)
+    assert not ReadingCheckin.objects.filter(profile=rp).exists()
+    reading.start(rp, e, 3)
+    context, page, _ = _open(browser, live_server, "reader", "/books/read/", PHONE, "dark")
+    try:
+        page.wait_for_selector("[data-earned]:not([hidden])", timeout=15000)
+        assert page.evaluate("window.__bkPings") >= 1
+        assert "עוד יום ברצף!" in page.text_content("[data-earned]")
+        assert page.evaluate("[...document.querySelectorAll('[data-celebrated]')].every(i => i.value === '1')")
+        assert page.evaluate("document.querySelector('.bk-flame').classList.contains('is-lit')")
+        assert page.text_content(".bk-flame b").strip() == "1"
+        page.wait_for_selector("[data-earned]", state="hidden", timeout=8000)
+        before = page.text_content("[data-timer]")
+        page.wait_for_timeout(1500)
+        assert page.text_content("[data-timer]") != before  # the clock goes on
+        for _ in range(20):
+            if ReadingCheckin.objects.filter(profile=rp).exists():
+                break
+            page.wait_for_timeout(200)
+        assert ReadingCheckin.objects.filter(profile=rp).exists()  # counted on the server at that moment
+        page.click("[data-end-form] button[type=submit]")
+        page.wait_for_url("**/books/")
+        assert "streak=1" not in page.url  # celebrated once, not twice
+    finally:
+        context.close()
+
+
+def test_a_screen_left_open_asks_and_stops_the_clock_when_nobody_answers(browser, live_server, db):
+    """Avi, 2026-10-23: if I leave the reading open by mistake it must not
+    keep counting. After a while without a touch it asks; no answer stops
+    the clock where the question came up; a tap goes on."""
+    from books import catalog, reading
+    from books.models import ReadingSession
+    build_world()
+    rp = _fresh_reader()
+    e = catalog.CatalogEntry.objects.create(collection_type=catalog.book_type(), title="ספר שנשכח פתוח")
+    s = reading.start(rp, e, 1)
+    context, page, _ = _open(browser, live_server, "reader", "/books/", PHONE, "light")
+    try:
+        page.add_init_script("window.bkReadingTest = {idle: 2, answer: 2};")
+        page.goto(f"{live_server.url}/books/read/", wait_until="domcontentloaded")
+        page.wait_for_selector('[data-still][data-state="ask"]:not([hidden])', timeout=8000)
+        assert page.text_content("[data-still-title]") == "עדיין קוראים?"
+        page.wait_for_selector('[data-still][data-state="stopped"]', timeout=8000)
+        assert page.text_content("[data-still-yes]") == "ממשיכים לקרוא"
+        for _ in range(20):
+            s.refresh_from_db()
+            if s.paused_at is not None:
+                break
+            page.wait_for_timeout(200)
+        assert s.paused_at is not None and s.seconds <= 5  # stopped where the question came up
+        frozen = page.text_content("[data-timer]")
+        page.wait_for_timeout(1500)
+        assert page.text_content("[data-timer]") == frozen
+        page.click("[data-still-yes]")
+        page.wait_for_selector("[data-still]", state="hidden")
+        for _ in range(20):
+            s.refresh_from_db()
+            if s.paused_at is None:
+                break
+            page.wait_for_timeout(200)
+        assert s.paused_at is None and ReadingSession.objects.get(pk=s.pk).ended_at is None
+    finally:
+        context.close()

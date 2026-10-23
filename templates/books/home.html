@@ -42,6 +42,7 @@
     </section>
     <nav class="bk-quick" aria-label="{% t "home.quick" %}">
       <a class="bk-quick-tile bk-quick-friends" href="{% url 'books:friends' %}">{% include "books/ui/_icon.html" with name="friends" %}<span>{% t "friends.title" %}{% if friend_counts.following or friend_counts.followers %} · {{ friend_counts.following|add:friend_counts.followers }}{% endif %}</span>{% if friend_counts.requests %}<b class="bk-quick-badge">{{ friend_counts.requests }}</b>{% endif %}</a>
+      <a class="bk-quick-tile bk-quick-history" href="{% url 'books:history' %}">{% include "books/ui/_icon.html" with name="history" %}<span>{% t "history.title" %}</span></a>
       {% if books_json and books_json != "[]" %}
       <a class="bk-quick-tile" href="{% url 'books:library' %}">{% include "books/ui/_icon.html" with name="books" %}<span>{% t "lib.all_books" %}</span></a>
       {% endif %}

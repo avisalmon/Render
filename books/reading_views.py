@@ -26,11 +26,18 @@ def read_page(request):
     me = request.books_profile
     session = reading.active(me)
     if session:
+        reading.settle(session)  # a screen that went silent stopped counting where it went silent
         reading.resume(me, session)  # back on the reading screen: the clock runs again
-        from . import firstread
+        from . import firstread, play
 
+        day = reading._day(session.started_at)
+        counted = reading.day_seconds(me, day) >= reading.MIN_STREAK_SECONDS
         return render(request, "books/read/session.html", {
             "elapsed": reading.elapsed(session),
+            # The five minutes that earn the day are celebrated on this screen (Avi, 2026-10-23).
+            "day_before": max(0, reading.day_seconds(me, day) - session.seconds),
+            "goal_seconds": reading.MIN_STREAK_SECONDS,
+            "streak_next": play.streak(me) + (0 if counted else 1),
             # Both covers, from the reading screen too (Avi, 2026-10-23): the book is in my hands now.
             "cover": firstread.cover_for(me, session.entry), "back": firstread.back_enabled(),
             "session": session, "progress": reading.book_progress(me, session.entry),
@@ -102,10 +109,14 @@ def end(request, pk):
         from .models import ReadingCheckin
 
         day = reading._day(session.started_at)
-        counted_before = ReadingCheckin.objects.filter(profile=me, day=day).exists()
+        reading.settle(session)
+        # The day without this sitting: the heartbeat may already have counted it (Avi, 2026-10-23).
+        before = reading.day_seconds(me, day) - session.seconds
         reading.end(me, session, request.POST.get("end_page"), finished)
-        # This sitting made the day count for the streak: home shows the moment (Avi, 2026-10-21).
-        newly = not counted_before and ReadingCheckin.objects.filter(profile=me, day=day).exists()
+        # This sitting made the day count for the streak: home shows the moment (Avi, 2026-10-21),
+        # unless the reading screen already celebrated it.
+        newly = (before < reading.MIN_STREAK_SECONDS and request.POST.get("celebrated") != "1"
+                 and ReadingCheckin.objects.filter(profile=me, day=day).exists())
     except reading.ReadingError as exc:
         return redirect(f"{reverse('books:read')}?error={exc}")
     if finished:
@@ -138,8 +149,28 @@ def pause(request, pk):
 def tick(request, pk):
     """The reading screen's heartbeat: the time so far, saved."""
     session = get_object_or_404(ReadingSession, pk=pk, profile=request.books_profile)
+    if reading.settle(session):
+        # Silent too long (a frozen tab): the gap is not counted; the screen resumes from here.
+        return JsonResponse({"seconds": session.seconds, "paused": True})
     reading.heartbeat(request.books_profile, session)
-    return JsonResponse({"seconds": session.seconds})
+    return JsonResponse({"seconds": session.seconds, "paused": session.paused_at is not None})
+
+
+@books_page
+@require_POST
+def trim(request, pk):
+    """"Count only until..." (Avi, 2026-10-23): the screen was left open by mistake."""
+    session = get_object_or_404(ReadingSession, pk=pk, profile=request.books_profile)
+    reading.trim(request.books_profile, session, request.POST.get("seconds"))
+    return JsonResponse({"elapsed": reading.elapsed(session)})
+
+
+@books_page
+def history(request):
+    """My reading over time (Avi, 2026-10-23): every book on a timeline."""
+    from . import history as hist
+
+    return render(request, "books/read/history.html", hist.timeline(request.books_profile, _lang(request)))
 
 
 @books_page

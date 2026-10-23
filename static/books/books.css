@@ -1135,4 +1135,58 @@ html[dir="rtl"] .bk-prop > summary { padding: 6px 14px 6px 6px; }
 .bk-read-covers .bk-btn { gap: 6px; }
 .bk-read-covers-status { margin: 4px 0 0; min-height: 0; }
 .bk-read-covers-status:empty { display: none; }
+/* ---- the five minutes that earn the day, on the reading screen (Avi, 2026-10-23) ---------- */
+.bk-earned { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px;
+  background: color-mix(in srgb, var(--bk-bg) 55%, transparent); opacity: 0; transition: opacity .35s ease; }
+.bk-earned.is-on { opacity: 1; }
+.bk-earned[hidden] { display: none; }
+.bk-earned-sky { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.bk-earned-card { position: relative; text-align: center; padding: 22px 26px; border-radius: 18px; background: var(--bk-surface);
+  box-shadow: 0 18px 40px var(--bk-shadow); max-width: 320px; transform: scale(.85); transition: transform .45s cubic-bezier(.2, 1.4, .4, 1); }
+.bk-earned.is-on .bk-earned-card { transform: scale(1); }
+.bk-earned-flame { width: 64px; height: 64px; display: block; margin: 0 auto; animation: bk-earned-flicker 1.2s ease-in-out infinite alternate; }
+.bk-earned-flame .bk-flame-outer { fill: var(--bk-flame, #E8590C); }
+.bk-earned-flame .bk-flame-core { fill: var(--bk-flame-core, #FFB020); }
+.bk-earned-n { font-size: 44px; font-weight: 800; line-height: 1; margin: 4px 0 0; color: var(--bk-flame, #E8590C); font-variant-numeric: tabular-nums; }
+.bk-earned-title { font-size: 22px; font-weight: 800; margin: 8px 0 4px; color: var(--bk-ink); }
+.bk-earned-sub { margin: 0; color: var(--bk-muted); }
+@keyframes bk-earned-flicker { from { transform: scale(1) rotate(-2deg); } to { transform: scale(1.08) rotate(2deg); } }
+@media (prefers-reduced-motion: reduce) { .bk-earned-flame { animation: none; } .bk-earned-card { transition: none; } }
+
+/* ---- still reading? (Avi, 2026-10-23) ---------------------------------------------------- */
+.bk-still { margin: 12px 0; padding: 14px; border-radius: 14px; background: var(--bk-surface); border: 1px solid var(--bk-brass);
+  box-shadow: 0 8px 20px var(--bk-shadow); display: grid; gap: 8px; }
+.bk-still[hidden] { display: none; }
+.bk-still-title { margin: 0; font-size: 20px; font-weight: 800; text-align: center; color: var(--bk-ink); }
+.bk-still-sub { margin: 0; text-align: center; }
+.bk-still [hidden] { display: none; }
+
+/* ---- my history: a timeline of the books I read (Avi, 2026-10-23) -------------------------- */
+.bk-history-totals { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 12px 0 18px; }
+.bk-history-totals div { background: var(--bk-surface); border-radius: 10px; padding: 8px 4px; text-align: center; min-width: 0; }
+.bk-history-totals dt { font-size: 12px; color: var(--bk-muted); }
+.bk-history-totals dd { margin: 2px 0 0; font-size: 20px; font-weight: 800; color: var(--bk-ink); font-variant-numeric: tabular-nums; }
+.bk-timeline, .bk-timeline-books { list-style: none; margin: 0; padding: 0; }
+.bk-timeline { position: relative; padding-inline-start: 22px; }
+.bk-timeline::before { content: ""; position: absolute; inset-block: 6px 0; inset-inline-start: 7px; width: 2px; border-radius: 2px;
+  background: linear-gradient(var(--bk-brass), color-mix(in srgb, var(--bk-brass) 15%, transparent)); }
+.bk-timeline-month { margin: 0 0 14px; }
+.bk-timeline-when { position: relative; font-size: 14px; font-weight: 700; letter-spacing: .02em; color: var(--bk-brass); margin: 0 0 8px; }
+.bk-timeline-when::before { content: ""; position: absolute; inset-inline-start: -21px; top: 3px; width: 12px; height: 12px; border-radius: 50%;
+  background: var(--bk-bg); border: 2px solid var(--bk-brass); }
+.bk-timeline-book { position: relative; margin: 0 0 8px; }
+.bk-timeline-book::before { content: ""; position: absolute; inset-inline-start: -18px; top: 26px; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--bk-muted); }
+.bk-timeline-book.is-finished::before { background: var(--bk-ok); width: 8px; height: 8px; inset-inline-start: -19px; }
+.bk-timeline-book.is-now::before { background: var(--bk-flame, #E8590C); }
+.bk-timeline-card { display: flex; gap: 10px; align-items: flex-start; padding: 8px; border-radius: 12px; background: var(--bk-surface);
+  color: inherit; text-decoration: none; min-width: 0; }
+.bk-timeline-card:hover, .bk-timeline-card:focus-visible { background: var(--bk-surface-2); }
+.bk-timeline-text { display: grid; gap: 2px; min-width: 0; }
+.bk-timeline-text > * { overflow-wrap: anywhere; }
+.bk-timeline-state { font-size: 13px; font-weight: 600; color: var(--bk-ink); }
+.is-finished .bk-timeline-state { color: var(--bk-ok); }
+.bk-timeline-facts { font-size: 12.5px; color: var(--bk-muted); }
+.bk-sittings { margin-top: 10px; }
+.bk-sittings-list { margin: 0; padding-inline-start: 18px; font-size: 14px; color: var(--bk-muted); display: grid; gap: 4px; }
 

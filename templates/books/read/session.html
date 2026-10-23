@@ -4,8 +4,9 @@
 {% block scanbar %}{% endblock %}
 {% block readbar %}{% endblock %}
 {% block content %}
-<div class="bk-narrow bk-reading" data-reading data-elapsed="{{ elapsed }}"
-     data-pause-url="{% url 'books:read_pause' session.pk %}" data-resume-url="{% url 'books:read_resume' session.pk %}" data-tick-url="{% url 'books:read_tick' session.pk %}">
+<div class="bk-narrow bk-reading" data-reading data-elapsed="{{ elapsed }}" data-day-before="{{ day_before }}" data-goal="{{ goal_seconds }}"
+     data-pause-url="{% url 'books:read_pause' session.pk %}" data-resume-url="{% url 'books:read_resume' session.pk %}" data-tick-url="{% url 'books:read_tick' session.pk %}"
+     data-trim-url="{% url 'books:read_trim' session.pk %}">
   <p class="bk-kicker" style="margin: 0">{% t "read.reading_now" %}</p>
   <h1 class="bk-title" style="margin-top: 4px">{{ session.entry.title }}</h1>
   <p class="bk-muted" style="margin: 0">{% t "read.from_page" n=session.start_page %}{% if pages %} · {% t "read.of_pages" n=pages %}{% endif %}{% if progress.pace %} · {% t "read.pace" n=progress.pace %}{% endif %}</p>
@@ -29,6 +30,7 @@
              data-filled="{% t "first.back_filled" %}" data-suggested="{% t "first.back_suggested" %}" data-nothing="{% t "first.back_nothing" %}">
     </label>
     {% endif %}
+    <a class="bk-btn bk-btn--small" href="{% url 'books:catalog_entry' session.entry_id %}" data-book-details>{% include "books/ui/_icon.html" with name="info" %} {% t "read.details" %}</a>
   </div>
   <p class="bk-help bk-read-covers-status" data-first-cover-status aria-live="polite"></p>
   <p class="bk-help bk-read-covers-status" data-first-back-status aria-live="polite"></p>
@@ -42,6 +44,27 @@
     <span class="bk-candle-dish"></span>
   </div>
   <div class="bk-timer" role="timer" aria-live="off" data-timer>0:00</div>
+
+  {# Still reading? After twenty minutes without a touch (Avi, 2026-10-23: a screen left open by mistake must not count). #}
+  <div class="bk-still" data-still hidden role="alertdialog" aria-labelledby="still-h"
+       data-ask="{% t "still.ask" %}" data-ask-sub="{% t "still.ask_sub" m="{m}" %}" data-stopped="{% t "still.stopped" t="{t}" %}"
+       data-stopped-sub="{% t "still.stopped_sub" %}" data-yes="{% t "still.yes" %}" data-go-on="{% t "still.go_on" %}" data-trim="{% t "still.trim" t="{t}" %}">
+    <p class="bk-still-title" id="still-h" data-still-title>{% t "still.ask" %}</p>
+    <p class="bk-help bk-still-sub" data-still-sub></p>
+    <button type="button" class="bk-btn bk-btn--primary bk-btn--wide" data-still-yes>{% t "still.yes" %}</button>
+    <button type="button" class="bk-btn bk-btn--quiet bk-btn--wide" data-still-trim hidden>{% t "still.trim" t="0:00" %}</button>
+  </div>
+
+  {# The five minutes that earn the day: a ping, fireworks, and the clock goes on (Avi, 2026-10-23). #}
+  <div class="bk-earned" data-earned hidden role="status" aria-live="polite">
+    <canvas class="bk-earned-sky" data-earned-sky aria-hidden="true"></canvas>
+    <div class="bk-earned-card">
+      <svg class="bk-earned-flame" viewBox="0 0 24 24" aria-hidden="true"><path class="bk-flame-outer" d="M12 2.5c.6 3.2 2.6 4.8 4.3 6.6 1.6 1.7 2.7 3.6 2.7 6 0 3.9-3.1 6.4-7 6.4s-7-2.5-7-6.4c0-2.3 1-4 2.3-5.3.2 1.3.9 2.4 2 2.9-.3-3.7 1.2-7.3 2.7-10.2z"/><path class="bk-flame-core" d="M12 12.3c.3 1.5 1.3 2.3 2 3.1.6.7 1 1.4 1 2.3 0 1.7-1.3 2.8-3 2.8s-3-1.1-3-2.8c0-1.6 1.2-2.8 3-5.4z"/></svg>
+      <p class="bk-earned-n">{{ streak_next }}</p>
+      <p class="bk-earned-title">{% t "earned.title" %}</p>
+      <p class="bk-earned-sub">{% if streak_next > 1 %}{% t "earned.sub" n=streak_next %}{% else %}{% t "earned.sub_one" %}{% endif %}</p>
+    </div>
+  </div>
   {% if error %}<p class="bk-error" role="alert">{{ error }}</p>{% endif %}
 
   <form class="bk-think" method="post" action="{% url 'books:note_add' session.entry_id %}" data-think data-saved="{% t "think.saved" %}">
@@ -79,6 +102,7 @@
   </dialog>
 
   <form method="post" action="{% url 'books:read_end' session.pk %}" class="bk-card bk-form" data-end-form>{% csrf_token %}
+    <input type="hidden" name="celebrated" value="" data-celebrated>
     <div class="bk-flip" data-flip data-min="{{ session.start_page }}" data-max="{{ pages|default:0 }}" data-read-tpl="{% t "read.flip_gained" n="{n}" %}"
          role="slider" tabindex="0" aria-label="{% t "read.page_reached" %}" aria-valuemin="{{ session.start_page }}"{% if pages %} aria-valuemax="{{ pages }}"{% endif %} aria-valuenow="{{ session.start_page }}">
       <p class="bk-kicker bk-flip-label">{% t "read.page_reached" %}</p>
@@ -112,6 +136,7 @@
       <form method="post" action="{% url 'books:read_end' session.pk %}" class="bk-form" data-finish-form>
         {% csrf_token %}
         <input type="hidden" name="finished" value="1">
+        <input type="hidden" name="celebrated" value="" data-celebrated>
         <input type="hidden" name="end_page" value="{{ pages|default:session.start_page }}" data-finish-page data-pages="{{ pages|default:0 }}">
         <input type="hidden" name="summary_source" value="typed" data-voice-source>
         <p class="bk-finish-ask">{% t "finish.ask" %}</p>
@@ -133,10 +158,11 @@
 {% block scripts %}
 {% load static %}<script src="{% static 'books/flip.js' %}" defer></script>
 <script src="{% static 'books/notes.js' %}" defer></script>
+<script src="{% static 'books/sky.js' %}" defer></script>
 <script src="{% static 'books/finish.js' %}" defer></script>
 <script src="{% static 'books/first.js' %}" defer></script>
 <script>
-(function () {
+window.addEventListener('DOMContentLoaded', function () {
   // The clock counts only while this screen is in front (Avi, 2026-10-21):
   // leaving it, locking the phone or switching apps pauses it on the server,
   // and coming back resumes it.
@@ -144,22 +170,154 @@
   var out = document.querySelector('[data-timer]');
   if (!root || !out) return;
   var csrf = document.body.getAttribute('data-csrf');
+  var test = window.bkReadingTest || {};
   var base = Date.now() - (parseInt(root.getAttribute('data-elapsed'), 10) || 0) * 1000;
   var paused = false, frozenAt = 0, ended = false;
-  var show = function (s) {
+  var held = false;  // stopped by the still-reading check: only a tap starts it again
+  var fmt = function (s) {
     var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
-    out.textContent = (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(sec).padStart(2, '0');
+    return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(sec).padStart(2, '0');
+  };
+  var seconds = function () { return Math.max(0, Math.floor(((paused ? frozenAt : Date.now()) - base) / 1000)); };
+  var show = function (s) { out.textContent = fmt(s); };
+  var post = function (url, extra) {
+    var fd = new FormData(); fd.append('csrfmiddlewaretoken', csrf);
+    for (var k in (extra || {})) fd.append(k, extra[k]);
+    return fetch(url, {method: 'POST', body: fd, headers: {'Accept': 'application/json'}, keepalive: true});
   };
   var candle = document.querySelector('[data-candle]');
+
+  // -- the ping: a small bell made on the spot (the phone allows sound after a first touch) --
+  var audio = null;
+  var unlock = function () {
+    try {
+      audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+      if (audio.state === 'suspended') audio.resume();
+    } catch (e) { audio = null; }
+  };
+  document.addEventListener('pointerdown', unlock, {passive: true});
+  var ping = function (soft) {
+    window.__bkPings = (window.__bkPings || 0) + 1;
+    unlock();
+    if (!audio) return;
+    var t0 = audio.currentTime + 0.02;
+    (soft ? [[660, 0]] : [[880, 0], [1318.5, 0.16]]).forEach(function (n) {
+      var o = audio.createOscillator(), g = audio.createGain();
+      o.type = 'sine'; o.frequency.value = n[0];
+      g.gain.setValueAtTime(0.0001, t0 + n[1]);
+      g.gain.exponentialRampToValueAtTime(soft ? 0.12 : 0.28, t0 + n[1] + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + n[1] + 0.9);
+      o.connect(g); g.connect(audio.destination);
+      o.start(t0 + n[1]); o.stop(t0 + n[1] + 1);
+    });
+  };
+
+  // -- the five minutes that earn the day (Avi, 2026-10-23) --
+  var dayBefore = parseInt(root.getAttribute('data-day-before'), 10) || 0;
+  var goal = parseInt(root.getAttribute('data-goal'), 10) || 300;
+  var earned = dayBefore + seconds() >= goal;
+  var earnedBox = document.querySelector('[data-earned]');
+  var sky = earnedBox && window.bkSky ? window.bkSky(earnedBox.querySelector('[data-earned-sky]')) : null;
+  var celebrate = function () {
+    earned = true;
+    document.querySelectorAll('[data-celebrated]').forEach(function (i) { i.value = '1'; });
+    beat();  // the day is counted on the server now
+    ping(false);
+    if (navigator.vibrate) { try { navigator.vibrate([40, 60, 40, 60, 120]); } catch (e) { /* ignore */ } }
+    // The header's flame lights up with the new count at once.
+    var flame = document.querySelector('.bk-flame');
+    var n = earnedBox && earnedBox.querySelector('.bk-earned-n');
+    if (flame) {
+      flame.classList.add('is-lit');
+      if (n && flame.querySelector('b')) flame.querySelector('b').textContent = n.textContent.trim();
+    }
+    if (!earnedBox) return;
+    earnedBox.hidden = false;
+    requestAnimationFrame(function () { earnedBox.classList.add('is-on'); });
+    if (sky) sky.start({confetti: 70, busy: 2600, every: 0});
+    var gone = false;
+    var close = function () {
+      if (gone) return;
+      gone = true;
+      earnedBox.classList.remove('is-on');
+      setTimeout(function () { earnedBox.hidden = true; if (sky) sky.stop(); }, 400);
+    };
+    earnedBox.addEventListener('click', close, {once: true});
+    setTimeout(close, test.earnedMs || 5200);
+  };
+
+  // -- still reading? (Avi, 2026-10-23: a screen left open by mistake must not count) --
+  var still = document.querySelector('[data-still]');
+  var IDLE = (test.idle || 20 * 60) * 1000, ANSWER = (test.answer || 3 * 60) * 1000;
+  var lastTouch = Date.now(), touchSec = seconds(), askedAt = 0, askedSec = 0;
+  var touched = function () {
+    if (askedAt || held || paused) return;
+    lastTouch = Date.now(); touchSec = seconds();
+  };
+  ['pointerdown', 'keydown', 'scroll', 'input'].forEach(function (e) {
+    document.addEventListener(e, touched, {passive: true, capture: true});
+  });
+  var sattr = function (k) { return still.getAttribute('data-' + k) || ''; };
+  var showStill = function (state, sec) {
+    var title = still.querySelector('[data-still-title]'), sub = still.querySelector('[data-still-sub]');
+    var yes = still.querySelector('[data-still-yes]'), trimBtn = still.querySelector('[data-still-trim]');
+    still.setAttribute('data-state', state);
+    if (state === 'ask') {
+      title.textContent = sattr('ask');
+      sub.textContent = sattr('ask-sub').replace('{m}', String(Math.round(IDLE / 60000)));
+      yes.textContent = sattr('yes');
+    } else {
+      title.textContent = sattr('stopped').replace('{t}', fmt(sec));
+      sub.textContent = sattr('stopped-sub');
+      yes.textContent = sattr('go-on');
+    }
+    trimBtn.textContent = sattr('trim').replace('{t}', fmt(touchSec));
+    trimBtn.hidden = touchSec >= (state === 'ask' ? seconds() : sec) - 30;
+    still.hidden = false;
+  };
+  var stopAt = function (sec) {
+    held = true; askedAt = 0;
+    if (!paused) { paused = true; frozenAt = Date.now(); }
+    base = frozenAt - sec * 1000;
+    root.classList.add('is-paused');
+    show(sec);
+    post(root.getAttribute('data-trim-url'), {seconds: String(sec)})
+      .then(function (r) { return r.json(); })
+      .then(function (d) { base = frozenAt - d.elapsed * 1000; show(d.elapsed); })
+      .catch(function () {});
+    if (lock) { lock.release().catch(function () {}); lock = null; }  // the phone may sleep now
+    showStill('stopped', sec);
+  };
+  var goOn = function () {
+    still.hidden = true; askedAt = 0;
+    lastTouch = Date.now(); touchSec = seconds();
+    if (held) { held = false; resume(); awake(); }
+  };
+  if (still) {
+    still.querySelector('[data-still-yes]').addEventListener('click', goOn);
+    still.querySelector('[data-still-trim]').addEventListener('click', function () { stopAt(touchSec); });
+  }
+  var idleCheck = function () {
+    if (!still || paused || ended || held) return;
+    if (!askedAt && Date.now() - lastTouch >= IDLE) {
+      askedAt = Date.now(); askedSec = seconds();
+      showStill('ask');
+      ping(true);
+      if (navigator.vibrate) { try { navigator.vibrate(60); } catch (e) { /* ignore */ } }
+    } else if (askedAt && Date.now() - askedAt >= ANSWER) {
+      stopAt(askedSec);  // no answer: the clock stopped when the question came up
+    }
+  };
+
   var tick = function () {
     if (paused) return;
-    var sec = Math.max(0, Math.floor((Date.now() - base) / 1000));
+    var sec = seconds();
     show(sec);
     // The candle burns down over an hour of reading (Avi chose it, 2026-10-21).
     if (candle) candle.style.setProperty('--h', String(Math.max(0.12, 1 - sec / 3600)));
+    if (!earned && dayBefore + sec >= goal) celebrate();
+    idleCheck();
   };
-  tick();
-  setInterval(tick, 1000);
   var pause = function () {
     if (paused || ended) return;
     paused = true; frozenAt = Date.now(); root.classList.add('is-paused');
@@ -168,32 +326,50 @@
     else fetch(root.getAttribute('data-pause-url'), {method: 'POST', body: fd, keepalive: true});
   };
   var resume = function () {
-    if (!paused || ended) return;
+    if (!paused || ended || held) return;
+    var running = function () {
+      paused = false; root.classList.remove('is-paused');
+      // Coming back is a sign of life: an open question goes away.
+      if (askedAt && still) { askedAt = 0; still.hidden = true; }
+      lastTouch = Date.now(); touchSec = seconds();
+      tick();
+    };
     fetch(root.getAttribute('data-resume-url'), {method: 'POST', headers: {'X-CSRFToken': csrf, 'Accept': 'application/json'}})
       .then(function (r) { return r.json(); })
-      .then(function (d) { base = Date.now() - d.elapsed * 1000; paused = false; root.classList.remove('is-paused'); tick(); })
-      .catch(function () { base += Date.now() - frozenAt; paused = false; root.classList.remove('is-paused'); });
+      .then(function (d) { base = Date.now() - d.elapsed * 1000; running(); })
+      .catch(function () { base += Date.now() - frozenAt; running(); });
   };
-  window.bkReading = {pause: pause, resume: resume, end: function () { ended = true; }};
-  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') pause(); else resume(); });
   // A heartbeat while reading: the time so far is saved every 90 seconds, so a
   // closed app or a dead battery never loses it (Avi, 2026-10-23).
-  setInterval(function () {
+  var beat = function () {
     if (paused || ended) return;
-    fetch(root.getAttribute('data-tick-url'), {method: 'POST', headers: {'X-CSRFToken': csrf, 'Accept': 'application/json'}, keepalive: true}).catch(function () {});
-  }, 90000);
+    fetch(root.getAttribute('data-tick-url'), {method: 'POST', headers: {'X-CSRFToken': csrf, 'Accept': 'application/json'}, keepalive: true})
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        // The server stopped a clock that went silent too long: start again from what it kept.
+        if (d.paused && !paused && !held && !ended) { paused = true; frozenAt = Date.now(); resume(); }
+      })
+      .catch(function () {});
+  };
+  tick();
+  setInterval(tick, 1000);
+  setInterval(beat, 90000);
+  window.bkReading = {pause: pause, resume: resume, end: function () { ended = true; }};
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') pause(); else resume(); });
   window.addEventListener('pagehide', pause);
   window.addEventListener('pageshow', function (e) { if (e.persisted) resume(); });
   document.querySelectorAll('form[action$="/end/"], form[action$="/discard/"]').forEach(function (f) {
     f.addEventListener('submit', function () { ended = true; });
   });
-  // Keep the screen awake while reading (a web page cannot silence the phone).
+  // Keep the screen awake while reading (a web page cannot silence the phone),
+  // but not once the still-reading check has stopped the clock.
+  var lock = null;
   var awake = function () {
-    if (!('wakeLock' in navigator) || document.visibilityState !== 'visible') return;
-    navigator.wakeLock.request('screen').catch(function () {});
+    if (held || !('wakeLock' in navigator) || document.visibilityState !== 'visible') return;
+    navigator.wakeLock.request('screen').then(function (l) { lock = l; }).catch(function () {});
   };
   awake();
   document.addEventListener('visibilitychange', awake);
-})();
+});
 </script>
 {% endblock %}

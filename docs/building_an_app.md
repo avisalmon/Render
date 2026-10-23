@@ -1011,3 +1011,18 @@ sends, the worst one we support (here Android), not the tidy case. And
 code reading a stream of updates rebuilds the whole from each update
 rather than adding to a running total.
 
+### 45. When a fact starts being written earlier, find everyone who read "it was not there yet" as an event
+
+The streak screen on home showed when "done" found the day not yet counted
+before it and counted after it. Mistake 43 moved the counting earlier (a
+heartbeat while reading), so by the time "done" was pressed the day was
+almost always counted already, and the streak screen quietly stopped
+appearing. No test failed: the tests for the moment ended a sitting
+without a heartbeat in between.
+
+**The rule.** When a change makes something get written sooner or more
+often, search for every place that inferred an event from its absence
+("was it there before this?") and give that event its own definition
+(here: the day without this sitting was under five minutes, and the screen
+did not already celebrate it). Test the event along the new path too.
+
