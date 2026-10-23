@@ -626,12 +626,22 @@ def shelf_books(profile, limit=400, photos=False, viewer=None, teaser=False):
     pages = dict(BookDetail.objects.filter(entry_id__in=ids, pages__isnull=False).values_list("entry_id", "pages"))
     pages.update(ReadingLog.objects.filter(profile=profile, entry_id__in=ids, pages__isnull=False)
                  .values_list("entry_id", "pages"))
+    # On a friend's shelf (Avi, 2026-10-23): one tap says "I want to receive / borrow /
+    # swap / buy". A friend may ask for any book here; others only on an open offer.
+    friend = other and not teaser and __import__("books.hub", fromlist=["are_friends"]).are_friends(viewer, profile)
     for c in copies:
         kinds = [o.kind for o in c.offers.all() if o.is_active]
         status = kinds[0] if kinds else ("public" if c.visibility == Copy.PUBLIC else "private")
         row = {"id": c.pk, "title": c.entry.title, "author": c.entry.creator_names, "status": status,
                "rare": c.is_rare_candidate,
                "url": "" if teaser else (f"/books/catalog/{c.entry_id}/" if other else f"/books/copy/{c.pk}/")}
+        if other and not teaser and c.status == Copy.WITH_OWNER and not c.display_only:
+            from .hub import offer_open_to
+
+            open_kinds = [o.kind for o in c.offers.all() if o.is_active and (friend or offer_open_to(viewer, o))]
+            if friend or open_kinds:
+                row["kinds"] = open_kinds
+                row["ask"] = f"/books/ask/{c.pk}/"
         row.update(spine_for(c.entry_id, c.entry.title))
         if pages.get(c.entry_id):
             row["w"] = drawn_width(pages[c.entry_id], row["h"])

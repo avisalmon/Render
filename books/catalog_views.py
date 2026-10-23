@@ -149,6 +149,10 @@ def entry(request, pk):
         "my_scan_item": __import__("books.models", fromlist=["ScanItem"]).ScanItem.objects.filter(
             copy__owner=request.books_profile, copy__entry=obj).select_related("scan").first(),
         "wished": obj.wishes.filter(profile=request.books_profile).exists(),
+        # Friends who hold it, one tap to ask (Avi, 2026-10-23).
+        "holders": __import__("books.hub", fromlist=["friends_holding"]).friends_holding(me, obj),
+        "ask_error": __import__("books.strings", fromlist=["text"]).text(request.GET.get("error"), _lang(request))
+        if (request.GET.get("error") or "").startswith("hub.err.") else "",
     })
 
 

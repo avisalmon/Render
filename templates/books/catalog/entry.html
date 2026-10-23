@@ -48,6 +48,28 @@
     </div>
   </details>
   {% endif %}
+  {% if ask_error %}<p class="bk-error" role="alert">{{ ask_error }}</p>{% endif %}
+  {% if holders %}
+  <section class="bk-card bk-holders" aria-labelledby="holders-h" data-holders>
+    <h2 class="bk-h2" id="holders-h" style="margin-top: 0">{% t "ask.holders" n=holders|length %}</h2>
+    <ul class="bk-friend-list">
+      {% for h in holders %}
+      <li class="bk-friend bk-holder">
+        <a class="bk-friend-who" href="{% url 'books:friend_shelf' h.copy.owner.pk %}"><span class="bk-avatar" aria-hidden="true">{{ h.copy.owner.display_name|slice:":1" }}</span><span>{{ h.copy.owner.display_name }}<small>{% if h.kinds %}{% for k in h.kinds %}{% with key="status."|add:k %}{% t key %}{% endwith %}{% if not forloop.last %} · {% endif %}{% endfor %}{% else %}{% t "ask.any" %}{% endif %}</small></span></a>
+        {% if h.open %}<a class="bk-btn bk-btn--small" href="{% url 'books:deal' h.open.pk %}">{% t "offered.see_request" %}</a>
+        {% else %}
+        <form method="post" action="{% url 'books:ask_copy' h.copy.pk %}" class="bk-holder-ask">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}">
+          <button type="submit" name="kind" value="give" class="bk-btn bk-btn--small{% if "give" in h.kinds %} bk-btn--primary{% endif %}">{% t "ask.give" %}</button>
+          <button type="submit" name="kind" value="lend" class="bk-btn bk-btn--small{% if "lend" in h.kinds %} bk-btn--primary{% endif %}">{% t "ask.lend" %}</button>
+          <button type="submit" name="kind" value="exchange" class="bk-btn bk-btn--small{% if "exchange" in h.kinds %} bk-btn--primary{% endif %}">{% t "ask.exchange" %}</button>
+          <button type="submit" name="kind" value="sell" class="bk-btn bk-btn--small{% if "sell" in h.kinds %} bk-btn--primary{% endif %}">{% t "ask.sell" %}</button>
+        </form>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
   {% if near_count %}<a class="bk-notice" href="{% url 'books:near' %}?q={{ entry.title|urlencode }}">{% t "disc.near_count" n=near_count %}</a>{% endif %}
 
   {% if entry.description %}<p class="bk-prose">{{ entry.description|linebreaksbr }}</p>{% endif %}

@@ -73,6 +73,29 @@ def offered(request, pk):
 # ---- my deals ---------------------------------------------------------------------------
 
 @books_page
+@require_POST
+def ask_copy(request, pk):
+    """One tap on a friend's book, or on the book's page: "I want to receive /
+    borrow / swap for / buy this" (Avi, 2026-10-23). Lands in the conversation."""
+    me = request.books_profile
+    copy = get_object_or_404(Copy.objects.select_related("owner", "entry"), pk=pk)
+    from .auth_views import safe_next
+
+    back = safe_next(request, reverse("books:catalog_entry", args=[copy.entry_id]))
+    already = hub.open_deal(me, copy)
+    if already:
+        return redirect("books:deal", pk=already.pk)
+    try:
+        deal = hub.ask(me, copy, request.POST.get("kind", ""), request.POST.get("message", ""))
+    except hub.DealError as exc:
+        if str(exc) == "hub.err.tier":
+            return redirect(f"{reverse('books:plans')}?next={back}")
+        joiner = "&" if "?" in back else "?"
+        return redirect(f"{back}{joiner}error={exc}")
+    return redirect("books:deal", pk=deal.pk)
+
+
+@books_page
 def deals(request):
     me = request.books_profile
     hub.sweep_lazily()
@@ -100,17 +123,36 @@ def deal_page(request, pk):
     other = deal.other(me)
     my_shares = (deal.owner_shares if role == "owner" else deal.requester_shares).split(",")
     taken = role == "requester" and hub.went_elsewhere(deal)
+    messages_list = list(deal.messages.select_related("sender"))
     return render(request, "books/hub/deal.html", {
+        "messages_list": messages_list, "last_id": messages_list[-1].pk if messages_list else 0,
+        "can_write": deal.status not in (Deal.DECLINED, Deal.CANCELLED) and not hub.blocked_between(me, other),
         "deal": deal, "role": role, "other": other, "rep": hub.reputation(other),
         # The line of askers, the asker's place in it, and where else the book is (Avi, 2026-10-23).
         "askers": hub.askers(deal.copy) if role == "owner" else [], "place": hub.place_in_line(deal),
         "taken": taken, "elsewhere": hub.elsewhere(me, deal.copy.entry, exclude_copy=deal.copy) if taken else [],
-        "messages_list": deal.messages.select_related("sender"), "contact": hub.contact_for(deal, me),
+        "contact": hub.contact_for(deal, me),
         "my_shares": my_shares, "share_ways": hub.SHARE_WAYS, "has_phone": bool(me.phone),
         "places": places_for(deal.owner, deal.requester), "today": timezone.now().date(),
         "i_confirmed": bool(deal.owner_confirmed_handover_at if role == "owner" else deal.requester_confirmed_handover_at),
         "error": _error_text(request), "blocked": hub.blocked_between(me, other),
     })
+
+
+def _message_row(m):
+    return {"id": m.pk, "sender": m.sender_id, "who": m.sender.display_name, "body": m.body,
+            "when": timezone.localtime(m.created_at).strftime("%d.%m %H:%M")}
+
+
+@books_page
+def deal_messages(request, pk):
+    """The conversation's new messages, for the page that stays open (Avi,
+    2026-10-23); reading them marks them read."""
+    deal = _deal_for(request, pk)
+    after = int(request.GET.get("after") or 0)
+    rows = list(deal.messages.filter(pk__gt=after).select_related("sender").order_by("pk"))
+    hub.read_messages(deal, request.books_profile)
+    return JsonResponse({"messages": [_message_row(m) for m in rows], "status": deal.status})
 
 
 def _error_text(request):

@@ -1216,3 +1216,73 @@ def test_the_friends_search_answers_as_i_type_and_the_invite_opens_from_its_butt
         assert not page.is_visible("[data-friend-results]")
     finally:
         context.close()
+
+
+def test_on_a_phone_one_tap_on_a_friends_book_opens_the_conversation(browser, live_server, db, settings):
+    """Avi, 2026-10-23: "if I see a book at a friend's I say in one tap that I
+    want to receive, borrow or buy it, and a conversation opens." """
+    from books import catalog, friends
+    from books.models import Copy, Deal, Offer, Profile
+    settings.BOOKS_PILOT_GIFT = True
+    build_world()
+    rp = Profile.objects.get(user__username="reader")
+    owner = Profile.objects.get(user__username="shelver")
+    friends.join_through_invite(rp, friends.invite_for(owner))
+    e = catalog.CatalogEntry.objects.create(collection_type=catalog.book_type(), title="ספר למסירה")
+    c = Copy.objects.create(owner=owner, entry=e, visibility=Copy.PUBLIC, position=0)
+    Offer.objects.create(copy=c, kind="give")
+    context, page, _ = _open(browser, live_server, "reader", f"/books/people/{owner.pk}/shelf/", PHONE, "dark")
+    try:
+        page.wait_for_selector(f'.bk-spine[data-book="{c.pk}"]')
+        page.click(f'.bk-spine[data-book="{c.pk}"]')
+        page.wait_for_selector("[data-label-ask]:not([hidden])")
+        give = page.locator('[data-label-ask] [data-ask-kind="give"]')
+        assert "bk-btn--primary" in give.get_attribute("class")  # offered: the bold one
+        assert "bk-btn--primary" not in page.locator('[data-label-ask] [data-ask-kind="sell"]').get_attribute("class")
+        give.scroll_into_view_if_needed()
+        give.click()
+        page.wait_for_url(re.compile(r"/books/deals/\d+/$"))
+        deal = Deal.objects.get(copy=c)  # build_world seeds a deal of its own
+        assert deal.kind == "give" and deal.requester == rp and page.url.endswith(f"/books/deals/{deal.pk}/")
+        assert "מסירה במתנה" in page.text_content(".bk-narrow")
+    finally:
+        context.close()
+
+
+def test_on_a_phone_the_request_is_a_conversation_that_sends_and_receives_without_reloading(browser, live_server, db, settings):
+    """Avi, 2026-10-23: a request is a conversation. A message goes without a
+    page reload, the other side's words arrive on their own, the composer
+    stays at the bottom, and the one next step is on top."""
+    from books import catalog, friends, hub
+    from books.models import Copy, Message, Offer, Profile
+    settings.BOOKS_PILOT_GIFT = True
+    build_world()
+    rp = Profile.objects.get(user__username="reader")
+    owner = Profile.objects.get(user__username="shelver")
+    friends.join_through_invite(rp, friends.invite_for(owner))
+    e = catalog.CatalogEntry.objects.create(collection_type=catalog.book_type(), title="ספר לשיחה")
+    c = Copy.objects.create(owner=owner, entry=e, visibility=Copy.PUBLIC)
+    Offer.objects.create(copy=c, kind="give")
+    deal = hub.ask(rp, c, "give", "אשמח לקבל אותו")
+    context, page, _ = _open(browser, live_server, "reader", f"/books/deals/{deal.pk}/", PHONE, "dark")
+    try:
+        assert page.locator("[data-chat-list] .bk-bubble").count() == 1
+        url = page.url
+        page.fill("[data-chat-form] [name=body]", "מתי נוח לך?")
+        page.click("[data-chat-send]")
+        page.wait_for_function("document.querySelectorAll('[data-chat-list] .bk-bubble').length === 2")
+        assert page.url == url  # no reload, no navigation
+        assert page.input_value("[data-chat-form] [name=body]") == ""
+        assert "bk-bubble--mine" in page.locator("[data-chat-list] .bk-bubble").nth(1).get_attribute("class")
+        assert Message.objects.filter(deal=deal, sender=rp, body="מתי נוח לך?").exists()
+        hub.send_message(deal, owner, "מחר בשש?")  # the other side writes
+        page.evaluate("window.bkChat.fetchNew()")
+        page.wait_for_function("document.querySelectorAll('[data-chat-list] .bk-bubble').length === 3")
+        third = page.locator("[data-chat-list] .bk-bubble").nth(2)
+        assert "bk-bubble--mine" not in third.get_attribute("class") and "מחר בשש?" in third.text_content()
+        # the composer is on screen without scrolling to it
+        box = page.locator("[data-chat-form]").bounding_box()
+        assert box and box["y"] + box["height"] <= PHONE["height"]
+        assert Message.objects.filter(deal=deal, sender=owner, read_at__isnull=False).exists()  # fetched = read
+    finally:
+        context.close()

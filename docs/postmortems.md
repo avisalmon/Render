@@ -17,6 +17,26 @@ Newest first.
 
 ---
 
+## PM-50 · 2026-10-23 · SPR-G.2, one tap and the conversation
+
+**What happened.** Sprint end. One tap on a friend's book (the label under
+the shelf, and the book's page listing the friends who hold it) opens the
+request; the request is a conversation: the book and the person on top,
+the one next step, the chat with its composer at the bottom, messages sent
+and received without a reload, the rest folded.
+
+**What the process caught.** The screen contract refused the new page
+twice: a cover link with no text, then a title link 22px tall; both fixed
+before the push. A browser test waited on `**/books/deals/*`, which never
+matches a URL ending in a slash; and it asserted `Deal.objects.get()` on a
+world that already seeds a deal. Both were the test, not the product.
+
+**Rule.** Nothing new (mistake 1: assert on the thing; here, the glob and
+the query were too loose).
+
+Here: tests/test_books_ask.py, tests/test_books_screens.py
+BKM: deferred - nothing new; mistake 1 covers it
+
 ## PM-49 · 2026-10-23 · SPR-G.1, the rules of giving and the hand-to-hand flow
 
 **What happened.** Sprint end. Built from Avi's brief: a gift as a kind of

@@ -12,6 +12,7 @@
   </section>
   {% endif %}
 
+  {% if ask_error %}<p class="bk-error" role="alert">{{ ask_error }}</p>{% endif %}
   {% if level %}
     {% t "friends.shelf_of" name=owner.display_name as plate %}
     {% t "home.count" n=count as hint_end %}

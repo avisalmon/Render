@@ -1211,3 +1211,32 @@ dialog.bk-invite-sheet::backdrop { background: var(--bk-scrim); }
 dialog.bk-invite-sheet[open] { animation: bk-sheet-up .22s ease-out; }
 dialog.bk-invite-sheet .bk-invite { margin: 0 0 10px; }
 @media (min-width: 700px) { dialog.bk-invite-sheet { margin: auto; border-radius: 16px; } }
+
+/* ---- one tap on a friend's book (Avi, 2026-10-23) ---------------------------------------- */
+.bk-label-ask { display: grid; gap: 6px; margin-top: 8px; }
+.bk-label-ask[hidden] { display: none; }
+.bk-label-ask-lead { font-size: 12.5px; color: var(--bk-muted); }
+.bk-label-ask-row, .bk-holder-ask { display: flex; flex-wrap: wrap; gap: 6px; }
+.bk-holder { flex-wrap: wrap; }
+.bk-holder .bk-holder-ask { flex: 1 1 100%; justify-content: flex-end; }
+\n
+/* ---- the request as a conversation (Avi, 2026-10-23) --------------------------------------- */
+.bk-deal-back { margin: 0 0 6px; }
+.bk-deal-head { display: flex; gap: 12px; align-items: flex-start; margin: 0 0 10px; }
+.bk-deal-cover { width: 56px; height: 80px; flex: none; border-radius: 3px; box-shadow: 0 6px 14px var(--bk-shadow); }
+.bk-deal-head-text { min-width: 0; }
+.bk-deal-title { margin: 0; font-size: 22px; overflow-wrap: anywhere; }
+.bk-deal-kind { margin: 2px 0 0; }
+.bk-deal-who { margin: 6px 0 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.bk-chat { margin: 14px 0 10px; }
+.bk-chat-list { display: grid; gap: 8px; max-height: 52vh; overflow: auto; padding: 4px 2px; }
+.bk-bubble { max-width: 85%; margin: 0; padding: 8px 12px; border-radius: 14px 14px 14px 4px; background: var(--bk-surface); border: 1px solid var(--bk-line); }
+.bk-bubble--mine { margin-inline-start: auto; background: var(--bk-surface-2); border-radius: 14px 14px 4px 14px; }
+.bk-bubble-body { display: block; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.45; }
+.bk-bubble-meta { display: block; font-size: 11.5px; color: var(--bk-muted); margin-top: 3px; }
+.bk-chat-empty { margin: 0; text-align: center; }
+.bk-chat-compose { position: sticky; bottom: calc(72px + env(safe-area-inset-bottom, 0px)); display: flex; gap: 8px; align-items: flex-end; padding: 8px 0; margin-top: 6px; background: var(--bk-bg); }
+@media (min-width: 900px) { .bk-chat-compose { bottom: 0; } }
+.bk-chat-field { flex: 1 1 auto; resize: none; min-height: 44px; max-height: 140px; font-size: 16px; }
+.bk-chat-help { margin: 0; font-size: 12px; }
+

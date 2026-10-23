@@ -26,7 +26,7 @@
 (function () {
   "use strict";
 
-  var STATUS_KEYS = { private: "status.private", public: "status.public", lend: "status.lend",
+  var STATUS_KEYS = { give: "status.give", private: "status.private", public: "status.public", lend: "status.lend",
                       exchange: "status.exchange", sell: "status.sell" };
   var GAP = 3;                 // px between standing books
   var LIFT = -14;              // px a tapped book rises
@@ -568,6 +568,24 @@
     if (author) author.textContent = b.author || "";
     if (status) status.textContent = b.status_text || this.t[STATUS_KEYS[b.status]] || "";
     if (link) { if (b.url) { link.hidden = false; link.setAttribute("href", b.url); } else { link.hidden = true; } }
+    // A friend's book (Avi, 2026-10-23): one tap says what I want. What the owner
+    // offered is the bold button; the rest ask all the same, the owner answers.
+    var ask = this.label.querySelector("[data-label-ask]");
+    if (ask) {
+      if (b.ask) {
+        ask.hidden = false;
+        ask.setAttribute("action", b.ask);
+        var kinds = b.kinds || [];
+        var lead = ask.querySelector("[data-label-ask-lead]");
+        if (lead) lead.textContent = kinds.length ? (this.t["ask.offered"] || "") : (this.t["ask.any"] || "");
+        ask.querySelectorAll("[data-ask-kind]").forEach(function (btn) {
+          var offered = kinds.indexOf(btn.getAttribute("data-ask-kind")) >= 0;
+          btn.classList.toggle("bk-btn--primary", offered);
+        });
+      } else {
+        ask.hidden = true;
+      }
+    }
   };
 
   function boot() {

@@ -106,7 +106,9 @@ def friend_shelf(request, pk):
     rows = shelf.shelf_books(owner, photos=friends.can_see_spines(me, owner), viewer=me) if level else []
     from .models import Copy
 
+    err = request.GET.get("error") or ""
     return render(request, "books/friends/shelf.html", {
+        "ask_error": t(err, _lang(request)) if err.startswith("hub.err.") else "",
         "owner": owner, "level": level, "status": friends.status_between(me, owner),
         # Their shelf as they see it themselves (the living view's drag is theirs alone).
         "view": owner.shelf_view if owner.shelf_view in ("lamp", "bookcase") else "lamp",

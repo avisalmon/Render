@@ -307,6 +307,23 @@ def elsewhere(viewer, entry, exclude_copy=None, limit=6):
     return out
 
 
+def friends_holding(viewer, entry, limit=12):
+    """Friends who hold this book and let me see it, with what they offered,
+    and my open request on each if any (Avi, 2026-10-23: the book's page
+    shows who has it and lets me ask in one tap)."""
+    from .friends import friend_ids
+
+    out = []
+    copies = (Copy.objects.filter(entry=entry, owner_id__in=friend_ids(viewer), status=Copy.WITH_OWNER,
+                                  display_only=False).exclude(visibility=Copy.HIDDEN)
+              .exclude(owner_id__in=blocked_ids(viewer)).select_related("owner").prefetch_related("offers")
+              .order_by("owner__display_name")[:limit])
+    for c in copies:
+        out.append({"copy": c, "kinds": [o.kind for o in c.offers.all() if o.is_active],
+                    "open": open_deal(viewer, c)})
+    return out
+
+
 def _need(deal, profile, role, *statuses):
     if deal.role(profile) != role and role != "either":
         raise DealError("hub.err.not_yours")

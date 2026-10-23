@@ -20,7 +20,7 @@ The lamp, the shelf and the label (board C3). Takes:
   {% if books_json and books_json != "[]" %}
     <div class="bk-shelf{% if user.books_profile.spine_text_down %} is-text-down{% endif %}{% if not user.books_profile.spine_photos %} is-drawn{% endif %}" data-shelf data-shelf-view="{{ view|default:'lamp' }}" data-shelf-source="{{ shelf_id }}-data" data-shelf-strings="{{ shelf_id }}-strings" data-shelf-label="{{ shelf_id }}-label" data-shelf-aria="{% t "shelf.your_shelf" %}" data-shelf-plate-1="{{ plate1|default:'' }}" data-shelf-plate-2="{{ plate2|default:'' }}" {% if lifted %}data-shelf-lifted="{{ lifted }}"{% endif %}></div>
     <script type="application/json" id="{{ shelf_id }}-data">{{ books_json|safe }}</script>
-    <script type="application/json" id="{{ shelf_id }}-strings">{"shelf.from_yours": "{% t "shelf.from_yours" %}", "shelf.rare": "{% t "shelf.rare" %}", "status.private": "{% t "status.private" %}", "status.public": "{% t "status.public" %}", "status.lend": "{% t "status.lend" %}", "status.exchange": "{% t "status.exchange" %}", "status.sell": "{% t "status.sell" %}"}</script>
+    <script type="application/json" id="{{ shelf_id }}-strings">{"shelf.from_yours": "{% t "shelf.from_yours" %}", "shelf.rare": "{% t "shelf.rare" %}", "status.private": "{% t "status.private" %}", "status.public": "{% t "status.public" %}", "status.lend": "{% t "status.lend" %}", "status.exchange": "{% t "status.exchange" %}", "status.sell": "{% t "status.sell" %}", "status.give": "{% t "status.give" %}", "ask.offered": "{% t "ask.offered" %}", "ask.any": "{% t "ask.any" %}"}</script>
     <div class="bk-shelf-hints">
       <span>{% if view == "living" %}{% t "shelf.drag_hint" %}{% else %}{% t "shelf.swipe_hint" %}{% endif %}</span>
       <span class="bk-shelf-hints-end">{{ hint_end|default:'' }}
@@ -43,6 +43,17 @@ The lamp, the shelf and the label (board C3). Takes:
       <span class="bk-muted" data-label-author></span>
       <span class="bk-label-status" data-label-status></span>
       <a class="bk-btn bk-btn--small" data-label-link hidden href="#">{% t "shelf.card" %}</a>
+      <form method="post" class="bk-label-ask" data-label-ask hidden action="#">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <span class="bk-label-ask-lead" data-label-ask-lead></span>
+        <span class="bk-label-ask-row">
+          <button type="submit" name="kind" value="give" class="bk-btn bk-btn--small" data-ask-kind="give">{% t "ask.give" %}</button>
+          <button type="submit" name="kind" value="lend" class="bk-btn bk-btn--small" data-ask-kind="lend">{% t "ask.lend" %}</button>
+          <button type="submit" name="kind" value="exchange" class="bk-btn bk-btn--small" data-ask-kind="exchange">{% t "ask.exchange" %}</button>
+          <button type="submit" name="kind" value="sell" class="bk-btn bk-btn--small" data-ask-kind="sell">{% t "ask.sell" %}</button>
+        </span>
+      </form>
     </div>
   {% else %}
     <div class="bk-shelf" aria-label="{% t "home.shelf_empty" %}">
