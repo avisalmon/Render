@@ -103,11 +103,13 @@ def _day(dt):
 
 
 def day_seconds(profile, day):
-    """Reading time on one Israeli day, by when each session started."""
+    """Reading time on one Israeli day, by when each session started. A
+    sitting still open counts what it has saved so far (every pause and
+    every heartbeat saves it), so leaving the screen never loses the time."""
     from .play import day_start
 
     start_ = day_start(day)
-    return ReadingSession.objects.filter(profile=profile, ended_at__isnull=False, started_at__gte=start_,
+    return ReadingSession.objects.filter(profile=profile, started_at__gte=start_,
                                          started_at__lt=start_ + timedelta(days=1)).aggregate(
         n=Sum("seconds"))["n"] or 0
 
@@ -119,12 +121,28 @@ def elapsed(session, now=None):
     return int(min(MAX_SESSION_SECONDS, max(0, (now - session.started_at).total_seconds() - paused)))
 
 
-def pause(profile, session, now=None):
-    """The reading screen was left: the clock stops until I come back."""
-    if session.profile_id != profile.pk or session.ended_at is not None or session.paused_at is not None:
+def heartbeat(profile, session, now=None):
+    """Every minute or two while I read, and the moment I leave: the time so
+    far is saved on the sitting and the day is counted. So ten minutes read
+    and a closed app still make the streak (Avi, 2026-10-23)."""
+    if session.profile_id != profile.pk or session.ended_at is not None:
         return session
-    session.paused_at = now or timezone.now()
-    session.save(update_fields=["paused_at"])
+    session.seconds = elapsed(session, now)
+    session.save(update_fields=["seconds"])
+    _count_the_day(profile, _day(session.started_at))
+    return session
+
+
+def pause(profile, session, now=None):
+    """The reading screen was left: the clock stops until I come back, and
+    what was read so far is saved and counted."""
+    if session.profile_id != profile.pk or session.ended_at is not None:
+        return session
+    now = now or timezone.now()
+    if session.paused_at is None:
+        session.paused_at = now
+        session.save(update_fields=["paused_at"])
+    heartbeat(profile, session, now)
     return session
 
 

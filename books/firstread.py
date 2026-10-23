@@ -31,6 +31,7 @@ SMALL_COVER = 400  # px wide: a catalogue cover narrower than this is replaced b
 COVER_MAX_SIDE = 1400
 MAX_PHOTO_BYTES = 15 * 1024 * 1024
 BACK_DAILY_USD_DEFAULT = "1"
+BACK_LINE = "מהכריכה האחורית:"
 
 
 class FirstReadError(Exception):
@@ -191,8 +192,13 @@ def apply_back(profile, entry, data, isbn_hint=""):
     entry = CatalogEntry.objects.get(pk=entry.pk)
     detail, _ = BookDetail.objects.get_or_create(entry=entry)
     blurb = (data.get("blurb") or "").strip()
-    if blurb and not entry.description.strip():
-        entry.description = blurb[:4000]
+    if blurb and blurb[:80] not in entry.description:
+        # Avi, 2026-10-23: the back cover's words go into the description; an existing
+        # description stays first, the blurb joins it under its own line.
+        if entry.description.strip():
+            entry.description = (entry.description.rstrip() + "\n\n" + BACK_LINE + "\n" + blurb)[:4000]
+        else:
+            entry.description = blurb[:4000]
         entry.save(update_fields=["description"])
         filled.append("description")
     isbn = normalize_isbn(data.get("isbn") or "") or normalize_isbn(isbn_hint or "")

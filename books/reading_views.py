@@ -27,8 +27,12 @@ def read_page(request):
     session = reading.active(me)
     if session:
         reading.resume(me, session)  # back on the reading screen: the clock runs again
+        from . import firstread
+
         return render(request, "books/read/session.html", {
             "elapsed": reading.elapsed(session),
+            # Both covers, from the reading screen too (Avi, 2026-10-23): the book is in my hands now.
+            "cover": firstread.cover_for(me, session.entry), "back": firstread.back_enabled(),
             "session": session, "progress": reading.book_progress(me, session.entry),
             "pages": reading.total_pages(session.entry, me), "error": _err(request),
             "notes": __import__("books.notes", fromlist=["for_book"]).for_book(me, session.entry),
@@ -127,6 +131,15 @@ def pause(request, pk):
     session = get_object_or_404(ReadingSession, pk=pk, profile=request.books_profile)
     reading.pause(request.books_profile, session)
     return JsonResponse({"paused": True})
+
+
+@books_page
+@require_POST
+def tick(request, pk):
+    """The reading screen's heartbeat: the time so far, saved."""
+    session = get_object_or_404(ReadingSession, pk=pk, profile=request.books_profile)
+    reading.heartbeat(request.books_profile, session)
+    return JsonResponse({"seconds": session.seconds})
 
 
 @books_page

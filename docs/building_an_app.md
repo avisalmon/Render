@@ -983,3 +983,17 @@ day (same link all day, so the browser caches them), straight from the
 bucket, in parallel; keep the app's own endpoint as the fallback for the
 disk. And while a picture loads, show the text it will replace.
 
+### 43. Count what a person did as they do it, not when they close it
+
+Avi read for ten minutes, left the screen, and got neither the time nor
+the streak day: a sitting's time was written only when "done" was pressed,
+and the day was counted only then. What people do is leave: lock the
+phone, switch apps, put the book down.
+
+**The rule.** Progress a person earns over time is saved as it accrues
+(a heartbeat every minute or two, and the moment the screen is left) and
+counted from what is saved, so closing the app, a dead battery or a
+forgotten button never loses it. And the button that ends a sitting says
+it is only a break ("that's it for now"), with the reassurance that the
+time is kept, so nobody avoids pressing it or thinks they finished.
+

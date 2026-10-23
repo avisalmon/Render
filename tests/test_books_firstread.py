@@ -152,9 +152,13 @@ def test_what_differs_becomes_a_correction_never_an_overwrite(settings, noa, boo
     BookDetail.objects.create(entry=book, publisher="כתר", pages=300)
     done = firstread.read_back(noa, book, photo(), client=FakeVision(BACK))
     book.refresh_from_db()
-    assert book.year == 1970 and book.description == "תיאור קיים"
+    # The blurb joins an existing description under its own line (Avi, 2026-10-23); the year is a suggestion.
+    assert book.year == 1970 and book.description == "תיאור קיים\n\nמהכריכה האחורית:\nסיפור על חנה וירושלים."
     assert BookDetail.objects.get(entry=book).pages == 300
     assert set(done["suggested"]) == {"publisher", "year"}
+    firstread.read_back(noa, book, photo(), client=FakeVision(BACK))
+    book.refresh_from_db()
+    assert book.description.count("מהכריכה האחורית") == 1  # read twice: joined once
     assert set(EntryCorrection.objects.values_list("field", "value")) == {("publisher", "עם עובד"), ("year", "1968")}
 
 
@@ -188,3 +192,18 @@ def test_the_back_endpoint_says_what_was_added(client, settings, noa, book, monk
     client.force_login(noa.user)
     r = client.post(f"/books/read/first/{book.pk}/back/", {"photo": photo()})
     assert r.status_code == 200 and "תקציר" in r.json()["filled"] and r.json()["pages"] == 290
+
+
+def test_the_reading_screen_lets_me_photograph_both_covers(client, settings, noa, book):
+    settings.OPENAI_API_KEY = "sk-test"
+    reading.start(noa, book, 12)
+    client.force_login(noa.user)
+    html = client.get("/books/read/").content.decode()
+    assert f'data-first-cover-input\n             data-url="/books/read/first/{book.pk}/cover/"' in html
+    assert f'data-first-back-input\n             data-url="/books/read/first/{book.pk}/back/"' in html
+    assert "books/first.js" in html and "צילום הכריכה" in html and "צילום הגב" in html
+    r = client.post(f"/books/read/first/{book.pk}/cover/", {"photo": photo()})
+    assert r.status_code == 200
+    book.refresh_from_db()
+    assert book.cover  # the cover photographed mid-sitting is the book's picture
+

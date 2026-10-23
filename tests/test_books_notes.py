@@ -374,3 +374,35 @@ def test_paid_voice_is_off_unless_switched_on(settings, noa):
     with pytest.raises(notes.NoteError, match="notes.err.no_voice"):
         notes.transcribe(noa, clip(), client=FakeAudio())
 
+
+# ---- the time of a sitting I never closed still counts (Avi, 2026-10-23) ------------------
+
+def test_leaving_the_screen_saves_the_time_and_counts_the_day(client, noa, book):
+    from books.models import ReadingCheckin
+    s = reading.start(noa, book, 1)
+    t0 = s.started_at
+    assert reading.day_seconds(noa, reading._day(t0)) == 0
+    reading.pause(noa, s, now=t0 + timedelta(minutes=10))  # left the screen after ten minutes, never pressed a thing
+    s.refresh_from_db()
+    assert s.seconds == 600 and s.ended_at is None
+    assert reading.day_seconds(noa, reading._day(t0)) == 600
+    assert ReadingCheckin.objects.filter(profile=noa).exists()  # the day counts for the streak
+    assert reading.stats(noa)["today_counts"] is True
+
+
+def test_the_heartbeat_saves_the_time_while_reading(client, noa, book):
+    s = reading.start(noa, book, 1)
+    ReadingSession.objects.filter(pk=s.pk).update(started_at=timezone.now() - timedelta(minutes=7))
+    client.force_login(noa.user)
+    r = client.post(f"/books/read/{s.pk}/tick/")
+    assert 415 <= r.json()["seconds"] <= 425
+    html = client.get("/books/").content.decode()
+    assert 'class="bk-dial is-done"' in html  # the dial already shows the day counted, the sitting still open
+
+
+def test_the_button_says_it_is_only_a_break(client, noa, book):
+    reading.start(noa, book, 1)
+    client.force_login(noa.user)
+    html = client.get("/books/read/").content.decode()
+    assert "סיימתי לבינתיים" in html and "הזמן נשמר ונספר להיום" in html and "data-tick-url" in html
+

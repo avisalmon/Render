@@ -17,6 +17,26 @@ Newest first.
 
 ---
 
+## PM-44 · 2026-10-23 · Ten minutes read, nothing saved, no streak
+
+**What happened.** Avi read ten minutes, left the screen without pressing
+"done", and the day counted nothing. A sitting's seconds were written only
+on "done", and only ended sittings counted toward the day.
+
+**Why our process let it happen.** The reading flow was tested as
+start-then-end; the pause on leaving was added later for the clock, not
+for the count. No test asked what a sitting left open is worth.
+
+**Rule.** Mistake 43. Done: an open sitting's time counts; it is saved on
+every pause and by a heartbeat every 90 seconds; the day is counted from
+what is saved; the button reads "that's it for now" with "the time is
+saved and counts for today". Also from Avi today: both covers can be
+photographed from the reading screen; the back cover's words join an
+existing description under their own line.
+
+Here: docs/building_an_app.md mistake 43; tests/test_books_notes.py
+BKM: FullStackBKM 52580c8 (lesson 52)
+
 ## PM-43 · 2026-10-22 · The invited person's road, a memory restart, slow pictures
 
 **What happened.** Avi walked his own invite as a newcomer and found it

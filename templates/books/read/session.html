@@ -5,10 +5,33 @@
 {% block readbar %}{% endblock %}
 {% block content %}
 <div class="bk-narrow bk-reading" data-reading data-elapsed="{{ elapsed }}"
-     data-pause-url="{% url 'books:read_pause' session.pk %}" data-resume-url="{% url 'books:read_resume' session.pk %}">
+     data-pause-url="{% url 'books:read_pause' session.pk %}" data-resume-url="{% url 'books:read_resume' session.pk %}" data-tick-url="{% url 'books:read_tick' session.pk %}">
   <p class="bk-kicker" style="margin: 0">{% t "read.reading_now" %}</p>
   <h1 class="bk-title" style="margin-top: 4px">{{ session.entry.title }}</h1>
   <p class="bk-muted" style="margin: 0">{% t "read.from_page" n=session.start_page %}{% if pages %} · {% t "read.of_pages" n=pages %}{% endif %}{% if progress.pace %} · {% t "read.pace" n=progress.pace %}{% endif %}</p>
+
+  <div class="bk-read-covers">
+    <span class="bk-read-cover-thumb{% if not cover %} bk-cover-drawn{% endif %}" data-first-cover{% if not cover %} style="{% spine_style session.entry %}"{% endif %} aria-hidden="true">
+      {% if cover.copy_photo %}<img src="{% url 'books:copy_photo' cover.copy.pk cover.copy_photo.pk %}" alt="">
+      {% elif cover.url %}<img src="{{ cover.url }}" alt="">
+      {% else %}<span class="bk-cover-title">{{ session.entry.title }}</span>{% endif %}
+    </span>
+    <label class="bk-btn bk-btn--small bk-file-button">
+      {% include "books/ui/_icon.html" with name="camera" %} {% t "read.cover_take" %}
+      <input class="bk-visually-hidden" type="file" accept="image/*" capture="environment" data-first-cover-input
+             data-url="{% url 'books:first_cover' session.entry_id %}">
+    </label>
+    {% if back %}
+    <label class="bk-btn bk-btn--small bk-file-button">
+      {% include "books/ui/_icon.html" with name="book" %} {% t "read.back_take" %}
+      <input class="bk-visually-hidden" type="file" accept="image/*" capture="environment" data-first-back-input
+             data-url="{% url 'books:first_back' session.entry_id %}" data-working="{% t "first.back_working" %}"
+             data-filled="{% t "first.back_filled" %}" data-suggested="{% t "first.back_suggested" %}" data-nothing="{% t "first.back_nothing" %}">
+    </label>
+    {% endif %}
+  </div>
+  <p class="bk-help bk-read-covers-status" data-first-cover-status aria-live="polite"></p>
+  <p class="bk-help bk-read-covers-status" data-first-back-status aria-live="polite"></p>
 
   <div class="bk-candle" data-candle aria-hidden="true">
     <span class="bk-candle-glow"></span>
@@ -76,6 +99,7 @@
       </div>
     </div>
     <button type="submit" class="bk-btn bk-btn--primary bk-btn--wide">{% t "read.done" %}</button>
+    <p class="bk-help" style="margin: 0; text-align: center">{% t "read.done_help" %}</p>
   </form>
 
   <button type="button" class="bk-finish-open" data-finish-open aria-haspopup="dialog"><span>{% t "finish.open" %}</span></button>
@@ -110,6 +134,7 @@
 {% load static %}<script src="{% static 'books/flip.js' %}" defer></script>
 <script src="{% static 'books/notes.js' %}" defer></script>
 <script src="{% static 'books/finish.js' %}" defer></script>
+<script src="{% static 'books/first.js' %}" defer></script>
 <script>
 (function () {
   // The clock counts only while this screen is in front (Avi, 2026-10-21):
@@ -151,6 +176,12 @@
   };
   window.bkReading = {pause: pause, resume: resume, end: function () { ended = true; }};
   document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') pause(); else resume(); });
+  // A heartbeat while reading: the time so far is saved every 90 seconds, so a
+  // closed app or a dead battery never loses it (Avi, 2026-10-23).
+  setInterval(function () {
+    if (paused || ended) return;
+    fetch(root.getAttribute('data-tick-url'), {method: 'POST', headers: {'X-CSRFToken': csrf, 'Accept': 'application/json'}, keepalive: true}).catch(function () {});
+  }, 90000);
   window.addEventListener('pagehide', pause);
   window.addEventListener('pageshow', function (e) { if (e.persisted) resume(); });
   document.querySelectorAll('form[action$="/end/"], form[action$="/discard/"]').forEach(function (f) {

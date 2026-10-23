@@ -98,6 +98,7 @@ urlpatterns = [
     path("read/<int:pk>/discard/", reading_views.discard, name="read_discard"),
     path("read/<int:pk>/pause/", reading_views.pause, name="read_pause"),
     path("read/<int:pk>/resume/", reading_views.resume, name="read_resume"),
+    path("read/<int:pk>/tick/", reading_views.tick, name="read_tick"),
     path("read/notes/<int:entry_pk>/add/", reading_views.note_add, name="note_add"),
     path("read/notes/<int:pk>/delete/", reading_views.note_delete, name="note_delete"),
     path("read/voice/", reading_views.note_voice, name="note_voice"),
