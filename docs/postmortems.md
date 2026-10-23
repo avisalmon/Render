@@ -17,6 +17,26 @@ Newest first.
 
 ---
 
+## PM-48 · 2026-10-23 · The friends page rebuilt
+
+**What happened.** Avi found the friends page badly planned and described
+what he wanted; a plan was shown first and he said run. Built: a search at
+the top that answers from the second letter, anywhere in the name, final
+letters the same as ordinary ones, my friends first and everyone else
+after; when not searching, one invite button that opens the share, code
+and link as a sheet; below it only what needs me (requests waiting, people
+who asked for my books, new friends of the last 30 days); the full list one
+link away.
+
+**What the process caught.** The plan included "friends whose wishlist has
+a book I own". Wishlists are private (they only quietly tell the wisher);
+showing them would have exposed a friend's list without their word. Left
+out at planning, raised with Avi instead. Rule 7 (personal data: who sees
+it?) did its job.
+
+Here: tests/test_books_friends.py, tests/test_books_screens.py
+BKM: deferred - nothing new; Rule 7 (personal data) already covers it
+
 ## PM-47 · 2026-10-23 · Straightening a photographed cover
 
 **What happened.** Avi: "I always shoot the cover at an angle and it does

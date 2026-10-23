@@ -1,0 +1,29 @@
+{% load books_tags %}{# The friends search's answer (Avi, 2026-10-23): my friends first, then everyone else by that name. #}
+{% if found.q|length < 2 %}<p class="bk-help bk-friend-hint">{% t "friends.res_more" %}</p>
+{% elif not found.friends and not found.others %}<p class="bk-muted bk-friend-hint">{% t "friends.none_found" %}</p>
+{% else %}
+{% if found.friends %}
+<h2 class="bk-friend-sec">{% t "friends.res_mine" %}</h2>
+<ul class="bk-friend-list" data-results-mine>
+  {% for p in found.friends %}
+  <li class="bk-friend">
+    <a class="bk-friend-who" href="{% url 'books:friend_shelf' p.pk %}"><span class="bk-avatar" aria-hidden="true">{{ p.display_name|slice:":1" }}</span><span>{{ p.display_name }}{% if p.area_name %}<small>{{ p.area_name }}</small>{% endif %}</span></a>
+    <a class="bk-btn bk-btn--small" href="{% url 'books:friend_shelf' p.pk %}">{% t "friends.to_shelf" %}</a>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% if found.others %}
+<h2 class="bk-friend-sec">{% t "friends.res_others" %}</h2>
+<ul class="bk-friend-list" data-results-others>
+  {% for f in found.others %}
+  <li class="bk-friend">
+    <a class="bk-friend-who" href="{% url 'books:friend_shelf' f.p.pk %}"><span class="bk-avatar bk-avatar--quiet" aria-hidden="true">{{ f.p.display_name|slice:":1" }}</span><span>{{ f.p.display_name }}{% if f.p.area_name %}<small>{{ f.p.area_name }}</small>{% endif %}</span></a>
+    {% if f.status == "accepted" %}<span class="bk-chip-note">{% t "friends.following_you" %}</span>
+    {% elif f.status == "pending" %}<span class="bk-chip-note">{% t "friends.requested" %}</span>
+    {% else %}<form method="post" action="{% url 'books:follow' f.p.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{% url 'books:friends' %}?q={{ found.q|urlencode }}"><button type="submit" class="bk-btn bk-btn--small bk-btn--primary">{% t "friends.ask" %}</button></form>{% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% endif %}

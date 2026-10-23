@@ -258,3 +258,85 @@ def test_a_friends_shelf_wears_their_own_look(client, avi, moshe):
         avi.save()
         assert f'data-shelf-view="{shown}"' in client.get(f"/books/people/{avi.pk}/shelf/").content.decode()
 
+
+
+# ---- the friends page, rebuilt (Avi, 2026-10-23) ------------------------------------------
+
+def test_the_search_finds_a_friend_from_two_letters_anywhere_in_the_name(client, avi):
+    salmon = person("salmon")
+    salmon.display_name = "אבי סלמון"
+    salmon.save()
+    other = person("other")
+    other.display_name = "מוטי מוסקוביץ"
+    other.save()
+    friends.join_through_invite(salmon, friends.invite_for(avi))
+    found = friends.search(avi, "מו")
+    assert found["friends"] == [salmon]  # "מו" inside "סלמון"
+    assert [f["p"] for f in found["others"]] == [other]
+    assert friends.search(avi, "סלמונ")["friends"] == [salmon]  # a final letter typed as an ordinary one
+    assert friends.search(avi, "מ") == {"q": "מ", "friends": [], "others": []}
+
+    client.force_login(avi.user)
+    html = client.get("/books/friends/search/?q=מו").content.decode()
+    assert "החברים שלי" in html and "עוד אנשים בספרים" in html and "אבי סלמון" in html
+    assert html.index("אבי סלמון") < html.index("מוטי מוסקוביץ")
+    assert f'action="/books/people/{other.pk}/follow/"' in html and "בקשת חברות" in html
+    assert f'action="/books/people/{salmon.pk}/follow/"' not in html
+    assert "עוד אות או שתיים" in client.get("/books/friends/search/?q=מ").content.decode()
+
+
+def test_not_searching_the_page_is_the_invite_button_and_only_what_needs_me(client, avi, moshe):
+    from datetime import timedelta
+
+    from django.db.models import Q
+    from django.utils import timezone
+
+    from books.models import Deal
+
+    asker = person("asker")
+    friends.follow(asker, avi)  # waits for my answer
+    friends.join_through_invite(moshe, friends.invite_for(avi))  # new, through my invitation
+    old = person("old")
+    friends.follow(avi, old)
+    friends.follow(old, avi)
+    Follow.objects.filter(follower=old).update(status=Follow.ACCEPTED)
+    Follow.objects.filter(followee=old).update(status=Follow.ACCEPTED)
+    long_ago = timezone.now() - timedelta(days=friends.NEW_DAYS + 5)
+    Follow.objects.filter(Q(follower=old) | Q(followee=old)).update(created_at=long_ago, accepted_at=long_ago)
+    copy = shelf_of(avi, "public")[0]
+    Deal.objects.create(copy=copy, owner=avi, requester=moshe, kind="lend")
+
+    client.force_login(avi.user)
+    html = client.get("/books/friends/").content.decode()
+    assert 'data-friend-results aria-live="polite" hidden' in html  # no results until I search
+    assert "data-invite-open" in html and '<dialog class="bk-invite-sheet" data-invite' in html
+    assert "מחכים לתשובה שלך" in html and "asker" in html and "מבקש/ת לעקוב אחריך" in html
+    assert "רוצים ספר שלך" in html and f"מבקש/ת את &quot;{copy.entry.title}&quot;" in html
+    assert "חברים חדשים" in html and "הצטרף/ה דרך ההזמנה שלך" in html
+    new_part = html.split("חברים חדשים")[1]
+    assert "moshe" in new_part and ">old<" not in new_part  # a friend from long ago is not new
+    assert 'href="/books/friends/all/"' in html and "כל החברים (2)" in html
+
+
+def test_a_friends_wishlist_stays_private_on_my_friends_page(client, avi, moshe):
+    from books.models import Wish
+
+    friends.join_through_invite(moshe, friends.invite_for(avi))
+    copy = shelf_of(avi, "public")[0]
+    Wish.objects.create(profile=moshe, entry=copy.entry)
+    client.force_login(avi.user)
+    assert copy.entry.title not in client.get("/books/friends/").content.decode()
+
+
+def test_all_my_friends_is_one_link_away(client, avi, moshe):
+    friends.join_through_invite(moshe, friends.invite_for(avi))
+    client.force_login(avi.user)
+    html = client.get("/books/friends/all/").content.decode()
+    assert "כל החברים" in html and "moshe" in html and "אני עוקב/ת · 1" in html
+    assert "moshe" in client.get("/books/friends/all/?tab=followers").content.decode()
+
+
+def test_a_newcomer_sees_the_invite_and_why(client, avi):
+    client.force_login(avi.user)
+    html = client.get("/books/friends/").content.decode()
+    assert "עוד אין לך חברים כאן" in html and "כל החברים" not in html

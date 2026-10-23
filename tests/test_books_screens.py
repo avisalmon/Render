@@ -326,6 +326,8 @@ SCREENS = [
     ("catalog-entry", "/books/catalog/1001/", "reader", "catalog-entry"),
     ("first-read", "/books/read/first/1001/", "reader", "first-read"),
     ("friends", "/books/friends/?q=sh", "reader", "friends"),
+    ("friends-home", "/books/friends/", "reader", "friends"),
+    ("friends-all", "/books/friends/all/", "reader", "friends-all"),
     ("friend-shelf", lambda: _follow_and_shelf("reader", "shelver"), "reader", "friend-shelf"),
     ("friend-closed", lambda: f"/books/people/{__import__('books.models', fromlist=['Profile']).Profile.objects.get(user__username='staff').pk}/shelf/", "reader", "friend-shelf"),
     ("catalog-new", "/books/catalog/new/", "reader", "catalog-new"),
@@ -790,6 +792,7 @@ NARROW_PATHS = [("landing", None, "/books/"), ("login", None, "/books/login/"), 
                 ("settings", "reader", "/books/settings/"), ("play", "reader", "/books/play/"),
                 ("club", "reader", "/books/club/"), ("near", "reader", "/books/near/"), ("read", "shelver", "/books/read/"),
                 ("friends", "reader", "/books/friends/"), ("history", "reader", "/books/history/"),
+                ("friends-all", "reader", "/books/friends/all/"),
                 ("friend-shelf", "reader", None)]
 
 
@@ -1177,5 +1180,36 @@ def test_an_angled_cover_photo_is_found_and_straightened_and_can_be_undone(brows
         with e.cover.open("rb") as fh:
             w, h = Image.open(fh).size
         assert abs(w / h - 2 / 3) < 0.01  # as taken: the middle of the photo
+    finally:
+        context.close()
+
+
+def test_the_friends_search_answers_as_i_type_and_the_invite_opens_from_its_button(browser, live_server, db):
+    """Avi, 2026-10-23: results from the second letter, anywhere in the name, with
+    nothing else on the screen; not searching, one invite button opens the sheet."""
+    from books import friends
+    from books.models import Profile
+    build_world()
+    rp = Profile.objects.get(user__username="reader")
+    other = Profile.objects.exclude(pk=rp.pk).first()
+    other.display_name = "אבי סלמון"
+    other.save()
+    friends.join_through_invite(other, friends.invite_for(rp))
+    context, page, _ = _open(browser, live_server, "reader", "/books/friends/", PHONE, "dark")
+    try:
+        assert page.is_visible("[data-invite-open]") and not page.is_visible("[data-invite]")
+        page.click("[data-invite-open]")
+        page.wait_for_selector("dialog[data-invite][open]")
+        assert page.is_visible("[data-share]")
+        page.click("[data-invite-close]")
+        page.wait_for_selector("dialog[data-invite]:not([open])", state="attached")
+        page.fill("[data-friend-q]", "מו")
+        page.wait_for_selector("[data-results-mine]")
+        assert "אבי סלמון" in page.text_content("[data-friend-results]")
+        assert not page.is_visible("[data-friend-rest]")  # nothing else while searching
+        assert "q=" in page.url
+        page.fill("[data-friend-q]", "")
+        page.wait_for_selector("[data-friend-rest]", state="visible")
+        assert not page.is_visible("[data-friend-results]")
     finally:
         context.close()

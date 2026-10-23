@@ -1192,3 +1192,22 @@ html[dir="rtl"] .bk-prop > summary { padding: 6px 14px 6px 6px; }
 /* ---- the straightened cover's way back (Avi, 2026-10-23) ---------------------------------- */
 .bk-cover-undo { display: block; min-height: 44px; background: none; border: 0; padding: 0; font: inherit; text-align: start; color: var(--bk-brass); text-decoration: underline; cursor: pointer; }
 
+/* ---- the friends page: search first, the invite behind a button, only what needs me (Avi, 2026-10-23) ---- */
+.bk-friend-search { margin: 4px 0 12px; }
+.bk-friend-find { position: relative; display: block; }
+.bk-friend-find .bk-icon { position: absolute; inset-inline-start: 12px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; color: var(--bk-muted); pointer-events: none; }
+.bk-friend-find .bk-input { width: 100%; min-height: 48px; padding-inline-start: 42px; border-radius: 24px; font-size: 16px; }
+.bk-friend-results[hidden], .bk-friend-rest[hidden] { display: none; }
+.bk-friend-hint { margin: 4px 4px 12px; }
+.bk-friend-sec { font-size: 14px; font-weight: 700; color: var(--bk-brass); margin: 18px 2px 8px; letter-spacing: .01em; }
+.bk-invite-open { gap: 8px; margin: 2px 0 6px; }
+.bk-friend-empty { margin: 8px 2px 0; }
+.bk-friend-quiet { margin: 18px 2px 0; text-align: center; }
+.bk-friend-all { margin-top: 10px; }
+.bk-avatar--quiet { background: var(--bk-surface-2); color: var(--bk-ink); }
+dialog.bk-invite-sheet { width: 100%; max-width: 560px; max-height: 90vh; margin: auto auto 0; padding: 14px 18px 22px; border: 0; border-radius: 16px 16px 0 0;
+  background: var(--bk-surface); color: var(--bk-ink); box-shadow: 0 -10px 30px var(--bk-shadow-strong); overflow: auto; }
+dialog.bk-invite-sheet::backdrop { background: var(--bk-scrim); }
+dialog.bk-invite-sheet[open] { animation: bk-sheet-up .22s ease-out; }
+dialog.bk-invite-sheet .bk-invite { margin: 0 0 10px; }
+@media (min-width: 700px) { dialog.bk-invite-sheet { margin: auto; border-radius: 16px; } }

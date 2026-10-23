@@ -2,97 +2,132 @@
 {% block title %}{% t "friends.title" %} · {% t "brand" %}{% endblock %}
 {% block screen %}friends{% endblock %}
 {% block content %}
-<div class="bk-narrow">
+{# Avi, 2026-10-23: a search at the top that answers from the second letter; when not searching, #}
+{# one invite button (the share, the code and the link open from it) and only what needs me. #}
+<div class="bk-narrow bk-friends">
   <h1 class="bk-title">{% t "friends.title" %}</h1>
 
-  <section class="bk-invite" aria-labelledby="invite-h">
-    <h2 class="bk-invite-title" id="invite-h">{% t "friends.invite_h" %}</h2>
-    <p class="bk-invite-lead">{% t "friends.invite_lead" %}</p>
-    <button type="button" class="bk-btn bk-btn--primary bk-btn--wide bk-invite-share" data-share='{{ share_json }}'
-            data-copied="{% t "friends.copied_note" %}">
-      {% include "books/ui/_icon.html" with name="share" %} <span data-share-label>{% t "friends.share" %}</span>
-    </button>
-    <button type="button" class="bk-invite-way" data-qr-open aria-expanded="false">{% t "friends.via_qr" %}</button>
-    <div class="bk-invite-qr" data-qr hidden>
-      <img src="{% url 'books:invite_qr' %}" alt="{% t "friends.qr_alt" %}" width="220" height="220" loading="lazy">
-      <p class="bk-help" style="margin: 6px 0 0">{% t "friends.qr_help" %}</p>
-    </div>
-    <p class="bk-invite-link"><span dir="ltr">{{ invite_url }}</span></p>
-    {% if invite.joined %}<p class="bk-help" style="margin: 0">{% t "friends.joined_n" n=invite.joined %}</p>{% endif %}
-  </section>
-
-  <form method="get" class="bk-friend-search" role="search">
-    <input type="hidden" name="tab" value="{{ tab }}">
-    <label class="bk-field">{% t "friends.find" %} <input class="bk-input" type="search" name="q" value="{{ q }}" placeholder="{% t "friends.find_hint" %}"></label>
+  <form method="get" action="{% url 'books:friends' %}" class="bk-friend-search" role="search" data-friend-search data-url="{% url 'books:friends_search' %}">
+    <label class="bk-friend-find">
+      <span class="bk-visually-hidden">{% t "friends.find" %}</span>
+      {% include "books/ui/_icon.html" with name="search" %}
+      <input class="bk-input" type="search" name="q" value="{{ q }}" placeholder="{% t "friends.find_hint" %}" autocomplete="off" enterkeyhint="search" data-friend-q>
+    </label>
   </form>
-  {% if q %}
-  <ul class="bk-friend-list">
-    {% for f in found %}
-    <li class="bk-friend">
-      <a class="bk-friend-who" href="{% url 'books:friend_shelf' f.p.pk %}"><span class="bk-avatar" aria-hidden="true">{{ f.p.display_name|slice:":1" }}</span><span>{{ f.p.display_name }}{% if f.p.area_name %}<small>{{ f.p.area_name }}</small>{% endif %}</span></a>
-      {% if f.status == "accepted" %}<span class="bk-chip-note">{% t "friends.following_you" %}</span>
-      {% elif f.status == "pending" %}<span class="bk-chip-note">{% t "friends.requested" %}</span>
-      {% else %}<form method="post" action="{% url 'books:follow' f.p.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button type="submit" class="bk-btn bk-btn--small bk-btn--primary">{% t "friends.follow" %}</button></form>{% endif %}
-    </li>
-    {% empty %}<li class="bk-muted">{% t "friends.none_found" %}</li>
-    {% endfor %}
-  </ul>
-  {% endif %}
+  <div class="bk-friend-results" data-friend-results aria-live="polite"{% if not q %} hidden{% endif %}>{% if found %}{% include "books/friends/_results.html" %}{% endif %}</div>
 
-  <div class="bk-chips bk-friend-tabs" role="tablist">
-    <a class="bk-chip" role="tab" href="?tab=following" aria-pressed="{% if tab == "following" %}true{% else %}false{% endif %}">{% t "friends.tab_following" %} · {{ counts.following }}</a>
-    <a class="bk-chip" role="tab" href="?tab=followers" aria-pressed="{% if tab == "followers" %}true{% else %}false{% endif %}">{% t "friends.tab_followers" %} · {{ counts.followers }}</a>
-    {% if counts.requests or tab == "requests" %}<a class="bk-chip" role="tab" href="?tab=requests" aria-pressed="{% if tab == "requests" %}true{% else %}false{% endif %}">{% t "friends.tab_requests" %} · {{ counts.requests }}</a>{% endif %}
+  <div class="bk-friend-rest" data-friend-rest{% if q %} hidden{% endif %}>
+    <button type="button" class="bk-btn bk-btn--primary bk-btn--wide bk-invite-open" data-invite-open aria-haspopup="dialog">
+      {% include "books/ui/_icon.html" with name="plus" %} {% t "friends.invite_open" %}
+    </button>
+    {% if not n_friends %}<p class="bk-help bk-friend-empty">{% t "friends.empty_lead" %}</p>{% endif %}
+
+    {% if requests %}
+    <section aria-labelledby="sec-requests">
+      <h2 class="bk-friend-sec" id="sec-requests">{% t "friends.sec_requests" %}</h2>
+      <ul class="bk-friend-list">
+        {% for r in requests %}
+        <li class="bk-friend">
+          <a class="bk-friend-who" href="{% url 'books:friend_shelf' r.follower.pk %}"><span class="bk-avatar" aria-hidden="true">{{ r.follower.display_name|slice:":1" }}</span><span>{{ r.follower.display_name }}<small>{% t "friends.asks" %}</small></span></a>
+          <form method="post" action="{% url 'books:follow_answer' r.pk %}" class="bk-row">{% csrf_token %}
+            <button type="submit" name="action" value="accept" class="bk-btn bk-btn--small bk-btn--primary">{% t "friends.accept" %}</button>
+            <button type="submit" name="action" value="decline" class="bk-btn bk-btn--small bk-btn--quiet">{% t "friends.decline" %}</button>
+          </form>
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+
+    {% if wants %}
+    <section aria-labelledby="sec-wants">
+      <h2 class="bk-friend-sec" id="sec-wants">{% t "friends.sec_wants" %}</h2>
+      <ul class="bk-friend-list">
+        {% for d in wants %}
+        <li class="bk-friend">
+          <a class="bk-friend-who" href="{% url 'books:deal' d.pk %}"><span class="bk-avatar" aria-hidden="true">{{ d.requester.display_name|slice:":1" }}</span><span>{{ d.requester.display_name }}<small>{% t "friends.wants_row" title=d.copy.entry.title %}</small></span></a>
+          <a class="bk-btn bk-btn--small bk-btn--primary" href="{% url 'books:deal' d.pk %}">{% t "friends.to_request" %}</a>
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+
+    {% if new %}
+    <section aria-labelledby="sec-new">
+      <h2 class="bk-friend-sec" id="sec-new">{% t "friends.sec_new" %}</h2>
+      <ul class="bk-friend-list">
+        {% for f in new %}
+        <li class="bk-friend">
+          <a class="bk-friend-who" href="{% url 'books:friend_shelf' f.p.pk %}"><span class="bk-avatar" aria-hidden="true">{{ f.p.display_name|slice:":1" }}</span><span>{{ f.p.display_name }}<small>{% if f.invite %}{% t "friends.new_invite" %}{% else %}{% t "friends.new_when" date=f.when|date:"d.m" %}{% endif %}</small></span></a>
+          {% if not f.i_follow %}<form method="post" action="{% url 'books:follow' f.p.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.path }}"><button type="submit" class="bk-btn bk-btn--small">{% t "friends.follow_back" %}</button></form>
+          {% else %}<a class="bk-btn bk-btn--small" href="{% url 'books:friend_shelf' f.p.pk %}">{% t "friends.to_shelf" %}</a>{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+
+    {% if n_friends and not requests and not wants and not new %}<p class="bk-muted bk-friend-quiet">{% t "friends.quiet" %}</p>{% endif %}
+    {% if n_friends %}<a class="bk-link-quiet bk-friend-all" href="{% url 'books:friends_all' %}">{% t "friends.all" n=n_friends %}</a>{% endif %}
   </div>
 
-  {% if tab == "requests" %}
-  <ul class="bk-friend-list">
-    {% for r in requests %}
-    <li class="bk-friend">
-      <a class="bk-friend-who" href="{% url 'books:friend_shelf' r.follower.pk %}"><span class="bk-avatar" aria-hidden="true">{{ r.follower.display_name|slice:":1" }}</span><span>{{ r.follower.display_name }}<small>{% t "friends.asks" %}</small></span></a>
-      <form method="post" action="{% url 'books:follow_answer' r.pk %}" class="bk-row">{% csrf_token %}
-        <button type="submit" name="action" value="accept" class="bk-btn bk-btn--small bk-btn--primary">{% t "friends.accept" %}</button>
-        <button type="submit" name="action" value="decline" class="bk-btn bk-btn--small bk-btn--quiet">{% t "friends.decline" %}</button>
-      </form>
-    </li>
-    {% empty %}<li class="bk-muted">{% t "friends.no_requests" %}</li>
-    {% endfor %}
-  </ul>
-  {% elif tab == "followers" %}
-  <ul class="bk-friend-list">
-    {% for p in followers %}
-    <li class="bk-friend">
-      <a class="bk-friend-who" href="{% url 'books:friend_shelf' p.pk %}"><span class="bk-avatar" aria-hidden="true">{{ p.display_name|slice:":1" }}</span><span>{{ p.display_name }}{% if p.area_name %}<small>{{ p.area_name }}</small>{% endif %}</span></a>
-      <div class="bk-row">
-        {% if p.pk not in followed_back %}<form method="post" action="{% url 'books:follow' p.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button type="submit" class="bk-btn bk-btn--small">{% t "friends.follow_back" %}</button></form>{% endif %}
-        <details class="bk-menu bk-friend-menu">
-          <summary class="bk-iconbtn" aria-label="{% t "ui.more" %}">{% include "books/ui/_icon.html" with name="more" %}</summary>
-          <div class="bk-menu-pop">
-            <form method="post" action="{% url 'books:remove_follower' p.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button type="submit" class="bk-btn bk-btn--quiet bk-btn--small">{% t "friends.remove" %}</button></form>
-            <p class="bk-help" style="margin: 0">{% t "friends.remove_help" %}</p>
-          </div>
-        </details>
+  <dialog class="bk-invite-sheet" data-invite aria-labelledby="invite-h">
+    <div class="bk-sheet-handle" aria-hidden="true"></div>
+    <section class="bk-invite">
+      <h2 class="bk-invite-title" id="invite-h">{% t "friends.invite_h" %}</h2>
+      <p class="bk-invite-lead">{% t "friends.invite_lead" %}</p>
+      <button type="button" class="bk-btn bk-btn--primary bk-btn--wide bk-invite-share" data-share='{{ share_json }}'
+              data-copied="{% t "friends.copied_note" %}">
+        {% include "books/ui/_icon.html" with name="share" %} <span data-share-label>{% t "friends.share" %}</span>
+      </button>
+      <button type="button" class="bk-invite-way" data-qr-open aria-expanded="false">{% t "friends.via_qr" %}</button>
+      <div class="bk-invite-qr" data-qr hidden>
+        <img src="{% url 'books:invite_qr' %}" alt="{% t "friends.qr_alt" %}" width="220" height="220" loading="lazy">
+        <p class="bk-help" style="margin: 6px 0 0">{% t "friends.qr_help" %}</p>
       </div>
-    </li>
-    {% empty %}<li class="bk-muted">{% t "friends.no_followers" %}</li>
-    {% endfor %}
-  </ul>
-  {% else %}
-  <ul class="bk-friend-list">
-    {% for p in following %}
-    <li class="bk-friend">
-      <a class="bk-friend-who" href="{% url 'books:friend_shelf' p.pk %}"><span class="bk-avatar" aria-hidden="true">{{ p.display_name|slice:":1" }}</span><span>{{ p.display_name }}{% if p.area_name %}<small>{{ p.area_name }}</small>{% endif %}</span></a>
-      <a class="bk-btn bk-btn--small" href="{% url 'books:friend_shelf' p.pk %}">{% t "friends.to_shelf" %}</a>
-    </li>
-    {% empty %}<li class="bk-muted">{% t "friends.no_following" %}</li>
-    {% endfor %}
-  </ul>
-  {% endif %}
+      <p class="bk-invite-link"><span dir="ltr">{{ invite_url }}</span></p>
+      {% if invite.joined %}<p class="bk-help" style="margin: 0">{% t "friends.joined_n" n=invite.joined %}</p>{% endif %}
+    </section>
+    <button type="button" class="bk-btn bk-btn--quiet bk-btn--wide" data-invite-close>{% t "friends.invite_close" %}</button>
+  </dialog>
 </div>
 {% endblock %}
 {% block scripts %}
 <script>
 (function () {
+  // The search answers from the second letter, as you type (Avi, 2026-10-23); while
+  // searching, the rest of the page steps aside. Without script the form still searches.
+  var form = document.querySelector('[data-friend-search]');
+  var input = document.querySelector('[data-friend-q]');
+  var results = document.querySelector('[data-friend-results]');
+  var rest = document.querySelector('[data-friend-rest]');
+  if (form && input && results && rest) {
+    var timer = 0, asked = 0;
+    var update = function () {
+      var q = input.value.trim();
+      try { var u = new URL(location.href); if (q) u.searchParams.set('q', q); else u.searchParams.delete('q'); history.replaceState(null, '', u); } catch (e) { /* ignore */ }
+      if (!q) { results.hidden = true; results.innerHTML = ''; rest.hidden = false; return; }
+      rest.hidden = true; results.hidden = false;
+      var mine = ++asked;
+      fetch(form.getAttribute('data-url') + '?q=' + encodeURIComponent(q), {headers: {'Accept': 'text/html'}})
+        .then(function (r) { return r.text(); })
+        .then(function (html) { if (mine === asked) results.innerHTML = html; })
+        .catch(function () {});
+    };
+    input.addEventListener('input', function () { clearTimeout(timer); timer = setTimeout(update, 150); });
+    form.addEventListener('submit', function (e) { e.preventDefault(); clearTimeout(timer); update(); });
+  }
+
+  // The invitation opens from its button, as a sheet.
+  var sheet = document.querySelector('[data-invite]');
+  var open = document.querySelector('[data-invite-open]');
+  if (sheet && open) {
+    open.addEventListener('click', function () { if (sheet.showModal) sheet.showModal(); else sheet.setAttribute('open', ''); });
+    sheet.querySelector('[data-invite-close]').addEventListener('click', function () { sheet.close(); });
+    sheet.addEventListener('click', function (e) { if (e.target === sheet) sheet.close(); });
+  }
+
   // One share button (Avi, 2026-10-22): the phone's own share sheet (WhatsApp,
   // mail, everything); where there is none, the invitation is copied.
   var share = document.querySelector('[data-share]');

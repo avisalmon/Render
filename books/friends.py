@@ -12,9 +12,12 @@
 
 Every rule lives here; the pages and the API both call it."""
 
+import re
 import secrets
+from datetime import timedelta
 
 from django.db import IntegrityError, transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from .models import Copy, Follow, Invite, Notification, Profile
@@ -184,6 +187,78 @@ def find_people(viewer, q):
         return Profile.objects.none()
     return (Profile.objects.filter(display_name__icontains=q).exclude(pk=viewer.pk)
             .exclude(pk__in=blocked_ids(viewer)).order_by("display_name")[:40])
+
+
+# ---- the friends page (Avi, 2026-10-23) -----------------------------------------------
+# A search at the top that answers from the second letter; when not searching, one
+# "invite" button and only what needs me: requests, people who asked for my books,
+# and new friends. The full list is one link away.
+
+FINALS = {"ך": "כ", "ם": "מ", "ן": "נ", "ף": "פ", "ץ": "צ"}
+NEW_DAYS = 30
+
+
+def name_pattern(q):
+    """A search anywhere in the name ("מו" finds "סלמון"), with a final letter and
+    its ordinary form the same ("סלמונ" finds "סלמון")."""
+    out = []
+    for ch in q:
+        base = FINALS.get(ch, ch)
+        final = next((k for k, v in FINALS.items() if v == base), None)
+        out.append(f"[{base}{final}]" if final else re.escape(ch))
+    return "".join(out)
+
+
+def friend_ids(profile):
+    """Everyone I follow or who follows me, accepted."""
+    rows = Follow.objects.filter(status=Follow.ACCEPTED).filter(Q(follower=profile) | Q(followee=profile))
+    return {r.followee_id if r.follower_id == profile.pk else r.follower_id
+            for r in rows.only("follower_id", "followee_id")}
+
+
+def search(viewer, q):
+    """My friends first, then everyone else on Books by that name (anyone may ask)."""
+    from .hub import blocked_ids
+
+    q = (q or "").strip()[:60]
+    if len(q) < 2:
+        return {"q": q, "friends": [], "others": []}
+    found = (Profile.objects.filter(display_name__iregex=name_pattern(q)).exclude(pk=viewer.pk)
+             .exclude(pk__in=blocked_ids(viewer)))
+    ids = friend_ids(viewer)
+    status = dict(Follow.objects.filter(follower=viewer).values_list("followee_id", "status"))
+    return {
+        "q": q,
+        "friends": list(found.filter(pk__in=ids).order_by("display_name")[:30]),
+        "others": [{"p": p, "status": status.get(p.pk)} for p in found.exclude(pk__in=ids).order_by("display_name")[:20]],
+    }
+
+
+def new_friends(profile, days=NEW_DAYS, limit=12):
+    """People who became my friends in the last month, newest first, and whether I
+    follow them back."""
+    since = timezone.now() - timedelta(days=days)
+    rows = (Follow.objects.filter(status=Follow.ACCEPTED).filter(Q(follower=profile) | Q(followee=profile))
+            .filter(Q(accepted_at__gte=since) | Q(accepted_at__isnull=True, created_at__gte=since))
+            .select_related("follower", "followee"))
+    i_follow = set(Follow.objects.filter(follower=profile, status=Follow.ACCEPTED).values_list("followee_id", flat=True))
+    people = {}
+    for r in rows:
+        other = r.follower if r.followee_id == profile.pk else r.followee
+        when = r.accepted_at or r.created_at
+        if other.pk not in people or when > people[other.pk]["when"]:
+            people[other.pk] = {"p": other, "when": when, "i_follow": other.pk in i_follow,
+                                "invite": r.source == Follow.INVITE}
+    return sorted(people.values(), key=lambda x: x["when"], reverse=True)[:limit]
+
+
+def want_my_books(profile, limit=12):
+    """People who asked for one of my books and wait for my answer. (A friend's
+    wishlist stays private: it is not shown here.)"""
+    from .models import Deal
+
+    return list(Deal.objects.filter(owner=profile, status=Deal.REQUESTED)
+                .select_related("requester", "copy__entry").order_by("-created_at")[:limit])
 
 
 # ---- seeing a friend's library ------------------------------------------------------

@@ -46,23 +46,36 @@ def invite_link(request, code):
 
 @books_page
 def friends_page(request):
+    """Search at the top, the invite behind one button, and only what needs me (Avi, 2026-10-23)."""
     me = request.books_profile
     invite = friends.invite_for(me)
-    tab = request.GET.get("tab") or ("requests" if friends.requests_for(me).exists() else "following")
-    q = (request.GET.get("q") or "").strip()
-    found = []
-    if q:
-        status = dict(Follow.objects.filter(follower=me).values_list("followee_id", "status"))
-        found = [{"p": p, "status": status.get(p.pk)} for p in friends.find_people(me, q)]
     url = _invite_url(request, invite)
-    lang = _lang(request)
     # The invitation goes out in English (Avi, 2026-10-22), whatever my own language.
     message = t("friends.share_text", "en", name=me.display_name)
+    q = (request.GET.get("q") or "").strip()
     return render(request, "books/friends/friends.html", {
-        "tab": tab, "q": q, "found": found, "invite": invite, "invite_url": url, "share_text": message,
+        "q": q, "found": friends.search(me, q) if q else None,
+        "invite": invite, "invite_url": url, "share_text": message,
         "share_json": json.dumps({"title": t("friends.share_title", "en"), "text": message, "url": url}, ensure_ascii=False),
-        "following": friends.following(me), "followers": friends.followers(me),
-        "requests": friends.requests_for(me), "counts": friends.counts(me),
+        "requests": friends.requests_for(me), "wants": friends.want_my_books(me), "new": friends.new_friends(me),
+        "n_friends": len(friends.friend_ids(me)), "new_days": friends.NEW_DAYS,
+    })
+
+
+@books_page
+def friends_search(request):
+    """The search's answer, as the page's own markup, from the second letter."""
+    found = friends.search(request.books_profile, request.GET.get("q"))
+    return render(request, "books/friends/_results.html", {"found": found, "q": found["q"]})
+
+
+@books_page
+def friends_all(request):
+    """Everyone, one link away: who I follow and who follows me."""
+    me = request.books_profile
+    tab = request.GET.get("tab") if request.GET.get("tab") in ("following", "followers") else "following"
+    return render(request, "books/friends/all.html", {
+        "tab": tab, "following": friends.following(me), "followers": friends.followers(me), "counts": friends.counts(me),
         "followed_back": set(Follow.objects.filter(follower=me, status=Follow.ACCEPTED).values_list("followee_id", flat=True)),
     })
 

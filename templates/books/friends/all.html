@@ -1,0 +1,43 @@
+{% extends "books/base.html" %}{% load books_tags %}
+{% block title %}{% t "friends.all_title" %} · {% t "brand" %}{% endblock %}
+{% block screen %}friends-all{% endblock %}
+{% block content %}
+<div class="bk-narrow">
+  <p><a href="{% url 'books:friends' %}">{% t "friends.back" %}</a></p>
+  <h1 class="bk-title">{% t "friends.all_title" %}</h1>
+  <div class="bk-chips bk-friend-tabs" role="tablist">
+    <a class="bk-chip" role="tab" href="?tab=following" aria-pressed="{% if tab == "following" %}true{% else %}false{% endif %}">{% t "friends.tab_following" %} · {{ counts.following }}</a>
+    <a class="bk-chip" role="tab" href="?tab=followers" aria-pressed="{% if tab == "followers" %}true{% else %}false{% endif %}">{% t "friends.tab_followers" %} · {{ counts.followers }}</a>
+  </div>
+  {% if tab == "followers" %}
+  <ul class="bk-friend-list">
+    {% for p in followers %}
+    <li class="bk-friend">
+      <a class="bk-friend-who" href="{% url 'books:friend_shelf' p.pk %}"><span class="bk-avatar" aria-hidden="true">{{ p.display_name|slice:":1" }}</span><span>{{ p.display_name }}{% if p.area_name %}<small>{{ p.area_name }}</small>{% endif %}</span></a>
+      <div class="bk-row">
+        {% if p.pk not in followed_back %}<form method="post" action="{% url 'books:follow' p.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button type="submit" class="bk-btn bk-btn--small">{% t "friends.follow_back" %}</button></form>{% endif %}
+        <details class="bk-menu bk-friend-menu">
+          <summary class="bk-iconbtn" aria-label="{% t "ui.more" %}">{% include "books/ui/_icon.html" with name="more" %}</summary>
+          <div class="bk-menu-pop">
+            <form method="post" action="{% url 'books:remove_follower' p.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button type="submit" class="bk-btn bk-btn--quiet bk-btn--small">{% t "friends.remove" %}</button></form>
+            <p class="bk-help" style="margin: 0">{% t "friends.remove_help" %}</p>
+          </div>
+        </details>
+      </div>
+    </li>
+    {% empty %}<li class="bk-muted">{% t "friends.no_followers" %}</li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <ul class="bk-friend-list">
+    {% for p in following %}
+    <li class="bk-friend">
+      <a class="bk-friend-who" href="{% url 'books:friend_shelf' p.pk %}"><span class="bk-avatar" aria-hidden="true">{{ p.display_name|slice:":1" }}</span><span>{{ p.display_name }}{% if p.area_name %}<small>{{ p.area_name }}</small>{% endif %}</span></a>
+      <a class="bk-btn bk-btn--small" href="{% url 'books:friend_shelf' p.pk %}">{% t "friends.to_shelf" %}</a>
+    </li>
+    {% empty %}<li class="bk-muted">{% t "friends.no_following" %}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</div>
+{% endblock %}

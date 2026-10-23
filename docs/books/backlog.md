@@ -648,6 +648,9 @@ charging for the web lookup.
 
 | F-R.35 | A photographed cover is found and straightened on the phone, in its own proportion; one tap keeps it as taken | DONE |
 
+| F-R.36 | The friends page: search at the top from the second letter (anywhere in the name), one invite button with the sheet, only what needs me, the full list one link away | DONE |
+| F-R.37 | Friends whose wishlist has a book I own: needs Avi's word, since wishlists are private today | OPEN |
+
 Next on friends (Avi, 2026-10-22): "I'd love to borrow this one", seeing which friend has a book I want, a friends' feed.
 
 Open for later (Avi): what to do with a finished book's notes (a summary, a
