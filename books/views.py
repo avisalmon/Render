@@ -217,7 +217,10 @@ def settings_page(request):
     else:
         form = SettingsForm(instance=profile, lang=_lang(request))
         saved = request.GET.get("saved") == "1"
+    from . import tiers
+
     return render(request, "books/settings.html", {"form": form, "profile": profile, "saved": saved,
+                                                   "gifted": tiers.gifted(profile),  # the pilot's Pro (2026-10-23)
                                                    "groups": _profile_groups(form, profile, _lang(request))})
 
 

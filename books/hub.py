@@ -20,12 +20,13 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
-from . import jobs
+from . import jobs, mail
 from .models import (
     Block,
     Copy,
     CopyTransfer,
     Deal,
+    Follow,
     Message,
     Notification,
     Offer,
@@ -40,6 +41,9 @@ log = logging.getLogger(__name__)
 SHARE_WAYS = ("phone", "whatsapp", "email")
 DUE_SOON_DAYS = 3
 LOST_FACTOR = 2
+FRIENDS_FIRST_HOURS = 48  # an offer is the friends' alone for two days (Avi, 2026-10-23); BOOKS_FRIENDS_FIRST_HOURS
+FREE_FRIEND_DEALS = 4  # a free person's transactions with friends on Pro's terms (Avi, 2026-10-23)
+TRANSFER_KIND = {Offer.SELL: "sold", Offer.EXCHANGE: "exchanged", Offer.GIVE: "given"}
 
 
 class DealError(Exception):
@@ -57,6 +61,55 @@ def can_start(profile):
 
 def blocked_between(a, b):
     return Block.objects.filter(Q(blocker=a, blocked=b) | Q(blocker=b, blocked=a)).exists()
+
+
+def are_friends(a, b):
+    """Accepted, either direction."""
+    return Follow.objects.filter(status=Follow.ACCEPTED).filter(
+        Q(follower=a, followee=b) | Q(follower=b, followee=a)).exists()
+
+
+def friend_deals_used(profile):
+    """The free person's four: requests they started that reached approval."""
+    return Deal.objects.filter(requester=profile).exclude(
+        status__in=(Deal.REQUESTED, Deal.DECLINED, Deal.CANCELLED)).count()
+
+
+def friend_deals_left(profile):
+    return max(0, FREE_FRIEND_DEALS - friend_deals_used(profile))
+
+
+def may_ask(requester, owner):
+    """Why this person may not ask this owner, or None. Pro asks anyone; a
+    free person asks friends only, four times on Pro's terms."""
+    if can_start(requester):
+        return None
+    if not are_friends(requester, owner):
+        return "hub.err.tier"
+    if friend_deals_left(requester) <= 0:
+        return "hub.err.friends_quota"
+    return None
+
+
+def can_see_copy(viewer, copy):
+    """A friend sees everything but "only me"; anyone sees what is public."""
+    if copy.status != Copy.WITH_OWNER or copy.display_only or copy.visibility == Copy.HIDDEN:
+        return False
+    if copy.visibility == Copy.PUBLIC:
+        return True
+    return are_friends(viewer, copy.owner)
+
+
+def friends_first_hours():
+    return int(getattr(settings, "BOOKS_FRIENDS_FIRST_HOURS", FRIENDS_FIRST_HOURS))
+
+
+def offer_open_to(viewer, offer, now=None):
+    """Friends from the first minute; everyone else after two days."""
+    if are_friends(viewer, offer.copy.owner):
+        return True
+    now = now or timezone.now()
+    return offer.created_at <= now - timedelta(hours=friends_first_hours())
 
 
 def blocked_ids(profile):
@@ -119,8 +172,13 @@ def offered_copies(viewer, kind=None, q=None, tag=None, language=None, limit=300
 
     hidden = blocked_ids(viewer)
     peers = peer_ids(viewer)
+    from .friends import friend_ids
+
     offers = Offer.objects.filter(is_active=True, copy__visibility=Copy.PUBLIC, copy__status=Copy.WITH_OWNER,
                                   copy__display_only=False).exclude(copy__owner=viewer).exclude(copy__owner_id__in=hidden)
+    # Friends first (Avi, 2026-10-23): a fresh offer is the owner's friends' alone for two days.
+    offers = offers.filter(Q(copy__owner_id__in=friend_ids(viewer)) |
+                           Q(created_at__lte=timezone.now() - timedelta(hours=friends_first_hours())))
     if kind:
         offers = offers.filter(kind=kind)
     if q:
@@ -153,7 +211,9 @@ def offered_copies(viewer, kind=None, q=None, tag=None, language=None, limit=300
 # ---- notifications ---------------------------------------------------------------------
 
 def notify(profile, kind, deal=None, entry=None, copy=None, thread=None):
-    return Notification.objects.create(profile=profile, kind=kind, deal=deal, entry=entry, copy=copy, thread=thread)
+    n = Notification.objects.create(profile=profile, kind=kind, deal=deal, entry=entry, copy=copy, thread=thread)
+    mail.notify_later(n)  # every step of a request also by email (Avi, 2026-10-23)
+    return n
 
 
 def unread_count(profile):
@@ -168,29 +228,83 @@ def open_deal(requester, copy):
 
 @transaction.atomic
 def ask(requester, copy, kind, message="", swap_copy=None):
+    """One tap: "I want to receive / borrow / buy / swap for this" (Avi,
+    2026-10-23). On an offer the owner made, when it is open to me (friends
+    at once, everyone after two days); or, as a friend, on any book I can
+    see, offered or not: the owner answers."""
     if copy.owner_id == requester.pk:
         raise DealError("hub.err.own")
-    if not can_start(requester):
-        raise DealError("hub.err.tier")
+    if kind not in dict(Offer.KINDS):
+        raise DealError("hub.err.not_offered")
+    why = may_ask(requester, copy.owner)
+    if why:
+        raise DealError(why)
     if blocked_between(requester, copy.owner):
         raise DealError("hub.err.blocked")
+    if not can_see_copy(requester, copy):
+        raise DealError("hub.err.not_offered")
     offer = copy.offers.filter(kind=kind, is_active=True).first()
-    if offer is None or copy.visibility != Copy.PUBLIC or copy.status != Copy.WITH_OWNER or copy.display_only:
+    if offer is not None and not offer_open_to(requester, offer):
+        offer = None
+    if offer is None and not are_friends(requester, copy.owner):
         raise DealError("hub.err.not_offered")
     if open_deal(requester, copy):
         raise DealError("hub.err.already")
-    if kind == Offer.EXCHANGE:
-        if swap_copy is None or swap_copy.owner_id != requester.pk or swap_copy.status != Copy.WITH_OWNER:
+    if kind == Offer.EXCHANGE and swap_copy is not None:
+        if swap_copy.owner_id != requester.pk or swap_copy.status != Copy.WITH_OWNER:
             raise DealError("hub.err.swap_copy")
-    else:
+    if kind != Offer.EXCHANGE:
         swap_copy = None
     deal = Deal.objects.create(offer=offer, copy=copy, owner=copy.owner, requester=requester, kind=kind,
-                               swap_copy=swap_copy, loan_days=offer.loan_days if kind == Offer.LEND else None,
-                               price_amount=offer.price_amount if kind == Offer.SELL else None)
+                               swap_copy=swap_copy,
+                               loan_days=(offer.loan_days if offer else None) if kind == Offer.LEND else None,
+                               price_amount=(offer.price_amount if offer else None) if kind == Offer.SELL else None)
     if message.strip():
         Message.objects.create(deal=deal, sender=requester, body=message.strip()[:2000])
     notify(copy.owner, "deal.requested", deal=deal)
     return deal
+
+
+def askers(copy):
+    """Everyone waiting for this copy, in the order they asked (Avi,
+    2026-10-23: the owner sees who came first and chooses)."""
+    return list(Deal.objects.filter(copy=copy, status=Deal.REQUESTED).select_related("requester")
+                .order_by("created_at"))
+
+
+def place_in_line(deal):
+    """1 for the first to ask; None once the request is not waiting."""
+    if deal.status != Deal.REQUESTED:
+        return None
+    return Deal.objects.filter(copy=deal.copy, status=Deal.REQUESTED, created_at__lt=deal.created_at).count() + 1
+
+
+TAKEN = "taken"
+
+
+def went_elsewhere(deal):
+    """The book went to someone else (declined because another asker was chosen)."""
+    return deal.status == Deal.DECLINED and deal.closed_note == TAKEN
+
+
+def elsewhere(viewer, entry, exclude_copy=None, limit=6):
+    """Where else this book may be had: friends' copies I can see (offered or
+    not), then copies offered near me. For the asker whose request lost."""
+    from .friends import friend_ids
+
+    out, seen = [], {exclude_copy.pk} if exclude_copy else set()
+    fids = friend_ids(viewer)
+    for c in (Copy.objects.filter(entry=entry, owner_id__in=fids, status=Copy.WITH_OWNER, display_only=False)
+              .exclude(visibility=Copy.HIDDEN).exclude(owner_id__in=blocked_ids(viewer))
+              .select_related("owner").prefetch_related("offers")[:limit]):
+        if c.pk not in seen:
+            seen.add(c.pk)
+            out.append({"copy": c, "friend": True, "kinds": [o.kind for o in c.offers.all() if o.is_active]})
+    for c, km in offered_copies(viewer, limit=200):
+        if c.entry_id == entry.pk and c.pk not in seen and len(out) < limit:
+            seen.add(c.pk)
+            out.append({"copy": c, "friend": False, "km": km, "kinds": [o.kind for o in c.offers.all() if o.is_active]})
+    return out
 
 
 def _need(deal, profile, role, *statuses):
@@ -212,7 +326,7 @@ def approve(deal, profile):
     # One copy, one taker: other open requests for it are declined.
     for other in Deal.objects.filter(copy=deal.copy, status=Deal.REQUESTED).exclude(pk=deal.pk):
         other.status = Deal.DECLINED
-        other.closed_note = "taken"
+        other.closed_note = TAKEN
         other.save(update_fields=["status", "closed_note", "updated_at"])
         notify(other.requester, "deal.declined", deal=other)
     return deal
@@ -293,8 +407,9 @@ def confirm_handover(deal, profile):
         if deal.swap_copy_id:
             transfer(deal.swap_copy, deal.owner, deal, "exchanged")
     else:
+        # Sold or given: the book stands on the receiver's shelf now (Avi, 2026-10-23).
         deal.status = Deal.COMPLETED
-        transfer(deal.copy, deal.requester, deal, "sold")
+        transfer(deal.copy, deal.requester, deal, TRANSFER_KIND[deal.kind])
     deal.save(update_fields=["status", "due_date", "updated_at"])
     for p in (deal.owner, deal.requester):
         notify(p, "deal.handed_over", deal=deal)
@@ -356,6 +471,7 @@ def send_message(deal, profile, body):
     if not body:
         raise DealError("hub.err.empty")
     msg = Message.objects.create(deal=deal, sender=profile, body=body)
+    mail.message_later(msg)  # every message also by email (Avi, 2026-10-23)
     other = deal.other(profile)
     # One unread "new message" per deal is enough; more is noise.
     if not Notification.objects.filter(profile=other, deal=deal, kind="deal.message", read_at__isnull=True).exists():
@@ -440,9 +556,11 @@ def reputation(profile):
     ended = on_time + late + lost
     lent = Deal.objects.filter(owner=profile, kind=Offer.LEND,
                                status__in=[Deal.HANDED_OVER, Deal.RETURNED, Deal.LOST]).count()
-    passed_on = Deal.objects.filter(owner=profile, kind__in=[Offer.EXCHANGE, Offer.SELL], status=Deal.COMPLETED).count()
-    received = Deal.objects.filter(requester=profile, kind__in=[Offer.EXCHANGE, Offer.SELL], status=Deal.COMPLETED).count()
-    return {"lent": lent, "passed_on": passed_on, "received": received, "borrowed_on_time": on_time,
+    moved = [Offer.EXCHANGE, Offer.SELL, Offer.GIVE]
+    passed_on = Deal.objects.filter(owner=profile, kind__in=moved, status=Deal.COMPLETED).count()
+    received = Deal.objects.filter(requester=profile, kind__in=moved, status=Deal.COMPLETED).count()
+    given = Deal.objects.filter(owner=profile, kind=Offer.GIVE, status=Deal.COMPLETED).count()
+    return {"lent": lent, "passed_on": passed_on, "received": received, "given": given, "borrowed_on_time": on_time,
             "borrowed_late": late, "lost": lost, "ended": ended,
             "reliability": round(100 * on_time / ended) if ended else None}
 

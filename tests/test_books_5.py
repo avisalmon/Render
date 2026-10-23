@@ -167,10 +167,11 @@ def test_no_way_to_talk_shows_before_approval(noa, dan, entry):
     assert hub.contact_for(deal, dan) == {}
 
 
-def test_an_exchange_needs_one_of_your_own_books(noa, dan, entry):
+def test_an_exchange_names_one_of_your_own_books_or_none_yet(noa, dan, entry):
+    # Avi, 2026-10-23: the book in return may be settled in the conversation; a named one must be yours.
     c = offered(noa, entry, "exchange")
-    with pytest.raises(hub.DealError, match="hub.err.swap_copy"):
-        hub.ask(dan, c, "exchange")
+    assert hub.ask(dan, c, "exchange").swap_copy is None
+    Deal.objects.all().delete()
     theirs = Copy.objects.create(owner=noa, entry=entry)
     with pytest.raises(hub.DealError, match="hub.err.swap_copy"):
         hub.ask(dan, c, "exchange", swap_copy=theirs)

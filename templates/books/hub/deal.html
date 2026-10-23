@@ -7,11 +7,37 @@
   <h1 class="bk-title">{% t "deal.title" title=deal.copy.entry.title %}</h1>
   <p style="margin: 0 0 8px"><span class="bk-status-pill">{% with key="dstatus."|add:deal.status %}{% t key %}{% endwith %}</span></p>
   <p class="bk-muted" style="margin: 0">
-    {% if deal.kind == "lend" %}{% t "deal.kind_lend" days=deal.loan_days %}{% elif deal.kind == "exchange" %}{% t "deal.kind_exchange" title=deal.swap_copy.entry.title %}{% else %}{% t "deal.kind_sell" price=deal.price_amount|floatformat:"0" %}{% endif %}
+    {% if deal.kind == "give" %}{% t "deal.kind_give" %}{% elif deal.kind == "lend" %}{% if deal.loan_days %}{% t "deal.kind_lend" days=deal.loan_days %}{% else %}{% t "deal.kind_lend_open" %}{% endif %}{% elif deal.kind == "exchange" %}{% if deal.swap_copy %}{% t "deal.kind_exchange" title=deal.swap_copy.entry.title %}{% else %}{% t "deal.kind_exchange_open" %}{% endif %}{% else %}{% if deal.price_amount %}{% t "deal.kind_sell" price=deal.price_amount|floatformat:"0" %}{% else %}{% t "deal.kind_sell_open" %}{% endif %}{% endif %}
+    {% if place %} · {% t "deal.place_in_line" n=place %}{% endif %}
     {% if deal.due_date and deal.kind == "lend" %} · {% t "deal.due" date=deal.due_date|date:"d.m.Y" %}{% endif %}
   </p>
   <p class="bk-muted" style="margin: 4px 0 0">{% if role == "owner" %}{% t "deal.you_owner" %}{% else %}{% t "deal.you_requester" %}{% endif %} · {% t "deal.other_side" %}: {{ other.display_name }}{% if other.area_name %}, {{ other.area_name }}{% endif %}</p>
   {% if deal.status == "disputed" and deal.closed_note %}<p class="bk-notice" role="status">{{ deal.closed_note }}</p>{% endif %}
+  {% if taken %}
+  <section class="bk-card bk-taken" data-taken>
+    <p class="bk-taken-title">{% t "deal.taken" name=other.display_name %}</p>
+    {% if elsewhere %}
+    <p class="bk-help" style="margin: 0 0 6px">{% t "deal.elsewhere" %}</p>
+    <ul class="bk-friend-list">
+      {% for e in elsewhere %}
+      <li class="bk-friend">
+        <a class="bk-friend-who" href="{% if e.friend %}{% url 'books:friend_shelf' e.copy.owner.pk %}{% else %}{% url 'books:offered' e.copy.pk %}{% endif %}"><span class="bk-avatar{% if not e.friend %} bk-avatar--quiet{% endif %}" aria-hidden="true">{{ e.copy.owner.display_name|slice:":1" }}</span><span>{{ e.copy.owner.display_name }}<small>{% if e.kinds %}{% for k in e.kinds %}{% with key="status."|add:k %}{% t key %}{% endwith %}{% if not forloop.last %} · {% endif %}{% endfor %}{% elif e.friend %}{% t "deal.friend_has" %}{% endif %}{% if e.km is not None %} · {% t "near.km" km=e.km|floatformat:"0" %}{% endif %}</small></span></a>
+        <a class="bk-btn bk-btn--small bk-btn--primary" href="{% if e.friend %}{% url 'books:friend_shelf' e.copy.owner.pk %}{% else %}{% url 'books:offered' e.copy.pk %}{% endif %}">{% t "deal.ask_there" %}</a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}<p class="bk-help" style="margin: 0">{% t "deal.elsewhere_none" %} <a href="{% url 'books:wish_entry' deal.copy.entry.pk %}" data-wish-link>{% t "deal.wish_it" %}</a></p>{% endif %}
+  </section>
+  {% endif %}
+  {% if role == "owner" and askers|length > 1 %}
+  <section class="bk-card" data-askers>
+    <p class="bk-kicker" style="margin: 0 0 6px">{% t "deal.askers" n=askers|length %}</p>
+    <ol class="bk-askers">
+      {% for a in askers %}<li{% if a.pk == deal.pk %} class="is-this"{% endif %}><a href="{% url 'books:deal' a.pk %}">{{ a.requester.display_name }}</a> <small class="bk-muted">{{ a.created_at|date:"d.m H:i" }}</small>{% if a.pk == deal.pk %} <small>{% t "deal.this_one" %}</small>{% endif %}</li>{% endfor %}
+    </ol>
+    <p class="bk-help" style="margin: 6px 0 0">{% t "deal.askers_help" %}</p>
+  </section>
+  {% endif %}
   {% if error %}<p class="bk-error" role="alert">{{ error }}</p>{% endif %}
   {% if request.GET.reported %}<p class="bk-notice bk-notice--ok" role="status">{% t "report.thanks" %}</p>{% endif %}
 

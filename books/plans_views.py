@@ -26,7 +26,7 @@ def plans(request):
         except tiers.TierError as exc:
             error = t(str(exc), _lang(request))
     return render(request, "books/plans.html", {
-        "tier": tiers.effective(me), "until": tiers.until(me), "error": error,
+        "tier": tiers.effective(me), "until": tiers.until(me), "error": error, "gifted": tiers.gifted(me),
         "redeemed": request.GET.get("redeemed"), "next": request.GET.get("next", ""),
         "subscriptions": me.subscriptions.all()[:10],
     })

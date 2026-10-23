@@ -68,6 +68,9 @@
       <div class="bk-filterbox-body bk-form">
         <p class="bk-help" style="margin: 0">{% t "copy.offers_note" %}</p>
         <div class="bk-offer">
+          <label class="bk-check">{{ form.give }} <span>{{ form.give.label }}</span></label>
+        </div>
+        <div class="bk-offer">
           <label class="bk-check">{{ form.lend }} <span>{{ form.lend.label }}</span></label>
           <label class="bk-field">{{ form.loan_days.label }} {{ form.loan_days }}</label>
         </div>

@@ -88,8 +88,8 @@ class OfferSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         copy = attrs.get("copy") or getattr(self.instance, "copy", None)
-        if copy is not None and copy.visibility != Copy.PUBLIC:
-            raise serializers.ValidationError({"copy": "An offer needs a public copy."})
+        if copy is not None and copy.visibility == Copy.HIDDEN:
+            raise serializers.ValidationError({"copy": "An offer needs a copy that someone can see."})
         return attrs
 
 

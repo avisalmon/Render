@@ -141,7 +141,7 @@ def test_bulk_move_and_visibility(client, shelved, reader):
     assert set(Copy.objects.values_list("location_note", flat=True)) == {"ארגז במחסן"}
     client.post("/books/library/bulk/", {"copy": [b.pk], "action": "private"})
     b.refresh_from_db()
-    assert b.visibility == "private" and not b.offers.exists()
+    assert b.visibility == "private" and b.offers.exists()  # friends-only keeps the offers for the friends (2026-10-23)
 
 
 # ---- one copy --------------------------------------------------------------------------
@@ -154,7 +154,7 @@ def test_the_copy_page_saves_offers_and_details(client, shelved, reader):
                                              "price": "35"})
     assert r.status_code == 302
     a.refresh_from_db()
-    assert a.visibility == "public"  # an offer makes it visible
+    assert a.visibility == "private"  # an offer on a friends-only book reaches the friends (Avi, 2026-10-23)
     assert a.condition == "good" and a.notes == "עותק של סבא" and a.location_note == "מדף עליון"
     offers = {o.kind: o for o in a.offers.all()}
     assert set(offers) == {"lend", "sell"} and offers["lend"].loan_days == 21 and str(offers["sell"].price_amount) == "35.00"

@@ -656,6 +656,18 @@ Next on friends (Avi, 2026-10-22): "I'd love to borrow this one", seeing which f
 Open for later (Avi): what to do with a finished book's notes (a summary, a
 review draft, sharing some of them).
 
+## Giving and the hand-to-hand flow (Avi, 2026-10-23) `WIP`
+
+Spec BK5b. Three sprints, each pushed when done (Books rule).
+
+| ID | Sprint | Status |
+| --- | --- | --- |
+| SPR-G.1 | The rules: `give`; the pilot gift (everyone Pro, with the note); friends first for 48 hours; a free person's four with friends; a friend asks for an unoffered book; the line of askers in order; "went to someone else" with where else to find it; every step and message by email; the terms | DONE |
+| SPR-G.2 | The screens: one tap from a friend's shelf and the book's page (which friends hold it); the request as a conversation (chat first, the one next action on top, the rest folded, messages sent without reload); "went to someone else" on the asker's screen | TODO |
+| SPR-G.3 | My library: every row carries show / give / lend / sell, saved as tapped, no reload, phone and computer | TODO |
+
+Open (needs Avi): whether a free person's four count per year or for good (built: for good).
+
 ## Epics BK12 and BK13
 
 Not broken into sprints yet: advanced creation, other collections.

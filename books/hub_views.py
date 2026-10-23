@@ -99,8 +99,12 @@ def deal_page(request, pk):
     role = deal.role(me)
     other = deal.other(me)
     my_shares = (deal.owner_shares if role == "owner" else deal.requester_shares).split(",")
+    taken = role == "requester" and hub.went_elsewhere(deal)
     return render(request, "books/hub/deal.html", {
         "deal": deal, "role": role, "other": other, "rep": hub.reputation(other),
+        # The line of askers, the asker's place in it, and where else the book is (Avi, 2026-10-23).
+        "askers": hub.askers(deal.copy) if role == "owner" else [], "place": hub.place_in_line(deal),
+        "taken": taken, "elsewhere": hub.elsewhere(me, deal.copy.entry, exclude_copy=deal.copy) if taken else [],
         "messages_list": deal.messages.select_related("sender"), "contact": hub.contact_for(deal, me),
         "my_shares": my_shares, "share_ways": hub.SHARE_WAYS, "has_phone": bool(me.phone),
         "places": places_for(deal.owner, deal.requester), "today": timezone.now().date(),

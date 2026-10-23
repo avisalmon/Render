@@ -39,7 +39,7 @@
     <h2 class="bk-h2" style="margin-top: 0">{% t "offered.offers" %}</h2>
     <ul class="bk-plain-list">
       {% for o in offers %}
-      <li>{% if o.kind == "lend" %}{% t "offered.lend_days" days=o.loan_days %}{% elif o.kind == "exchange" %}{% if o.wants_note %}{% t "offered.exchange_for" note=o.wants_note %}{% else %}{% t "status.exchange" %}{% endif %}{% else %}{% t "offered.sell_price" price=o.price_amount|floatformat:"0" %}{% endif %}</li>
+      <li>{% if o.kind == "give" %}{% t "offered.give" %}{% elif o.kind == "lend" %}{% t "offered.lend_days" days=o.loan_days %}{% elif o.kind == "exchange" %}{% if o.wants_note %}{% t "offered.exchange_for" note=o.wants_note %}{% else %}{% t "status.exchange" %}{% endif %}{% else %}{% t "offered.sell_price" price=o.price_amount|floatformat:"0" %}{% endif %}</li>
       {% endfor %}
     </ul>
   </section>

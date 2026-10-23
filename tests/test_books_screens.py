@@ -394,6 +394,9 @@ def _no_background_sweeps(settings):
     # test it would still be writing while the test database is torn down
     # ("database table is locked", foreign key errors). Its own tests cover it.
     settings.BOOKS_ENRICH_SWEEP = False
+    # Mail for requests runs as a job; on a thread it would write while the live
+    # server's request holds the test database ("database table is locked").
+    settings.BOOKS_JOBS_INLINE = True
 
 
 @pytest.fixture(scope="module")

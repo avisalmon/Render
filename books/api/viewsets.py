@@ -281,8 +281,8 @@ class CopyViewSet(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         copy = serializer.save()
-        if copy.visibility == Copy.PRIVATE:
-            copy.offers.all().delete()  # private means no offers (data model section 9)
+        if copy.visibility == Copy.HIDDEN:
+            copy.offers.all().delete()  # "only me" means no offers; friends-only keeps them (2026-10-23)
 
 
 class OfferViewSet(viewsets.ModelViewSet):

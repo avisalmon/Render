@@ -38,7 +38,7 @@ SCAN_MAX_SIDE = 4000
 HIGH_CONFIDENCE = Decimal("0.85")
 CANDIDATES = 3
 VISIBILITY_CHOICES = ("hidden", "private", "public")
-OFFER_KINDS = ("lend", "exchange", "sell")
+OFFER_KINDS = ("lend", "exchange", "sell", "give")
 DEFAULT_LOAN_DAYS = 30
 
 # Spine colours for the home shelf, from the approved board. A book's colour

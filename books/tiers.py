@@ -12,6 +12,11 @@ for 90 days.
 
 Staff are never refused (so the site's owner is never locked out of it). The
 old pilot switch BOOKS_PILOT_EVERYONE_ASKS, when on, opens everything.
+
+The pilot gift (Avi, 2026-10-23): while BOOKS_PILOT_GIFT is on, for as long
+as Avi says, everyone is on the 4.99 tier, called Pro, as a gift; the
+profile and the plans page say so. A free person, once the gift ends, can
+still deal with friends: four transactions on Pro's terms (books/hub.py).
 """
 
 from django.conf import settings
@@ -44,13 +49,31 @@ def active(profile, now=None):
     return Subscription.objects.filter(profile=profile, started_at__lte=now, ends_at__gt=now)
 
 
+def pilot_gift():
+    return bool(getattr(settings, "BOOKS_PILOT_GIFT", False))
+
+
 def effective(profile, now=None):
-    """The highest tier in force: the hand-set one, or any subscription."""
+    """The highest tier in force: the hand-set one, any subscription, or the
+    pilot's gift of Pro."""
     best = profile.tier if profile.tier in ORDER else Profile.FREE
     for sub in active(profile, now):
         if _rank(sub.tier) > _rank(best):
             best = sub.tier
+    if pilot_gift() and _rank(best) < _rank(Profile.PLUS):
+        best = Profile.PLUS
     return best
+
+
+def gifted(profile, now=None):
+    """True when the person's Pro is the pilot's gift and nothing of their own."""
+    if not pilot_gift():
+        return False
+    own = profile.tier if profile.tier in ORDER else Profile.FREE
+    for sub in active(profile, now):
+        if _rank(sub.tier) > _rank(own):
+            own = sub.tier
+    return _rank(own) < _rank(Profile.PLUS)
 
 
 def until(profile):

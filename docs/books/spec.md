@@ -641,6 +641,53 @@ others is a neighbourhood and a rough distance, never a point.
 **Done when.** Two pilot users who do not know each other find a book, agree,
 meet and complete a loan and its return through the app, and an exchange.
 
+## BK5b. Giving, and the hand-to-hand flow (Avi, 2026-10-23)
+
+**Goal.** A person who sees a book at a friend's says in one tap "I want
+to receive it / borrow it / buy it / swap for it"; that opens a conversation;
+the two of them settle everything between themselves; both press "handed
+over" and "received"; the book moves to its new owner. Books connects and
+records. It never handles payment, shipping or liability.
+
+**Decided by Avi, 2026-10-23.**
+- **Giving (מסירה)** joins lending, swapping and selling. A gift needs no
+  details beyond an optional line.
+- **One tap from a friend's shelf**, on any book a friend lets me see:
+  receive, borrow, buy, swap. A book the owner offered says how; a book
+  not offered can still be asked for by a friend (the owner answers).
+- **A conversation** in the site, every message also sent by email. The
+  two decide between themselves how to go on (phone, WhatsApp). Each side
+  may open a way to talk; the site never shows one unasked.
+- **Closing:** the giver presses "handed over", the receiver "received";
+  then the transaction is recorded and the copy moves to the receiver's
+  shelf (a loan stays the owner's and comes back). Nothing counts before
+  both pressed.
+- **The pilot** is open-ended, until Avi stops it (`BOOKS_PILOT_GIFT`).
+  Everyone is on the 4.99 plan, now called **Pro**, as a gift; the profile
+  and plans pages say so.
+- **Plans, when the pilot ends.** A Pro person can ask anyone. A free
+  person can deal with friends only, and gets 4 transactions with friends
+  on Pro's terms (counted when a request is approved); after that, Pro.
+  Answering a request is always free.
+- **Friends first:** for 48 hours after a book is offered, only the
+  owner's friends see the offer and can ask; then everyone nearby.
+- **Several askers:** the owner sees them in the order they asked, with
+  their place in the line, and chooses whom to give it to. The others are
+  told the book went to someone else and shown where else it may be had.
+- **The terms** say plainly: Books is a go-between; payment, delivery,
+  the book's condition, returns and disputes are between the two people.
+
+**UX bar (Avi: "really simple and intuitive").** Finding a book at a
+friend's and asking for it is one screen and one tap; the request is a
+chat, not a form; the person whose book went elsewhere is told at once and
+shown the same book, or a similar one, at someone else's; on my own
+library every book's row carries its four switches (show, give, lend,
+sell), saved as they are tapped, with no page reload.
+
+**Done when.** Two friends give a book from one shelf to the other
+through the site, from the tap to the book standing on the new shelf, with
+every step also in their mail.
+
 ## BK6. Circles and the first launch
 
 **Goal.** The first experiment works: one real group of people in Haifa or Tel

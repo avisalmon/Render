@@ -78,8 +78,7 @@ def bulk(request):
     if action == "move":
         copies.update(location_note=(request.POST.get("location_note") or "").strip()[:120])
     elif action == "private":
-        Offer.objects.filter(copy__in=copies).delete()
-        copies.update(visibility=Copy.PRIVATE)
+        copies.update(visibility=Copy.PRIVATE)  # the friends keep seeing them, offers and all
     elif action == "public":
         copies.update(visibility=Copy.PUBLIC)
     else:
@@ -90,6 +89,7 @@ def bulk(request):
 # ---- one copy ----------------------------------------------------------------------
 
 class CopyForm(_Localised, forms.ModelForm):
+    give = forms.BooleanField(required=False)  # a gift (Avi, 2026-10-23)
     lend = forms.BooleanField(required=False)
     loan_days = forms.IntegerField(required=False, min_value=1, max_value=365,
                                    widget=forms.NumberInput(attrs={"class": "bk-input", "inputmode": "numeric"}))
@@ -116,11 +116,12 @@ class CopyForm(_Localised, forms.ModelForm):
                                              ("hidden", self.t("status.hidden"))]
         self.fields["condition"].widget.choices = [("", "—")] + [(c, self.t(f"cond.{c}")) for c in CONDITIONS]
         for name in ("visibility", "location_note", "condition", "notes", "is_rare_candidate", "rarity_note",
-                     "display_only", "lend", "loan_days", "exchange", "wants_note", "sell", "price"):
+                     "display_only", "give", "lend", "loan_days", "exchange", "wants_note", "sell", "price"):
             self.fields[name].label = self.t(f"copy.{name}")
         copy = self.instance
         if copy.pk:
             offers = {o.kind: o for o in copy.offers.all()}
+            self.initial.setdefault("give", "give" in offers)
             self.initial.setdefault("lend", "lend" in offers)
             self.initial.setdefault("loan_days", offers["lend"].loan_days if "lend" in offers else shelf.DEFAULT_LOAN_DAYS)
             self.initial.setdefault("exchange", "exchange" in offers)
@@ -130,15 +131,16 @@ class CopyForm(_Localised, forms.ModelForm):
 
     def clean(self):
         d = super().clean()
-        if d.get("display_only") and (d.get("lend") or d.get("exchange") or d.get("sell")):
+        if d.get("display_only") and (d.get("give") or d.get("lend") or d.get("exchange") or d.get("sell")):
             self.add_error("display_only", self.t("copy.display_only_no_offers"))
         return d
 
     def save_offers(self, copy):
         d = self.cleaned_data
         wanted = {k for k in shelf.OFFER_KINDS if d.get(k)}
-        if wanted and copy.visibility != Copy.PUBLIC:
-            copy.visibility = Copy.PUBLIC
+        if wanted and copy.visibility == Copy.HIDDEN:
+            # An offer on a friends-only book reaches the friends (Avi, 2026-10-23); "only me" cannot offer.
+            copy.visibility = Copy.PRIVATE
             copy.save(update_fields=["visibility"])
         copy.offers.exclude(kind__in=wanted).delete()
         for kind in wanted:
@@ -169,9 +171,9 @@ def copy_page(request, pk):
         form = CopyForm(request.POST, instance=copy, lang=_lang(request))
         if form.is_valid():
             copy = form.save()
-            # An offer makes the book visible; private with no offer withdraws them all.
+            # "Only me" withdraws every offer; friends-only keeps them for the friends.
             wants_offer = any(form.cleaned_data.get(k) for k in shelf.OFFER_KINDS)
-            if copy.visibility == Copy.PRIVATE and not wants_offer:
+            if copy.visibility == Copy.HIDDEN or not wants_offer:
                 copy.offers.all().delete()
             else:
                 form.save_offers(copy)

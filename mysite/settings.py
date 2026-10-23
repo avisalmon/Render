@@ -550,6 +550,9 @@ BOOKS_NLI_API_KEY = os.environ.get("BOOKS_NLI_API_KEY", "")
 # Books: "1" opens every tier's features to everyone (the BK5 pilot). Off since
 # BK11 (Avi, 2026-10-20): tiers are enforced; the code "helpavi" opens Plus for 90 days.
 BOOKS_PILOT_EVERYONE_ASKS = os.environ.get("BOOKS_PILOT_EVERYONE_ASKS", "0") == "1"
+# The pilot's gift (Avi, 2026-10-23): everyone on Pro, until Avi switches it off.
+BOOKS_PILOT_GIFT = os.environ.get("BOOKS_PILOT_GIFT", "1") == "1"
+BOOKS_BASE_URL = os.environ.get("BOOKS_BASE_URL", "https://babook.co.il")
 # Books: find unmatched books on the web as part of a scan, at most this much a day (Avi, 2026-10-20).
 BOOKS_WEB_LOOKUP = os.environ.get("BOOKS_WEB_LOOKUP", "1") == "1"
 BOOKS_WEB_DAILY_USD = os.environ.get("BOOKS_WEB_DAILY_USD", "2")

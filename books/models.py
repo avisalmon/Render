@@ -462,8 +462,8 @@ class Offer(models.Model):
     """How a public copy is offered. One copy may carry several. An offer on
     a private copy is refused (data model section 9)."""
 
-    LEND, EXCHANGE, SELL = "lend", "exchange", "sell"
-    KINDS = [(LEND, "lend"), (EXCHANGE, "exchange"), (SELL, "sell")]
+    LEND, EXCHANGE, SELL, GIVE = "lend", "exchange", "sell", "give"
+    KINDS = [(LEND, "lend"), (EXCHANGE, "exchange"), (SELL, "sell"), (GIVE, "give")]  # give: Avi, 2026-10-23
 
     copy = models.ForeignKey(Copy, on_delete=models.CASCADE, related_name="offers")
     kind = models.CharField(max_length=8, choices=KINDS)
@@ -483,8 +483,9 @@ class Offer(models.Model):
     def clean(self):
         from django.core.exceptions import ValidationError
 
-        if self.copy_id and self.copy.visibility != Copy.PUBLIC:
-            raise ValidationError("An offer needs a public copy.")
+        # Friends-only books can be offered to the friends (Avi, 2026-10-23); "only me" cannot offer.
+        if self.copy_id and self.copy.visibility == Copy.HIDDEN:
+            raise ValidationError("An offer needs a copy that someone can see.")
 
     def save(self, *args, **kwargs):
         self.clean()
@@ -552,10 +553,11 @@ class MeetingPlace(models.Model):
 
 
 class Deal(models.Model):
-    """One person asking for one offered copy, and what happened (lend,
-    exchange and sale in one model). `copy` and `owner` are kept even though
+    """One person asking for one copy, and what happened (lend, exchange,
+    sale and gift in one model). `copy` and `owner` are kept even though
     the offer gives them: after a transfer the copy's owner changes, and the
-    deal must still say who owned it then."""
+    deal must still say who owned it then. `offer` is empty when a friend
+    asks for a book the owner did not offer (Avi, 2026-10-23)."""
 
     REQUESTED, APPROVED, DECLINED, CANCELLED = "requested", "approved", "declined", "cancelled"
     HANDED_OVER, RETURNED, COMPLETED, LOST, DISPUTED = "handed_over", "returned", "completed", "lost", "disputed"

@@ -17,6 +17,28 @@ Newest first.
 
 ---
 
+## PM-49 · 2026-10-23 · SPR-G.1, the rules of giving and the hand-to-hand flow
+
+**What happened.** Sprint end. Built from Avi's brief: a gift as a kind of
+offer; the pilot's Pro for everyone with the note; friends first for 48
+hours; a free person's four with friends; a friend asks for an unoffered
+book; the line of askers; "went to someone else" with where else to find
+it; every step and message by email; the terms as a go-between.
+
+**What the process caught.** Four older tests encoded the rules that
+changed (a swap needs a named book, "private" means no offers, the plan's
+old name, an offer forces public); each was read and rewritten to the new
+rule, not silenced. The mail job, started on a thread, locked the test
+database under the live-server screen checks; the screens module now runs
+jobs inline (mistake 26's rule, applied to a new job).
+
+**Rule.** Nothing new. The friends-first window is a setting
+(`BOOKS_FRIENDS_FIRST_HOURS`) so the older hub tests keep their meaning
+with it off, the same pattern as the pilot switch.
+
+Here: docs/books/spec.md BK5b, docs/books/data_model.md, tests/test_books_give.py
+BKM: deferred - nothing new; mistakes 26 and the setting-switch pattern already cover it
+
 ## PM-48 · 2026-10-23 · The friends page rebuilt
 
 **What happened.** Avi found the friends page badly planned and described

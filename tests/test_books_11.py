@@ -174,7 +174,7 @@ def test_from_refused_to_a_code_to_asking(client, noa, dan):
     client.post(f"/books/near/{c.pk}/", {"kind": "lend", "message": "אשמח"})
     assert c.deals.count() == 1
     plans = client.get("/books/plans/").content.decode()
-    assert "המסלול שלך: מנוי" in plans and "עד " in plans
+    assert "המסלול שלך: Pro" in plans and "עד " in plans  # the 4.99 tier is called Pro (Avi, 2026-10-23)
     community.start_thread(noa, "discussion", "עכשיו מותר", "טקסט")
     assert Thread.objects.count() == 1
     api = client.get("/books/api/plan/").json()

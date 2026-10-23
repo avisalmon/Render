@@ -586,3 +586,24 @@ joined). Scanning defaults to public. Removing a follower deletes the row
 without telling anyone. Migration 0026. API: `follows` (ask, accept,
 decline, unfollow, remove), `invites`.
 
+**Giving and the hand-to-hand flow (2026-10-23, Avi in chat).**
+`Offer.kind` and `Deal.kind` gain `give` (a gift; no details). A `Deal`
+may now have no `offer`: a friend asking for a book the owner did not
+offer (`kind` is what they ask for; the owner answers). `swap_copy` is
+optional at the ask; the owner may pick from the asker's shelf later.
+`CopyTransfer.kind` `given` (it existed, unused). No new table:
+- **friends first** is read from `Offer.created_at` (48 hours) and
+  `Follow` (accepted, either direction);
+- **the free person's four** are counted from `Deal` rows they started that
+  reached approval (`status` not requested / declined / cancelled);
+- **the line of askers** is `Deal` rows on one copy, `status` requested,
+  by `created_at`;
+- **the pilot gift** is a setting (`BOOKS_PILOT_GIFT`), not rows: while
+  it is on, everyone's effective tier is at least Pro (the 4.99 tier,
+  `plus` in code). Switching it off is the end of the pilot.
+Offers on a `private` copy are allowed and reach followers only; offering
+a `hidden` copy makes it `private`. Every step of a deal and every message
+also goes out by email, in the recipient's language, as a background job
+(`mail.notification`, `mail.message`); this supersedes the 2026-10-19
+"in the app only" decision. Migration 0029.
+

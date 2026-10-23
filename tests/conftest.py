@@ -22,4 +22,6 @@ def _books_no_real_model_calls(request, settings):
     # Each feature's own tests run with every tier open; tests/test_books_11.py
     # closes them to test the tiers themselves.
     settings.BOOKS_PILOT_EVERYONE_ASKS = True
+    settings.BOOKS_PILOT_GIFT = False  # the gift is tested where it is the subject (tests/test_books_give.py)
+    settings.BOOKS_FRIENDS_FIRST_HOURS = 0  # friends-first is tested where it is the subject (test_books_give.py)
     yield
