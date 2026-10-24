@@ -1129,3 +1129,16 @@ And when the person says "the search uses AI?", the right answer may be to
 stop using it: a client-side match over the rendered cards costs nothing,
 leaks nothing and cannot be abused.
 
+### 52. A new form control runs the narrowest-phone test the day it ships
+
+The library rows' offer menu went out with 14px text. On an iPhone a field
+under 16px makes the page zoom in when touched, then slide sideways: the
+exact failure mistake 34 had already closed. The sprint ran its own tests
+and the library screens, not the all-widths phone test, which would have
+named the menu at once; it did, a day later, in another sprint's run.
+
+**The rule.** Any sprint that adds a field, a select or a text box runs
+`test_on_every_phone_width_the_page_never_slides_sideways` before it ships,
+whatever else it runs. A rule that a sweep enforces is only enforced when
+the sweep runs.
+

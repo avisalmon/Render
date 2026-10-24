@@ -370,10 +370,9 @@ html[dir="rtl"] .bk-tile-cover { border-radius: 8px 3px 3px 8px; }
   z-index: 1; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
 }
 .bk-spine:focus-visible { outline: 2px solid var(--bk-brass); outline-offset: 3px; }
-.bk-spine.is-lifted {
-  z-index: 5; filter: brightness(1.12);
-  box-shadow: 0 16px 24px var(--bk-shadow-strong), 0 0 0 1px var(--bk-brass), 0 -6px 30px var(--bk-lamp-glow);
-}
+/* A tapped book's place on the shelf while it floats over the page (Avi, 2026-10-24):
+   the book stays where it is, dimmed, so the shelf never moves. */
+.bk-spine.is-lifted { opacity: .32; box-shadow: 0 0 0 1px var(--bk-brass); }
 .bk-spine-band {
   position: absolute; top: 10px; left: 4px; right: 4px; height: 3px; pointer-events: none;
   border-top: 1px solid var(--spine-band, rgba(216, 180, 106, 0.6)); border-bottom: 1px solid var(--spine-band, rgba(216, 180, 106, 0.6));
@@ -1042,12 +1041,24 @@ html[dir="rtl"] .bk-prop > summary { padding: 6px 14px 6px 6px; }
   .bk-shelf-row.is-panning, .bk-shelf-row.is-panning .bk-spine { cursor: grabbing; user-select: none; }
 }
 .bk-spines-progress { margin: 6px 0 0; text-align: center; }
-/* ---- a tapped book grows (Avi, 2026-10-22); the row makes room above it ---------- */
-.bk-shelf-row { transition: height 350ms cubic-bezier(.3, 1.2, .5, 1); }
-.bk-shelf-row.is-zoomed { height: calc(214px + var(--zoom-room, 150px)); }
-.bk-case .bk-shelf-row.is-zoomed { height: calc(128px + var(--zoom-room, 150px)); }
-@media (min-width: 900px) { .bk-shelf-row.is-zoomed { height: calc(230px + var(--zoom-room, 150px)); } }
-@media (prefers-reduced-motion: reduce) { .bk-shelf-row { transition: none; } }
+/* ---- a tapped book floats over the page (Avi, 2026-10-24); the shelf never moves ----------- */
+.bk-float { position: fixed; inset: 0; z-index: 25; pointer-events: none; }
+.bk-float .bk-spine--float {
+  position: absolute; left: 0; top: 0; bottom: auto; margin: 0; z-index: 2; pointer-events: auto; cursor: zoom-out;
+  transform-origin: 0 0; opacity: 1;
+  transition: transform 340ms cubic-bezier(.2, 1.25, .4, 1), box-shadow 300ms ease, filter 300ms ease;
+  box-shadow: 0 24px 40px var(--bk-shadow-strong), 0 0 0 1px var(--bk-brass), 0 0 40px var(--bk-lamp-glow);
+}
+.bk-float.is-closing .bk-spine--float { transition: transform 280ms cubic-bezier(.4, 0, .6, 1), box-shadow 200ms ease; box-shadow: none; }
+.bk-float .bk-float-tag {
+  position: absolute; margin: 0 !important; pointer-events: auto; z-index: 3; max-height: calc(100vh - 140px); overflow: auto;
+  box-shadow: 0 18px 36px var(--bk-shadow-strong); opacity: 0; transform: translateY(6px);
+  transition: opacity 220ms ease 120ms, transform 260ms ease 120ms;
+}
+.bk-float.is-open .bk-float-tag { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .bk-float .bk-spine--float, .bk-float .bk-float-tag { transition: none; }
+}
 /* drawn spines on a shelf that has photos: the photo steps aside, the text comes back */
 .bk-shelf.is-drawn .bk-spine--photo { background-image: none; }
 .bk-shelf.is-drawn .bk-spine--photo::after { display: none; }
@@ -1247,7 +1258,7 @@ dialog.bk-invite-sheet .bk-invite { margin: 0 0 10px; }
 .bk-flag { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 6px; border-radius: 8px; cursor: pointer; font-size: 13px; color: var(--bk-muted); white-space: nowrap; }
 .bk-flag input { width: 22px; height: 22px; margin: 0; accent-color: var(--bk-brass); cursor: pointer; }
 .bk-flag:has(input:checked) { color: var(--bk-ink); }
-.bk-flag-select { min-height: 44px; padding: 4px 8px; font-size: 14px; max-width: 128px; }
+.bk-flag-select { min-height: 44px; padding: 4px 8px; font-size: 16px; max-width: 132px; }  /* under 16px an iPhone zooms in (mistake 34) */
 .bk-flag-select[hidden] { display: none; }
 .bk-copy-flags:has(:disabled) { opacity: .6; }
 .bk-copy-flags.is-saved .bk-flag { color: var(--bk-ok); }

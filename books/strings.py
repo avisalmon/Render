@@ -264,6 +264,7 @@ STRINGS = {
     "status.exchange": {"he": "להחלפה", "en": "To swap"},
     "status.sell": {"he": "למכירה", "en": "For sale"},
     "status.give": {"he": "למסירה", "en": "To give away"},
+    "shelf.put_back": {"he": "להחזיר למדף:", "en": "Put back on the shelf:"},
     "scan.err.day_cap": {"he": "זה הרבה צילומים ליום אחד. מחר אפשר להמשיך.", "en": "That is a lot of photos for one day. Tomorrow you can go on."},
     "scan.err.site_cap": {"he": "קריאת המדפים של היום נגמרה לכל האתר. מחר זה נפתח שוב.", "en": "Today's shelf reading is used up for the whole site. It opens again tomorrow."},
     "signup.err.rate": {"he": "נרשמו מכאן הרבה חשבונות בשעה האחרונה. נסו שוב מאוחר יותר.", "en": "Many accounts were created from here in the last hour. Try again later."},

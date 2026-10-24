@@ -73,6 +73,7 @@ OVERFLOW_JS = """(expected) => {
     const wide = document.documentElement.scrollWidth > limit + 1 ? ['html w=' + document.documentElement.scrollWidth] : [];
     document.querySelectorAll('body *').forEach(el => {
         if (el.closest('.bk-shelf-scroll')) return;  // the shelf scrolls sideways on purpose
+        if (el.closest('.bk-float')) return;  // a floating book is fixed to the screen; its own test checks its bounds
         const r = el.getBoundingClientRect();
         if ((r.width > limit + 1 || r.right > limit + 1 || r.left < -1) && r.height > 0)
             wide.push(el.tagName.toLowerCase() + '.' + String(el.className || '').split(' ')[0] + ' w=' + Math.round(r.width));
@@ -478,14 +479,14 @@ def test_the_shelf_lifts_a_book_and_shows_its_label(browser, live_server, db):
         assert shelf.locator(".bk-spine.is-lifted").count() == 1
         label = page.locator("#sample-lamp-label")
         assert label.is_visible() and "אלטנוילנד" in label.inner_text()
-        # Tapping another spine lifts it instead and the label follows.
+        # Tapping another spine floats it instead, and the card follows it.
         spines.nth(0).click()
         page.wait_for_timeout(350)
         assert shelf.locator(".bk-spine.is-lifted").count() == 1
         assert spines.nth(0).get_attribute("aria-pressed") == "true"
         assert "מיכאל שלי" in label.inner_text()
-        # Tapping it again puts it back.
-        spines.nth(0).click()
+        # Tapping the floating book puts it back.
+        page.locator(".bk-float .bk-spine--float").click()
         page.wait_for_timeout(350)
         assert shelf.locator(".bk-spine.is-lifted").count() == 0
         assert label.is_hidden()
@@ -1334,5 +1335,68 @@ def test_on_a_phone_a_row_switch_saves_without_reloading_the_list(browser, live_
         target.refresh_from_db()
         assert target.visibility == Copy.HIDDEN and not target.offers.exists()
         assert page.evaluate("window.__stayed") == 1
+    finally:
+        context.close()
+
+
+def test_a_tapped_book_floats_and_the_shelf_never_moves(browser, live_server, db):
+    """Avi, 2026-10-24: the tapped book jumps forward, floating over the page,
+    enlarged; the shelf and its books do not move. It goes back on a second
+    tap, when the shelf is swiped, or after ten seconds."""
+    from books import catalog
+    from books.models import Copy, Profile
+    build_world()
+    sp = Profile.objects.get(user__username="shelver")
+    for i in range(18):
+        e = catalog.CatalogEntry.objects.create(collection_type=catalog.book_type(), title=f"ספר צף {i}")
+        Copy.objects.create(owner=sp, entry=e, visibility=Copy.PUBLIC, position=200 + i)
+    context, page, _ = _open(browser, live_server, "shelver", "/books/", PHONE, "dark")
+    try:
+        page.wait_for_selector(".bk-shelf .bk-spine")
+        page.wait_for_timeout(600)
+        spines = page.locator("[data-shelf] .bk-spine")
+        # the books a finger can reach now (in Hebrew the shelf opens at its right end)
+        on_screen = page.evaluate("() => [...document.querySelectorAll('[data-shelf] .bk-spine')].map((s, i) => "
+                                  "[i, s.getBoundingClientRect()]).filter(([i, r]) => r.left > 20 && r.right < innerWidth - 20)"
+                                  ".map(([i]) => i)")
+        assert len(on_screen) >= 3
+        target = spines.nth(on_screen[1])
+        layout = "() => ({row: document.querySelector('[data-shelf] .bk-shelf-row').getBoundingClientRect().height, "                  "page: document.documentElement.scrollHeight, "                  "spines: [...document.querySelectorAll('[data-shelf] .bk-spine')].map(s => "                  "{const r = s.getBoundingClientRect(); return [Math.round(r.left), Math.round(r.top)];})})"
+        def tap(loc):  # a finger: where the book is on screen, no scrolling first
+            b = loc.bounding_box()
+            page.touchscreen.tap(b["x"] + b["width"] / 2, b["y"] + b["height"] * 0.6)
+
+        before = page.evaluate(layout)
+        tap(target)
+        page.wait_for_selector(".bk-float.is-open .bk-spine--float")
+        page.wait_for_timeout(450)
+        after = page.evaluate(layout)
+        assert after == before  # nothing on the page moved
+        fl = page.locator(".bk-float .bk-spine--float").bounding_box()
+        orig = target.bounding_box()
+        assert fl["height"] > orig["height"] * 1.3  # enlarged
+        assert 0 <= fl["y"] and fl["y"] + fl["height"] <= PHONE["height"]  # on the screen
+        tag = page.locator(".bk-float .bk-float-tag")
+        assert tag.is_visible() and "ספר צף" in tag.inner_text()
+        tb = tag.bounding_box()
+        assert tb["x"] >= 0 and tb["x"] + tb["width"] <= PHONE["width"] + 1
+        # a second tap on the floating book puts it back
+        tap(page.locator(".bk-float .bk-spine--float"))
+        page.wait_for_selector(".bk-float", state="detached")
+        assert page.locator("[data-shelf] .bk-spine.is-lifted").count() == 0
+        assert page.evaluate(layout) == before
+        # a swipe of the shelf puts it back
+        tap(target)
+        page.wait_for_selector(".bk-float.is-open")
+        page.evaluate("document.querySelector('[data-shelf] .bk-shelf-scroll').scrollLeft += 120")
+        page.wait_for_selector(".bk-float", state="detached")
+        # and ten seconds do too (shortened here)
+        page.evaluate("window.bkShelfFloatMs = 900")
+        page.evaluate("document.querySelector('[data-shelf] .bk-shelf-scroll').scrollLeft = 0")
+        page.wait_for_timeout(200)
+        tap(spines.nth(on_screen[2]))
+        page.wait_for_selector(".bk-float.is-open")
+        page.wait_for_selector(".bk-float", state="detached", timeout=4000)
+        assert page.locator("[data-shelf] .bk-spine.is-lifted").count() == 0
     finally:
         context.close()

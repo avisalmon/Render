@@ -31,8 +31,7 @@
   var GAP = 3;                 // px between standing books
   var LIFT = -14;              // px a tapped book rises
   var HOLD_LIFT = -18;         // px a held book rises
-  var ZOOM_ROOM = 150;         // px the row grows upward while a tapped book is enlarged (Avi, 2026-10-22)
-  var ZOOM_MAX = 2.2;
+  var FLOAT_MS = 10000;        // a floating book goes back by itself after ten seconds (Avi, 2026-10-24)
   var LONG_PRESS = 320;        // ms to pick a book up outside the living view
   var REDUCED = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -300,23 +299,6 @@
     this.kick();
   };
 
-  // A tapped book rises, stands straight and grows to fill the room the row
-  // makes for it above the shelf; tapped again, or another tapped, it shrinks back.
-  Row.prototype.liftOnly = function (id) {
-    var self = this;
-    var base = this.baseHeight || (this.baseHeight = this.el.offsetHeight || 214);
-    this.el.classList.toggle("is-zoomed", id !== null);
-    this.el.style.setProperty("--zoom-room", ZOOM_ROOM + "px");
-    this.ids.forEach(function (k) {
-      var s = self.state[k];
-      s.lifted = k === id;
-      s.ty = s.lifted ? LIFT : 0;
-      s.ta = s.lifted ? 0 : s.rest;
-      s.tz = s.lifted ? Math.max(1.3, Math.min(ZOOM_MAX, (base + ZOOM_ROOM + LIFT - 14) / s.h)) : 1;
-    });
-    this.kick();
-  };
-
   // Where would the carried book go, from its centre?
   Row.prototype.slotFor = function (carried, centre) {
     var self = this;
@@ -520,7 +502,16 @@
       this.root.appendChild(scroll1);
     }
     this.rows.forEach(function (r) { r.fit(); });
-    if (this.lifted) this.toggle(this.lifted, true);
+    // A book chosen in the page itself (the design page's sample) is marked and its card
+    // shown in place; floating is for a tap.
+    if (this.lifted) {
+      var chosen = this.root.querySelector('.bk-spine[data-book="' + this.lifted + '"]');
+      if (chosen) {
+        chosen.classList.add("is-lifted"); chosen.setAttribute("aria-pressed", "true");
+        this.liftedId = String(this.lifted);
+        this.showLabel(this.byId(this.lifted));
+      }
+    }
   };
 
   Shelf.prototype.rowOf = function (id) {
@@ -528,30 +519,168 @@
     return null;
   };
 
+  // A tapped book floats over the page, enlarged, with its card beside it; the
+  // shelf and every book on it stay exactly where they are (Avi, 2026-10-24).
+  // It goes back on a second tap, when the shelf or the page scrolls, on a tap
+  // elsewhere, on Escape, or after ten seconds.
   Shelf.prototype.toggle = function (id, force) {
-    var self = this;
     var already = this.liftedId === String(id);
-    this.root.querySelectorAll(".bk-spine.is-lifted").forEach(function (s) {
-      s.classList.remove("is-lifted"); s.setAttribute("aria-pressed", "false");
-    });
-    this.rows.forEach(function (r) { r.liftOnly(null); });
-    if (already && !force) {
-      this.liftedId = null; this.showLabel(null);
-      var back = this.root.querySelector('.bk-spine[data-book="' + id + '"]');
-      if (back) setTimeout(function () { back.style.zIndex = ""; }, 450);
-      return;
-    }
+    this.closeFloat();
+    if (already && !force) return;
     var btn = this.root.querySelector('.bk-spine[data-book="' + id + '"]');
     if (!btn) return;
     btn.classList.add("is-lifted"); btn.setAttribute("aria-pressed", "true");
-    var row = this.rowOf(id);
-    if (row) row.liftOnly(String(id));
     this.liftedId = String(id);
-    if (!force) btn.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
-    btn.style.zIndex = "6";
-    this.root.querySelectorAll(".bk-spine").forEach(function (s) { if (s !== btn) s.style.zIndex = ""; });
-    this.showLabel(this.byId(id));
-    this.root.dispatchEvent(new CustomEvent("bkshelf:lift", { detail: { id: id, book: self.byId(id) } }));
+    this.openFloat(btn, this.byId(id));
+    this.root.dispatchEvent(new CustomEvent("bkshelf:lift", { detail: { id: id, book: this.byId(id) } }));
+  };
+
+  function viewport() {
+    var vw = document.documentElement.clientWidth || window.innerWidth;
+    var vh = window.innerHeight;
+    var top = 12, bottom = vh - 12;
+    var head = document.querySelector(".bk-header");
+    if (head) top = Math.max(top, head.getBoundingClientRect().bottom + 8);
+    var nav = document.querySelector(".bk-nav");
+    if (nav && getComputedStyle(nav).position === "fixed" && nav.offsetParent !== null) {
+      bottom = Math.min(bottom, nav.getBoundingClientRect().top - 10);
+    }
+    return { vw: vw, vh: vh, top: top, bottom: bottom };
+  }
+
+  Shelf.prototype.openFloat = function (btn, b) {
+    var self = this, id = String(b.id);
+    var row = this.rowOf(id), s = row && row.state[id];
+    var w = s ? s.w : btn.offsetWidth, h = s ? s.h : btn.offsetHeight;
+    var rect = btn.getBoundingClientRect();
+    var v = viewport();
+
+    // The layer lives on the page's body, fixed, so nothing in the page moves; it
+    // carries the shelf's look (drawn spines, text direction) for the copy of the book.
+    var layer = el("div", "bk-float bk-shelf" + (this.root.classList.contains("is-drawn") ? " is-drawn" : "") +
+                   (this.root.classList.contains("is-text-down") ? " is-text-down" : ""));
+    layer.setAttribute("data-shelf-float", id);
+    var book = btn.cloneNode(true);
+    book.classList.remove("is-lifted", "is-dragging");
+    book.classList.add("bk-spine--float");
+    book.removeAttribute("aria-pressed");
+    book.setAttribute("aria-label", (this.t["shelf.put_back"] || "") + " " + (b.title || ""));
+    book.style.transform = "";
+    book.style.transformOrigin = "0 0";  // the shelf's lean pivot would grow it off the screen
+    book.style.zIndex = "";
+    book.style.opacity = "";
+    layer.appendChild(book);
+
+    var tag = this.label;
+    if (tag) {
+      if (!this.labelHome) {
+        this.labelHome = document.createComment("shelf label");
+        tag.parentNode.insertBefore(this.labelHome, tag);
+      }
+      this.showLabel(b);
+      tag.classList.add("bk-float-tag");
+      layer.appendChild(tag);
+    }
+    document.body.appendChild(layer);
+
+    // How big, and where: the book as tall as the room allows (up to two and a half
+    // times), its card beside it when there is room, under it when not.
+    var room = v.bottom - v.top;
+    var side = tag && (v.vw - 24 - w * 2 - 12) >= 170;
+    var tagW = tag ? (side ? Math.min(260, v.vw - 24 - 12 - w * 2) : Math.min(340, v.vw - 24)) : 0;
+    if (tag) tag.style.width = tagW + "px";
+    var tagH = tag ? tag.offsetHeight : 0;
+    var maxH = side ? room - 8 : room - tagH - 18;
+    var targetH = clamp(Math.min(380, maxH), h * 1.2, h * 2.5);
+    var sc = targetH / h, bw = w * sc;
+    if (side && 12 + bw + 12 + tagW + 12 > v.vw) { tagW = Math.max(150, v.vw - 36 - bw); tag.style.width = tagW + "px"; tagH = tag.offsetHeight; }
+    var cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
+    var groupW = side ? bw + 12 + tagW : Math.max(bw, tagW);
+    var groupH = side ? Math.max(targetH, tagH) : targetH + 10 + tagH;
+    var tagLeftSide = cx > v.vw / 2;  // the card goes to the side with more room
+    var gx = side ? (tagLeftSide ? cx - bw / 2 - 12 - tagW : cx - bw / 2) : cx - groupW / 2;
+    gx = clamp(gx, 12, Math.max(12, v.vw - 12 - groupW));
+    var gy = clamp(cy - groupH / 2, v.top, Math.max(v.top, v.bottom - groupH));
+    var bookX, bookY, tagX, tagY;
+    if (side) {
+      bookX = tagLeftSide ? gx + tagW + 12 : gx;
+      tagX = tagLeftSide ? gx : gx + bw + 12;
+      bookY = gy + (groupH - targetH) / 2;
+      tagY = gy + (groupH - tagH) / 2;
+    } else {
+      bookX = gx + (groupW - bw) / 2;
+      tagX = gx + (groupW - tagW) / 2;
+      bookY = gy;
+      tagY = gy + targetH + 10;
+    }
+    if (tag) { tag.style.left = Math.round(tagX) + "px"; tag.style.top = Math.round(tagY) + "px"; }
+
+    // From the book's place on the shelf to its floating place.
+    var from = "translate(" + (rect.left + (rect.width - w) / 2).toFixed(1) + "px," + (rect.bottom - h).toFixed(1) + "px) scale(1)";
+    var to = "translate(" + bookX.toFixed(1) + "px," + bookY.toFixed(1) + "px) scale(" + sc.toFixed(3) + ")";
+    book.style.transform = from;
+    book.getBoundingClientRect();  // the starting point is drawn before the move
+    requestAnimationFrame(function () {
+      book.style.transform = to;
+      layer.classList.add("is-open");
+    });
+
+    var close = function () { self.closeFloat(); };
+    var f = this.float = { layer: layer, book: book, id: id, from: from, listeners: [] };
+    var on = function (target, type, fn, opts) { target.addEventListener(type, fn, opts); f.listeners.push([target, type, fn, opts]); };
+    var restart = function () { clearTimeout(f.timer); f.timer = setTimeout(close, window.bkShelfFloatMs || FLOAT_MS); };
+    book.addEventListener("click", function (e) { e.preventDefault(); close(); });
+    on(document, "pointerdown", function (e) {
+      if (layer.contains(e.target)) { if (!book.contains(e.target)) restart(); return; }
+      if (e.target.closest && e.target.closest(".bk-spine") && self.root.contains(e.target)) return;  // the click decides
+      close();
+    }, true);
+    // A swipe of the shelf, or a scroll of the page, puts it back at once.
+    var startX = {};
+    this.root.querySelectorAll(".bk-shelf-scroll").forEach(function (sc2, i) { startX[i] = sc2.scrollLeft; });
+    on(document, "scroll", function (e) {
+      if (e.target && e.target.classList && e.target.classList.contains("bk-shelf-scroll")) {
+        var i = Array.prototype.indexOf.call(self.root.querySelectorAll(".bk-shelf-scroll"), e.target);
+        if (i >= 0 && Math.abs(e.target.scrollLeft - (startX[i] || 0)) < 3) return;
+      }
+      close();
+    }, true);
+    on(window, "resize", close);
+    on(document, "keydown", function (e) { if (e.key === "Escape") close(); });
+    restart();
+  };
+
+  Shelf.prototype.closeFloat = function () {
+    var f = this.float;
+    this.root.querySelectorAll(".bk-spine.is-lifted").forEach(function (s) {
+      s.classList.remove("is-lifted"); s.setAttribute("aria-pressed", "false");
+    });
+    this.liftedId = null;
+    if (!f) { if (this.label) this.label.hidden = true; return; }
+    this.float = null;
+    clearTimeout(f.timer);
+    f.listeners.forEach(function (l) { l[0].removeEventListener(l[1], l[2], l[3]); });
+    var tag = this.label, home = this.labelHome;
+    var back = this.root.querySelector('.bk-spine[data-book="' + f.id + '"]');
+    if (back) {
+      var r = back.getBoundingClientRect(), w = back.offsetWidth, h = back.offsetHeight;
+      f.book.style.transform = "translate(" + (r.left + (r.width - w) / 2).toFixed(1) + "px," + (r.bottom - h).toFixed(1) + "px) scale(1)";
+    } else {
+      f.book.style.transform = f.from;
+    }
+    f.layer.classList.remove("is-open");
+    f.layer.classList.add("is-closing");
+    var done = function () {
+      if (f.layer.parentNode) f.layer.parentNode.removeChild(f.layer);
+    };
+    // The card goes home at once (it is the page's own element); the book flies back.
+    if (tag && home && home.parentNode) {
+      tag.hidden = true;
+      tag.classList.remove("bk-float-tag");
+      tag.style.left = tag.style.top = tag.style.width = "";
+      home.parentNode.insertBefore(tag, home.nextSibling);
+    }
+    if (REDUCED) done(); else setTimeout(done, 300);
   };
 
   Shelf.prototype.showLabel = function (b) {
@@ -563,7 +692,9 @@
     var author = this.label.querySelector("[data-label-author]");
     var status = this.label.querySelector("[data-label-status]");
     var link = this.label.querySelector("[data-label-link]");
-    if (kind) kind.textContent = b.rare ? (this.t["shelf.rare"] || "") : (this.t["shelf.from_yours"] || "");
+    // "From your shelf" only on my own shelf; a friend's book links to the catalogue instead.
+    var mine = !(b.ask || /\/books\/catalog\//.test(b.url || ""));
+    if (kind) kind.textContent = b.rare ? (this.t["shelf.rare"] || "") : (mine ? (this.t["shelf.from_yours"] || "") : "");
     if (title) title.textContent = b.title || "";
     if (author) author.textContent = b.author || "";
     if (status) status.textContent = b.status_text || this.t[STATUS_KEYS[b.status]] || "";

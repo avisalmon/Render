@@ -17,6 +17,26 @@ Newest first.
 
 ---
 
+## PM-54 · 2026-10-24 · The floating book; a 14px menu shipped the day before
+
+**What happened.** Avi: a tapped book pushed the whole screen down (the row
+grew 150px to make room). Rebuilt: the book floats over the page in a fixed
+layer with its card beside it; the shelf and its books do not move by a
+pixel (a browser test measures every spine and the page height before and
+after); it goes back on a second tap, a swipe of the shelf, a page scroll,
+a tap elsewhere, Escape, or after ten seconds. While testing it, the
+all-widths phone test found the library's offer menu (shipped 2026-10-23)
+at 14px, which makes an iPhone zoom in.
+
+**Why our process let it happen.** Yesterday's sprint ran the library's own
+screens but not the narrow-phone sweep that enforces the 16px rule.
+
+**Rule.** Mistake 52. Done: the menu is 16px; the floating book and its
+test; the card on a friend's shelf no longer says "from your shelf".
+
+Here: docs/building_an_app.md mistake 52; tests/test_books_screens.py
+BKM: FullStackBKM 2d1cd7f (lesson 61)
+
 ## PM-53 · 2026-10-24 · The security review, and fourteen fixes
 
 **What happened.** Avi asked for a security review of the whole site, then
