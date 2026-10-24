@@ -39,7 +39,7 @@ the work does.
         {% elif file.text_value %}
           <p class="ct-fine" style="white-space:pre-wrap;margin:0">{{ file.text_value|truncatechars:320 }}</p>
         {% elif file.file %}
-          <a class="ct-fine" href="{{ file.file.url }}">{{ file.deliverable.label }}</a>
+          <a class="ct-fine" href="{% url 'crashtech:submission_file' file.pk %}">{{ file.deliverable.label }}</a>
         {% endif %}
       {% empty %}
         <p class="ct-fine" style="margin:0">Nothing was turned in for this one.</p>

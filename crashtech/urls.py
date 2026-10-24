@@ -4,7 +4,10 @@ from . import auth_views, views
 
 app_name = "crashtech"
 
+from .files import submission_file  # noqa: E402
+
 urlpatterns = [
+    path("file/<int:pk>/", submission_file, name="submission_file"),
     path("", views.home, name="home"),
     # `create/` rather than `new/`: the 2026 platform still owns
     # /crashtech/new/ and keeps working until C.8 retires it (Rule 13.3).

@@ -243,42 +243,51 @@
     });
     results.style.display = '';
     empty.style.display = slugs.length ? 'none' : 'block';
-    hint.textContent = mode === 'fallback' ? '· התאמה לפי טקסט' : '';
+    hint.textContent = '';
   }
 
-  // Instant, offline substring match - immediate feedback before the AI replies.
+  // The search runs here, in the browser (Avi, 2026-10-24: no model). Hebrew
+  // vowel marks are dropped and final letters read as their plain form, so a
+  // word matches however it was typed; every query word must be found in the
+  // card's title or description; title matches rank first.
+  var FINALS = {'\u05da': '\u05db', '\u05dd': '\u05de', '\u05df': '\u05e0', '\u05e3': '\u05e4', '\u05e5': '\u05e6'};
+  function norm(s) {
+    return (s || '').toLowerCase().replace(/[\u0591-\u05c7]/g, '')
+      .replace(/[\u05da\u05dd\u05df\u05e3\u05e5]/g, function (ch) { return FINALS[ch]; })
+      .replace(/["'\u05f3\u05f4.,:;!?()\[\]{}\/\-_]+/g, ' ').replace(/\s+/g, ' ').trim();
+  }
   function localSlugs(q) {
-    var out = [];
+    var words = norm(q).split(' ').filter(Boolean);
+    if (!words.length) return [];
+    var scored = [];
     Object.keys(cardBySlug).forEach(function (slug) {
-      var t = (cardBySlug[slug].dataset.title || '').toLowerCase();
-      if (t.indexOf(q) !== -1) out.push(slug);
+      var card = cardBySlug[slug];
+      var title = norm(card.dataset.title), body = norm(card.dataset.search);
+      var score = 0;
+      for (var i = 0; i < words.length; i++) {
+        var w = words[i];
+        if (title.indexOf(w) !== -1) score += (title.indexOf(' ' + w) !== -1 || title.indexOf(w) === 0) ? 3 : 2;
+        else if (body.indexOf(w) !== -1) score += 1;
+        else { score = 0; break; }
+      }
+      if (score) scored.push({slug: slug, score: score});
     });
-    return out;
+    scored.sort(function (a, b) { return b.score - a.score; });
+    return scored.map(function (x) { return x.slug; });
   }
 
-  var timer = null, seq = 0;
+  var timer = null;
   function run() {
     var q = (search.value || '').trim();
     if (!q) { showBrowse(); return; }
-    // Immediate local feedback…
-    showResults(localSlugs(q.toLowerCase()), 'fallback');
-    hint.textContent = '· מחפש…';
-    // …then the AI search (debounced, latest-wins).
-    var mySeq = ++seq;
-    fetch('{% url "courses_search" %}?q=' + encodeURIComponent(q), {
-      headers: { 'X-Requested-With': 'XMLHttpRequest' }
-    }).then(function (r) { return r.json(); }).then(function (data) {
-      if (mySeq !== seq) return;                 // a newer keystroke superseded this
-      if ((search.value || '').trim() !== q) return;
-      showResults(data.slugs || [], data.mode || 'ai');
-    }).catch(function () { /* keep the local results already shown */ });
+    showResults(localSlugs(q), 'local');
   }
 
   search.addEventListener('input', function () {
     clearTimeout(timer);
     var q = (search.value || '').trim();
     if (!q) { showBrowse(); return; }
-    timer = setTimeout(run, 320);
+    timer = setTimeout(run, 120);
   });
 })();
 </script>

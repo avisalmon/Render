@@ -24,7 +24,7 @@ given against the written ones, and the team was told what they were.{% endcomme
       <b style="font-size:13px">{{ file.deliverable.label }}</b><br>
       {% if file.url %}<a href="{{ file.url }}" target="_blank" rel="noopener">{{ file.url|truncatechars:70 }}</a>
       {% elif file.text_value %}<span class="ct-fine" style="white-space:pre-wrap">{{ file.text_value }}</span>
-      {% elif file.file %}<a href="{{ file.file.url }}">Open the file</a>{% endif %}</p>
+      {% elif file.file %}<a href="{% url 'crashtech:submission_file' file.pk %}">Open the file</a>{% endif %}</p>
   {% empty %}
     <p class="ct-fine" style="margin:0">Nothing was turned in.</p>
   {% endfor %}

@@ -62,10 +62,13 @@ def new_scan(request):
             form.add_error(None, t("scan.cap", _lang(request), cap=shelf.FREE_CAP))
         elif form.is_valid():
             d = form.cleaned_data
-            scan = shelf.start_scan(profile, d["photo"], d["shelf_label"], d["default_visibility"], d["default_offers"],
-                                    single=single)
-            # Back to the camera at once: the next shelf can go while this one reads.
-            return redirect(f"{reverse('books:scan_new')}?sent={scan.pk}{'&book=1' if single else ''}")
+            try:
+                scan = shelf.start_scan(profile, d["photo"], d["shelf_label"], d["default_visibility"], d["default_offers"],
+                                        single=single)
+                # Back to the camera at once: the next shelf can go while this one reads.
+                return redirect(f"{reverse('books:scan_new')}?sent={scan.pk}{'&book=1' if single else ''}")
+            except shelf.ScanRefused as exc:  # too many photos today (security review, 2026-10-24)
+                form.add_error(None, t(str(exc), _lang(request)))
     else:
         last = ShelfScan.objects.filter(owner=profile).first()
         form = ScanForm(lang=_lang(request), initial={

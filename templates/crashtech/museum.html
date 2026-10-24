@@ -75,7 +75,7 @@ disagree with the event it describes.{% endcomment %}
             {% if file.url %}
               <a href="{{ file.url }}" target="_blank" rel="noopener">{{ file.deliverable.label }}</a>{% if not forloop.last %} &middot; {% endif %}
             {% elif file.file %}
-              <a href="{{ file.file.url }}">{{ file.deliverable.label }}</a>{% if not forloop.last %} &middot; {% endif %}
+              <a href="{% url 'crashtech:submission_file' file.pk %}">{{ file.deliverable.label }}</a>{% if not forloop.last %} &middot; {% endif %}
             {% endif %}
           {% endfor %}
         </p>

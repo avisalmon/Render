@@ -2,6 +2,8 @@
 
 import json
 
+from .safejson import script_json
+
 from django import forms
 from django.http import Http404, HttpResponse
 from django.shortcuts import redirect, render
@@ -97,7 +99,7 @@ def landing(request, invite=None):
               "image": request.build_absolute_uri(static("books/og-invite.png")),
               "url": request.build_absolute_uri(request.path)}
     return render(request, "books/landing.html", {
-        "books_json": json.dumps(teaser or rows, ensure_ascii=False), "og": og,
+        "books_json": script_json(teaser or rows), "og": og,
         "inviter": pending.inviter if pending else None, "teaser_count": len(teaser)})
 
 
@@ -184,7 +186,7 @@ def _home(request):
     from . import play
 
     return render(request, "books/home.html", {
-        "profile": profile, "books_json": json.dumps(rows, ensure_ascii=False), "count": len(rows),
+        "profile": profile, "books_json": script_json(rows), "count": len(rows),
         "play": play.summary(profile),
         "reading_now": __import__("books.reading", fromlist=["active"]).active(profile),
         "reading_today": __import__("books.reading", fromlist=["stats"]).stats(profile)["today_minutes"],
@@ -390,7 +392,7 @@ def design_entry(request):
         raise Http404
     lang = _lang(request)
     return render(request, "books/design.html", {
-        "sample_json": json.dumps(SAMPLE_BOOKS[lang], ensure_ascii=False),
+        "sample_json": script_json(SAMPLE_BOOKS[lang]),
         "sample_kicker": t("home.shelf_of", lang, name=t("design.sample_author", lang)),
         "sample_lifted": "s4",
         "sample_plate1": "1", "sample_plate2": "2",

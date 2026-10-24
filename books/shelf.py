@@ -12,6 +12,7 @@ import hashlib
 import logging
 from decimal import Decimal
 
+from django.conf import settings
 from django.core.files.base import ContentFile
 from django.db import transaction
 from django.db.models import Max
@@ -128,7 +129,48 @@ def room_left(profile):
 
 # ---- starting a scan -------------------------------------------------------------
 
+SCANS_PER_DAY_DEFAULT = 30  # one person's shelf photos in a day (security review, 2026-10-24)
+SCAN_DAILY_USD_DEFAULT = "6"  # the whole site's shelf reading in a day
+
+
+class ScanRefused(Exception):
+    """Too many photos today (a strings.py key as the message)."""
+
+
+def scans_today(profile):
+    from .play import day_start, today
+
+    return ShelfScan.objects.filter(owner=profile, created_at__gte=day_start(today())).count()
+
+
+def scan_spend_today():
+    from django.db.models import Sum
+
+    from .models import ModelCall
+    from .play import day_start, today
+
+    return ModelCall.objects.filter(purpose__in=("shelf_read", "single_read"), created_at__gte=day_start(today())) \
+        .aggregate(n=Sum("cost_usd"))["n"] or 0
+
+
+def scan_allowed(profile):
+    """Why this person may not scan right now, or None. A cap per person and a
+    cap for the whole site: a script with many accounts cannot run up the bill."""
+    from decimal import Decimal
+
+    if profile.user.is_staff:
+        return None
+    if scans_today(profile) >= int(getattr(settings, "BOOKS_SCANS_PER_DAY", SCANS_PER_DAY_DEFAULT)):
+        return "scan.err.day_cap"
+    if Decimal(str(scan_spend_today())) >= Decimal(str(getattr(settings, "BOOKS_SCAN_DAILY_USD", SCAN_DAILY_USD_DEFAULT))):
+        return "scan.err.site_cap"
+    return None
+
+
 def start_scan(profile, uploaded, shelf_label="", default_visibility="private", default_offers=(), single=False):
+    why = scan_allowed(profile)
+    if why:
+        raise ScanRefused(why)
     # Read at up to 4000 px: measured 63/70 found and 3 extra, against 61/70
     # and 5 extra at 2000 px, same cost (books_measure, 2026-10-19).
     prepared = images.prepare(uploaded, max_side=SCAN_MAX_SIDE)

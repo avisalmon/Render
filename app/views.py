@@ -2544,4 +2544,20 @@ def certificate_image(request, cert_id):
     return resp
 
 
+def course_material_file(request, pk):
+    """A course's file, to people who may open the course (security review,
+    2026-10-24: the raw /media/ path was public)."""
+    from django.http import FileResponse, Http404
+    from django.shortcuts import get_object_or_404
 
+    from .models import CourseMaterial
+
+    material = get_object_or_404(CourseMaterial.objects.select_related("course"), pk=pk)
+    course = material.course
+    if not (course.is_published or request.user.is_staff or request.user.is_superuser):
+        raise Http404
+    if not request.user.is_authenticated:
+        return redirect(f"/join/?next=/course/{course.slug}/")
+    if not material.file:
+        raise Http404
+    return FileResponse(material.file.open("rb"), as_attachment=True, filename=material.file.name.rsplit("/", 1)[-1])

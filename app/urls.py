@@ -196,6 +196,7 @@ urlpatterns = [
     # Courses (plural - SPR-2.2)
     path("courses/", views.courses_catalog, name="courses_catalog"),
     path("courses/search/", views.courses_search, name="courses_search"),
+    path("course-material/<int:pk>/", views.course_material_file, name="course_material_file"),
     path("courses/topic/<slug:domain>/", views.courses_domain, name="courses_domain"),
     path("courses/topic/<slug:domain>/<slug:track>/", views.courses_track, name="courses_track"),
     path("courses/<slug:slug>/", views.courses_detail, name="courses_detail"),

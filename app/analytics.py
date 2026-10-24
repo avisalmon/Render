@@ -14,6 +14,16 @@ def _mark_modified(session):
         pass  # plain-dict sessions (tests) don't track modified
 
 
+# JSON inside a <script> tag never carries a raw "<", ">" or "&" (security review, 2026-10-24).
+_SCRIPT_ESCAPES = {ord("<"): "\\u003c", ord(">"): "\\u003e", ord("&"): "\\u0026"}
+
+
+def script_json(value):
+    import json
+
+    return json.dumps(value, ensure_ascii=False, default=str).translate(_SCRIPT_ESCAPES)
+
+
 def flash_event(request, name, props=None):
     """Queue a Plausible event to fire on the user's next page load."""
     if not hasattr(request, "session"):

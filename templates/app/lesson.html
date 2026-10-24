@@ -28,7 +28,7 @@
         <p class="small fw-semibold mb-2" style="color:var(--text-secondary)">חומרי לימוד</p>
         {% for m in materials %}
           {% if m.material_type == "file" and m.file %}
-          <a href="{{ m.file.url }}" download
+          <a href="{% url 'course_material_file' m.pk %}" download
              class="d-flex align-items-center gap-2 text-decoration-none mb-2 small"
              style="color:var(--text-primary)">
             <i class="bi bi-file-earmark-arrow-down" style="color:var(--accent-primary);flex-shrink:0"></i>

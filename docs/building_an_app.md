@@ -1075,3 +1075,57 @@ among several is a menu or radios; only "many at once" is a row of boxes.
 And a control that already sits on the row for another reason (here, a
 bulk pick box) is removed when the row's job changes, not left to confuse.
 
+### 49. JSON inside a script tag is HTML too
+
+The shelf's books went into the page as `{{ books_json|safe }}` inside a
+`<script type="application/json">`. `json.dumps` escapes quotes, not `<`,
+so a book called `</script><img onerror=...>` closed the block and ran in
+every viewer's browser: the owner's, every friend's, and anonymous visitors'
+through the invite link. The same pattern sat in blackjack, the dashboard
+and the analytics queue.
+
+**The rule.** JSON that lands inside a `<script>` is written with `<`, `>`
+and `&` as JSON escapes (`\u003c`...), through one helper per app
+(`script_json`), or Django's `json_script`. `|safe` on anything that came
+from a person is a finding until proven otherwise. The test puts
+`</script>` in a title and reads the page.
+
+### 50. Members' markdown is cleaned after rendering, not trusted
+
+Forum threads, posts, project stories and comments were rendered with
+python-markdown and `|safe`. Markdown passes raw HTML through, so a
+`<script>` or an `onerror=` ran for every reader, staff included.
+
+**The rule.** HTML made from a person's text goes through a sanitizer with
+an allowlist (`nh3.clean`) before `|safe`. Author-only content (lessons,
+blog) may keep its HTML, and that exception is written down.
+
+### 51. The security sweep: patterns to grep for before saying "secure"
+
+The 2026-10-24 review found its issues with a short list of searches, not
+with insight. Keep the list and run it at every launch:
+
+- `|safe`, `mark_safe`, `autoescape off`: who wrote the text behind each?
+- `json.dumps` rendered into a page: is `<` escaped?
+- `csrf_exempt`, `AllowAny`: what gate replaces the one removed?
+- `redirect(request.(POST|GET).get("next")`: validated against the host?
+- `== expected`, `!= expected` on a secret: constant-time compare, and
+  fail shut when the setting is empty.
+- `serve(`, `MEDIA_URL`: what lives under the public folder, and is any of
+  it private? Private files get their own folder and a checking view.
+- Every paid call site (`OpenAI(`, `responses.create`, `transcriptions`):
+  who can reach it, from how many accounts, with what daily cap, per person
+  and for the whole site. Instant signup plus an uncapped paid call is a
+  bill with no ceiling.
+- Every login form: is a failure counted and locked (django-axes covers
+  all of `django.contrib.auth` and /admin/ at once)?
+- Public write endpoints (counters, hits): a per-address throttle.
+- Headers: CSP (at least `object-src`, `base-uri`, `form-action`,
+  `frame-ancestors`), `nosniff`, `X-Frame-Options`.
+- Secrets: grep the tree for key shapes; a local settings file with real
+  keys is one `cat` away from a transcript. Keep them in `.env`.
+
+And when the person says "the search uses AI?", the right answer may be to
+stop using it: a client-side match over the rendered cards costs nothing,
+leaks nothing and cannot be abused.
+

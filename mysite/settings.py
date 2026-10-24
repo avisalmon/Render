@@ -5,6 +5,7 @@ See render_django_full_guide.md for the full deployment guide.
 """
 
 import os
+from datetime import timedelta
 from pathlib import Path
 
 # Load .env file for local development (no-op if file not found)
@@ -21,6 +22,7 @@ ALLOWED_HOSTS = [h.strip() for h in os.environ.get("ALLOWED_HOSTS", "127.0.0.1,l
 CSRF_TRUSTED_ORIGINS = [u.strip() for u in os.environ.get("CSRF_TRUSTED_ORIGINS", "http://127.0.0.1:8000,http://localhost:8000").split(",") if u.strip()]
 
 INSTALLED_APPS = [
+    "axes",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -58,6 +60,8 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "axes.middleware.AxesMiddleware",  # failed sign-ins are counted and locked out (security review, 2026-10-24)
+    "mysite.headers.SecurityHeadersMiddleware",
     "app.middleware.OnboardingMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -488,6 +492,7 @@ MATAZIM_ADMIN_TOKEN = os.environ.get("MATAZIM_ADMIN_TOKEN", "")
 # django-allauth
 SITE_ID = 1
 AUTHENTICATION_BACKENDS = [
+    "axes.backends.AxesStandaloneBackend",  # first: it refuses a locked-out attempt before any password check
     "django.contrib.auth.backends.ModelBackend",
     "allauth.account.auth_backends.AuthenticationBackend",
 ]
@@ -558,3 +563,18 @@ BOOKS_WEB_LOOKUP = os.environ.get("BOOKS_WEB_LOOKUP", "1") == "1"
 BOOKS_WEB_DAILY_USD = os.environ.get("BOOKS_WEB_DAILY_USD", "2")
 # Paid voice transcription for reading notes; off: the phone's own recognition is used (Avi, 2026-10-21).
 BOOKS_VOICE_PAID = os.environ.get("BOOKS_VOICE_PAID", "0") == "1"
+
+
+# ---------------------------------------------------------------------------
+# Sign-in brute force (security review, 2026-10-24): ten failed attempts from
+# one address for one username lock that pair out for fifteen minutes. Every
+# password form on the site goes through django.contrib.auth, so this covers
+# the apps' own login pages and /admin/ alike. Tests switch it off (conftest).
+# ---------------------------------------------------------------------------
+AXES_ENABLED = os.environ.get("AXES_ENABLED", "1") == "1"
+AXES_FAILURE_LIMIT = 10
+AXES_COOLOFF_TIME = timedelta(minutes=15)
+AXES_LOCKOUT_PARAMETERS = [["ip_address", "username"]]
+AXES_RESET_ON_SUCCESS = True
+AXES_IPWARE_PROXY_COUNT = 1  # Render's proxy sets X-Forwarded-For
+AXES_IPWARE_META_PRECEDENCE_ORDER = ["HTTP_X_FORWARDED_FOR", "REMOTE_ADDR"]

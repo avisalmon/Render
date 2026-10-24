@@ -262,6 +262,10 @@ def journal(request):
 
 def _serve_drive_photo(request, obj):
     if not obj.drive_file_id:
+        if getattr(obj, "photo", None):  # a file on our own disk: the same family gate (2026-10-24)
+            from django.http import FileResponse
+
+            return FileResponse(obj.photo.open("rb"))
         raise Http404("no photo on this row")
     client = drive.from_env("ustrip")
     if client is None:

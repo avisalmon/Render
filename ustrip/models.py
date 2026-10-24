@@ -303,12 +303,10 @@ class ItineraryPhoto(models.Model):
         member" (spec Sprint 13.1). A row not yet migrated falls back to the
         local file so nothing already uploaded goes dark mid-transition.
         """
-        if self.drive_file_id:
-            from django.urls import reverse
+        from django.urls import reverse
 
+        if self.drive_file_id or self.photo:  # a local file too: /media/ustrip/ is closed (2026-10-24)
             return reverse("ustrip:item_photo_file", args=[self.pk])
-        if self.photo:
-            return self.photo.url
         return ""
 
     def __str__(self):
@@ -411,7 +409,7 @@ class JournalPost(models.Model):
 
             return reverse("ustrip:journal_photo_file", args=[self.pk])
         if self.photo:
-            return self.photo.url
+            return reverse("ustrip:journal_photo_file", args=[self.pk])
         return ""
 
     def __str__(self):

@@ -8,6 +8,7 @@
   <a class="bk-btn bk-btn--primary bk-btn--wide" href="/accounts/google/login/?process=login&amp;next={{ next|default:'/books/welcome/'|urlencode }}">{% t "login.google" %}</a>
   <p class="bk-divider">{% t "login.or" %}</p>
   <form method="post" class="bk-card bk-form" novalidate>
+    {% if form.non_field_errors %}<p class="bk-error" role="alert">{{ form.non_field_errors.0 }}</p>{% endif %}
     {% csrf_token %}
     {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
     <label class="bk-field">{% t "field.email" %} {{ form.email }}</label>

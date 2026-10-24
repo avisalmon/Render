@@ -30,6 +30,8 @@ def pytest_configure(config):
     # This is the single biggest thing standing between us and a full
     # regression somebody will actually run.
     settings.PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
+    # Sign-in lockouts are tested where they are the subject (tests/test_security_review.py).
+    settings.AXES_ENABLED = False
 
 
 def pytest_collection_modifyitems(session, config, items):

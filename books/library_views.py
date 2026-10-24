@@ -83,7 +83,9 @@ def bulk(request):
         copies.update(visibility=Copy.PUBLIC)
     else:
         raise Http404
-    return redirect(request.POST.get("next") or reverse("books:library"))
+    from .auth_views import safe_next
+
+    return redirect(safe_next(request, reverse("books:library")))
 
 
 # ---- one copy ----------------------------------------------------------------------
@@ -317,7 +319,9 @@ def wishlist(request):
 def wish_entry(request, entry_pk):
     entry = get_object_or_404(CatalogEntry, pk=entry_pk)
     Wish.objects.get_or_create(profile=request.books_profile, entry=entry.merged_into or entry)
-    return redirect(request.POST.get("next") or reverse("books:wishlist"))
+    from .auth_views import safe_next
+
+    return redirect(safe_next(request, reverse("books:wishlist")))
 
 
 @books_page

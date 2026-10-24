@@ -6,7 +6,6 @@ alert config and alert dismissal. All gated by :func:`superuser_required`.
 """
 
 import io
-import json
 
 from django.conf import settings
 from django.contrib import messages
@@ -71,7 +70,7 @@ def admin_dashboard(request):
         "alerts": alerts,
         "cost_labels": adapter_labels(),
         "period": current_period(),
-        "trends_json": json.dumps(trends),
+        "trends_json": __import__("app.analytics", fromlist=["script_json"]).script_json(trends),
     }
     return render(request, "app/dashboard/hub.html", ctx)
 

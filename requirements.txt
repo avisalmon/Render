@@ -3,6 +3,8 @@ djangorestframework>=3.15,<3.16
 gunicorn>=22,<24
 whitenoise>=6.7,<7
 django-allauth[socialaccount]>=65.0,<66
+django-axes>=8.0,<9
+nh3>=0.2,<1
 requests>=2.31,<3
 Pillow>=10.0,<12
 # memz's own dependency (ACT-Z.12, 2026-09-16): reads a font's cmap table

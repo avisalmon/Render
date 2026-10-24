@@ -80,7 +80,12 @@ def tip_create(request):
     from .analytics import flash_event
     flash_event(request, "tip_posted")
     messages.success(request, "הטיפ פורסם! תודה ששיתפת 💡")
-    return redirect(request.POST.get("next") or "community")
+    from django.utils.http import url_has_allowed_host_and_scheme
+
+    nxt = request.POST.get("next") or ""
+    if not url_has_allowed_host_and_scheme(nxt, allowed_hosts={request.get_host()}):
+        nxt = ""
+    return redirect(nxt or "community")
 
 
 @interact_required

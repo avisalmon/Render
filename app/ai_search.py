@@ -74,9 +74,10 @@ def search_courses(query):
     docs = [course_search_doc(c) for c in courses]
     valid = {d["slug"] for d in docs}
 
-    from .ai_chat import _is_stub_mode
-    if _is_stub_mode():
-        return {"slugs": _substring_rank(query, docs), "mode": "fallback"}
+    # Avi, 2026-10-24: the search is local. The page ranks the cards in the
+    # browser; this endpoint keeps answering by text so old pages still work,
+    # and never calls a model.
+    return {"slugs": _substring_rank(query, docs), "mode": "fallback"}
 
     # Cache key folds in the model + a fingerprint of the catalog, so adding or
     # editing a course transparently invalidates stale results.

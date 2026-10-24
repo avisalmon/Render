@@ -35,11 +35,28 @@ def _unknown():
     return _json({"ok": False, "error": "unknown site key"}, status=404)
 
 
+HITS_PER_MINUTE = 60
+
+
+def _too_many(request):
+    """One address, one minute, sixty hits: a script cannot fill the table (security review, 2026-10-24)."""
+    from django.core.cache import cache
+
+    key = "counter:hits:" + ingest.ip_hash(request)[:24]
+    n = cache.get(key, 0)
+    if n >= HITS_PER_MINUTE:
+        return True
+    cache.set(key, n + 1, 60)
+    return False
+
+
 @csrf_exempt
 @require_http_methods(["POST", "OPTIONS"])
 def hit(request):
     if request.method == "OPTIONS":
         return _json({})
+    if _too_many(request):
+        return _json({"ok": False, "error": "too many"}, status=429)
     site, path = ingest.record(request, ingest.parse_body(request))
     if site is None:
         return _unknown()

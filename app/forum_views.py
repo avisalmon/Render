@@ -33,11 +33,17 @@ from .models import (
 
 
 def _render_markdown(text):
+    """Members' markdown, rendered and then cleaned: python-markdown passes raw
+    HTML through, so a <script> or an onerror= would run for every reader
+    (security review, 2026-10-24). nh3 keeps the harmless tags only."""
     import markdown
+    import nh3
+    from django.utils.html import escape
     try:
-        return markdown.markdown(text or "", extensions=["fenced_code", "tables", "nl2br"])
+        html = markdown.markdown(text or "", extensions=["fenced_code", "tables", "nl2br"])
     except Exception:
-        return "<p>" + (text or "").replace("\n", "<br>") + "</p>"
+        html = "<p>" + escape(text or "").replace("\n", "<br>") + "</p>"
+    return nh3.clean(html)
 
 
 def _check_write(request, text):

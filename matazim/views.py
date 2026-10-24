@@ -598,7 +598,12 @@ def welcome_accept(request):
         MemberProfile.objects.update_or_create(
             user=request.user, defaults={"welcome_accepted_at": timezone.now()}
         )
-    return redirect(request.POST.get("next") or "matazim:home")
+    from django.utils.http import url_has_allowed_host_and_scheme
+
+    nxt = request.POST.get("next") or ""
+    if not url_has_allowed_host_and_scheme(nxt, allowed_hosts={request.get_host()}):
+        nxt = ""
+    return redirect(nxt or "matazim:home")
 
 
 @require_POST

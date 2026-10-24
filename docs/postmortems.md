@@ -17,6 +17,32 @@ Newest first.
 
 ---
 
+## PM-53 · 2026-10-24 · The security review, and fourteen fixes
+
+**What happened.** Avi asked for a security review of the whole site, then
+to fix everything found and to make the catalogue search local. Fourteen
+findings (docs/security_review_2026-10-24.md): two stored XSS paths (JSON
+in a script tag, members' markdown), uncapped paid scanning with instant
+signup, an uncapped anonymous AI search, a public `/media/` holding private
+files, no login throttling, a traversal and a plain compare in the course
+API, open redirects, a public counter with no throttle, no CSP, and an
+enumerating signup message.
+
+**Why our process let it happen.** Each feature had its own tests and
+refusals; nobody had swept the site for the cross-cutting patterns. The
+`|safe` JSON was copied from one screen to the next for a year. Media
+serving was set up for a small site and never revisited as private apps
+joined. Caps were added per feature (web lookup, back cover, voice) and
+missed the most expensive one (the shelf read).
+
+**Rule.** Mistakes 49, 50, 51: escape JSON for script tags, clean members'
+HTML, and run the sweep list at every launch. Done: all fourteen (two by
+design, recorded), `tests/test_security_review.py` (15 tests, refusals
+first), the search in the browser.
+
+Here: docs/building_an_app.md mistakes 49-51; docs/security_review_2026-10-24.md; tests/test_security_review.py
+BKM: FullStackBKM e35480c (lessons 58-60)
+
 ## PM-52 · 2026-10-23 · Four boxes where a gate and a menu belonged
 
 **What happened.** Avi, on the library rows just shipped: the pick box by

@@ -11,6 +11,9 @@ keeps shared ("Auth: reuse the User model, but a lighter front door is fine").
 A blackjack-branded sign-in page of our own is SPR-B.1.2 work.
 """
 
+import json
+
+from django.core.serializers.json import DjangoJSONEncoder
 from datetime import timedelta
 
 from django.contrib.auth.decorators import login_required
@@ -273,9 +276,6 @@ def simulator(request):
     talks to the API for every deal and every decision. The shoe and the
     dealer's hole card are on the server and stay there.
     """
-    import json
-
-    from django.core.serializers.json import DjangoJSONEncoder
 
     from . import play, streaks
     from .models import Chart, Player
@@ -295,7 +295,7 @@ def simulator(request):
         "player": player,
         "rules": player.rule_set,
         "streak": streaks.of(player),
-        "table_json": json.dumps(play.present(table), cls=DjangoJSONEncoder, ensure_ascii=False),
+        "table_json": _script_json(play.present(table)),
     })
 
 
@@ -316,9 +316,6 @@ def drill(request):
     round trip per hand would make the tutor feel slower than the thought it is
     trying to replace.
     """
-    import json
-
-    from django.core.serializers.json import DjangoJSONEncoder
 
     from .models import Chart, Player
     from .strategy import supports
@@ -362,7 +359,7 @@ def drill(request):
         "rules": player.rule_set,
         "streak": streaks.of(player),
         "access": access,
-        "chart_json": json.dumps(payload, cls=DjangoJSONEncoder, ensure_ascii=False),
+        "chart_json": _script_json(payload),
     })
 
 
@@ -1033,3 +1030,11 @@ def lab_chart(request):
     except labmod.Refused as why:
         return JsonResponse({"error": str(why)}, status=400)
     return JsonResponse({"rules": rules, "cells": labmod.chart_cells(rules)})
+
+
+# JSON inside a <script> tag never carries a raw "<", ">" or "&" (security review, 2026-10-24).
+_SCRIPT_ESCAPES = {ord("<"): "\\u003c", ord(">"): "\\u003e", ord("&"): "\\u0026"}
+
+
+def _script_json(value):
+    return json.dumps(value, cls=DjangoJSONEncoder, ensure_ascii=False).translate(_SCRIPT_ESCAPES)

@@ -1,12 +1,14 @@
 """Sign in, sign up, sign out and password reset, in Books' own look
 (spec BK1 §1.5). The accounts underneath are the site's shared User."""
 
+from django.conf import settings
 from django.contrib.auth import login as auth_login
 from django.contrib.auth import views as auth
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.utils.http import url_has_allowed_host_and_scheme
 
+from .strings import text as t
 from .forms import BooksLoginForm, BooksPasswordResetForm, BooksSetPasswordForm, BooksSignupForm
 
 
@@ -54,13 +56,33 @@ class LogoutView(auth.LogoutView):
     next_page = reverse_lazy("books:login")
 
 
+SIGNUPS_PER_HOUR = 10
+
+
+def _signups_allowed(request):
+    """At most a handful of new accounts an hour from one address."""
+    import hashlib
+
+    from django.core.cache import cache
+
+    ip = (request.META.get("HTTP_X_FORWARDED_FOR", "").split(",")[0] or request.META.get("REMOTE_ADDR", "")).strip()
+    key = "books:signups:" + hashlib.sha256(ip.encode()).hexdigest()[:16]
+    n = cache.get(key, 0)
+    if n >= int(getattr(settings, "BOOKS_SIGNUPS_PER_HOUR", SIGNUPS_PER_HOUR)):
+        return False
+    cache.set(key, n + 1, 3600)
+    return True
+
+
 def signup(request):
     if request.user.is_authenticated:
         return redirect(safe_next(request))
     nxt = safe_next(request, default="")
     if request.method == "POST":
         form = BooksSignupForm(request.POST, lang=_lang(request))
-        if form.is_valid():
+        if not _signups_allowed(request):  # a script making accounts (security review, 2026-10-24)
+            form.add_error(None, t("signup.err.rate", _lang(request)))
+        elif form.is_valid():
             user = form.save()
             auth_login(request, user, backend="django.contrib.auth.backends.ModelBackend")
             return redirect(nxt or "books:onboarding")

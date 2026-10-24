@@ -2,6 +2,8 @@
 
 import json
 
+from .safejson import script_json
+
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -114,7 +116,7 @@ def friend_shelf(request, pk):
         "view": owner.shelf_view if owner.shelf_view in ("lamp", "bookcase") else "lamp",
         "my_shelf_empty": not Copy.objects.filter(owner=me, status__in=Copy.HELD).exists(),
         "follows_me": Follow.objects.filter(follower=owner, followee=me, status=Follow.ACCEPTED).exists(),
-        "books_json": json.dumps(rows, ensure_ascii=False), "count": len(rows),
+        "books_json": script_json(rows), "count": len(rows),
         "has_photos": any("photo" in r for r in rows), "joined": request.GET.get("joined") == "1",
         "counts": friends.counts(owner),
     })

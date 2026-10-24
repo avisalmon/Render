@@ -22,6 +22,7 @@ from pathlib import Path
 
 from django.conf import settings
 from django.http import JsonResponse
+from django.utils.crypto import constant_time_compare
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
@@ -46,6 +47,9 @@ def _load_json_body(request):
     return json.loads(raw)
 
 
+UPLOAD_SUBDIRS = {"course_materials", "course_thumbnails"}
+
+
 def require_api_key(view_fn):
     """Decorator - reject requests that don't carry the correct Bearer token."""
     @wraps(view_fn)
@@ -57,7 +61,7 @@ def require_api_key(view_fn):
         if not auth_header.startswith("Bearer "):
             return JsonResponse({"error": "Missing Authorization header"}, status=401)
         token = auth_header[len("Bearer "):]
-        if token != expected:
+        if not constant_time_compare(token, expected):
             return JsonResponse({"error": "Invalid API key"}, status=403)
         return view_fn(request, *args, **kwargs)
     return _wrapper
@@ -316,6 +320,10 @@ def upload_media(request):
         return JsonResponse({"error": "No file attached (field name: 'file')"}, status=400)
 
     subdir = request.POST.get("subdir", "course_materials").strip("/")
+    # Only the folders the tooling writes, and never a path that climbs out of MEDIA_ROOT
+    # (security review, 2026-10-24).
+    if subdir not in UPLOAD_SUBDIRS:
+        return JsonResponse({"error": "subdir must be one of: " + ", ".join(sorted(UPLOAD_SUBDIRS))}, status=400)
 
     # Sanitise filename - keep only the basename, no path traversal
     safe_name = Path(uploaded.name).name

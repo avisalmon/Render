@@ -189,10 +189,14 @@ def test_re_accepting_updates_the_same_copy_and_drops_removed_offers(scan, known
     assert first.pk == second.pk and second.visibility == "private" and not second.offers.exists()
 
 
-def test_an_offer_on_a_private_copy_is_refused(scan, known):
+def test_an_offer_on_a_hidden_copy_is_refused_and_a_friends_only_one_is_allowed(scan, known):
+    # Avi, 2026-10-23: a friends-only book may be offered (to the friends); "only me" cannot.
     copy = shelf.accept(scan.items.get(position=0), known[0], "private", [], "")
+    assert Offer.objects.create(copy=copy, kind="lend").pk
+    copy.visibility = "hidden"
+    copy.save(update_fields=["visibility"])
     with pytest.raises(Exception):
-        Offer.objects.create(copy=copy, kind="lend")
+        Offer.objects.create(copy=copy, kind="sell")
 
 
 def test_keep_as_read_makes_an_unverified_record(scan, reader):
@@ -344,12 +348,13 @@ def test_api_accept_and_offer_rules(client, scan, reader, other, known):
                     content_type="application/json")
     assert r.status_code == 200
     cid = r.json()["id"]
+    client.patch(f"/books/api/copies/{cid}/", json.dumps({"visibility": "hidden"}), content_type="application/json")
     r = client.post("/books/api/offers/", json.dumps({"copy": cid, "kind": "lend"}), content_type="application/json")
-    assert r.status_code == 400  # private copy
-    client.patch(f"/books/api/copies/{cid}/", json.dumps({"visibility": "public"}), content_type="application/json")
-    assert client.post("/books/api/offers/", json.dumps({"copy": cid, "kind": "lend"}), content_type="application/json").status_code == 201
+    assert r.status_code == 400  # "only me" cannot be offered
     client.patch(f"/books/api/copies/{cid}/", json.dumps({"visibility": "private"}), content_type="application/json")
-    assert not Offer.objects.filter(copy_id=cid).exists()  # going private withdraws every offer
+    assert client.post("/books/api/offers/", json.dumps({"copy": cid, "kind": "lend"}), content_type="application/json").status_code == 201  # friends-only may (2026-10-23)
+    client.patch(f"/books/api/copies/{cid}/", json.dumps({"visibility": "hidden"}), content_type="application/json")
+    assert not Offer.objects.filter(copy_id=cid).exists()  # "only me" withdraws every offer
     client.force_login(other)
     assert client.get(f"/books/api/copies/{cid}/").status_code == 404
     assert client.post("/books/api/offers/", json.dumps({"copy": cid, "kind": "lend"}), content_type="application/json").status_code == 400

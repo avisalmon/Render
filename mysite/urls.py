@@ -21,7 +21,9 @@ from django.contrib.sitemaps.views import sitemap
 from django.http import JsonResponse
 from django.urls import include, path, re_path
 from django.views.generic import RedirectView
-from django.views.static import serve
+from django.views.static import serve  # noqa: F401  (kept for the admin's own use)
+
+from .media_views import protected_serve
 
 from app.sitemaps import CourseSitemap, StaticViewSitemap
 from app.views import privacy, robots_txt, terms
@@ -78,7 +80,8 @@ urlpatterns = [
 # silently returns [] when DEBUG=False, so use re_path + serve directly.
 # Acceptable for small sites; use object storage for high traffic.
 urlpatterns += [
-    re_path(r"^media/(?P<path>.*)$", serve, {"document_root": settings.MEDIA_ROOT}),
+    # Private folders are refused here and served by their app's checking view (mysite/media_views.py).
+    re_path(r"^media/(?P<path>.*)$", protected_serve),
 ]
 
 # REQ-M.2 / ustrip spec §1 — error pages stay inside the walls.

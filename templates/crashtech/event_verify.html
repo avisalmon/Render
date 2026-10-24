@@ -40,7 +40,7 @@ it will be tempted to add "show all".
     {% for file in row.files %}
       <p class="ct-fine" style="margin:0 0 5px">{{ file.deliverable.label }}:
         {% if file.url %}<a href="{{ file.url }}" target="_blank" rel="noopener">open</a>
-        {% elif file.file %}<a href="{{ file.file.url }}">open</a>
+        {% elif file.file %}<a href="{% url 'crashtech:submission_file' file.pk %}">open</a>
         {% else %}{{ file.text_value|truncatechars:120 }}{% endif %}</p>
     {% empty %}
       <p class="ct-fine" style="margin:0 0 5px">Nothing was attached to this one.</p>
