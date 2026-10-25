@@ -1,0 +1,85 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.201, SPR-M.72 — every school, and how every student in it is getting on.
+
+  Lital, 2026-10-25: a view from above of all the schools and the progress of
+  all the students. One panel per school: its leaders, how many at each stage,
+  how many passed the screening test, the average through the track, and a
+  list of its students that opens on a tap. A report and nothing else; every
+  student came through `access.visible_students` (REQ-M.88).
+{% endcomment %}
+
+{% block title %}כל בתי הספר · מטצים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>כל בתי הספר</h1>
+    <p>כל בית ספר, המובילים שלו, וההתקדמות של כל מטצ בו.</p>
+  </div>
+
+  <section class="mz-panel mz-panel-soft">
+    <h2>בכל התוכנית</h2>
+    <dl class="mz-facts">
+      <div><dt>בתי ספר</dt><dd>{{ totals.schools }}</dd></div>
+      <div><dt>מטצים</dt><dd>{{ totals.students }}</dd></div>
+      <div><dt>נרשמו ועוד לא התחילו</dt><dd>{{ totals.not_started }}</dd></div>
+      <div><dt>עברו את מבחן המיון</dt><dd>{{ totals.passed_test }}</dd></div>
+      <div><dt>סיימו את ההדרכות של המסלול</dt><dd>{{ totals.finished_track }}</dd></div>
+    </dl>
+  </section>
+
+  {% for row in rows %}
+    <section class="mz-panel" id="school-{{ forloop.counter }}">
+      <h2>{{ row.school }} <span class="mz-count">{{ row.total }}</span></h2>
+      <p class="mz-muted">
+        {% if row.leaders %}מובילים: {{ row.leaders|join:" · " }}{% else %}עוד אין מוביל/ה{% endif %}
+      </p>
+
+      <dl class="mz-facts">
+        {% for stage in row.stage_list %}
+          <div><dt>{{ stage.label }}</dt><dd>{{ stage.count }}</dd></div>
+        {% endfor %}
+        <div><dt>עברו את מבחן המיון</dt><dd>{{ row.passed_test }}</dd></div>
+        <div><dt>התקדמות ממוצעת במסלול</dt><dd>{{ row.avg_pct }}%</dd></div>
+        <div><dt>נרשמו ועוד לא התחילו</dt><dd>{{ row.not_started }}</dd></div>
+      </dl>
+
+      {% if row.students %}
+        <details>
+          <summary>המטצים של {{ row.school }} ({{ row.total }})</summary>
+          <ul class="mz-roster">
+            {% for s in row.students %}
+              <li class="mz-roster-row">
+                <a class="mz-roster-who" href="{% url 'matazim:student' s.student.pk %}">
+                  <span class="mz-roster-name">{{ s.name }}</span>
+                  <span class="mz-muted">{{ s.stage }}{% if s.leader %} · {{ s.leader }}{% endif %}</span>
+                </a>
+                <span class="mz-role">
+                  {% if s.passed_test %}
+                    <span class="mz-tag mz-tag-done">עבר/ה מבחן מיון</span>
+                  {% else %}
+                    <span class="mz-tag">טרם עבר/ה מבחן מיון</span>
+                  {% endif %}
+                  <span class="mz-muted">{{ s.track.pct }}% מהמסלול</span>
+                </span>
+              </li>
+            {% endfor %}
+          </ul>
+        </details>
+      {% else %}
+        <p class="mz-muted">עוד אין מטצים בבית הספר הזה.</p>
+      {% endif %}
+    </section>
+  {% empty %}
+    <section class="mz-panel">
+      <p class="mz-muted">עוד אין בתי ספר בתוכנית.</p>
+    </section>
+  {% endfor %}
+
+  <p class="mz-page-actions">
+    <a class="mz-linkbtn" href="{% url 'matazim:cohort' %}">חזרה למחזור</a>
+  </p>
+</div>
+{% endblock %}

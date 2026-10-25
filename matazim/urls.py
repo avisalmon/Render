@@ -83,6 +83,7 @@ urlpatterns = [
     # rest of the programme's own screens rather than off on their own.
     path("staff/courses/", overview_views.staff_courses, name="staff_courses"),
     path("staff/people/", overview_views.staff_people, name="staff_people"),
+    path("staff/schools/", overview_views.staff_schools, name="staff_schools"),
     # SPR-M.57 — the two tutorials. Read-only, so they sit with the reports
     # rather than with the tools that change something.
     path("staff/guide/", guide_views.staff_guide, name="staff_guide"),

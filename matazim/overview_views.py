@@ -78,3 +78,22 @@ def staff_people(request):
             counts=programme_counts(request.user),
         ),
     )
+
+
+@login_required(login_url=LOGIN_URL)
+def staff_schools(request):
+    """REQ-M.201 — every school, and the progress of every student in it.
+
+    Lital, 2026-10-25. A report like the two above: it reads, it does not
+    change anything, and a student's name links to the page that already
+    exists for them (`roster_views.student`), which keeps its own guard.
+    """
+    from .schools import school_rows, totals
+
+    _staff_or_403(request)
+    rows = school_rows(request.user)
+    return render(
+        request,
+        "matazim/staff_schools.html",
+        shell(request, "cohort", rows=rows, totals=totals(rows)),
+    )

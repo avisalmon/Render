@@ -20,6 +20,11 @@
     <p>כמה מטצים יש, איפה הם עומדים, ואצל מי.</p>
   </div>
 
+  {# SPR-M.72 — Lital's view from above: every school and every student in it. #}
+  <p class="mz-page-actions">
+    <a class="mz-btn mz-btn-primary" href="{% url 'matazim:staff_schools' %}">מבט על: כל בתי הספר וההתקדמות של כל מטצ</a>
+  </p>
+
   <section class="mz-panel">
     <h2>לפי שלב <span class="mz-count">{{ funnel_total }}</span></h2>
     {% if funnel_total %}

@@ -4958,3 +4958,24 @@ production database and a role, and they are the program manager's to make on
 `/matazim/staff/team/`.
 
 **Tests.** `tests/test_spr_m_71.py`.
+
+## SPR-M.72 — A view from above of every school  `DONE 2026-10-25`
+
+Lital's mails of 25.10, 18:17 to 18:24 (spec C25 to C27). Run under Avi's standing
+rule of 2026-10-16.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.72.1 | `matazim/schools.py`: one row per school with its leaders, stages, test, track average and students | REQ-M.201 | DONE |
+| F-M.72.2 | `/matazim/staff/schools/` "כל בתי הספר", linked from the cohort page and the staff home | REQ-M.201 | DONE |
+| F-M.72.3 | Signed up and not started: counted per school by the school they chose, never named | REQ-M.201 | DONE |
+
+**What the bot did not do.** Load her list of leaders or appoint anyone (C25): a leader
+is a role, and approving one is the program manager's act on `/matazim/staff/team/`.
+Her list holds names, emails and phone numbers, and none of it went into the repo.
+
+**Found on the way.** `Institution.objects.values("managers")` inside `exclude(user__in=...)`
+carries a NULL for an institution with no managers, and `NOT IN (..., NULL)` matches
+nobody. Filtered with `managers__isnull=False`.
+
+**Tests.** `tests/test_spr_m_72.py`.
