@@ -521,17 +521,20 @@ def preview(request, stage):
     """
     from django.http import Http404
 
-    from .gate import PREVIEW_KEY, may_preview
+    from .gate import PREVIEW_KEY, may_preview, preview_stages
 
     if not may_preview(request.user):
         raise PermissionDenied
     if stage == "off":
         request.session.pop(PREVIEW_KEY, None)
-        return redirect("matazim:home")
+        return redirect(safe_next(request) or "matazim:home")
     if stage not in ("test", "join", "member"):
         raise Http404("unknown stage")
+    if stage not in preview_stages(request.user):
+        raise PermissionDenied
     request.session[PREVIEW_KEY] = stage
-    return redirect("matazim:home")
+    # SPR-M.71: a link can open the test or the path itself, not only the home.
+    return redirect(safe_next(request) or "matazim:home")
 
 
 @require_POST

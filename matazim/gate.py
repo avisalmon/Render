@@ -71,15 +71,31 @@ def may_preview(user):
     """
     if not getattr(user, "is_authenticated", False):
         return False
-    return bool(user.is_superuser or is_program_manager(user) or leader_of(user))
+    return bool(
+        user.is_superuser or is_program_manager(user) or leader_of(user) or candidate_of(user)
+    )
+
+
+def preview_stages(user):
+    """The stages this person may look at. SPR-M.71.
+
+    Lital, 2026-10-25: a leader who registers through the link should see the
+    students' entry, the screening test and the path while waiting for approval.
+    A candidate is anyone who held an open link, so they see the two stages that
+    show nothing of anybody (the test, and choosing a leader); the whole site,
+    with its community, waits for a person to approve them, as everything else does.
+    """
+    if not may_preview(user):
+        return ()
+    if user.is_superuser or is_program_manager(user) or leader_of(user):
+        return (TEST, JOIN, MEMBER)
+    return (TEST, JOIN)
 
 
 def preview_stage(request):
     """The stage a manager has chosen to look at, or None."""
-    if not may_preview(request.user):
-        return None
     chosen = request.session.get(PREVIEW_KEY)
-    return chosen if chosen in (TEST, JOIN, MEMBER) else None
+    return chosen if chosen in preview_stages(request.user) else None
 
 
 def stage_for(request):

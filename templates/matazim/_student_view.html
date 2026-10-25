@@ -1,0 +1,15 @@
+{% comment %}
+  SPR-M.71, Lital 2026-10-25: a leader who registers can see the students'
+  entry, the screening test and the path. Three links into the preview of
+  REQ-M.198; each one opens that page with the bar on top. Nothing is made for
+  the person looking.
+{% endcomment %}
+<section class="mz-panel" aria-label="מה התלמידים רואים">
+  <h2>מה התלמידים רואים</h2>
+  <p class="mz-muted">אפשר להיכנס ולראות את האתר בדיוק כמו תלמיד. שום דבר לא נשמר לכם.</p>
+  <p class="mz-home-do">
+    <a class="mz-btn mz-btn-secondary" href="{% url 'matazim:preview' 'test' %}?next={% url 'matazim:home' %}">הכניסה של התלמידים</a>
+    <a class="mz-btn mz-btn-secondary" href="{% url 'matazim:preview' 'test' %}?next={% url 'matazim:entrance_test' %}">מבחן המיון</a>
+    <a class="mz-btn mz-btn-secondary" href="{% url 'matazim:preview' 'test' %}?next={% url 'matazim:my_path' %}">המסלול</a>
+  </p>
+</section>

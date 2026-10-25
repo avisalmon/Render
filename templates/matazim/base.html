@@ -298,8 +298,8 @@
     <strong>אתם רואים את האתר כתלמיד.</strong>
     <a href="{% url 'matazim:preview' 'test' %}"{% if learner_stage == 'test' %} class="is-on"{% endif %}>לפני המבחן</a>
     <a href="{% url 'matazim:preview' 'join' %}"{% if learner_stage == 'join' %} class="is-on"{% endif %}>אחרי המבחן</a>
-    <a href="{% url 'matazim:preview' 'member' %}"{% if learner_stage == 'member' %} class="is-on"{% endif %}>משויך למוביל</a>
-    <a href="{% url 'matazim:preview' 'off' %}" class="mz-preview-off">חזרה לתצוגה שלי</a>
+    {% if not is_candidate %}<a href="{% url 'matazim:preview' 'member' %}"{% if learner_stage == 'member' %} class="is-on"{% endif %}>משויך למוביל</a>{% endif %}
+    <a href="{% url 'matazim:preview' 'off' %}{% if is_candidate %}?next={% url 'matazim:leader_entrance' %}{% endif %}" class="mz-preview-off">חזרה לתצוגה שלי</a>
   </div>
 {% endif %}
 

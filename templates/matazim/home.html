@@ -151,7 +151,7 @@
         <p class="mz-home-do">
           <a class="mz-btn mz-btn-secondary" href="{% url 'matazim:preview' 'test' %}">לפני המבחן</a>
           <a class="mz-btn mz-btn-secondary" href="{% url 'matazim:preview' 'join' %}">אחרי המבחן</a>
-          <a class="mz-btn mz-btn-secondary" href="{% url 'matazim:preview' 'member' %}">משויך למוביל</a>
+          {% if not is_candidate %}<a class="mz-btn mz-btn-secondary" href="{% url 'matazim:preview' 'member' %}">משויך למוביל</a>{% endif %}
         </p>
       </section>
     {% endif %}

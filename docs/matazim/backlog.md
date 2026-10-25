@@ -4935,3 +4935,26 @@ counts of electives and practicums, peak days read from the schedule rows and ne
 invented). The separate "מסלול ההכשרה" panel from SPR-M.69 is folded into this one.
 Migration 0046 changes the schedule's winter row from 3D to Python only where it
 still says what the seed wrote. `tests/test_spr_m_69.py`.
+
+## SPR-M.71 — A registering leader sees what the students see  `DONE 2026-10-25`
+
+Lital's mail of 25.10, 13:08 (spec C24), ahead of the leaders' training on 26.10. Run
+under Avi's standing rule of 2026-10-16.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.71.1 | `gate.preview_stages`: a candidate may look at `test` and `join` | REQ-M.200 | DONE |
+| F-M.71.2 | `/matazim/preview/<stage>/?next=` opens the test or the path, not only the home | REQ-M.200 | DONE |
+| F-M.71.3 | "מה התלמידים רואים" on the waiting page, the leaders' entrance and the leader's page | REQ-M.200 | DONE |
+| F-M.71.4 | Stopping returns a candidate to `/matazim/leaders/` | REQ-M.200 | DONE |
+
+**What was there already.** The link itself: the open invite on `/matazim/staff/team/`
+(REQ-M.92), and the approval by a person (REQ-M.93). What was broken: a candidate's home
+showed the three preview buttons of SPR-M.69, and each one answered 403, because
+`may_preview` knew only approved leaders.
+
+**What the bot did not do.** Make the link or approve anyone: those are rows in the
+production database and a role, and they are the program manager's to make on
+`/matazim/staff/team/`.
+
+**Tests.** `tests/test_spr_m_71.py`.
