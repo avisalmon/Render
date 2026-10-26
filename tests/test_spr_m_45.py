@@ -50,6 +50,18 @@ STRANGERS = ("mediadelivery.net", "b-cdn.net", "bunny.net", "bunnyinfra.net",
              "googleapis.com", "gstatic.com", "facebook", "google-analytics")
 
 
+@pytest.fixture(autouse=True)
+def _a_video_library(settings):
+    """The player needs a library id, and a clean clone has none in its environment.
+
+    Without this the embed address is None everywhere, and these tests passed only
+    on a machine whose environment happened to carry the real id (found 2026-10-26,
+    in the bot's clean clone).
+    """
+    if not settings.BUNNY_STREAM_LIBRARY_ID:
+        settings.BUNNY_STREAM_LIBRARY_ID = "test-library"
+
+
 @pytest.fixture
 def member(db):
     from app.models import UserProfile

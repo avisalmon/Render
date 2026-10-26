@@ -27,13 +27,27 @@ from .notify import notify
 RETRY = "retry"  # the measurement did not pass: the member has not been through yet
 
 
+def is_model(name):
+    """True for a file the measuring script can read (an STL)."""
+    return str(name or "").lower().endswith(".stl")
+
+
 def attempt_state(attempt):
-    """waiting, approved, returned, or retry (the script found something to fix)."""
+    """waiting, approved, returned, or retry (the script found something to fix).
+
+    REQ-M.205 (Naomi, 2026-10-26): "אפשר להעלות כל קובץ כהגשה, גם אם ירצו לעלות
+    תמונה". A file that is not an STL is not measured at all, so there is nothing
+    for the script to send back: it goes to a person, and is waiting.
+    """
     if attempt.decision == EntranceAttempt.APPROVED:
         return EntranceAttempt.APPROVED
     if attempt.decision == EntranceAttempt.RETURNED:
         return EntranceAttempt.RETURNED
-    return EntranceAttempt.WAITING if attempt.passed else RETRY
+    if attempt.passed:
+        return EntranceAttempt.WAITING
+    if attempt.model_file and not is_model(attempt.model_file.name):
+        return EntranceAttempt.WAITING
+    return RETRY
 
 
 def latest_submitted(member):

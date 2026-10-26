@@ -66,9 +66,17 @@
     {% endif %}
 
     {% if result %}
-      <section class="mz-verdict {% if result.passed %}is-pass{% else %}is-notyet{% endif %}">
+      <section class="mz-verdict {% if result.passed or result.file_only %}is-pass{% else %}is-notyet{% endif %}" id="mzResult">
         <h2>{{ result.headline }}</h2>
-        {% if result.passed %}
+        {% if result.file_only %}
+          <p id="mzFileOnly">
+            הקובץ נשלח לצוות התוכנית. אדם מהצוות פותח אותו ומחליט, ותקבלו התראה כשיש
+            תשובה. כניסת התלמידים נפתחת באישור.
+          </p>
+          <div class="mz-page-actions">
+            <a class="mz-btn mz-btn-primary" href="{% url 'matazim:home' %}">לדף הבית</a>
+          </div>
+        {% elif result.passed %}
           <p>
             המדידה עברה, וההגשה נשלחה לצוות התוכנית. אדם מהצוות רואה את המודל ומחליט,
             ותקבלו התראה כשיש תשובה. כניסת התלמידים נפתחת באישור.
@@ -113,13 +121,13 @@
         </ul>
       </section>
 
-      {% if not result.passed %}
+      {% if not result.passed and not result.file_only %}
         <section class="mz-panel mz-panel-wide">
           <h2>העלאת המודל</h2>
           <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
             <label class="mz-field">
-              <span>קובץ STL מטינקרקאד</span>
+              <span>הקובץ שלכם: STL מטינקרקאד, או כל קובץ אחר, גם תמונה</span>
               {% comment %}
                 The native control is the only English on this screen, and it
                 sits on the one button a 14-year-old has to press. The input
@@ -130,9 +138,9 @@
               <span class="mz-file">
                 <span class="mz-file-btn">בחירת קובץ</span>
                 <span class="mz-file-name" data-empty="לא נבחר קובץ">לא נבחר קובץ</span>
-                <input type="file" name="model_file" accept=".stl" required>
+                <input type="file" name="model_file" required>
               </span>
-              <small>בטינקרקאד: Export ואז STL.</small>
+              <small>בטינקרקאד: Export ואז STL. קובץ STL נמדד מיד; כל קובץ אחר עובר ישר לצוות.</small>
             </label>
             <button type="submit" class="mz-btn mz-btn-primary">שליחה לבדיקה</button>
             <script>

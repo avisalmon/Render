@@ -5006,3 +5006,34 @@ Resend daily quota is the known one, see `app/mail_guard.py`) read "נשלח" on
 the program manager's act, and the button is now on each leader's page.
 
 **Tests.** `tests/test_spr_m_73.py`.
+
+## SPR-M.74: Taking a student out, the test and the tasks on the row, any file for the test  `DONE 2026-10-26`
+
+Lital's mail of 26.10, 11:33, and Naomi's three mails of 26.10, 12:16 to 12:19 (spec C29
+to C32). Run under Avi's standing rule of 2026-10-16.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.74.1 | `matazim/removal.py`: `remove_student` (status הוסר, off the leader, the request and the classes, one history line keeping the leader) and `restore_student` (same stage, same leader) | REQ-M.203 | DONE |
+| F-M.74.2 | The student's page: "הוצאה מהתוכנית" for the leader and the programme team, "החזרה לתוכנית" for the programme team only | REQ-M.203 | DONE |
+| F-M.74.3 | The roster row and the student's page: where the screening test stands, and the hand-ins by state | REQ-M.204 | DONE |
+| F-M.74.4 | The test page takes any file; a file that is not an STL is not measured and waits for the team | REQ-M.205 | DONE |
+
+**What was there already.** For a leader: their group and classes, approving who asks to
+join (`leader_confirm`), approving and returning hand-ins, each student's progress. What
+was missing was taking anyone out, and the test and the tasks on the list.
+
+**What the bot did not do.** Delete anyone: taking out is a status, and deleting a
+teenager's account stays their own act or Avi's. Appoint Liron, Ronit or Dov as leaders
+(C31): a role is the programme manager's act. Widen a leader's view past their own
+students, or let a leader approve the screening test: asked back. Change the test's
+videos or add a keychain object: the videos are babook's course, and an object needs its
+drawing and measurements; asked which videos and what keychain.
+
+**Found on the way.** Three tests of `tests/test_spr_m_45.py` failed in a clean clone,
+with or without this sprint: they needed `BUNNY_STREAM_LIBRARY_ID` from the machine's
+environment, so the embed address was None. The test now sets a placeholder id when
+none is configured. And `history.set_status` takes `from_leader`, so taking a student
+out stays one door (the guard of SPR-M.18).
+
+**Tests.** `tests/test_spr_m_74.py`.
