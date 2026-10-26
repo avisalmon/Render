@@ -1,0 +1,6 @@
+# The site contract: run on every release train, whatever changed.
+# These are the checks that catch one app breaking another, or a new app
+# missing a piece the whole site relies on. Keep it fast (minutes, not an
+# hour): the full suite runs every night. docs/procedures/release_train.md.
+tests/test_spr_13_1.py   # every installed app is registered (PM-26: counter went 3 days unregistered)
+tests/test_smoke.py      # every page answers, every CSS variable exists, dashboards are current

@@ -1,0 +1,7 @@
+# Tests known to fail on main, so the release train and the nightly report
+# judge only NEW failures. Every line names its owner and why. A line is a
+# debt, not a decision: the owner fixes it and removes the line, and the
+# nightly lists any of these that started passing.
+# Format: <test id>   # <owning app>, <date added>, <why>
+tests/test_smoke.py::test_every_css_variable_is_defined   # memz, 2026-10-26, --mz-action-text used but never defined
+tests/test_smoke.py::test_the_dashboard_is_current   # matazim, 2026-10-26, docs/matazim/dashboard.html is stale (run manage.py matazim_dashboard)

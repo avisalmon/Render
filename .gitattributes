@@ -1,1 +1,3 @@
 *.pdf binary
+# Git hooks are shell scripts; a Windows line ending breaks them (release train).
+scripts/hooks/* text eol=lf

@@ -17,6 +17,26 @@ Newest first.
 
 ---
 
+## PM-55 · 2026-10-26 · Many agents, one main: the release train
+
+**What happened.** Five or more agents work on this repo at once, and any
+of them could push, which ships everybody's commits. Ten days produced: a
+commit shipped mid-regression by another chat (PM-13), four apps' failures
+shipped unnoticed, a three-hour regression from agents competing for the
+database and ports, and an app unregistered for three days (PM-26).
+
+**Why.** Publishing was a right every agent held, and checking was
+something each did for its own app, if at all.
+
+**Rule.** Only the release train pushes main (a hook refuses everything
+else). Agents ship; the train tests what the change touches plus a site
+contract, runs the full suite nightly, names each new failure's app, and
+is kept alive by a scheduled task, heartbeats and a watchdog. Avi chose
+the requester's tests per train and the full suite at night.
+
+Here: `scripts/train.py`, `docs/procedures/release_train.md`, `CLAUDE.md`
+BKM: FullStackBKM f7d41d7 (optional skill, for several apps at once only)
+
 ## PM-54 · 2026-10-24 · The floating book; a 14px menu shipped the day before
 
 **What happened.** Avi: a tapped book pushed the whole screen down (the row
