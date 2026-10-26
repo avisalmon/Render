@@ -17,6 +17,34 @@ Newest first.
 
 ---
 
+## PM-56 · 2026-10-26 · Review the thing you built as its attacker and its victim
+
+**What happened.** Avi asked for a security review of the release train
+before switching it on. Reading it as an attacker and as the mail bot
+found two things the 29 tests had not: a conflicted branch was deleted
+from origin along with the merged ones, which would have erased the
+bot's only copy of a client's work; and the watchdog killed whatever
+process held the lock's number, which after a restart can be anything
+(PID reuse). Three smaller ones: every secret in the user's environment
+reached the test run, not only the one key the code stripped; the
+failure mail's body, built from test logs and other people's notes, went
+through a model holding a mail tool with no fence around it; and a push
+refused because main moved failed the request for good.
+
+**Why.** The tests proved the promises the design made. None asked what
+the design forgot to promise: what happens to the branch that did not
+merge, what the lock's number means after a restart, what the mail
+relay does with text it did not write.
+
+**Rule.** Before switching on anything that deletes, kills, mails or
+pushes, walk it once as the thing it acts on (the branch, the process,
+the message) and once as somebody feeding it bad input, and write the
+test for each gap. The hook is a guard rail for cooperative agents, not
+a lock; say so where it is described.
+
+Here: `scripts/train.py`, `tests/test_release_train.py` (the review section), `docs/procedures/release_train.md`
+BKM: FullStackBKM, the illustrated page's section 9 (what it cannot do) and the procedure's 'Staying alive'
+
 ## PM-55 · 2026-10-26 · Many agents, one main: the release train
 
 **What happened.** Five or more agents work on this repo at once, and any

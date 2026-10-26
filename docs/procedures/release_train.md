@@ -116,6 +116,18 @@ settings close that gap, and only Avi can set them:
 2. Windows Update: set active hours, and turn on *notify before restarting*,
    so updates don't reboot it in the middle of the day.
 
+## What the hook is, and is not
+
+The pre-push hook stops accidents by cooperative agents, which is the
+whole problem it was built for. It is not a lock: any agent can set the
+override or push with `--no-verify`, and a line added to
+`known_failures.txt` gets a failing test past the train. All of that is
+visible in the diff and on the board, and the rules in CLAUDE.md forbid
+it. The hard version, once the train has run for a while: a branch
+protection rule on GitHub that lets only the train's own credential push
+`main`, with the shared tree and the bot's clone on a read-only token.
+Only Avi can set that up.
+
 ## When something is wrong
 
 - **Look first:** `scripts\train.py status` and the logs in
