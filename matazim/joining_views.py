@@ -568,32 +568,24 @@ def staff_leaders(request):
             # typo must not conjure an account with a role attached.
             error = f"לא נמצא חשבון עם האימייל {email}. אפשר למנות רק מי שכבר נרשם לאתר."
         else:
-            from django.utils import timezone
+            from .invite_views import approve_leader, tell_them
 
-            # `institution` is required (SPR-M.40) and this call never set it,
-            # which only worked before because the FK it replaced was nullable:
-            # a leader "assigned" from this screen belonged to nobody's world.
-            # `approved_at` had the same gap for a different reason — this
-            # predates REQ-M.93 (SPR-M.14) and was never updated, so a leader
-            # made here stayed a candidate forever: `leader_of()` refuses an
-            # unapproved row, so "the thing an admin exists to do" silently
-            # produced someone who could never sign in as a leader. Both are
-            # REQ-M.25 gaps this migration's required FK surfaced rather than
-            # caused, fixed together rather than leaving the second in place
-            # having found it.
-            leader, created = Leader.objects.get_or_create(
-                user=person,
-                defaults={
-                    "institution": institution_of(request.user),
-                    "assigned_by": request.user,
-                    "approved_at": timezone.now(),
-                    "approved_by": request.user,
-                },
-            )
-            if not created and not leader.is_active:
-                leader.is_active = True
-                leader.save(update_fields=["is_active"])
-            notice = f"{email} מוגדר/ת כמוביל/ה."
+            # SPR-M.73: the same act as approving on /staff/team/ (REQ-M.93),
+            # through the same function, and the same mail after it (REQ-M.90).
+            # Before, this screen made a leader in silence, and a person who had
+            # already signed up through the open invite stayed a candidate here,
+            # because get_or_create found their row and approved nothing.
+            existing = Leader.objects.filter(user=person).first()
+            mine = institution_of(request.user)
+            if existing and existing.institution_id not in (None, getattr(mine, "pk", None)):
+                error = "החשבון הזה כבר משויך לתוכנית אחרת."
+            else:
+                leader = approve_leader(person, request.user)
+                notice = f"{email} מוגדר/ת כמוביל/ה. " + (
+                    "נשלח אליו/ה מייל עם הקישור לאזור המובילים."
+                    if tell_them(request, leader)
+                    else "לא הצלחנו לשלוח מייל. אפשר לשלוח שוב מהדף של המוביל/ה."
+                )
 
     return render(
         request,
@@ -638,6 +630,16 @@ def staff_leader(request, leader_id):
             leader.is_active = True
             leader.save(update_fields=["is_active"])
             notice = "המוביל/ה חזר/ה לפעילות."
+        elif action == "send_access" and leader.is_approved:
+            # SPR-M.73: "they did not get a mail" has an answer on the screen
+            # where she is looking at them, not a request to the bot.
+            from .invite_views import tell_them
+
+            notice = (
+                f"נשלח מייל אל {leader.user.email}."
+                if tell_them(request, leader)
+                else "לא הצלחנו לשלוח מייל. אפשר להעתיק את הקישור לאזור המובילים ולשלוח בוואטסאפ."
+            )
         elif action == "move":
             # REQ-M.98 — a teacher leaves, a child changes school, a pairing
             # does not work. Both ends are read through the manager's own scope,

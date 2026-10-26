@@ -56,6 +56,24 @@
     </section>
   </div>
 
+  {% if leader.is_approved %}
+    {% comment %} SPR-M.73: "they did not get the mail" is answered here. {% endcomment %}
+    <section class="mz-panel" id="mzAccess">
+      <h2>הכניסה לאזור המובילים</h2>
+      <p class="mz-muted">
+        המוביל/ה נכנס/ת עם האימייל {{ leader.user.email }}, ומגיע/ה לאזור המובילים בקישור הזה.
+        אם המייל לא הגיע, אפשר לשלוח שוב, או להעתיק את הקישור ולשלוח בוואטסאפ.
+      </p>
+      <input class="mz-copy" type="text" value="{{ request.scheme }}://{{ request.get_host }}{% url 'matazim:leader_home' %}"
+             readonly onclick="this.select()" aria-label="הקישור לאזור המובילים">
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="send_access">
+        <button type="submit" class="mz-btn mz-btn-primary">שליחת מייל הכניסה שוב</button>
+      </form>
+    </section>
+  {% endif %}
+
   {% comment %}
     REQ-M.95 — the leader's students, not merely how many. A count tells you
     there are three; it does not tell you which three, which is the only reason

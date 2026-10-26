@@ -111,20 +111,34 @@ def tell_them(request, leader):
         f"קיבלת הרשאת מוביל/ה בתוכנית מטצים"
         f"{f', על ידי {manager_name}' if manager_name else ''}.\n\n"
         f"האזור שלך נמצא כאן:\n{where}\n\n"
+        # SPR-M.73: the account is the email (C25), so the mail names it: a
+        # leader who signs in with another address arrives as somebody else.
+        f"נכנסים עם האימייל הזה: {to}\n"
+        f"(עם Google, או עם האימייל והסיסמה שבחרת בהרשמה).\n\n"
         f"שם תמצא/י את קישור ההצטרפות שלך לתלמידים, את הכיתות שלך, "
         f"ואת רשימת המטצים שלך ככל שיצטרפו.\n\n"
         f"בהצלחה,\nצוות מטצים\n"
     )
+    return _mail(subject="קיבלת הרשאת מוביל/ה במטצים", body=body, to=to)
+
+
+def _mail(*, subject, body, to):
+    """Send one mail and say truthfully whether it went (SPR-M.73).
+
+    `fail_silently=True` swallows the provider's error and returns 0, so the
+    old `try: send_mail(...); return True` told the program manager "sent"
+    for a mail that never left. The count is the answer.
+    """
     try:
-        send_mail(
-            subject="קיבלת הרשאת מוביל/ה במטצים",
-            message=body,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[to],
-            fail_silently=True,
+        return bool(
+            send_mail(
+                subject=subject,
+                message=body,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[to],
+            )
         )
-        return True
-    except Exception:  # pragma: no cover - provider trouble, never fatal
+    except Exception:  # provider trouble, never fatal
         return False
 
 
@@ -216,19 +230,11 @@ def _send_invite(request, invite):
         f"אחרי ההרשמה, מנהל/ת התוכנית תאשר אותך ותקבל/י גישה לאזור המובילים.\n\n"
         f"צוות מטצים\n"
     )
-    try:
-        send_mail(
-            subject="הזמנה להיות מוביל/ה במטצים",
-            message=body,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[invite.email],
-            fail_silently=True,
-        )
-        invite.sent_at = timezone.now()
-        invite.save(update_fields=["sent_at"])
-        return True
-    except Exception:  # pragma: no cover
+    if not _mail(subject="הזמנה להיות מוביל/ה במטצים", body=body, to=invite.email):
         return False
+    invite.sent_at = timezone.now()
+    invite.save(update_fields=["sent_at"])
+    return True
 
 
 @login_required(login_url=LOGIN_URL)
