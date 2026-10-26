@@ -17,6 +17,51 @@ Newest first.
 
 ---
 
+## PM-63 · 2026-10-26 · An English app printed Hebrew dates, and a command line pushed the page sideways
+
+**What happened.** Sprint B.1, the whole bkm app. (1) The comment dates
+came out as "26 אוק 2026": the site's default language is Hebrew, and the
+app never said otherwise. The "every screen is English" test passed,
+because the pages it read had no comments, so no date. A screenshot showed
+it. (2) The BKM's page slid sideways at every width, by 378px at 320: the
+one-column grid track was `1fr`, so it grew to fit the `git clone` line
+and the unbroken repository link. The all-widths test caught it; the cause
+took a measurement, after two guesses that did not fix it (mistake 11).
+(3) The image script named `gpt-image-1`, which the account no longer
+serves; the model list said what is there.
+
+**Why.** The English rule was checked on empty pages. The grid lesson
+(mistake 29) was written for a strip inside a grid, not for text, and was
+not applied to a new grid.
+
+**Rule.** An app in another language than the site's switches its
+language on in its own base template, and its language test first puts
+every localised value on the page (a date, a number). Grid tracks are
+`minmax(0, 1fr)`; long commands scroll in their own box and long links
+break. Before naming a paid model in a script, list what the account
+serves.
+
+Here: `docs/building_an_app.md` (mistakes 57, 58), `templates/bkm/base.html`, `tests/test_bkm.py`
+BKM: 23e85d9
+
+## PM-62 · 2026-10-22 · A card split in two by a grid placed on one axis
+
+**What happened.** cohort, the two material shelves. The card's tags and
+its drag handle were both given `grid-row: 1` to share the top line, with
+no column. The grid opened a second, implicit column, and the private
+card fell apart into two columns. All 27 tests and the browser test
+passed; the screenshot at 390px showed it, before the push.
+
+**Why.** Layout is invisible to tests that read markup or drive clicks
+(mistake 6). The screenshot step was there and caught it, which is the
+system working; the lesson is the CSS one.
+
+**Rule.** A grid item placed explicitly is placed on both axes
+(`grid-area: 1 / 1`), never on one.
+
+Here: `docs/building_an_app.md` (mistake 58), `static/cohort/cohort.css`
+BKM: 23e85d9
+
 ## PM-61 · 2026-10-26 · A middleware placed by habit, and a sweep that did not know its own names
 
 **What happened.** Sprint D.4 of dentist (the mouth, the pilot clinic,

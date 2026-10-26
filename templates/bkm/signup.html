@@ -1,0 +1,21 @@
+{% extends "bkm/base.html" %}
+{% block title %}Create an account · Best Known Methods{% endblock %}
+{% block content %}
+<section class="bm-door">
+  <div class="bm-paper bm-door-paper">
+    <span class="bm-pin" aria-hidden="true"></span>
+    <h1 class="bm-h1">Create an account</h1>
+    <p>Faster with Google: <a href="/accounts/google/login/?process=login&amp;next={{ next|urlencode }}">continue with Google</a> and skip the password.</p>
+    <form method="post" class="bm-form">
+      {% csrf_token %}
+      {% for field in form %}
+        <label class="bm-field" for="{{ field.id_for_label }}"><span>{{ field.label }}</span>{{ field }}
+          {% for e in field.errors %}<small class="bm-error">{{ e }}</small>{% endfor %}</label>
+      {% endfor %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <button type="submit" class="bm-btn">Create the account</button>
+    </form>
+    <p class="bm-small">Already have one? <a href="{% url 'bkm:login' %}?next={{ next|urlencode }}">Sign in</a>.</p>
+  </div>
+</section>
+{% endblock %}

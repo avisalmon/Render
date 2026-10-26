@@ -1212,3 +1212,27 @@ names matches the alphabet the stylesheet allows (letters, digits, `-`,
 eight do not fit the width at 44px, the row scrolls in its own box
 rather than shrinking.
 
+### 57. A page in another language than the site prints its dates in the site's
+
+bkm is English on a site whose default language is Hebrew. Comment dates
+came out with Hebrew month names, and the "every screen is English" test
+passed, because the pages it read had no comments on them (PM-63).
+
+**The rule.** An app whose language is not the site's switches it on in
+its own base template for the whole page (`{% language "en" %}` around
+everything), and its language test first puts every localised value on
+the page: a date, a number, a plural. An empty page proves nothing.
+
+### 58. A grid item needs both axes, and a track needs `minmax(0, ...)`
+
+Twice in a week a grid passed every test and broke on the screenshot.
+cohort's card gave two items `grid-row: 1` and no column, so the grid
+opened a second column (PM-62). bkm's one-column track was `1fr`, so it
+grew to a `git clone` line and a long link and the page slid sideways at
+every width (PM-63).
+
+**The rule.** Place a grid item on both axes (`grid-area: 1 / 1`) or not
+at all. Size tracks with `minmax(0, 1fr)`, give children `min-width: 0`,
+let commands scroll in their own box and links break
+(`overflow-wrap: anywhere`).
+
