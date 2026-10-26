@@ -17,6 +17,43 @@ Newest first.
 
 ---
 
+## PM-57 · 2026-10-26 · The first real train: a clean copy is not the developers' copy
+
+**What happened.** The first train with real work aboard (the dentist app,
+twelve commits) ran the full suite and refused to ship: 16 failures, 10 of
+them "new". Five were other chats' debt that nobody had listed. The other
+five were not code at all. The train's clone had a fresh `ruff` (two minor
+versions newer, 461 findings the developers' ruff never shows), no
+collected static files (a stylesheet test got 404 where the shared tree
+had a `staticfiles/` folder from some earlier day), and no
+`mysite/settings_local.py`, deliberately, because that file holds real
+keys; but three matazim tests render a video library id that lives there
+too. The second train died in two seconds: a file copied by hand into the
+clone made `git checkout` refuse, and a captured command's output had a
+byte Windows' cp1252 cannot decode.
+
+**Why.** The clone was built to be clean, and clean is not the same as
+"what the tests were written against". Every developer's tree had grown
+things nobody wrote down: a linter version, a built folder, a local config
+with secrets and non-secrets mixed in one file. The tests passed there for
+years without anyone knowing which of those they leaned on.
+
+**Rule.** The train's environment is derived from the shared tree by
+code, never by hand: pin the tools to the shared tree's versions
+(`setup()` reads ruff's version from the source env), build what
+production builds (`collectstatic` every ride), and copy local config
+through a filter that drops every name shaped like a secret and every
+multi-line value, so a non-secret setting reaches the tests and a key
+never does. The clone owns nothing: hard-reset before every checkout, and
+never copy a file into it by hand (the published script reaches it
+through the train, like everything else). Decode every captured command
+as UTF-8 with replacement. And before the first train, list the failures
+already on main with their owners, or the first train blames the
+requester for everyone's debt.
+
+Here: `scripts/train.py` (`sync_local_config`, `collect_static`, `setup`, `prepare_clone`), `tests/known_failures.txt`, `docs/procedures/release_train.md`
+BKM: 9630c0a
+
 ## PM-56 · 2026-10-26 · Review the thing you built as its attacker and its victim
 
 **What happened.** Avi asked for a security review of the release train

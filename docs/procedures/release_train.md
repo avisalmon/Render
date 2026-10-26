@@ -51,7 +51,14 @@ On `ship --run`, or on the next tick of the scheduled task:
 1. Takes the lock (one train at a time; a second steps aside).
 2. In its own clone (`C:\Projects\Render-train`, never the shared tree)
    builds a candidate: `origin/main`, plus the shared tree's `main`, plus any
-   side branch a request named (the mail bot's).
+   side branch a request named (the mail bot's). The clone's environment is
+   derived from the shared tree by code, never by hand (PM-57): `setup` pins
+   ruff to the shared tree's version, every ride runs `collectstatic`, and
+   `mysite/settings_local.py` is rewritten from the shared tree's with every
+   secret-shaped name (KEY, TOKEN, SECRET, PASSWORD, CREDENTIAL, PRIVATE), the
+   Google provider block and every multi-line value left out. The clone owns
+   nothing: it is hard-reset before every checkout, so never copy a file into
+   it.
 3. Works out what to test from the files the candidate changes:
    - an app's files (`<app>/`, `templates/<app>/`, `static/<app>/`) select
      every test file that names that app;
