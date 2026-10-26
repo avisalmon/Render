@@ -338,5 +338,51 @@
       </form>
     </section>
   {% endif %}
+
+  {% comment %}
+    REQ-M.204 - the screening test, beside the rest of what they did.
+    REQ-M.203 - taking them out of the programme. Nothing is deleted: the status
+    becomes "הוסר", they leave the leader and the classes, and the line in the
+    history keeps the leader they had, so the programme team can bring them back.
+  {% endcomment %}
+  <section class="mz-panel" id="mzStudentTest">
+    <h2>מבחן הכניסה</h2>
+    <p>
+      {% if test == "approved" %}<span class="mz-tag mz-tag-done">אושר</span>
+      {% elif test == "waiting" %}<span class="mz-tag mz-tag-doing">מחכה לצוות</span>
+      {% elif test == "returned" %}<span class="mz-tag mz-tag-idle">הוחזר לתיקון</span>
+      {% elif test == "retry" %}<span class="mz-tag mz-tag-idle">בתיקון</span>
+      {% else %}<span class="mz-tag mz-tag-idle">לא הוגש</span>{% endif %}
+    </p>
+  </section>
+
+  <section class="mz-panel" id="mzStudentRemove">
+    {% if person.status == "revoked" %}
+      <h2>הוצא/ה מהתוכנית</h2>
+      <p class="mz-muted">שום דבר לא נמחק. ההיסטוריה למעלה אומרת מי הוציא ומתי.</p>
+      {% if can_restore %}
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="restore">
+          <button type="submit" class="mz-btn mz-btn-secondary">החזרה לתוכנית</button>
+        </form>
+      {% endif %}
+    {% else %}
+      <h2>הוצאה מהתוכנית</h2>
+      <p class="mz-muted">
+        המטצ יורד/ת מהרשימה שלכם ומהכיתות. שום דבר לא נמחק: ההתקדמות, ההגשות והתעודות
+        נשמרות, וצוות התוכנית יכול להחזיר.
+      </p>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="remove">
+        <label class="mz-field">
+          <span>למה (לא חובה)</span>
+          <input type="text" name="note" maxlength="200">
+        </label>
+        <button type="submit" class="mz-btn mz-btn-ghost">הוצאה מהתוכנית</button>
+      </form>
+    {% endif %}
+  </section>
 </div>
 {% endblock %}

@@ -18,7 +18,7 @@ rule is only real while something checks it.
 from .models import StatusLog, Student
 
 
-def set_status(student, to_status, *, by=None, note="", extra_fields=()):
+def set_status(student, to_status, *, by=None, note="", extra_fields=(), from_leader=None):
     """Move a student to a stage and record that it happened.
 
     `extra_fields` lets a caller save other columns in the same write, so
@@ -43,6 +43,9 @@ def set_status(student, to_status, *, by=None, note="", extra_fields=()):
         student=student,
         from_status=previous or "",
         to_status=to_status,
+        # REQ-M.203 - taking a student out leaves their leader in the same write,
+        # and the line keeps who that was, so bringing them back can.
+        from_leader=from_leader,
         changed_by=by,
         note=note,
     )

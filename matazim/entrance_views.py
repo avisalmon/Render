@@ -148,9 +148,16 @@ def test_task(request):
 
     if request.method == "POST" and request.FILES.get("model_file") and not preview_stage(request):
         upload = request.FILES["model_file"]
-        passed, issues, measured = measure_submission(upload.read(), attempt.target_id)
+        # REQ-M.205 - any file may be handed in: a picture, a PDF, a model in
+        # another format. Only an STL can be measured, and anything else goes
+        # straight to a person, with no advice from the script beside it.
+        file_only = not entrance_review.is_model(upload.name)
+        if file_only:
+            passed, issues, measured = False, [], {}
+        else:
+            passed, issues, measured = measure_submission(upload.read(), attempt.target_id)
+            upload.seek(0)
 
-        upload.seek(0)
         attempt.model_file = upload
         attempt.passed = passed
         attempt.issues = issues
@@ -163,8 +170,12 @@ def test_task(request):
         # (entrance_review.approve) and by nothing here.
         result = {
             "passed": passed,
+            "file_only": file_only,
             "issues": issues,
-            "headline": encouragement(issues, attempt.number),
+            "headline": (
+                "ההגשה נשלחה לצוות התוכנית" if file_only
+                else encouragement(issues, attempt.number)
+            ),
         }
 
     return render(

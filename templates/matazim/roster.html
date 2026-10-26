@@ -22,6 +22,12 @@
     <p>מי אצלכם, איפה כל אחד עומד, ומה חסר כדי להסמיך.</p>
   </div>
 
+  {% if removed %}
+    <div class="mz-alert" role="status" id="mzRemoved">
+      המטצ הוצא/ה מהתוכנית. שום דבר לא נמחק, וצוות התוכנית יכול להחזיר.
+    </div>
+  {% endif %}
+
   {% if waiting %}
     <div class="mz-alert" role="status">
       {{ waiting }} מחכים לאישור שלכם.
@@ -79,6 +85,13 @@
                   {% for c in row.student.classes.all %}{{ c.name }}{% if c.school_name %} · {{ c.school_name }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}
                 </span>
               {% endif %}
+              {% comment %}REQ-M.204 - the screening test and the tasks, on the row.{% endcomment %}
+              <span class="mz-muted" data-test="{{ row.test }}">
+                מבחן הכניסה:
+                {% if row.test == "approved" %}אושר{% elif row.test == "waiting" %}מחכה לצוות{% elif row.test == "returned" %}הוחזר לתיקון{% elif row.test == "retry" %}בתיקון{% else %}לא הוגש{% endif %}
+                · משימות:
+                {% if row.work %}{{ row.work.approved|default:0 }} אושרו{% if row.work.waiting %}, {{ row.work.waiting }} מחכות לכם{% endif %}{% if row.work.returned %}, {{ row.work.returned }} הוחזרו{% endif %}{% else %}עוד לא הוגשו{% endif %}
+              </span>
             </a>
 
             <span class="mz-roster-progress" title="התקדמות בשתי הדרכות הסקראץ׳">

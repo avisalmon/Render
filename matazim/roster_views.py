@@ -18,6 +18,7 @@ from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from .access import (
@@ -62,7 +63,7 @@ def roster(request):
 
     students = (
         visible_students(request.user)
-        .select_related("user", "user__profile", "leader__user")
+        .select_related("user", "user__profile", "user__matazim_profile", "leader__user")
         .prefetch_related("classes")
     )
 
@@ -85,6 +86,7 @@ def roster(request):
     # rather than one per teenager.
     rows = cohort_progress(page.object_list, REQUIRED_COURSE_SLUGS)
     states = eligibility_for_many(page.object_list)
+    tests, work = _tests_and_work(page.object_list)
 
     listed = []
     for student in page.object_list:
@@ -94,6 +96,8 @@ def roster(request):
                 "student": student,
                 "progress": track_summary(per_course),
                 "eligibility": states.get(student.user_id),
+                "test": tests.get(student.user_id, "none"),
+                "work": work.get(student.pk, {}),
             }
         )
 
@@ -110,8 +114,47 @@ def roster(request):
             in_class=in_class,
             classes=StudyClass.objects.filter(leader=leader) if leader else [],
             waiting=Student.objects.filter(pending_leader=leader).count() if leader else 0,
+            removed=request.GET.get("removed") == "1",
         ),
     )
+
+
+def _tests_and_work(students):
+    """REQ-M.204 - the screening test and the tasks, for a page of students.
+
+    Naomi, 2026-10-26: a leader should see "את ההתקדמות של התלמידים והאם בצעו את
+    המשימות ואת מבחן הכניסה". Two fixed queries for the page, whatever its size.
+
+    The test: approved, waiting for the team, returned, retry (the measurement
+    found something to fix), or none. The tasks: hand-ins counted by state.
+    """
+    from . import entrance_review
+    from .models import EntranceAttempt, Submission
+
+    students = list(students)
+    user_ids = [s.user_id for s in students]
+    tests = {}
+    for attempt in (
+        EntranceAttempt.objects.filter(member__user_id__in=user_ids, submitted_at__isnull=False)
+        .select_related("member")
+        .order_by("member_id", "-number")
+    ):
+        uid = attempt.member.user_id
+        if uid in tests:
+            continue
+        tests[uid] = entrance_review.attempt_state(attempt)
+    for student in students:
+        profile = getattr(student.user, "matazim_profile", None)
+        if profile is not None and profile.entrance_test_passed_at is not None:
+            tests[student.user_id] = EntranceAttempt.APPROVED
+
+    work = {}
+    for student_id, status in Submission.objects.filter(
+        student__in=students
+    ).values_list("student_id", "status"):
+        counts = work.setdefault(student_id, {})
+        counts[status] = counts.get(status, 0) + 1
+    return tests, work
 
 
 def _teaching_for(person):
@@ -224,6 +267,9 @@ def student(request, student_id):
             ),
             my_classes=StudyClass.objects.filter(leader=leader) if leader else [],
             chosen=set(person.classes.values_list("pk", flat=True)),
+            # REQ-M.204, REQ-M.203 - the screening test, and taking them out.
+            test=_tests_and_work([person])[0].get(person.user_id, "none"),
+            can_restore=is_program_manager(request.user),
         ),
     )
 
@@ -264,7 +310,25 @@ def _consent_panel(user, person):
 
 
 def _student_action(request, leader, person):
-    if request.POST.get("action") == "set_classes":
+    action = request.POST.get("action")
+    if action == "remove":
+        # REQ-M.203. The person reached this through `visible_students`, so a
+        # leader can only ever remove their own. Nothing is deleted.
+        from .removal import remove_student
+
+        remove_student(person, by=request.user, note=request.POST.get("note"))
+        if leader is not None and not is_program_manager(request.user):
+            # They are no longer this leader's to look at.
+            return redirect(f"{reverse('matazim:roster')}?removed=1")
+        return redirect("matazim:student", student_id=person.pk)
+    if action == "restore":
+        if not is_program_manager(request.user):
+            raise PermissionDenied
+        from .removal import restore_student
+
+        restore_student(person, by=request.user)
+        return redirect("matazim:student", student_id=person.pk)
+    if action == "set_classes":
         wanted = [int(v) for v in request.POST.getlist("classes") if v.isdigit()]
         # Scoped through the queryset, not filtered after the fact: nobody can
         # file a student into a class they are not allowed to name (REQ-M.22),
