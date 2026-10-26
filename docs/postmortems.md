@@ -17,6 +17,54 @@ Newest first.
 
 ---
 
+## PM-56 · 2026-10-26 · Review the thing you built as its attacker and its victim
+
+**What happened.** Avi asked for a security review of the release train
+before switching it on. Reading it as an attacker and as the mail bot
+found two things the 29 tests had not: a conflicted branch was deleted
+from origin along with the merged ones, which would have erased the
+bot's only copy of a client's work; and the watchdog killed whatever
+process held the lock's number, which after a restart can be anything
+(PID reuse). Three smaller ones: every secret in the user's environment
+reached the test run, not only the one key the code stripped; the
+failure mail's body, built from test logs and other people's notes, went
+through a model holding a mail tool with no fence around it; and a push
+refused because main moved failed the request for good.
+
+**Why.** The tests proved the promises the design made. None asked what
+the design forgot to promise: what happens to the branch that did not
+merge, what the lock's number means after a restart, what the mail
+relay does with text it did not write.
+
+**Rule.** Before switching on anything that deletes, kills, mails or
+pushes, walk it once as the thing it acts on (the branch, the process,
+the message) and once as somebody feeding it bad input, and write the
+test for each gap. The hook is a guard rail for cooperative agents, not
+a lock; say so where it is described.
+
+Here: `scripts/train.py`, `tests/test_release_train.py` (the review section), `docs/procedures/release_train.md`
+BKM: FullStackBKM, the illustrated page's section 9 (what it cannot do) and the procedure's 'Staying alive'
+
+## PM-55 · 2026-10-26 · Many agents, one main: the release train
+
+**What happened.** Five or more agents work on this repo at once, and any
+of them could push, which ships everybody's commits. Ten days produced: a
+commit shipped mid-regression by another chat (PM-13), four apps' failures
+shipped unnoticed, a three-hour regression from agents competing for the
+database and ports, and an app unregistered for three days (PM-26).
+
+**Why.** Publishing was a right every agent held, and checking was
+something each did for its own app, if at all.
+
+**Rule.** Only the release train pushes main (a hook refuses everything
+else). Agents ship; the train tests what the change touches plus a site
+contract, runs the full suite nightly, names each new failure's app, and
+is kept alive by a scheduled task, heartbeats and a watchdog. Avi chose
+the requester's tests per train and the full suite at night.
+
+Here: `scripts/train.py`, `docs/procedures/release_train.md`, `CLAUDE.md`
+BKM: FullStackBKM f7d41d7 (optional skill, for several apps at once only)
+
 ## PM-54 · 2026-10-24 · The floating book; a 14px menu shipped the day before
 
 **What happened.** Avi: a tapped book pushed the whole screen down (the row
@@ -857,6 +905,12 @@ checked afterwards and was clean.
 **Rule.** Never chain an action after a piped test run. Write the output to
 a file and act on the test command's own exit code; confirm a file pattern
 matched something before passing it on.
+
+**Again, 2026-10-26.** Building the release train, a commit was chained
+after a test run with `;`, and went ahead with one test failing. Caught
+before any push; the commit was redone only after a green run. The
+train itself now acts on pytest's own exit code (`run_pytest`), which is
+the durable form of this rule: a person forgets, a gate does not.
 
 Here: this file
 BKM: FullStackBKM 2458104

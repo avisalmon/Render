@@ -1,0 +1,10 @@
+{% extends "dentist/base.html" %}
+{% block title %}Something broke{% endblock %}
+{% block screen %}500{% endblock %}
+{% block nav %}{% endblock %}
+{% comment %}Rendered when something has already failed, so it asks nothing
+of the database or the session.{% endcomment %}
+{% block content %}
+<h1>Something broke</h1>
+<p class="dn-lede">Not your doing, and nothing already saved is lost. Try again in a moment.</p>
+{% endblock %}

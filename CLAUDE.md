@@ -60,3 +60,30 @@ is the opposite of babook, where pushing still waits for Avi's word.
 FullStackBKM does not; run it at every sprint end. A git pre-push hook
 refuses to push babook while a post-mortem entry is still `BKM: pending`
 (the only way past is `BKM: deferred - <reason>` written in the entry).
+
+## Publishing: only the release train (standing rule, all chats and the mail bot)
+
+Many agents work on this repo at once, so **nobody pushes to main except the
+release train** ([docs/procedures/release_train.md](docs/procedures/release_train.md)).
+A pre-push hook refuses everything else.
+
+- When Avi says push, deploy or publish:
+  `.\env\Scripts\python.exe scripts\train.py ship --app <app> --run --wait 3600`,
+  then report the record it prints. Never `git push` to main yourself, and
+  never set `RELEASE_TRAIN` or `RELEASE_TRAIN_OVERRIDE` (that one is Avi's).
+- **A commit is "ready to ship"**: any train may carry it (postmortems PM-13).
+- While working, run your app's tests. The full suite runs every night, once,
+  for everybody; don't run it yourself.
+- At the start of work, read the board:
+  `C:\Users\avisa\.claude\release-train\board.md`. A failure it names as your
+  app's is yours to fix.
+- Before editing a shared file (`render.yaml`, `mysite/settings.py`,
+  `mysite/urls.py`, `requirements*.txt`, `pyproject.toml`, `CLAUDE.md`):
+  `scripts\train.py claim <path> --by <app> --why "<what>"`; `release` it after.
+- A test you know fails and cannot fix now goes in `tests/known_failures.txt`
+  with its owning app, the date and why, never silently.
+
+**"Poke the train"** (Avi, 2026-10-26): `.\env\Scripts\python.exe scripts\train.py poke`.
+It does the most useful thing at once: the watchdog, then a train if anything
+is waiting, otherwise the full regression right now. If a train is already
+running it says so and leaves it alone. Report what it printed.

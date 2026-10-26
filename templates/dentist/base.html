@@ -1,0 +1,61 @@
+{% load static i18n %}<!doctype html>
+{% comment %}
+dentist's own base template (spec Rule 2.2). It never extends babook's
+base.html and never inherits its header, footer or menu. Nothing links out
+of /dentist/.
+
+The pilot banner is the first thing on every page, for every persona, and
+cannot be turned off in the pilot (Rule 2.7): this app holds health
+information and nobody using it should mistake a pilot for something with
+an organisation's formal backing behind it.
+
+Sprint D.1 renders the staff screens in English. D.7 brings the strings
+file and the six patient languages; until then the <html> language is
+forced to English so the project's Hebrew default cannot leak into dates.
+{% endcomment %}
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{% block title %}Clinic{% endblock %}</title>
+  <meta name="description" content="{% block description %}The working system of a volunteer dental clinic. A pilot.{% endblock %}">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#2F6F4E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800&family=JetBrains+Mono:wght@400;700&display=swap">
+  <link rel="stylesheet" href="{% static 'dentist/dentist.css' %}">
+</head>
+<body data-screen="{% block screen %}page{% endblock %}">
+{% language 'en' %}
+<div class="dn-app">
+  <div class="dn-pilot" role="note">Pilot. Not an official system. Invented data only.</div>
+
+  <header class="dn-head">
+    <div class="dn-head-in">
+      <a class="dn-brand" href="{% url 'dentist:home' %}">{% block brand %}Clinic{% endblock %}<small>{% block brand_sub %}{% endblock %}</small></a>
+      <nav class="dn-nav">{% block nav %}{% endblock %}</nav>
+      <div class="dn-head-end">
+        {% block role %}{% endblock %}
+        {% if user.is_authenticated %}
+          <form method="post" action="{% url 'dentist:logout' %}">{% csrf_token %}
+            <button type="submit" class="dn-btn dn-btn--sm">Sign out</button>
+          </form>
+        {% else %}
+          <a class="dn-btn dn-btn--sm" href="{% url 'dentist:login' %}">Sign in</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <main class="dn-main">
+    {% if messages %}{% for message in messages %}<p class="dn-note">{{ message }}</p>{% endfor %}{% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="dn-foot"><span>{% block footer %}A pilot system for a volunteer dental clinic.{% endblock %}</span></footer>
+</div>
+{% endlanguage %}
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,8 @@
+{% extends "dentist/base.html" %}
+{% block title %}Not here{% endblock %}
+{% block screen %}404{% endblock %}
+{% block content %}
+<h1>Nothing at this address</h1>
+<p class="dn-lede">The link may be old, or mistyped.</p>
+<a class="dn-btn dn-btn--primary" href="{% url 'dentist:home' %}">Back to the clinic</a>
+{% endblock %}

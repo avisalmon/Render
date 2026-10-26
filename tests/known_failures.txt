@@ -1,0 +1,17 @@
+# Tests known to fail on main, so the release train and the nightly report
+# judge only NEW failures. Every line names its owner and why. A line is a
+# debt, not a decision: the owner fixes it and removes the line, and the
+# nightly lists any of these that started passing.
+# Format: <test id>   # <owning app>, <date added>, <why>
+tests/test_smoke.py::test_every_css_variable_is_defined   # memz, 2026-10-26, --mz-action-text used but never defined
+tests/test_smoke.py::test_the_dashboard_is_current   # matazim, 2026-10-26, docs/matazim/dashboard.html is stale (run manage.py matazim_dashboard)
+tests/test_spri_4_2.py::test_the_page_loads_the_judge_and_what_it_needs_in_order   # improv, 2026-10-26, failing since at least 2026-10-15
+tests/test_spri_9_5.py::test_the_bar_holds_the_everyday_screens   # improv, 2026-10-26, failing since at least 2026-10-15
+tests/test_spri_1_1.py::test_every_class_the_markup_uses_is_a_class_the_stylesheet_defines   # improv, 2026-10-26, failing since at least 2026-10-15
+tests/test_review_2026_10_02.py::test_the_table_is_reached_from_the_sheet_and_the_nav_fits_a_phone   # blackjack, 2026-10-26, the nav has 8 links where the test expects 7 (since 2026-10-17)
+tests/test_books_1_2.py::test_every_class_the_markup_uses_is_defined   # books, 2026-10-26, failing on main before the first train
+tests/test_books_1_2.py::test_every_token_used_is_defined_in_light_and_dark   # books, 2026-10-26, same
+tests/test_books_1_2.py::test_no_colour_outside_the_token_blocks   # books, 2026-10-26, same
+tests/test_books_1_3.py::test_no_english_interface_copy_is_hard_coded_in_templates   # books, 2026-10-26, same
+tests/test_books_give.py::test_the_owner_sees_the_askers_in_order_chooses_and_the_others_are_told_where_else   # books, 2026-10-26, same
+tests/test_spr_1_7.py::TestCodeQuality::test_ruff_check_passes   # app, 2026-10-26, ruff I001 in app/context_processors.py since 612305c (24 Oct); fails on main as it is

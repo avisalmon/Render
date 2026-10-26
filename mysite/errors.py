@@ -16,6 +16,7 @@ from books import errors as books_errors
 from cohort import errors as cohort_errors
 from counter import errors as counter_errors
 from crashtech import errors as crashtech_errors
+from dentist import errors as dentist_errors
 from exo import errors as exo_errors
 from matazim import errors as matazim_errors
 from memz import errors as memz_errors
@@ -42,6 +43,8 @@ def page_not_found(request, exception=None):
         return counter_errors.page_not_found(request, exception)
     if request.path.startswith(crashtech_errors.PREFIX):
         return crashtech_errors.page_not_found(request, exception)
+    if request.path.startswith(dentist_errors.PREFIX):
+        return dentist_errors.page_not_found(request, exception)
     return defaults.page_not_found(request, exception)
 
 
@@ -64,6 +67,8 @@ def server_error(request):
         return counter_errors.server_error(request)
     if request.path.startswith(crashtech_errors.PREFIX):
         return crashtech_errors.server_error(request)
+    if request.path.startswith(dentist_errors.PREFIX):
+        return dentist_errors.server_error(request)
     return defaults.server_error(request)
 
 
@@ -86,4 +91,6 @@ def permission_denied(request, exception=None):
         return counter_errors.permission_denied(request, exception)
     if request.path.startswith(crashtech_errors.PREFIX):
         return crashtech_errors.permission_denied(request, exception)
+    if request.path.startswith(dentist_errors.PREFIX):
+        return dentist_errors.permission_denied(request, exception)
     return defaults.permission_denied(request, exception)

@@ -1,0 +1,30 @@
+{% extends "dentist/base.html" %}
+{% block title %}{{ clinic.name }}{% endblock %}
+{% block screen %}clinic-home{% endblock %}
+{% block brand %}{{ clinic.name|truncatechars:28 }}{% endblock %}
+{% block role %}<span class="dn-role">{{ member.get_role_display }}</span>{% endblock %}
+{% comment %}The clinic's home per role (Rule 11.5). In D.1 it shows the
+shape and the facts; each row below becomes a link as its screen is built
+(D.2 to D.6). Nothing here is a control that cannot be used yet.{% endcomment %}
+{% block content %}
+<h1>{{ clinic.name }}</h1>
+<p class="dn-lede">{% if is_admin %}What the clinic has, and what needs you.{% else %}Your day, once the day screen exists (sprint D.5). For now, the clinic as it stands.{% endif %}</p>
+
+<div class="dn-grid dn-grid--figures" style="margin-bottom:20px">
+  <div class="dn-card dn-figure"><b>{{ counts.patients }}</b><span class="dn-fine">active patients</span></div>
+  <div class="dn-card dn-figure"><b>{{ counts.members }}</b><span class="dn-fine">dentists and administrators</span></div>
+  <div class="dn-card dn-figure"><b>{{ counts.chairs }}</b><span class="dn-fine">chairs</span></div>
+  {% if is_admin %}<div class="dn-card dn-figure"><b>{{ counts.pending }}</b><span class="dn-fine">invitations not yet accepted</span></div>{% endif %}
+</div>
+
+{% if is_admin %}
+  <p class="dn-cap">As administrator</p>
+  <div class="dn-row"><span class="dn-row-main"><b>People, chairs and hours</b><span>Invite dentists and administrators, set up the chairs. Sprint D.2.</span></span></div>
+  <div class="dn-row"><span class="dn-row-main"><b>Patients</b><span>Find, create, the record, the access log, export. Sprint D.3.</span></span></div>
+  <div class="dn-row"><span class="dn-row-main"><b>The diary and the queue</b><span>Shifts, booking, walk-ins. Sprint D.5.</span></span></div>
+{% else %}
+  <p class="dn-cap">As dentist</p>
+  <div class="dn-row"><span class="dn-row-main"><b>Today</b><span>Who is booked, who is waiting and in how much pain. Sprint D.5.</span></span></div>
+  <div class="dn-row"><span class="dn-row-main"><b>A patient</b><span>Alerts, the chart, the plan, the files, one tap to start a visit. Sprints D.3 and D.4.</span></span></div>
+{% endif %}
+{% endblock %}

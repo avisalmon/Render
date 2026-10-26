@@ -1,0 +1,17 @@
+{% extends "dentist/base.html" %}
+{% block title %}New clinic{% endblock %}
+{% block screen %}clinic-new{% endblock %}
+{% block content %}
+<h1>Create a clinic</h1>
+<p class="dn-lede">Two fields. The first administrator gets an invitation at the address
+  you give and sets up the rest from inside. You will not be a member.</p>
+<form method="post" class="dn-card">{% csrf_token %}
+  <label class="dn-field"><span>The clinic's name</span>
+    <input class="dn-input" name="name" value="{{ data.name }}" required maxlength="160" autofocus>
+    {% if errors.name %}<span class="dn-error">{{ errors.name }}</span>{% endif %}</label>
+  <label class="dn-field"><span>First administrator's email</span>
+    <input class="dn-input" name="admin_email" type="email" value="{{ data.admin_email }}" required>
+    {% if errors.admin_email %}<span class="dn-error">{{ errors.admin_email }}</span>{% endif %}</label>
+  <button class="dn-btn dn-btn--primary" type="submit">Create and invite</button>
+</form>
+{% endblock %}

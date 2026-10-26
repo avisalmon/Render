@@ -164,6 +164,8 @@ markers = [
     "sprc5: SPR-C.5 CrashTech judging, results and the one click that publishes them",
     "sprc6: SPR-C.6 CrashTech the museum, consent-computed exhibition, and where media lives",
     "sprc65: SPR-C.6.5 CrashTech the checkpoint: everything a review of C.1 to C.6 found",
+    "release_train: the release train, scripts/train.py, driven for real in a throwaway world",
+    "sprd1: SPR-D.1 dentist, the skeleton and the seal",
     "crashtech_e2e: one whole CrashTech event driven through the screens, setup to museum",
     "memzscreens: memz's screen contract - every memz screen, in every state, rendered on a phone (tests/test_memz_screens.py)",
     "screens: the screen contract - every מט״צים screen, in every state, rendered",

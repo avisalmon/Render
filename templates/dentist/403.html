@@ -1,0 +1,8 @@
+{% extends "dentist/base.html" %}
+{% block title %}Not for you{% endblock %}
+{% block screen %}403{% endblock %}
+{% block content %}
+<h1>Not for you</h1>
+<p class="dn-lede">This page belongs to a clinic you are not a member of, or needs a role you do not hold.</p>
+<a class="dn-btn dn-btn--primary" href="{% url 'dentist:home' %}">Back to the clinic</a>
+{% endblock %}
