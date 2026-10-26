@@ -116,7 +116,7 @@ without it, **later** where it can.
 | **Appointments and the queue** | Dentists' hours and shifts, chairs, booking, today's walk-in queue with a pain level, a waiting list, who did not come | pilot |
 | **Reminders** | SMS or WhatsApp before an appointment, saying only when and where | pilot |
 | **Consent** | The patient's informed consent to a treatment, recorded | pilot |
-| **Payments record** | What a treatment cost, was paid, donated or waived. **A record only: the app never takes a payment** | pilot, if the clinic charges at all |
+| **Cost record** | What something cost (a medicine, lab work, materials) and who paid. **A record only: the app never takes, asks for or calculates a payment** | pilot |
 | **Who looked** | Every opening and change of a patient's record, by whom and when | pilot |
 | **Clinic setup** | Dentists and administrators (invited by email), chairs, opening hours | pilot |
 | **Export** | Everything the clinic holds, in one click, in a form another system can read | pilot |
@@ -171,11 +171,11 @@ widens access to patient data, whoever asked for it.
 
 | # | Question | Why it matters |
 |---|---|---|
-| Q1 | **During the pilot, does real patient information go in, or only invented data until the clinic approves?** | The biggest decision: it sets how strict the pilot's security must be on day one |
-| Q2 | Who is the clinic-side owner who will write by email (the interview said Amir), and from which address? | The bot's allow-list |
-| Q3 | Do patients sign in, or only receive messages? Many may not have a Google account or a smartphone of their own | Whether "Patient" is a login or only a record |
-| Q4 | Which languages: Hebrew for the staff; for patients, which of Arabic, Tigrinya, Amharic, Russian, English? | Every screen and message patients see |
+| Q1 | ~~During the pilot, real patient information or invented data?~~ **Decided (Avi, 2026-10-26): invented or semi-invented data only, marked as demo.** | Export and deletion are rehearsed on it before any real record exists |
+| Q2 | Who is the clinic-side owner who will write by email (the interview said Amir), and from which address? | The bot's allow-list; see 1.8 |
+| Q3 | ~~Do patients sign in?~~ **Decided: yes, patients sign in.** If it turns out many cannot, this changes later | "Patient" is a record that can be connected to a login |
+| Q4 | ~~Which languages?~~ **Decided: Hebrew, English, Russian, Arabic, Tigrinya (Eritrea), and a language of India, to be confirmed.** | Every screen and message patients see; Hebrew and Arabic are right-to-left |
 | Q5 | SMS, WhatsApp, or both, and through which provider? Both cost per message | Reminders, and a running cost |
 | Q6 | A separate bucket for this app, or a folder in the existing one? (A bucket has no cost of its own; a separate one gives its own access rights and keeps another app's mistake away from medical files) | Where X-rays live |
-| Q7 | Does the clinic charge anything at all? | Whether the payments record is needed in the pilot |
+| Q7 | ~~Does the clinic charge anything at all?~~ **Decided: nothing is charged through the app, ever. Costs (a medicine, lab work) may be recorded; the app is never a billing service.** | The payments record becomes a cost record |
 | Q8 | One mail routine for both מט״צים and dentist, or one each? (Two routines pushing to the same repo at once is the risk in [postmortems](../postmortems.md) PM-13) | How the email channel is wired |
