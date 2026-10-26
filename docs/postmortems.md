@@ -17,6 +17,92 @@ Newest first.
 
 ---
 
+## PM-60 · 2026-10-26 · A one-time door refused its own holder, and a second door forgot the mail
+
+**What happened.** Building the dentist app's two doors (an invitation
+link for staff, a one-time link for a patient). (1) The patient's link
+checked "used or expired" first, so the patient who opened their own link
+a second time, which phones do (a tap, a refresh, a back button), was told
+"this link has been used". (2) In D.1 the superuser's "create a clinic and
+invite its first administrator" created the invitation row and sent no
+mail; the mail lived only on the people screen built a sprint later. Both
+caught by the sprint's own refusal tests before anyone saw them, which is
+the point of writing the refusals first. Two smaller things from the
+browser tests: `inner_text` applies CSS `text-transform`, so a check for
+"Your next appointment" failed against "YOUR NEXT APPOINTMENT"; and a
+screen that lists languages in their own script (עברית, العربية) fails an
+"English only" test unless option labels are excluded.
+
+**Why.** A one-time door was written as a gate (valid or not) before it
+was written as an owner's door (is this already theirs). And the mail for
+the first invitation was never a separate thought because the invitation
+model existed before the mail function did; mistake 53 again, from the
+other side.
+
+**Rule.** For any one-time link: ask "is this already theirs" before
+"is it still valid", so the owner coming back is a no-op success and
+never a refusal; test the second visit by the owner and by a stranger
+separately. Every path that grants access calls the one function that
+also sends the mail, including the first path built, and the test counts
+the mails for every such path. In browser tests compare lower-case when
+the stylesheet transforms case, and strip `<option>` labels before an
+"English only" check.
+
+Here: `dentist/people.py` (`connect`, `invite`), `docs/building_an_app.md` mistake 55, `tests/test_spr_d_2.py`, `tests/test_spr_d_3.py`
+BKM: 4a0912b
+
+## PM-59 · 2026-10-26 · The mail bot skipped a mail that came in while it worked
+
+**What happened.** Lital wrote at 11:06 and again at 11:33. The bot's run
+for the first mail was still building when the second arrived, and it
+replied at 12:32. Its rule was "a mail is new if it is later than the
+bot's last reply in the thread", so the 11:33 mail, now older than that
+reply, counted as handled. It was answered at 14:29, only because Naomi's
+mails started another run that happened to read it. Meanwhile the train's
+watchdog mailed Avi "the mail bot has not checked mail for over 40
+minutes" while the bot was two hours into a job: its heartbeat was written
+only at the start of a run.
+
+**Why.** "Handled" was inferred from time order instead of recorded. The
+rule was written when runs were short and mails rare, and nobody asked
+what happens to a mail that arrives during a run. The heartbeat had the
+same blind spot: it measured "a run started", not "the bot is alive".
+
+**Rule.** Record handled items by id, after the work is done: the bot now
+labels each mail `matazim-bot-done` only after its reply is sent, and
+"new" means "from Lital or Naomi and not labelled". Mail arriving during a
+run is not on that run's list, so the next run takes it. A skipped run
+because a job is still going now refreshes the heartbeat with "busy".
+
+Here: `docs/building_an_app.md` (mistake 54); the bot's `check.md`, `run.md`, `run.ps1` in `C:\Users\avisa\.claude\matazim-mail\`
+BKM: 384cf4b
+
+## PM-58 · 2026-10-26 · "Sent" for leader mails that never left
+
+**What happened.** Lital wrote that two of her leaders, Liron and Ronit,
+never got the mail that gives them leader access. The appoint-by-email
+screen (/matazim/staff/leaders/), which the bot had pointed her to the day
+before, made people leaders without sending any mail, and left anyone who
+had signed up through the open invite still waiting. Separately, both
+leader mails used `fail_silently=True` inside a `try` that returned
+`True`, so a send the provider refused showed "sent". Fixed in SPR-M.73
+(affd71a): one function sends every access mail and reports what the
+backend returned, and each leader's page has a "send again" button.
+
+**Why.** Two doors to the same result (the team page and the leaders
+page) were built at different times, and only one went through the mail.
+The tests checked that a leader was created, not that a mail left, and
+nothing tested a refused send. The bot pointed a client at a screen it had
+never walked.
+
+**Rule.** "Sent" comes from the backend's answer, and a test forces a
+refusal and checks the screen says so. Every way of granting access goes
+through the one function that also sends the mail. Before pointing a
+person at a screen, walk it as them, to the mail in their inbox.
+
+Here: `docs/building_an_app.md` (mistake 53), `matazim/invite_views.py` (`_mail`), `tests/test_spr_m_73.py`
+BKM: 384cf4b
+
 ## PM-57 · 2026-10-26 · The first real train: a clean copy is not the developers' copy
 
 **What happened.** The first train with real work aboard (the dentist app,

@@ -1,0 +1,20 @@
+{% extends "dentist/base.html" %}
+{% block title %}New patient{% endblock %}
+{% block screen %}patient-new{% endblock %}
+{% block brand %}{{ clinic.name|truncatechars:28 }}{% endblock %}
+{% block nav %}{% include "dentist/_nav.html" %}{% endblock %}
+{% block role %}<span class="dn-role">{{ member.get_role_display }}</span>{% endblock %}
+{% comment %}A record in ten seconds (Rule 4.1): the walk-in in pain. One
+required field; the language because the front desk knows it now.{% endcomment %}
+{% block content %}
+<h1>New patient</h1>
+<p class="dn-lede">A first name is enough. Everything else can be filled in on the record, later.</p>
+<form method="post" class="dn-card">{% csrf_token %}
+  <label class="dn-field"><span>First name</span>
+    <input class="dn-input" name="first_name" required maxlength="80" autofocus autocomplete="off">
+    {% if error %}<span class="dn-error">{{ error }}</span>{% endif %}</label>
+  <label class="dn-field"><span>Language they read</span>
+    <select class="dn-input" name="preferred_language">{% for code, name in languages %}<option value="{{ code }}"{% if code == 'en' %} selected{% endif %}>{{ name }}</option>{% endfor %}</select></label>
+  <button class="dn-btn dn-btn--primary dn-btn--wide" type="submit">Create the record</button>
+</form>
+{% endblock %}

@@ -1,8 +1,9 @@
 # dentist: Spec
 
-> **Status: chapters 0 to 13 written, data model approved, build starting in
-> dev, 2026-10-26.** Avi builds the first version himself; Amir takes it over
-> through chapter 0 once it is live. Data model: [data_model.md](data_model.md).
+> **Status: chapters 0 to 13 written, data model approved; D.1 live on
+> 2026-10-26, D.2 and D.3 built in dev the same day.** Avi builds the first
+> version himself; Amir takes it over through chapter 0 once a basic demo
+> runs live. Data model: [data_model.md](data_model.md).
 > Sprints: [backlog.md](backlog.md). Process and rules:
 > [building_an_app.md](../building_an_app.md).
 
@@ -242,7 +243,9 @@ the record; an administrator makes a one-time link for that patient (printed
 on their card or sent to their phone); the patient signs in with Google or
 an email and password, and the new account is connected to the record. A
 link expires, works once, and is logged. A patient account sees exactly one
-record: its own.
+record: its own. **In the pilot** a patient without any account arrives
+through Google sign-in (the site makes the account); an email-and-password
+sign-up for patients does not exist yet and is Amir's to ask for.
 
 Rule 3.5: a patient who signs in sees their appointments, their reminders,
 their treatment plan and what was done, in their language. They do not see

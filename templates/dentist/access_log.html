@@ -1,0 +1,25 @@
+{% extends "dentist/base.html" %}
+{% block title %}Who looked{% endblock %}
+{% block screen %}access-log{% endblock %}
+{% block brand %}{{ clinic.name|truncatechars:28 }}{% endblock %}
+{% block nav %}{% include "dentist/_nav.html" %}{% endblock %}
+{% block role %}<span class="dn-role">{{ member.get_role_display }}</span>{% endblock %}
+{% comment %}Administrator (Rule 4.5). The last 200 rows: who, what, which
+record by number, when. Nothing clinical is in a row.{% endcomment %}
+{% block content %}
+<h1>Who looked</h1>
+<p class="dn-lede">Every opening, change, export and deletion of a record. The last 200.</p>
+<div class="dn-table-wrap"><table class="dn-table">
+  <thead><tr><th>When</th><th>Who</th><th>What</th><th>Patient</th></tr></thead>
+  <tbody>
+  {% for r in rows %}
+    <tr><td class="dn-mono">{{ r.at|date:"j M, H:i" }}</td>
+        <td>{% if r.user %}{{ r.user.get_full_name|default:r.user.email }}{% else %}(gone){% endif %}</td>
+        <td>{{ r.get_action_display|lower }} &middot; {{ r.what }}</td>
+        <td class="dn-mono">{% if r.patient %}{{ r.patient.clinic_number }}{% endif %}</td></tr>
+  {% empty %}
+    <tr><td colspan="4" class="dn-fine">Nothing yet.</td></tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% endblock %}

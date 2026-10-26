@@ -67,7 +67,7 @@ def test_dentist_never_extends_babooks_base_template():
     for path in Path("templates/dentist").rglob("*.html"):
         text = path.read_text(encoding="utf-8")
         assert '{% extends "base.html" %}' not in text, path
-        if path.name != "base.html":
+        if path.name != "base.html" and not path.name.startswith("_"):  # _partials are included, not pages
             assert '{% extends "dentist/base.html" %}' in text, path
 
 
@@ -392,8 +392,13 @@ def test_the_clinic_home_names_the_role_and_shows_nothing_unbuilt_as_a_link(clie
     client.force_login(_member(clinic, "d@example.com"))
     body = client.get(f"/dentist/c/{clinic.slug}/").content.decode()
     assert "Dentist" in body
+    # Since D.2 the rows are links; every one of them opens as this role
+    # (Rule 11.5), and the rows for unbuilt screens are not links.
     links = [h for h in re.findall(r'href="(/dentist/[^"]+)"', body)]
-    assert all(h in ("/dentist/", "/dentist/logout/", f"/dentist/c/{clinic.slug}/") for h in links), links
+    assert all(h.startswith(("/dentist/", f"/dentist/c/{clinic.slug}/")) for h in links), links
+    for h in set(links) - {"/dentist/logout/"}:
+        assert client.get(h).status_code == 200, h
+    assert "Not built yet" in body and 'href="#"' not in body
 
 
 def test_staff_screens_render_in_english_with_no_hebrew_dates(client):

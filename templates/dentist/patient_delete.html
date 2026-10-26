@@ -1,0 +1,28 @@
+{% extends "dentist/base.html" %}
+{% block title %}Delete {{ patient.clinic_number }}{% endblock %}
+{% block screen %}patient-delete{% endblock %}
+{% block brand %}{{ clinic.name|truncatechars:28 }}{% endblock %}
+{% block nav %}{% include "dentist/_nav.html" %}{% endblock %}
+{% block role %}<span class="dn-role">{{ member.get_role_display }}</span>{% endblock %}
+{% comment %}Administrator. Asks twice (Rule 9.5): the consequence in numbers,
+then the clinic number typed. Export is offered first.{% endcomment %}
+{% block content %}
+<h1>Delete {{ patient.first_name }} {{ patient.last_name }}?</h1>
+<p class="dn-lede">This cannot be undone. Everything about <span class="dn-mono">{{ patient.clinic_number }}</span> goes:
+  {{ counts.history }} history item{{ counts.history|pluralize }}, {{ counts.teeth }} tooth observation{{ counts.teeth|pluralize }},
+  {{ counts.visits }} visit{{ counts.visits|pluralize }}, {{ counts.appointments }} appointment{{ counts.appointments|pluralize }},
+  {{ counts.files }} file{{ counts.files|pluralize }}. The log keeps one line: that patient {{ patient.pk }} was deleted by you, now.</p>
+<div class="dn-card">
+  <p>If the clinic may need this record again, export it first.</p>
+  <a class="dn-btn" href="{% url 'dentist:patient_export' clinic.slug patient.pk %}">Export first</a>
+</div>
+<form method="post" class="dn-card">{% csrf_token %}
+  <label class="dn-field"><span>Type the clinic number to confirm: <b class="dn-mono">{{ patient.clinic_number }}</b></span>
+    <input class="dn-input dn-mono" name="confirm" required autocomplete="off" autocapitalize="characters">
+    {% if error %}<span class="dn-error">{{ error }}</span>{% endif %}</label>
+  <div class="dn-actions">
+    <button class="dn-btn dn-btn--danger" type="submit">Delete for good</button>
+    <a class="dn-btn dn-btn--quiet" href="{% url 'dentist:patient' clinic.slug patient.pk %}">Keep the record</a>
+  </div>
+</form>
+{% endblock %}

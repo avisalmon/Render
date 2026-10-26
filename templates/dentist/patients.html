@@ -1,0 +1,29 @@
+{% extends "dentist/base.html" %}
+{% block title %}Patients{% endblock %}
+{% block screen %}patients{% endblock %}
+{% block brand %}{{ clinic.name|truncatechars:28 }}{% endblock %}
+{% block nav %}{% include "dentist/_nav.html" %}{% endblock %}
+{% block role %}<span class="dn-role">{{ member.get_role_display }}</span>{% endblock %}
+{% comment %}Dentist and administrator. One box (Rule 4.6), built for a thumb
+on a tablet: the list starts in the top half of the first screen.{% endcomment %}
+{% block content %}
+<div class="dn-pagehead">
+  <h1>Patients</h1>
+  <a class="dn-btn dn-btn--primary" href="{% url 'dentist:patient_new' clinic.slug %}">New patient</a>
+</div>
+<form method="get" class="dn-search" role="search">
+  <input class="dn-input" type="search" name="q" value="{{ q }}" placeholder="Name, number or phone" aria-label="Find a patient" autocomplete="off" {% if not q %}autofocus{% endif %}>
+  <button class="dn-btn" type="submit">Find</button>
+</form>
+<p class="dn-cap">{% if q %}Found{% else %}Last seen{% endif %} &middot; {{ total }} in the clinic</p>
+{% for p in patients %}
+  <a class="dn-row" href="{% url 'dentist:patient' clinic.slug p.pk %}">
+    <span class="dn-row-main"><b>{{ p.first_name }} {{ p.last_name }}</b>
+      <span><span class="dn-mono">{{ p.clinic_number }}</span>{% if p.birth_year %} &middot; born {{ p.birth_year }}{% endif %} &middot; {{ p.get_preferred_language_display }}{% if p.needs_interpreter %} &middot; interpreter{% endif %}</span></span>
+    {% if p.alerts.exists %}<span class="dn-tag dn-tag--wait">Alert</span>{% endif %}
+    {% if p.is_demo %}<span class="dn-tag">Demo</span>{% endif %}
+  </a>
+{% empty %}
+  <div class="dn-empty">{% if q %}Nobody matches "{{ q }}". Check the spelling, or start a new record.{% else %}No patients yet. The first one is a first name away.{% endif %}</div>
+{% endfor %}
+{% endblock %}

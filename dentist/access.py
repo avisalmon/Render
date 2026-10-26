@@ -9,6 +9,7 @@ its first administrator.
 """
 
 from django.core.exceptions import PermissionDenied
+from django.shortcuts import get_object_or_404
 
 from .models import AccessLog, ClinicMember
 
@@ -34,6 +35,11 @@ def require_member(user, clinic, role=None):
     if m is None or (role and m.role != role):
         raise PermissionDenied
     return m
+
+
+def require_admin(user, clinic):
+    """The administrator's screens: people, setup, the log, export, delete."""
+    return require_member(user, clinic, role=ClinicMember.ADMIN)
 
 
 def is_admin(user, clinic):
@@ -63,6 +69,12 @@ def patients_for(user, clinic):
     if me is not None and me.clinic_id == clinic.pk:
         return clinic.patients.filter(pk=me.pk)
     return clinic.patients.none()
+
+
+def patient_or_404(user, clinic, pk):
+    """One patient of this clinic, through the same scope as the list, so
+    another clinic's patient is "not here" rather than "not yours"."""
+    return get_object_or_404(patients_for(user, clinic), pk=pk)
 
 
 def log(clinic, user, action, patient=None, what=""):

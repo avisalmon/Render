@@ -1,0 +1,25 @@
+{% extends "dentist/base.html" %}
+{% block title %}Edit {{ patient.first_name }}{% endblock %}
+{% block screen %}patient-edit{% endblock %}
+{% block brand %}{{ clinic.name|truncatechars:28 }}{% endblock %}
+{% block nav %}{% include "dentist/_nav.html" %}{% endblock %}
+{% block role %}<span class="dn-role">{{ member.get_role_display }}</span>{% endblock %}
+{% comment %}Everything the record may hold (Rule 4.1, 4.2, 4.3, 4.7). No field
+for an address, an employer, a nationality or a payment.{% endcomment %}
+{% block content %}
+<h1>{{ patient.first_name }} {{ patient.last_name }} <span class="dn-mono dn-number">{{ patient.clinic_number }}</span></h1>
+<p class="dn-lede">Only what treatment needs. Identification is optional and never assumes an Israeli ID; "No identification" is a normal answer.</p>
+<form method="post" class="dn-card">{% csrf_token %}
+  {% for field in form %}
+    {% if field.name == 'needs_interpreter' %}
+      <label class="dn-check">{{ field }}<span>{{ field.label }}</span></label>
+    {% else %}
+      <label class="dn-field"><span>{{ field.label }}</span>{{ field }}{% for e in field.errors %}<span class="dn-error">{{ e }}</span>{% endfor %}</label>
+    {% endif %}
+  {% endfor %}
+  <div class="dn-actions">
+    <button class="dn-btn dn-btn--primary" type="submit">Save</button>
+    <a class="dn-btn dn-btn--quiet" href="{% url 'dentist:patient' clinic.slug patient.pk %}">Back without saving</a>
+  </div>
+</form>
+{% endblock %}

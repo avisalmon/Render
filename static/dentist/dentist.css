@@ -21,7 +21,7 @@
   --dn-card: #FFFDF8;
   --dn-line: #E1D9C8;
   --dn-ink: #22302A;
-  --dn-dim: #6B7570;
+  --dn-dim: #606A65;  /* 4.98:1 on the paper; the lighter #6B7570 measured 4.24 */
   --dn-teal: #2F6F4E;
   --dn-teal-soft: #E3EFE7;
   --dn-amber: #9A5B00;
@@ -74,10 +74,10 @@ body {
   max-width: 1040px; margin: 0 auto; padding: 10px 16px;
   display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
 }
-.dn-brand { font-weight: 700; color: var(--dn-teal); text-decoration: none; font-size: 17px; white-space: nowrap; }
+.dn-brand { display: inline-flex; align-items: center; min-height: 44px; font-weight: 700; color: var(--dn-teal); text-decoration: none; font-size: 17px; white-space: nowrap; }
 .dn-brand small { color: var(--dn-dim); font-weight: 400; font-size: 13px; margin-left: 8px; }
 .dn-nav { display: flex; gap: 14px; flex-wrap: wrap; }
-.dn-nav a { color: var(--dn-dim); text-decoration: none; font-size: 15px; padding: 6px 0; }
+.dn-nav a { color: var(--dn-dim); text-decoration: none; font-size: 15px; padding: 6px 0; min-height: 40px; display: inline-flex; align-items: center; }
 .dn-nav a:hover, .dn-nav a.is-on { color: var(--dn-ink); box-shadow: inset 0 -2px 0 var(--dn-teal); }
 .dn-head-end { margin-left: auto; display: flex; align-items: center; gap: 10px; }
 .dn-role {
@@ -87,36 +87,81 @@ body {
 
 /* ---- type ------------------------------------------------------------ */
 
-h1, h2, h3 { margin: 0 0 8px; line-height: 1.2; letter-spacing: -0.01em; }
+h1, h2, h3 { margin: 0 0 8px; line-height: 1.2; letter-spacing: -0.01em; text-wrap: balance; }
 h1 { font-size: 27px; } h2 { font-size: 20px; } h3 { font-size: 17px; }
 p { margin: 0 0 12px; }
 .dn-lede { color: var(--dn-dim); margin-bottom: 20px; }
 .dn-fine { color: var(--dn-dim); font-size: 14px; }
 .dn-mono { font-family: var(--dn-mono); font-variant-numeric: tabular-nums; }
+.dn-number { font-size: 0.6em; font-weight: 400; color: var(--dn-dim); white-space: nowrap; }
 .dn-cap {
   font-family: var(--dn-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
   text-transform: uppercase; color: var(--dn-dim); margin: 0 0 8px;
 }
 a { color: var(--dn-teal); }
 
+/* ---- the page head: the title and its one main action ---------------- */
+
+.dn-pagehead { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+.dn-pagehead h1 { flex: 1 1 200px; min-width: 0; }
+.dn-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+
 /* ---- surfaces -------------------------------------------------------- */
 
 .dn-card { background: var(--dn-card); border: 1px solid var(--dn-line); border-radius: var(--dn-r); padding: 18px; margin-bottom: 14px; }
 .dn-row {
-  display: flex; align-items: center; gap: 14px; padding: 14px 16px; min-height: 60px;
+  display: flex; align-items: center; gap: 10px; padding: 14px 16px; min-height: 60px;
   background: var(--dn-card); border: 1px solid var(--dn-line); border-radius: var(--dn-r);
-  margin-bottom: 8px; text-decoration: none; color: inherit;
+  margin-bottom: 8px; text-decoration: none; color: inherit; flex-wrap: wrap;
 }
 a.dn-row:hover { border-color: var(--dn-teal); }
-.dn-row-main { flex: 1; min-width: 0; }
-.dn-row-main > b { display: block; font-weight: 700; }
-.dn-row-main > span { display: block; color: var(--dn-dim); font-size: 14px; }
+.dn-row--off { opacity: 0.6; }
+.dn-row-main { flex: 1 1 180px; min-width: 0; }
+.dn-row-main > b { display: block; font-weight: 700; overflow-wrap: anywhere; }
+.dn-row-main > span { display: block; color: var(--dn-dim); font-size: 14px; overflow-wrap: anywhere; }
+.dn-row form { margin: 0; }
 .dn-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
 /* Figures sit two across on a phone: four full-width tiles put a screen of
    numbers between the person and the first thing to do (the museum lesson). */
 .dn-grid--figures { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
-.dn-figure { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 14px; }
+.dn-figure { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 14px; text-decoration: none; color: inherit; }
+a.dn-figure:hover { border-color: var(--dn-teal); }
 .dn-figure b { font-family: var(--dn-mono); font-size: 30px; line-height: 1; }
+
+/* Key and value, two columns where there is room, stacked on a phone. */
+.dn-kv { margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px 16px; }
+.dn-kv > div { background: var(--dn-card); border: 1px solid var(--dn-line); border-radius: 12px; padding: 10px 14px; min-width: 0; }
+.dn-kv dt { font-size: 12px; color: var(--dn-dim); text-transform: uppercase; letter-spacing: 0.06em; font-family: var(--dn-mono); }
+.dn-kv dd { margin: 2px 0 0; overflow-wrap: anywhere; }
+
+/* A form that folds, its summary saying what it is for (mistake 28). */
+.dn-fold { background: var(--dn-card); border: 1px solid var(--dn-line); border-radius: var(--dn-r); margin-bottom: 8px; }
+.dn-fold > summary { list-style: none; cursor: pointer; padding: 14px 16px; min-height: 60px; display: flex; flex-direction: column; justify-content: center; }
+.dn-fold > summary::-webkit-details-marker { display: none; }
+.dn-fold > summary > b { display: block; }
+.dn-fold > summary > span { display: block; color: var(--dn-dim); font-size: 14px; }
+.dn-fold[open] > summary { border-bottom: 1px solid var(--dn-line); }
+.dn-fold-body { padding: 16px; }
+
+/* The one search box (Rule 4.6). */
+.dn-search { display: flex; gap: 8px; margin-bottom: 14px; }
+.dn-search .dn-input { flex: 1; min-width: 0; }
+.dn-inline { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
+.dn-grow { flex: 1 1 200px; margin-bottom: 0; }
+
+/* A link to copy or print: wraps, never scrolls sideways. */
+.dn-link-box { background: var(--dn-paper); border: 1px dashed var(--dn-line); border-radius: 12px; padding: 10px 12px; font-size: 14px; overflow-wrap: anywhere; user-select: all; }
+
+/* The patient's next appointment, large (Rule 7.6). */
+.dn-next { border-color: var(--dn-teal); }
+.dn-big { font-size: 26px; font-weight: 700; line-height: 1.25; color: var(--dn-teal); margin-bottom: 8px; }
+
+/* The log: a real table, scrolling in its own box if it must. */
+.dn-table-wrap { overflow-x: auto; border: 1px solid var(--dn-line); border-radius: var(--dn-r); background: var(--dn-card); }
+.dn-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.dn-table th, .dn-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--dn-line); vertical-align: top; }
+.dn-table th { font-family: var(--dn-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--dn-dim); }
+.dn-table tr:last-child td { border-bottom: 0; }
 
 /* ---- the alert: read before you treat (Rule 4.4) --------------------- */
 
@@ -136,7 +181,7 @@ a.dn-row:hover { border-color: var(--dn-teal); }
 .dn-tag--stop { background: var(--dn-red-soft); color: var(--dn-red); border-color: var(--dn-red); }
 .dn-note { border-radius: var(--dn-r); padding: 11px 14px; font-size: 15px; margin-bottom: 14px; border: 1px solid var(--dn-line); background: var(--dn-card); }
 .dn-note--warn { background: var(--dn-amber-soft); border-color: var(--dn-amber); color: var(--dn-amber); }
-.dn-empty { border: 1px dashed var(--dn-line); border-radius: var(--dn-r); padding: 24px 16px; text-align: center; color: var(--dn-dim); }
+.dn-empty { border: 1px dashed var(--dn-line); border-radius: var(--dn-r); padding: 24px 16px; text-align: center; color: var(--dn-dim); margin-bottom: 8px; }
 
 /* ---- controls (48px: a thumb on a tablet) ---------------------------- */
 
@@ -147,17 +192,21 @@ a.dn-row:hover { border-color: var(--dn-teal); }
 }
 .dn-btn:hover { border-color: var(--dn-teal); }
 .dn-btn--primary { background: var(--dn-teal); border-color: var(--dn-teal); color: #fff; }
+.dn-btn--danger { background: var(--dn-card); border-color: var(--dn-red); color: var(--dn-red); }
+.dn-btn--quiet { background: transparent; border-color: transparent; color: var(--dn-dim); }
 .dn-btn--wide { width: 100%; }
 .dn-btn--sm { min-height: 40px; padding: 8px 14px; font-size: 14px; }
 .dn-field { display: block; margin-bottom: 14px; }
 .dn-field > span { display: block; font-size: 14px; color: var(--dn-dim); margin-bottom: 5px; }
-.dn-input {
+.dn-input, select.dn-input, textarea.dn-input {
   width: 100%; min-height: var(--dn-tap); padding: 12px 14px; border-radius: var(--dn-r);
   border: 1px solid var(--dn-line); background: var(--dn-card); color: var(--dn-ink); font: 400 17px/1.4 var(--dn-sans);
 }
-.dn-input:focus-visible, .dn-btn:focus-visible, a:focus-visible { outline: 3px solid var(--dn-teal); outline-offset: 2px; }
-.dn-error { color: var(--dn-red); font-size: 14px; margin: 4px 0 0; }
-input[type="checkbox"], input[type="radio"] { accent-color: var(--dn-teal); width: 20px; height: 20px; }
+textarea.dn-input { resize: vertical; }
+.dn-check { display: flex; align-items: center; gap: 10px; min-height: var(--dn-tap); margin-bottom: 14px; }
+.dn-input:focus-visible, .dn-btn:focus-visible, a:focus-visible, .dn-fold > summary:focus-visible { outline: 3px solid var(--dn-teal); outline-offset: 2px; }
+.dn-error { color: var(--dn-red); font-size: 14px; margin: 4px 0 0; display: block; }
+input[type="checkbox"], input[type="radio"] { accent-color: var(--dn-teal); width: 22px; height: 22px; }
 
 /* ---- footer ---------------------------------------------------------- */
 
@@ -167,10 +216,16 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--dn-teal); widt
 /* ---- narrow ---------------------------------------------------------- */
 
 html, body { overflow-x: clip; }
+@media (max-width: 700px) {
+  /* The nav takes its own row under the clinic's name: a phone header
+     holds three or four items, not seven (mistake 34). */
+  .dn-nav { order: 3; width: 100%; gap: 12px; }
+  .dn-head-in { gap: 10px; row-gap: 2px; }
+}
 @media (max-width: 560px) {
   h1 { font-size: 23px; }
   .dn-main { padding-top: 16px; }
-  .dn-head-in { gap: 10px; }
-  .dn-nav { gap: 12px; }
+  .dn-role { display: none; }
+  .dn-big { font-size: 23px; }
 }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }

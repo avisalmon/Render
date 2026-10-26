@@ -5,7 +5,8 @@
 in two sentences and offers the way in; it never shows a patient's name or
 a clinic's numbers. Signed in it is a list of this person's clinics, or
 their own record, or, for a superuser with nothing, the one thing they may
-do (Rule 3.3).{% endcomment %}
+do (Rule 3.3). A person with exactly one clinic, or only their own record,
+never sees this page: they are sent straight on.{% endcomment %}
 {% block content %}
 {% if signed_out %}
   <h1>A volunteer dental clinic</h1>
@@ -35,11 +36,11 @@ do (Rule 3.3).{% endcomment %}
 
   {% if patient %}
     <p class="dn-cap" style="margin-top:18px">You</p>
-    <div class="dn-row">
+    <a class="dn-row" href="{% url 'dentist:me' %}">
       <span class="dn-row-main"><b>{{ patient.first_name }}</b>
         <span>{{ patient.clinic.name }} &middot; <span class="dn-mono">{{ patient.clinic_number }}</span></span></span>
-    </div>
-    <p class="dn-fine">Your appointments and your plan arrive here in a later sprint.</p>
+      <span class="dn-tag dn-tag--go">Open</span>
+    </a>
   {% endif %}
 
   {% if may_create %}

@@ -1,0 +1,20 @@
+{% extends "dentist/base.html" %}
+{% block title %}You are invited{% endblock %}
+{% block screen %}accept{% endblock %}
+{% comment %}The invitation link, seen signed out. Names the clinic and the
+role; says nothing clinical. The way in is the same door as everyone's,
+coming back here.{% endcomment %}
+{% block content %}
+<h1>You are invited</h1>
+<p class="dn-lede">{{ invitation.clinic.name }} invites <b>{{ invitation.email }}</b> as {{ invitation.get_role_display|lower }}.</p>
+<div class="dn-card">
+  {% if invitation.is_pending %}
+  <p>Sign in to accept. If you have no account yet, continue with Google and one is made for you.</p>
+  <a class="dn-btn dn-btn--primary dn-btn--wide" href="{{ google_url }}" style="margin-bottom:10px">Continue with Google</a>
+  <a class="dn-btn dn-btn--wide" href="{% url 'dentist:login' %}?next={{ next|urlencode }}">Sign in with email and password</a>
+  {% else %}
+  <p>This invitation has already been accepted. Sign in to open the clinic.</p>
+  <a class="dn-btn dn-btn--primary dn-btn--wide" href="{% url 'dentist:login' %}">Sign in</a>
+  {% endif %}
+</div>
+{% endblock %}

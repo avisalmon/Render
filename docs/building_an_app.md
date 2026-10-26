@@ -1142,3 +1142,57 @@ named the menu at once; it did, a day later, in another sprint's run.
 whatever else it runs. A rule that a sweep enforces is only enforced when
 the sweep runs.
 
+### 53. "Sent" is what the mail backend said, not what the code hoped
+
+מטצים told the program manager "sent" for leader mails that never left.
+Both mails called `send_mail(..., fail_silently=True)` inside a `try` that
+returned `True`, so a refused send read as success; and the
+appoint-by-email screen made a leader in silence, with no mail at all. The
+mail bot had pointed the client at that screen the day before without
+walking it. She found out from two leaders who never got access.
+
+**The rule.** A screen says "sent" only from the backend's own answer
+(`send_mail` returns the number sent: use it, and drop `fail_silently`
+inside a `try` that already catches). A test sends with the backend
+refusing and asserts the screen says "not sent". Every path that gives
+someone access sends the same mail through one function, so a second door
+cannot forget it. And before pointing a person at a screen, walk it once
+as them, end to end, to the mail in their inbox.
+
+### 54. Mark each item handled by its id; never infer "handled" from time
+
+The mail bot treated a client mail as new only if it was later than the
+bot's last reply in that thread. A mail that arrived while the bot was
+still working on the previous one was older than the reply the bot then
+sent, so it was skipped. It was answered three hours later, only because
+another mail started a run. The same day the bot's heartbeat went stale
+during a two-hour job (it was written only at the start of a run), and the
+watchdog mailed "silent" about a bot that was busy.
+
+**The rule.** A worker that consumes a queue writes down the ids it is
+taking at the start, and marks each one done (a Gmail label, a status
+column) only after it is really done. "New" means "not marked", never
+"later than my last action". A heartbeat beats while busy, not only when a
+run starts, or the watchdog cries wolf and the real alarm gets ignored.
+The bot's rules live in `C:\Users\avisa\.claude\matazim-mail\check.md` and
+`run.md`, outside this repo.
+
+### 55. A one-time door lets its own holder back in; every door mails
+
+dentist's patient link checked "used or expired" before "is this already
+theirs", so a patient who opened their own link twice (a refresh, a back
+button) was refused. And the first invitation path built (the superuser
+creating a clinic) made the invitation row and sent no mail, because the
+mail function came a sprint later. Both caught by the refusal tests
+written first (postmortems PM-60).
+
+**The rule.** For a one-time link, ownership first, validity second: the
+owner coming back is a no-op success, and the second visit is tested for
+the owner and for a stranger separately. Every path that grants access,
+including the first one built, goes through the one function that also
+sends the mail, and a test counts the mails per path. Two browser-test
+notes from the same sprint: `inner_text` applies `text-transform`, so
+compare lower-case; and strip `<option>` labels before an "English only"
+check, because a language named in its own script is not the UI's
+language.
+
