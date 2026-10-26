@@ -1,10 +1,10 @@
 # dentist: Data model
 
-> **Status: draft for Avi's approval, 2026-10-26.** Nothing is built. This is
-> the shape of the data on its own, kept apart from the spec on purpose
-> ([building_an_app.md](../building_an_app.md), Rule 4). It does not have to
-> be complete; it has to be understood. The decisions it rests on are in
-> [spec.md](spec.md) chapter 1 and the answers in 1.10.
+> **Status: approved by Avi, 2026-10-26**, with the draft answers in section
+> 10 taken as they stand; Amir may change them later. Nothing is built yet.
+> This is the shape of the data on its own, kept apart from the spec on
+> purpose ([building_an_app.md](../building_an_app.md), Rule 4). The
+> decisions it rests on are in [spec.md](spec.md) chapter 1 and 1.10.
 
 Four things shape everything here:
 
@@ -176,11 +176,10 @@ second clinic's actual setup, and the patient's own view beyond their
 appointments and reminders. Each is a later chapter, and most will come from
 Amir's chapter 0.
 
-## 10. Open, for the approval conversation
+## 10. Settled at approval (Avi, 2026-10-26; Amir may change them)
 
-- Should a patient who signs in see the dentist's working notes, or only the
-  treatment plan and what was done? (The draft says: plan and procedures yes,
-  notes no.)
-- Birth year only, or full date of birth? (The draft says year; a dentist may
-  want the date for children.)
-- Which language of India.
+- A patient who signs in sees their treatment plan and what was done, not
+  the dentist's working notes.
+- Birth year only, not a full date of birth.
+- The language of India is left to the clinic to name; English is the
+  fallback until then.

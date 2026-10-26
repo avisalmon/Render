@@ -1,6 +1,6 @@
 # dentist: Spec
 
-> **Status: chapter 1 only, from Avi's interview, 2026-10-26.** Nothing is
+> **Status: chapter 1 done and the data model approved, 2026-10-26.** Nothing is
 > built. Next, per [building_an_app.md](../building_an_app.md): the data model
 > in its own file, which waits for Avi's approval, then the full spec.
 
