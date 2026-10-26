@@ -1,0 +1,55 @@
+{% comment %}
+  One BKM on the wall (REQ-B.10 to B.14). Signed in: the picture and the
+  name open the BKM's page, and the buttons work. A visitor gets the same
+  card with no way out of it: every link and button opens the sign-in
+  window (REQ-B.2), and the BKM's addresses are not in the page at all.
+{% endcomment %}
+{% with signed=user.is_authenticated %}
+<article class="bm-card{% if not b.is_published %} is-hidden{% endif %}" id="{{ b.slug }}" data-slug="{{ b.slug }}">
+  <span class="bm-pin" aria-hidden="true"></span>
+  {% if signed %}
+    <a class="bm-card-pic" href="{{ b.page_url }}" target="_blank" rel="noopener" aria-label="Open {{ b.name }}">
+  {% else %}
+    <a class="bm-card-pic" href="{% url 'bkm:login' %}?next=/bkm/%23{{ b.slug }}" data-gate aria-label="Sign in to open {{ b.name }}">
+  {% endif %}
+    {% if b.picture %}<img src="{{ b.picture.url }}" alt="" width="960" height="720" loading="lazy">{% else %}<span class="bm-card-nopic">{{ b.name }}</span>{% endif %}
+  </a>
+  <div class="bm-card-text">
+    <h2 class="bm-card-name">
+      {% if signed %}<a href="{{ b.page_url }}" target="_blank" rel="noopener">{{ b.name }}</a>
+      {% else %}<a href="{% url 'bkm:login' %}?next=/bkm/%23{{ b.slug }}" data-gate>{{ b.name }}</a>{% endif %}
+    </h2>
+    <p class="bm-card-line">{{ b.tagline }}</p>
+    {% if not b.is_published %}<p class="bm-hidden-tag">Hidden: only you see it</p>{% endif %}
+  </div>
+  <div class="bm-card-acts">
+    {% if signed %}
+      <button type="button" class="bm-act bm-like" data-like="{{ b.slug }}" aria-pressed="{% if b.pk in liked %}true{% else %}false{% endif %}" aria-label="Like {{ b.name }}" title="Like">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 7.9 3.5 4.5 7 4.5c2 0 3.4 1.1 5 3 1.6-1.9 3-3 5-3 3.5 0 5.6 3.4 4.3 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"/></svg>
+        <span class="bm-count" data-count>{{ b.n_likes }}</span>
+      </button>
+      <button type="button" class="bm-act bm-star" data-star="{{ b.slug }}" aria-pressed="{% if b.pk in starred %}true{% else %}false{% endif %}" aria-label="Star {{ b.name }} for yourself" title="Star it for yourself">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.7 5.6 6.1.8-4.5 4.2 1.1 6-5.4-3-5.4 3 1.1-6-4.5-4.2 6.1-.8z"/></svg>
+      </button>
+      <a class="bm-act" href="{% url 'bkm:bkm' b.slug %}#thread" aria-label="Talk about {{ b.name }}" title="Questions and comments">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>
+        <span class="bm-count">{{ b.n_comments }}</span>
+      </a>
+      <a class="bm-start" href="{% url 'bkm:bkm' b.slug %}">How to start</a>
+    {% else %}
+      <button type="button" class="bm-act bm-like" data-gate aria-label="Sign in to like {{ b.name }}" title="Like">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 7.9 3.5 4.5 7 4.5c2 0 3.4 1.1 5 3 1.6-1.9 3-3 5-3 3.5 0 5.6 3.4 4.3 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"/></svg>
+        <span class="bm-count">{{ b.n_likes }}</span>
+      </button>
+      <button type="button" class="bm-act bm-star" data-gate aria-label="Sign in to star {{ b.name }}" title="Star it for yourself">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.7 5.6 6.1.8-4.5 4.2 1.1 6-5.4-3-5.4 3 1.1-6-4.5-4.2 6.1-.8z"/></svg>
+      </button>
+      <button type="button" class="bm-act" data-gate aria-label="Sign in to talk about {{ b.name }}" title="Questions and comments">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>
+        <span class="bm-count">{{ b.n_comments }}</span>
+      </button>
+      <button type="button" class="bm-start" data-gate>How to start</button>
+    {% endif %}
+  </div>
+</article>
+{% endwith %}

@@ -17,6 +17,84 @@ Newest first.
 
 ---
 
+## PM-63 · 2026-10-26 · An English app printed Hebrew dates, and a command line pushed the page sideways
+
+**What happened.** Sprint B.1, the whole bkm app. (1) The comment dates
+came out as "26 אוק 2026": the site's default language is Hebrew, and the
+app never said otherwise. The "every screen is English" test passed,
+because the pages it read had no comments, so no date. A screenshot showed
+it. (2) The BKM's page slid sideways at every width, by 378px at 320: the
+one-column grid track was `1fr`, so it grew to fit the `git clone` line
+and the unbroken repository link. The all-widths test caught it; the cause
+took a measurement, after two guesses that did not fix it (mistake 11).
+(3) The image script named `gpt-image-1`, which the account no longer
+serves; the model list said what is there.
+
+**Why.** The English rule was checked on empty pages. The grid lesson
+(mistake 29) was written for a strip inside a grid, not for text, and was
+not applied to a new grid.
+
+**Rule.** An app in another language than the site's switches its
+language on in its own base template, and its language test first puts
+every localised value on the page (a date, a number). Grid tracks are
+`minmax(0, 1fr)`; long commands scroll in their own box and long links
+break. Before naming a paid model in a script, list what the account
+serves.
+
+Here: `docs/building_an_app.md` (mistakes 57, 58), `templates/bkm/base.html`, `tests/test_bkm.py`
+BKM: 23e85d9
+
+## PM-62 · 2026-10-22 · A card split in two by a grid placed on one axis
+
+**What happened.** cohort, the two material shelves. The card's tags and
+its drag handle were both given `grid-row: 1` to share the top line, with
+no column. The grid opened a second, implicit column, and the private
+card fell apart into two columns. All 27 tests and the browser test
+passed; the screenshot at 390px showed it, before the push.
+
+**Why.** Layout is invisible to tests that read markup or drive clicks
+(mistake 6). The screenshot step was there and caught it, which is the
+system working; the lesson is the CSS one.
+
+**Rule.** A grid item placed explicitly is placed on both axes
+(`grid-area: 1 / 1`), never on one.
+
+Here: `docs/building_an_app.md` (mistake 58), `static/cohort/cohort.css`
+BKM: 23e85d9
+
+## PM-61 · 2026-10-26 · A middleware placed by habit, and a sweep that did not know its own names
+
+**What happened.** Sprint D.4 of dentist (the mouth, the pilot clinic,
+"try as"). (1) The middleware that reads the tried role from the session
+was put first in `MIDDLEWARE`, before the session and the user exist, so
+it silently did nothing: three tests failed, the page never showed the
+tried role. (2) The class-defined sweep (mistake 13) did not know that a
+class name can hold an underscore (`dn-seg--root_canal`) and failed on a
+class the stylesheet defined. (3) A whole-tooth state painted the button
+and none of its five segments: the layout only looked at a surface's own
+row. (4) The tap-target check found the teeth crowded on a 320px phone
+(eight 34px teeth in a row) and the patient's name link in the heading
+short. All four caught by the sprint's own tests and the screen contract
+before any screenshot was looked at.
+
+**Why.** The middleware was placed by habit ("ours goes first"), not by
+what it reads. The sweep's regex was written for the names that existed
+the day it was written. The segment inheritance was a design decision
+nobody had made explicit until the chart drew a crown as a white square.
+
+**Rule.** A middleware is placed by what it needs: one that reads the
+session or the user goes after `SessionMiddleware` and
+`AuthenticationMiddleware`, and its test asserts through a real request
+that the state reached the view. A sweep over names matches the same
+alphabet the stylesheet allows (letters, digits, `-`, `_`). When a part
+can carry state at two levels (a tooth and its surfaces), write down
+which wins and draw it from that rule. On a phone a row of tap targets is
+sized by the thumb, not by the width: eight teeth do not fit 320px at
+44px each, so the row scrolls in its own box rather than shrinking.
+
+Here: `mysite/settings.py` (MIDDLEWARE), `tests/test_spr_d_3.py` (the sweep), `dentist/mouth.py`, `static/dentist/dentist.css`
+BKM: 9a2ecf5
+
 ## PM-60 · 2026-10-26 · A one-time door refused its own holder, and a second door forgot the mail
 
 **What happened.** Building the dentist app's two doors (an invitation

@@ -1196,3 +1196,43 @@ compare lower-case; and strip `<option>` labels before an "English only"
 check, because a language named in its own script is not the UI's
 language.
 
+### 56. A middleware is placed by what it reads, and a sweep knows its own alphabet
+
+dentist's middleware for the tried role was put first in `MIDDLEWARE`
+out of habit, before the session and the user exist, and silently did
+nothing until three tests said so. The same sprint, the class-defined
+sweep (mistake 13) failed on `dn-seg--root_canal` because its regex did
+not allow an underscore (postmortems PM-61).
+
+**The rule.** A middleware that reads the session or the user goes after
+`SessionMiddleware` and `AuthenticationMiddleware`, and one test asserts
+through a real request that the state reached the view. A sweep over
+names matches the alphabet the stylesheet allows (letters, digits, `-`,
+`_`). And a row of tap targets on a phone is sized by the thumb: when
+eight do not fit the width at 44px, the row scrolls in its own box
+rather than shrinking.
+
+### 57. A page in another language than the site prints its dates in the site's
+
+bkm is English on a site whose default language is Hebrew. Comment dates
+came out with Hebrew month names, and the "every screen is English" test
+passed, because the pages it read had no comments on them (PM-63).
+
+**The rule.** An app whose language is not the site's switches it on in
+its own base template for the whole page (`{% language "en" %}` around
+everything), and its language test first puts every localised value on
+the page: a date, a number, a plural. An empty page proves nothing.
+
+### 58. A grid item needs both axes, and a track needs `minmax(0, ...)`
+
+Twice in a week a grid passed every test and broke on the screenshot.
+cohort's card gave two items `grid-row: 1` and no column, so the grid
+opened a second column (PM-62). bkm's one-column track was `1fr`, so it
+grew to a `git clone` line and a long link and the page slid sideways at
+every width (PM-63).
+
+**The rule.** Place a grid item on both axes (`grid-area: 1 / 1`) or not
+at all. Size tracks with `minmax(0, 1fr)`, give children `min-width: 0`,
+let commands scroll in their own box and links break
+(`overflow-wrap: anywhere`).
+

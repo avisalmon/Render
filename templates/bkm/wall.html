@@ -1,0 +1,39 @@
+{% extends "bkm/base.html" %}
+{% block title %}{% if only_stars %}My stars · {% endif %}Best Known Methods{% endblock %}
+{% block content %}
+{% if only_stars %}
+  <div class="bm-head">
+    <h1 class="bm-title">My stars</h1>
+    <p class="bm-lede">The BKMs you starred. Only you see this.</p>
+  </div>
+{% else %}
+  {# REQ-B.1: what a BKM is and how to start, pinned above the cards. #}
+  <section class="bm-intro" aria-labelledby="bm-intro-title">
+    <div class="bm-paper bm-intro-paper">
+      <span class="bm-pin" aria-hidden="true"></span>
+      <h1 class="bm-title" id="bm-intro-title">Best Known Methods</h1>
+      <p class="bm-lede">Each BKM is a GitHub repository that knows how to teach you one thing, start to finish, with an AI beside you. You do not read it. You open it and ask.</p>
+      <ol class="bm-steps">
+        <li><b>Get the tools.</b> Git, VS Code, and an AI in it: Claude Code or GitHub Copilot.</li>
+        <li><b>Clone the BKM.</b> <code>git clone</code> its repository to your computer.</li>
+        <li><b>Open it.</b> Open the folder in VS Code and start the AI chat.</li>
+        <li><b>Ask.</b> "Hi, what do I do now?" The BKM takes it from there.</li>
+      </ol>
+    </div>
+    <div class="bm-note" aria-hidden="true">
+      <p>Pick one below.<br>Every card is a thing you will make.</p>
+    </div>
+  </section>
+{% endif %}
+
+{% if items %}
+  <div class="bm-wall" id="bm-wall">
+    {% for b in items %}{% include "bkm/_card.html" %}{% endfor %}
+  </div>
+{% elif only_stars %}
+  <div class="bm-paper bm-empty"><p>No stars yet. Star a BKM on the wall and it waits for you here.</p>
+    <a class="bm-btn" href="{% url 'bkm:wall' %}">Back to the wall</a></div>
+{% else %}
+  <div class="bm-paper bm-empty"><p>The first BKMs are on their way.</p></div>
+{% endif %}
+{% endblock %}

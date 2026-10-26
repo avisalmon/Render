@@ -187,6 +187,9 @@ NOT_IN_THE_PORTAL = {
     # The volunteer dental clinic (2026-10-26): a pilot on invented data,
     # entered by invitation or a patient link, never from a portal tile.
     "dentist",
+    # The BKM gateway (2026-10-26): Avi wants it apart from babook, reached
+    # by its own link; only the shared sign-in connects them.
+    "bkm",
 }
 
 _BY_SLUG = {a.slug: a for a in APPS}

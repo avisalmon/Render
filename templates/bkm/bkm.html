@@ -1,0 +1,102 @@
+{% extends "bkm/base.html" %}
+{% block title %}{{ bkm.name }} · Best Known Methods{% endblock %}
+{% block content %}
+<p class="bm-back"><a href="{% url 'bkm:wall' %}#{{ bkm.slug }}">Back to the wall</a></p>
+
+<div class="bm-detail">
+  <article class="bm-card bm-card-big" id="{{ bkm.slug }}" data-slug="{{ bkm.slug }}">
+    <span class="bm-pin" aria-hidden="true"></span>
+    <a class="bm-card-pic" href="{{ bkm.page_url }}" target="_blank" rel="noopener" aria-label="Open {{ bkm.name }}">
+      {% if bkm.picture %}<img src="{{ bkm.picture.url }}" alt="" width="960" height="720">{% else %}<span class="bm-card-nopic">{{ bkm.name }}</span>{% endif %}
+    </a>
+    <div class="bm-card-text">
+      <h1 class="bm-card-name">{{ bkm.name }}</h1>
+      <p class="bm-card-line">{{ bkm.tagline }}</p>
+      {% if not bkm.is_published %}<p class="bm-hidden-tag">Hidden: only you see it</p>{% endif %}
+    </div>
+    <div class="bm-card-acts">
+      <button type="button" class="bm-act bm-like" data-like="{{ bkm.slug }}" aria-pressed="{{ liked|yesno:'true,false' }}" aria-label="Like {{ bkm.name }}" title="Like">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 7.9 3.5 4.5 7 4.5c2 0 3.4 1.1 5 3 1.6-1.9 3-3 5-3 3.5 0 5.6 3.4 4.3 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"/></svg>
+        <span class="bm-count" data-count>{{ likes }}</span>
+      </button>
+      <button type="button" class="bm-act bm-star" data-star="{{ bkm.slug }}" aria-pressed="{{ starred|yesno:'true,false' }}" aria-label="Star {{ bkm.name }} for yourself" title="Star it for yourself">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.7 5.6 6.1.8-4.5 4.2 1.1 6-5.4-3-5.4 3 1.1-6-4.5-4.2 6.1-.8z"/></svg>
+      </button>
+      <a class="bm-btn bm-btn-small" href="{{ bkm.page_url }}" target="_blank" rel="noopener" id="bm-open">Open the BKM page</a>
+    </div>
+  </article>
+
+  {# REQ-B.11: the four steps, with this BKM's own commands. #}
+  <section class="bm-paper bm-start-paper" aria-labelledby="bm-start-title">
+    <span class="bm-pin" aria-hidden="true"></span>
+    <h2 id="bm-start-title">Start in four steps</h2>
+    <ol class="bm-steps">
+      <li><b>Get the tools.</b> Git, VS Code, and an AI in it: Claude Code or GitHub Copilot.</li>
+      <li><b>Clone it.</b> In a terminal, in the folder where you keep your projects:
+        <div class="bm-cmd"><code id="bm-clone">git clone {{ bkm.clone_url }}</code>
+          <button type="button" class="bm-copy" data-copy="#bm-clone">Copy</button></div></li>
+      <li><b>Open it in VS Code.</b>
+        <div class="bm-cmd"><code id="bm-code">code {{ bkm.folder }}</code>
+          <button type="button" class="bm-copy" data-copy="#bm-code">Copy</button></div>
+        Then open the AI chat: Claude Code or GitHub Copilot.</li>
+      <li><b>Ask.</b>
+        <div class="bm-cmd"><code id="bm-ask">Hi, what do I do now?</code>
+          <button type="button" class="bm-copy" data-copy="#bm-ask">Copy</button></div>
+        The BKM takes it from there: it explains, installs, teaches and guides.</li>
+    </ol>
+    <p class="bm-small">The repository: <a href="{{ bkm.repo_url }}" target="_blank" rel="noopener">{{ bkm.repo_url }}</a></p>
+  </section>
+</div>
+
+{# REQ-B.15, B.16: one thread, replies quote what they answer. #}
+<section class="bm-thread" id="thread" aria-labelledby="bm-thread-title">
+  <h2 class="bm-thread-title" id="bm-thread-title">Questions and comments</h2>
+  {% for c in comments %}
+    <article class="bm-note{% if c.deleted_at %} is-deleted{% endif %}" id="c{{ c.pk }}">
+      <p class="bm-note-head"><b>{{ c.author.display_name }}</b> <span class="bm-muted">{{ c.created_at|date:"j M Y, H:i" }}{% if c.edited_at and not c.deleted_at %} · edited{% endif %}</span></p>
+      {% if c.deleted_at %}
+        <p class="bm-note-body bm-muted">This comment was deleted.</p>
+      {% else %}
+        {% if c.reply_to %}
+          <a class="bm-quote" href="#c{{ c.reply_to.pk }}"><b>{{ c.reply_to.author.display_name }}</b>{% if c.reply_to.deleted_at %}This comment was deleted.{% else %}{{ c.reply_to.body|truncatechars:140 }}{% endif %}</a>
+        {% endif %}
+        <p class="bm-note-body">{{ c.body|linebreaksbr }}</p>
+        <div class="bm-note-acts">
+          <button type="button" class="bm-link" data-reply="{{ c.pk }}" data-who="{{ c.author.display_name }}">Reply</button>
+          {% if c.author_id == reader.pk %}
+            <details class="bm-edit">
+              <summary class="bm-link">Edit</summary>
+              <form method="post" class="bm-form">{% csrf_token %}
+                <input type="hidden" name="action" value="edit"><input type="hidden" name="comment" value="{{ c.pk }}">
+                <textarea name="body" rows="3" maxlength="2000" aria-label="Edit your comment">{{ c.body }}</textarea>
+                <button type="submit" class="bm-btn bm-btn-small">Save</button>
+              </form>
+            </details>
+          {% endif %}
+          {% if c.author_id == reader.pk or is_admin %}
+            <form method="post" class="bm-inline" data-confirm="Delete this comment?">{% csrf_token %}
+              <input type="hidden" name="action" value="delete"><input type="hidden" name="comment" value="{{ c.pk }}">
+              <button type="submit" class="bm-link">Delete</button>
+            </form>
+          {% endif %}
+        </div>
+      {% endif %}
+    </article>
+  {% empty %}
+    <p class="bm-thread-empty">No questions yet. Be the first: what are you about to build with it?</p>
+  {% endfor %}
+
+  <form method="post" class="bm-note bm-note-new bm-form" id="bm-comment-form">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="add">
+    <div class="bm-replying" id="bm-replying" hidden>
+      <span>Replying to <b id="bm-replying-who"></b></span>
+      <button type="button" class="bm-link" id="bm-replying-cancel">Cancel</button>
+    </div>
+    {{ form.reply_to }}
+    <label class="bm-field"><span>Your comment</span>{{ form.body }}</label>
+    {% for e in form.body.errors %}<p class="bm-error">{{ e }}</p>{% endfor %}
+    <button type="submit" class="bm-btn">Post</button>
+  </form>
+</section>
+{% endblock %}

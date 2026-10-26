@@ -1,0 +1,64 @@
+{% load static i18n %}{% language "en" %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{% block title %}Best Known Methods{% endblock %}</title>
+  <meta name="description" content="Avi Salmon's Best Known Methods: GitHub repositories that teach one thing start to finish, with an AI beside you.">
+  {% comment %}
+    Rule 3: the app's own frame, nothing from babook's base or menu, and no
+    link to babook. The look is cohort's noticeboard (Avi, 2026-10-26),
+    in English (REQ-B.5).
+  {% endcomment %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap">
+  <link rel="stylesheet" href="{% static 'bkm/bkm.css' %}">
+</head>
+<body class="bm{% if not user.is_authenticated %} is-visitor{% endif %}">
+  <header class="bm-bar">
+    <a class="bm-brand" href="{% url 'bkm:wall' %}"><span class="bm-brand-mark">BKM</span> Best Known Methods</a>
+    <nav class="bm-nav" aria-label="Menu">
+      <a href="{% url 'bkm:wall' %}" {% if section == 'wall' %}aria-current="page"{% endif %}>The wall</a>
+      {% if user.is_authenticated %}
+        <a href="{% url 'bkm:wall' %}?starred=1" {% if section == 'stars' %}aria-current="page"{% endif %}>My stars</a>
+      {% endif %}
+    </nav>
+    <div class="bm-account">
+      {% if user.is_authenticated %}
+        <span class="bm-who">{{ user.first_name|default:user.email }}</span>
+        <form method="post" action="{% url 'bkm:logout' %}">{% csrf_token %}<button type="submit" class="bm-link">Sign out</button></form>
+      {% else %}
+        <a class="bm-btn bm-btn-small" href="{% url 'bkm:login' %}?next={{ request.get_full_path|urlencode }}" data-gate>Sign in</a>
+      {% endif %}
+    </div>
+  </header>
+
+  <main class="bm-main">
+    {% if messages %}
+      <div class="bm-flash" role="status">{% for m in messages %}<p>{{ m }}</p>{% endfor %}</div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="bm-foot">BKMs by Avi Salmon. Each one is a public GitHub repository.</footer>
+
+  {# REQ-B.4: a computer is where a BKM is used; a phone is told so, and may go on. #}
+  <div class="bm-phone" id="bm-phone" role="dialog" aria-modal="true" aria-labelledby="bm-phone-title" hidden>
+    <div class="bm-paper bm-phone-paper">
+      <span class="bm-pin" aria-hidden="true"></span>
+      <svg class="bm-phone-icon" viewBox="0 0 64 48" aria-hidden="true"><rect x="6" y="4" width="52" height="32" rx="3"/><path d="M2 42h60M24 36l-2 6M40 36l2 6"/></svg>
+      <h2 id="bm-phone-title">This site is made for a computer</h2>
+      <p>A BKM is something you do in front of a computer: you clone a repository, open it in VS Code and work with an AI beside you. Please come back from your desktop or laptop.</p>
+      <p class="bm-muted">You can look around here on the phone, but it is not built for it.</p>
+      <button type="button" class="bm-btn bm-btn-quiet" id="bm-phone-ok">Continue on the phone anyway</button>
+    </div>
+  </div>
+
+  {% if not user.is_authenticated %}
+    {% include "bkm/_gate.html" %}
+  {% endif %}
+
+  <script src="{% static 'bkm/bkm.js' %}" defer></script>
+</body>
+</html>{% endlanguage %}
