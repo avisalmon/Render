@@ -4979,3 +4979,30 @@ carries a NULL for an institution with no managers, and `NOT IN (..., NULL)` mat
 nobody. Filtered with `managers__isnull=False`.
 
 **Tests.** `tests/test_spr_m_72.py`.
+
+## SPR-M.73: Appointed leaders get the mail, and can get it again  `DONE 2026-10-26`
+
+Lital's mail of 26.10, 11:06 (spec C28), the morning of the leaders' training. Run
+under Avi's standing rule of 2026-10-16.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.73.1 | `/matazim/staff/leaders/` appoints through `approve_leader` and sends `tell_them`; a waiting candidate is approved; another programme's leader is refused | REQ-M.202 | DONE |
+| F-M.73.2 | The leader's page: the email they sign in with, the leaders' area link, "שליחת מייל הכניסה שוב" (approved leaders only) | REQ-M.202 | DONE |
+| F-M.73.3 | `invite_views._mail`: "sent" only when the backend sent it, for the leader mail and the emailed invite | REQ-M.202 | DONE |
+| F-M.73.4 | The leader mail names the email to sign in with | REQ-M.202 | DONE |
+
+**"The site is not working."** `/matazim/` answered 200 at 11:10. Her mail came at 11:06,
+after six deploys between 08:16 and 10:48 that morning, each a restart. Nothing in the
+matazim code was found broken; asked her what she saw.
+
+**Found on the way.** The bot's reply of 25.10 pointed her to `/matazim/staff/leaders/`,
+which made a leader in silence and, for someone who had already registered through the
+open invite, approved nothing (`get_or_create` found the candidate row). And both mails
+used `fail_silently=True` inside a `try` that returned True, so a provider refusal (the
+Resend daily quota is the known one, see `app/mail_guard.py`) read "נשלח" on the screen.
+
+**What the bot did not do.** Appoint Liron or Ronit, or send them anything: a role is
+the program manager's act, and the button is now on each leader's page.
+
+**Tests.** `tests/test_spr_m_73.py`.
