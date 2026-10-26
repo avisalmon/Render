@@ -403,7 +403,7 @@ def test_the_api_never_shows_the_patients_account(client, world):
 def test_every_class_the_markup_uses_is_a_class_the_stylesheet_defines():
     """Mistake 13: an undefined class is silence, not an error."""
     css = Path("static/dentist/dentist.css").read_text(encoding="utf-8")
-    defined = set(re.findall(r"\.(dn-[a-z0-9-]+)", css))
+    defined = set(re.findall(r"\.(dn-[a-z0-9_-]+)", css))
     used = set()
     for path in Path("templates/dentist").rglob("*.html"):
         for classes in re.findall(r'class="([^"{}]+)"', path.read_text(encoding="utf-8")):

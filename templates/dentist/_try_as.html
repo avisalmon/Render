@@ -1,0 +1,14 @@
+{% if show %}
+<div class="dn-tryas" role="region" aria-label="Try the clinic as a role">
+  <form method="post" action="{% url 'dentist:try_as' clinic.slug %}" class="dn-tryas-in">{% csrf_token %}
+    <span class="dn-tryas-say">{% if role == 'admin' %}Demo clinic. See it as:{% elif role == 'dentist' %}You are seeing the clinic as a <b>dentist</b>.{% else %}You are seeing the clinic as the patient <b>{{ patient.first_name|default:"?" }}</b>.{% endif %}</span>
+    {% if role != 'dentist' %}<button class="dn-btn dn-btn--sm" name="role" value="dentist" type="submit">Dentist</button>{% endif %}
+    {% if role != 'patient' %}
+      <label class="dn-tryas-pick"><span class="dn-visually-hidden">Which patient</span>
+        <select class="dn-input dn-input--sm" name="patient">{% for p in patients %}<option value="{{ p.pk }}">{{ p.first_name }}</option>{% endfor %}</select></label>
+      <button class="dn-btn dn-btn--sm" name="role" value="patient" type="submit">Patient</button>
+    {% endif %}
+    {% if role != 'admin' %}<button class="dn-btn dn-btn--sm dn-btn--primary" name="role" value="admin" type="submit">Back to administrator</button>{% endif %}
+  </form>
+</div>
+{% endif %}

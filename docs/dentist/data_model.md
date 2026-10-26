@@ -2,7 +2,8 @@
 
 > **Status: approved by Avi, 2026-10-26**, with the draft answers in section
 > 10 taken as they stand; Amir may change them later. Built as migration
-> 0001 (D.1, live); no change since.
+> 0001 (D.1, live); 0002 relabelled an identification kind; 0003 added
+> `Clinic.is_demo` (2026-10-26).
 > This is the shape of the data on its own, kept apart from the spec on
 > purpose ([building_an_app.md](../building_an_app.md), Rule 4). The
 > decisions it rests on are in [spec.md](spec.md) chapter 1 and 1.10.
@@ -34,7 +35,7 @@ Clinic 1──* Chair
 
 | Model | What it is | Main fields |
 |---|---|---|
-| **Clinic** | One clinic. The pilot is one row; a second clinic is a second row that shares nothing | name, slug, timezone, languages offered to patients, `is_pilot` (the banner), opening notes, created |
+| **Clinic** | One clinic. The pilot is one row; a second clinic is a second row that shares nothing | name, slug, timezone, languages offered to patients, `is_pilot` (the banner), `is_demo` (invented data only; the one kind a superuser may be a member of, and where roles can be tried, spec 3.3 and 3.7), opening notes, created |
 | **ClinicMember** | A person's role at one clinic. The app's own model, one per (clinic, user); it never adds fields to the site's `User` | clinic, user, role: `dentist` / `admin`, display name as patients see it (a dentist may prefer a first name only), active, invited_by |
 | **Invitation** | A role granted to an email before the person has an account, redeemed on sign-up (as CrashTech does) | clinic, email, role, token, sent_at, accepted_at |
 | **Chair** | A treatment chair or room | clinic, name, active |

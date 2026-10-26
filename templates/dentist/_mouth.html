@@ -1,0 +1,38 @@
+{% comment %}The chart as a mouth (Rule 5.2). Two rows: upper arch, lower arch;
+the patient's right on the viewer's left. Each tooth is a button holding a
+five-part glyph (O in the middle, B above, L below, M towards the midline,
+D away from it) and its number; the button is the tap target, at least
+44px, and carries the whole state as its label for a screen reader. In
+the print page the same include renders with `static_chart` and no
+buttons. Expects `rows`, `selected`, optional `static_chart`.{% endcomment %}
+<div class="dn-mouth{% if static_chart %} dn-mouth--static{% endif %}" role="group" aria-label="Tooth chart">
+{% for row in rows %}
+  <div class="dn-arch{% if forloop.first %} dn-arch--upper{% else %} dn-arch--lower{% endif %}">
+  {% for t in row %}
+    {% if static_chart %}<div class="dn-tooth dn-tooth--{{ t.condition }}{% if t.gone %} is-gone{% endif %}" aria-label="{{ t.label }}" title="{{ t.label }}">{% else %}
+    <a class="dn-tooth dn-tooth--{{ t.condition }}{% if t.gone %} is-gone{% endif %}{% if t.n == selected %} is-on{% endif %}" href="?tooth={{ t.n }}{% if child %}&amp;child=1{% endif %}" data-tooth="{{ t.n }}" aria-label="{{ t.label }}" title="{{ t.label }}"{% if t.n == selected %} aria-current="true"{% endif %}>{% endif %}
+      {% if t.upper %}<span class="dn-tooth-n dn-mono">{{ t.n }}</span>{% endif %}
+      <svg viewBox="0 0 40 40" aria-hidden="true" class="dn-glyph{% if t.mesial == 'left' %} dn-glyph--mleft{% endif %}">
+        <path class="dn-seg dn-seg--{{ t.surfaces.B }}" d="M2,2 L38,2 L28,12 L12,12 Z"/>
+        <path class="dn-seg dn-seg--{{ t.surfaces.L }}" d="M2,38 L38,38 L28,28 L12,28 Z"/>
+        {% if t.mesial == 'left' %}
+        <path class="dn-seg dn-seg--{{ t.surfaces.M }}" d="M2,2 L12,12 L12,28 L2,38 Z"/>
+        <path class="dn-seg dn-seg--{{ t.surfaces.D }}" d="M38,2 L28,12 L28,28 L38,38 Z"/>
+        {% else %}
+        <path class="dn-seg dn-seg--{{ t.surfaces.D }}" d="M2,2 L12,12 L12,28 L2,38 Z"/>
+        <path class="dn-seg dn-seg--{{ t.surfaces.M }}" d="M38,2 L28,12 L28,28 L38,38 Z"/>
+        {% endif %}
+        <rect class="dn-seg dn-seg--{{ t.surfaces.O }}" x="12" y="12" width="16" height="16"/>
+        {% if t.gone %}<path class="dn-gone-x" d="M6,6 L34,34 M34,6 L6,34"/>{% endif %}
+      </svg>
+      {% if not t.upper %}<span class="dn-tooth-n dn-mono">{{ t.n }}</span>{% endif %}
+    {% if static_chart %}</div>{% else %}</a>{% endif %}
+  {% endfor %}
+  </div>
+{% endfor %}
+</div>
+<ul class="dn-legend" aria-label="What the colours mean">
+  <li><i class="dn-seg--decay"></i>decay</li><li><i class="dn-seg--filling"></i>filling</li><li><i class="dn-seg--crown"></i>crown</li>
+  <li><i class="dn-seg--root_canal"></i>root canal</li><li><i class="dn-seg--implant"></i>implant</li><li><i class="dn-seg--fracture"></i>fracture</li>
+  <li><i class="dn-seg--missing"></i>missing / to extract</li><li><i class="dn-seg--other"></i>other</li>
+</ul>

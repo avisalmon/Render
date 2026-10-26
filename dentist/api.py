@@ -17,7 +17,17 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.routers import DefaultRouter
 
 from . import access, people
-from .models import AccessLog, Chair, Clinic, ClinicMember, HistoryItem, Invitation, Patient
+from .models import (
+    AccessLog,
+    Chair,
+    Clinic,
+    ClinicMember,
+    HistoryItem,
+    Invitation,
+    Patient,
+    PlanItem,
+    ToothState,
+)
 
 
 class IsClinicMember(permissions.BasePermission):
@@ -117,6 +127,70 @@ class HistoryViewSet(ClinicScoped, viewsets.ModelViewSet):
         instance.save(update_fields=["active"])
 
 
+# ------------------------------------------------------------- the mouth
+
+
+class _PatientOfClinic:
+    def validate_patient(self, patient):
+        if patient.clinic_id != self.context["view"].clinic().pk:
+            raise serializers.ValidationError("Not a patient of this clinic.")
+        return patient
+
+
+class ToothStateSerializer(_PatientOfClinic, serializers.ModelSerializer):
+    class Meta:
+        model = ToothState
+        fields = ["id", "patient", "tooth", "surface", "condition", "note", "noted_by", "noted_at", "visit"]
+        read_only_fields = ["noted_by", "noted_at", "visit"]
+
+
+class ToothStateViewSet(ClinicScoped, mixins.ListModelMixin, mixins.RetrieveModelMixin,
+                        mixins.CreateModelMixin, viewsets.GenericViewSet):
+    """Rows only grow (Rule 5.1): no update, no delete. The chart is the
+    latest row per tooth and surface; `?patient=` narrows to one mouth."""
+
+    serializer_class = ToothStateSerializer
+
+    def get_queryset(self):
+        rows = ToothState.objects.filter(patient__in=access.patients_for(self.request.user, self.clinic()))
+        patient = self.request.query_params.get("patient")
+        return rows.filter(patient_id=patient) if patient else rows
+
+    def perform_create(self, serializer):
+        row = serializer.save(noted_by=self.request.user)
+        access.log(self.clinic(), self.request.user, "edited", patient=row.patient, what=f"api: tooth {row.tooth}{row.surface}")
+
+
+class PlanItemSerializer(_PatientOfClinic, serializers.ModelSerializer):
+    class Meta:
+        model = PlanItem
+        fields = ["id", "patient", "tooth", "procedure", "priority", "status", "note", "planned_by", "planned_at", "done_in"]
+        read_only_fields = ["planned_by", "planned_at", "done_in"]
+
+    def validate_status(self, status):
+        # Done comes from a visit (Rule 5.3), never from a request.
+        if status == "done":
+            raise serializers.ValidationError("Done is set by the visit that did it.")
+        return status
+
+
+class PlanItemViewSet(ClinicScoped, viewsets.ModelViewSet):
+    serializer_class = PlanItemSerializer
+
+    def get_queryset(self):
+        rows = PlanItem.objects.filter(patient__in=access.patients_for(self.request.user, self.clinic()))
+        patient = self.request.query_params.get("patient")
+        return rows.filter(patient_id=patient) if patient else rows
+
+    def perform_create(self, serializer):
+        item = serializer.save(planned_by=self.request.user)
+        access.log(self.clinic(), self.request.user, "edited", patient=item.patient, what="api: plan item added")
+
+    def perform_destroy(self, instance):
+        instance.status = "dropped"  # kept, dropped (Rule 5.3)
+        instance.save(update_fields=["status"])
+
+
 # ---------------------------------------------------------- the clinic's own
 
 
@@ -204,6 +278,7 @@ class AccessLogViewSet(ClinicScoped, mixins.ListModelMixin, viewsets.GenericView
 
 
 router = DefaultRouter()
-for prefix, viewset in (("patients", PatientViewSet), ("history", HistoryViewSet), ("members", MemberViewSet),
-                        ("invitations", InvitationViewSet), ("chairs", ChairViewSet), ("access-log", AccessLogViewSet)):
+for prefix, viewset in (("patients", PatientViewSet), ("history", HistoryViewSet), ("teeth", ToothStateViewSet),
+                        ("plan", PlanItemViewSet), ("members", MemberViewSet), ("invitations", InvitationViewSet),
+                        ("chairs", ChairViewSet), ("access-log", AccessLogViewSet)):
     router.register(prefix, viewset, basename=f"api-{prefix}")

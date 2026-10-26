@@ -236,7 +236,11 @@ Rule 3.3: **the site admin sees nothing clinical.** A superuser is not a
 member of any clinic and gets no bypass. This is a deliberate exception to
 the usual pattern on this site, because the data is medical; it is written
 down here, and the one thing a superuser can still do is create a clinic and
-invite its first administrator.
+invite its first administrator. **The one exception** (Avi, 2026-10-26): a
+clinic marked demo (`Clinic.is_demo`, invented data only, set by the seed
+and never from a screen) may have a superuser as an explicit member, so the
+people building the app can run a clinic that feels live. The seed makes
+the site's superusers administrators of `pilot-clinic`.
 
 Rule 3.4: **a patient's login is a link, not a sign-up.** The clinic creates
 the record; an administrator makes a one-time link for that patient (printed
@@ -253,6 +257,16 @@ the dentist's working notes (settled at approval; Amir may change it).
 
 Rule 3.6: **chairs and opening hours are the clinic's own setup**, editable
 by its administrators, never fixed in code.
+
+Rule 3.7: **in a demo clinic, an administrator can try the other roles.**
+Avi, 2026-10-26: "have me and later Amir see the app as a doctor and also
+as a patient." A bar on every page of a demo clinic lets its administrator
+see it as a dentist, or as one of its demo patients, and come back. The
+choice is session state, honoured by the access functions alone and only
+while the person really is an active administrator of that demo clinic;
+nothing is written to any row, and as a patient every staff screen and API
+route refuses exactly as it would refuse a real patient. A real clinic
+offers none of this.
 
 ---
 

@@ -10,16 +10,27 @@ door and screen.
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
 from django.views.decorators.http import require_POST
 
-from . import access, people, records
+from . import access, mouth, people, records
 from .decorators import signed_in
 from .forms import ClinicForm, HistoryForm, PatientForm
-from .models import Chair, Clinic, ClinicMember, Invitation, PatientLink, VisitProcedure
+from .models import (
+    SURFACES,
+    Chair,
+    Clinic,
+    ClinicMember,
+    Invitation,
+    PatientLink,
+    PlanItem,
+    ToothState,
+    VisitProcedure,
+)
 
 
 def _clinic(slug):
@@ -42,6 +53,9 @@ def home(request):
 
     mine = list(access.memberships(request.user))
     me = access.patient_of(request.user)
+    tried = access.trying(request.user)
+    if me is not None and tried and tried["role"] == "patient":
+        return redirect("dentist:me")  # trying the clinic as a patient (Rule 3.7)
     if len(mine) == 1 and me is None:
         return redirect("dentist:clinic_home", slug=mine[0].clinic.slug)
     if me is not None and not mine and not access.may_create_clinic(request.user):
@@ -421,3 +435,149 @@ def me(request):
         "clinic": clinic, "patient": person, "next_one": upcoming.first(), "upcoming": upcoming[1:6], "past": past,
         "plan": person.plan.exclude(status="dropped"), "done": done,
     })
+
+
+# ---------------------------------------------------- trying a role (demo)
+
+
+@signed_in
+@require_POST
+def try_as(request, slug):
+    """**Administrator of a demo clinic** (Rule 3.7). Choose to see the
+    clinic as a dentist, as one of its demo patients, or as yourself
+    again. Session state only; checked by access.py on every request."""
+    clinic = _clinic(slug)
+    if not access.may_try(request.user, clinic):
+        raise PermissionDenied
+    role = request.POST.get("role")
+    if role not in access.TRY_ROLES:
+        raise Http404
+    if role == "admin":
+        request.session.pop(access.TRY_KEY, None)
+        return redirect("dentist:clinic_home", slug=slug)
+    state = {"clinic": slug, "role": role}
+    if role == "patient":
+        patient = clinic.patients.filter(is_demo=True, pk=request.POST.get("patient") or 0).first() \
+            or clinic.patients.filter(is_demo=True).order_by("first_name").first()
+        if patient is None:
+            messages.error(request, "This clinic has no demo patient to try.")
+            return redirect("dentist:clinic_home", slug=slug)
+        state["patient"] = patient.pk
+    request.session[access.TRY_KEY] = state
+    access.log(clinic, request.user, "viewed", what=f"trying the clinic as {role}")
+    return redirect("dentist:me" if role == "patient" else "dentist:clinic_home", **({} if role == "patient" else {"slug": slug}))
+
+
+# ------------------------------------------------------------- D.4: the mouth
+
+
+def _mouth_context(request, clinic, member, person, child):
+    latest = mouth.chart(person)
+    selected = mouth.valid_tooth(request.GET.get("tooth") or request.POST.get("tooth"))
+    return _ctx(
+        clinic, member, patient=person, child=child, rows=mouth.layout(person, child=child, latest=latest),
+        selected=selected, history=mouth.history_of(person, selected) if selected else [],
+        surfaces=[("", "Whole"), ("M", "M"), ("D", "D"), ("B", "B"), ("L", "L"), ("O", "O")],
+        conditions=ToothState.CONDITIONS, last_condition=request.session.get("dn_last_condition", "decay"),
+        plan=person.plan.exclude(status="dropped"), dropped=person.plan.filter(status="dropped"),
+        procedures=clinic.procedures.filter(active=True), alerts=person.alerts,
+    )
+
+
+def _wants_child(request, person):
+    flag = request.GET.get("child")
+    return flag == "1" if flag is not None else mouth.has_child_teeth(person)
+
+
+@signed_in
+def mouth_screen(request, slug, pk):
+    """**Dentist.** The chart as a mouth and the plan under it (Rule 5.1 to
+    5.3, 11.2): one tap on a tooth opens its state, two record the common
+    case. Every opening is a log row."""
+    clinic = _clinic(slug)
+    member = access.require_member(request.user, clinic)
+    person = access.patient_or_404(request.user, clinic, pk)
+    access.log(clinic, request.user, "viewed", patient=person, what="mouth")
+    return render(request, "dentist/mouth.html", _mouth_context(request, clinic, member, person, _wants_child(request, person)))
+
+
+@signed_in
+@require_POST
+def tooth_record(request, slug, pk):
+    """A new dated, authored row; never an edit of an old one (Rule 5.1)."""
+    clinic = _clinic(slug)
+    access.require_member(request.user, clinic)
+    person = access.patient_or_404(request.user, clinic, pk)
+    tooth = mouth.valid_tooth(request.POST.get("tooth"))
+    surface = request.POST.get("surface") or ""
+    condition = request.POST.get("condition") or ""
+    back = reverse("dentist:mouth", args=[slug, pk]) + f"?tooth={tooth or ''}" + ("&child=1" if request.POST.get("child") == "1" else "")
+    if tooth is None or surface not in dict(SURFACES) or condition not in dict(ToothState.CONDITIONS):
+        messages.error(request, "Pick a tooth, a surface and a condition.")
+        return redirect(back)
+    ToothState.objects.create(patient=person, tooth=tooth, surface=surface, condition=condition,
+                              note=(request.POST.get("note") or "")[:240], noted_by=request.user)
+    request.session["dn_last_condition"] = condition
+    access.log(clinic, request.user, "edited", patient=person, what=f"tooth {tooth}{surface} recorded")
+    return redirect(back)
+
+
+@signed_in
+@require_POST
+def plan_add(request, slug, pk):
+    clinic = _clinic(slug)
+    access.require_member(request.user, clinic)
+    person = access.patient_or_404(request.user, clinic, pk)
+    procedure = clinic.procedures.filter(active=True, pk=request.POST.get("procedure") or 0).first()
+    if procedure is None:
+        messages.error(request, "Pick a procedure from the clinic's list.")
+    else:
+        last = person.plan.exclude(status="dropped").order_by("-priority").values_list("priority", flat=True).first() or 0
+        PlanItem.objects.create(patient=person, procedure=procedure, tooth=mouth.valid_tooth(request.POST.get("tooth")),
+                                priority=last + 1, note=(request.POST.get("note") or "")[:240], planned_by=request.user)
+        access.log(clinic, request.user, "edited", patient=person, what="plan item added")
+    return redirect("dentist:mouth", slug=slug, pk=pk)
+
+
+@signed_in
+@require_POST
+def plan_item_action(request, slug, pk, item, what):
+    """Move up or down, or drop. Done is never set here: doing the
+    procedure in a visit marks it (Rule 5.3, sprint D.6)."""
+    clinic = _clinic(slug)
+    access.require_member(request.user, clinic)
+    person = access.patient_or_404(request.user, clinic, pk)
+    row = get_object_or_404(person.plan, pk=item)
+    live = list(person.plan.exclude(status="dropped").order_by("priority", "id"))
+    if what == "drop":
+        row.status = "dropped"
+        row.save(update_fields=["status"])
+    elif what in ("up", "down") and row in live:
+        i = live.index(row)
+        j = i - 1 if what == "up" else i + 1
+        if 0 <= j < len(live):
+            live[i], live[j] = live[j], live[i]
+            for n, r in enumerate(live, start=1):
+                if r.priority != n:
+                    r.priority = n
+                    r.save(update_fields=["priority"])
+    else:
+        raise Http404
+    access.log(clinic, request.user, "edited", patient=person, what=f"plan item {what}")
+    return redirect("dentist:mouth", slug=slug, pk=pk)
+
+
+@signed_in
+def patient_print(request, slug, pk):
+    """The chart and the plan on one page, for a patient who takes it to
+    another clinic (Rule 5.4). Logged as printed."""
+    clinic = _clinic(slug)
+    member = access.require_member(request.user, clinic)
+    person = access.patient_or_404(request.user, clinic, pk)
+    access.log(clinic, request.user, "printed", patient=person, what="chart and plan")
+    child = _wants_child(request, person)
+    return render(request, "dentist/print.html", _ctx(
+        clinic, member, patient=person, child=child, rows=mouth.layout(person, child=child),
+        plan=person.plan.exclude(status="dropped"), alerts=person.alerts, now=timezone.now(),
+        notes=person.teeth.exclude(note="").order_by("-noted_at", "-id")[:20],
+    ))

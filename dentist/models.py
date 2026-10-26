@@ -56,6 +56,10 @@ class Clinic(models.Model):
     # Rule 2.7: the banner is on while this is true, and it cannot be turned
     # off in the pilot from any screen.
     is_pilot = models.BooleanField(default=True)
+    # A demo clinic holds invented data only. It is the one kind of clinic a
+    # superuser may be a member of, and the one where roles can be tried
+    # (Rule 3.3, 3.7). Set by the seed, never from a screen.
+    is_demo = models.BooleanField(default=False)
     opening_notes = models.TextField(blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(USER, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")

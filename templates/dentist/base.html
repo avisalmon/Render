@@ -1,4 +1,4 @@
-{% load static i18n %}<!doctype html>
+{% load static i18n dentist_tags %}<!doctype html>
 {% comment %}
 dentist's own base template (spec Rule 2.2). It never extends babook's
 base.html and never inherits its header, footer or menu. Nothing links out
@@ -47,6 +47,7 @@ forced to English so the project's Hebrew default cannot leak into dates.
       </div>
     </div>
   </header>
+  {% try_as_bar %}
 
   <main class="dn-main">
     {% if messages %}{% for message in messages %}<p class="dn-note">{{ message }}</p>{% endfor %}{% endif %}

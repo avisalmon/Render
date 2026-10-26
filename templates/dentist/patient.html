@@ -45,11 +45,12 @@ deletion. Every form folds with its value showing (mistake 28).{% endcomment %}
 </details>
 {% if resolved %}<p class="dn-fine" style="margin-top:8px">Resolved, kept: {% for h in resolved %}{{ h.get_what_display }}{% if not forloop.last %}, {% endif %}{% endfor %}.</p>{% endif %}
 
-<h2 style="margin-top:22px">Treatment plan</h2>
+<div class="dn-pagehead" style="margin-top:22px"><h2>The mouth and the plan</h2>
+  <a class="dn-btn dn-btn--primary" href="{% url 'dentist:mouth' clinic.slug patient.pk %}">Open the chart</a></div>
 {% for item in plan %}
   <div class="dn-row"><span class="dn-row-main"><b>{{ item.procedure.name_en }}{% if item.tooth %} &middot; tooth <span class="dn-mono">{{ item.tooth }}</span>{% endif %}</b><span>{{ item.get_status_display }}{% if item.note %} &middot; {{ item.note }}{% endif %}</span></span></div>
 {% empty %}
-  <div class="dn-empty">No plan yet. The chart and the plan are written in sprint D.4.</div>
+  <div class="dn-empty">No plan yet. Open the chart to record the teeth and write the plan.</div>
 {% endfor %}
 
 <h2 style="margin-top:22px">Appointments</h2>
