@@ -6,6 +6,21 @@
 
 ---
 
+## 0. The clinic's requirements (these outrank everything below)
+
+Once the basic app is live, the clinic-side owner (Amir, see 1.8) writes to
+Avi's Gmail, and his requests are carried out end to end the way מט״צים's
+are (1.9). Each one lands here first, in his words, with what it became and
+when. Where this chapter and any later chapter disagree, **this chapter
+wins**, and the disagreement is written down here rather than left for the
+next reader to find.
+
+| # | What the clinic asked (his words, short) | What it became | Built by |
+|---|---|---|---|
+| | *Nothing yet. The channel opens when the basic app exists.* | | |
+
+---
+
 ## 1. What dentist is
 
 ### 1.1 In one paragraph
@@ -26,6 +41,17 @@ Every page carries a clear banner: **this is a pilot, not an official
 system.** It is there because the app handles health information, and nobody
 using it should mistake a pilot for something with an organisation's formal
 backing behind it.
+
+**The pilot's finish line:** it succeeds when the clinic runs one real clinic
+day on it, from the first patient through the door to the last, with nothing
+written on paper that the app should have held. That is the target, not a
+feature list.
+
+**The clinic owns its data.** At any time an administrator can export
+everything the clinic holds, in one click, in a form another system can
+read. If the pilot ends, the clinic takes its data and it is deleted from
+our side. For a clinic treating this group of people, that is the first
+question they will ask, so it is answered before they ask it.
 
 ### 1.3 Privacy is stricter here than anywhere else on the site
 
@@ -51,7 +77,27 @@ belongs to.
 | **Administrator** | Whoever runs the clinic (there may be several) | The diary, the dentists and their hours, patients' details, reminders, the clinic's records |
 | **Patient** | A person the clinic treats | Their appointments and reminders, in a language they read |
 
-Whether patients sign in at all, or only receive messages, is open (1.8).
+Whether patients sign in at all, or only receive messages, is open (1.10).
+
+**Roles are granted, never taken.** There is no open sign-up for a medical
+system. A dentist or an administrator exists because an administrator invited
+them, by email, and the invitation can be sent before the person has an
+account, the way CrashTech does it. Patients are never invited: they are
+records the clinic creates (and, if 1.10 Q3 says so, accounts they are later
+given).
+
+**The walk-in is the normal case.** A volunteer clinic for people without
+status gets people arriving in pain, with no appointment, sometimes with no
+phone and no papers. So a patient record can start with almost nothing, a
+first name and a clinic number, and be filled in later; and the diary has a
+**today's queue** beside the booked appointments, with a pain level, so the
+dentist on shift sees who is waiting and who is hurting most.
+
+**The volunteer who comes once a month.** Dentists rotate; many will use the
+app on their first shift and not again for weeks. So a dentist's screens are
+built like CrashTech's event screens: one job per screen, usable without
+being taught, on whatever device the clinic has, including a shared tablet
+on bad wifi. The administrator's screens can be denser; the dentist's cannot.
 
 ### 1.5 What it does: the feature areas
 
@@ -67,12 +113,13 @@ without it, **later** where it can.
 | **Treatment plan** | What each tooth needs, in what order, and how far it got: planned, in progress, done | pilot |
 | **Visits and notes** | What was done at each visit (procedure, tooth, surface, anaesthetic), the dentist's notes, signed by who wrote them | pilot |
 | **X-rays and photos** | Images attached to the patient, the visit and the tooth, stored privately | pilot |
-| **Appointments** | Dentists' hours and shifts, chairs, booking, a waiting list, who did not come | pilot |
+| **Appointments and the queue** | Dentists' hours and shifts, chairs, booking, today's walk-in queue with a pain level, a waiting list, who did not come | pilot |
 | **Reminders** | SMS or WhatsApp before an appointment, saying only when and where | pilot |
 | **Consent** | The patient's informed consent to a treatment, recorded | pilot |
 | **Payments record** | What a treatment cost, was paid, donated or waived. **A record only: the app never takes a payment** | pilot, if the clinic charges at all |
 | **Who looked** | Every opening and change of a patient's record, by whom and when | pilot |
-| **Clinic setup** | Dentists, staff, chairs, opening hours | pilot |
+| **Clinic setup** | Dentists and administrators (invited by email), chairs, opening hours | pilot |
+| **Export** | Everything the clinic holds, in one click, in a form another system can read | pilot |
 | Prescriptions and referrals | A letter to a pharmacy, a specialist or a hospital | later |
 | Recall | "Time for your check-up" six months on | later |
 | Reports | Anonymous numbers for the nonprofit and its donors: patients treated, treatments done | later |
@@ -88,26 +135,39 @@ without it, **later** where it can.
 - **Not one clinic's database mixed with another's.** When there is a second
   clinic, neither can see a single row of the other's.
 
-### 1.7 How it is built, and how it grows
+### 1.7 How it is built
 
 - **A standalone app** on this site, at `/dentist/`, under every rule in
   [building_an_app.md](../building_an_app.md): its own models, pages, look,
   error pages, docs and full API.
 - **Files** (X-rays, photos, consent documents) go to Google Cloud Storage,
-  never the server's disk, in a folder of their own (see 1.8 for which
+  never the server's disk, in a folder of their own (see 1.10 for which
   bucket).
-- **It grows by email.** Once the basic app is live, its owner on the clinic
-  side writes to Avi's Gmail and the requests are carried out end to end, the
-  way מט״צים works with Lital and Naomi: a scheduled task on Avi's PC checks
-  every 10 minutes, a session specs, builds, tests, publishes and answers in
-  the same thread. **Only that one person** has this authority, and only
-  from an address Avi confirms once they have signed up. Avi turns it on
-  when the basic app exists.
-- Because this app holds medical information, the mail bot **stops and asks
-  Avi** before anything that exports, deletes or widens access to patient
-  data, whoever asked for it.
+- **It ships through the release train** like every app on this site
+  ([release_train.md](../procedures/release_train.md)): nobody pushes it to
+  production directly, including the mail bot.
 
-### 1.8 Open questions
+### 1.8 Who owns it on the clinic side
+
+Amir, Avi's friend, is the clinic-side owner: the person who decides what the
+clinic needs and whose requests are built. He is not yet on the site. When
+he has signed up, Avi confirms his address once, and from then on his word
+on this app carries Avi's authority, the way Lital's and Naomi's do on
+מט״צים (and nobody else's does, whatever a mail claims).
+
+### 1.9 How it grows: by email
+
+Once the basic app is live, Amir writes to Avi's Gmail and the requests are
+carried out end to end: a scheduled task on Avi's PC checks every 10 minutes,
+a session specs the request into chapter 0, builds it with tests, ships it
+through the train, and answers in the same thread. Avi turns this on when
+the basic app exists.
+
+Because this app holds medical information, the mail bot has one extra
+brake: it **stops and asks Avi** before anything that exports, deletes or
+widens access to patient data, whoever asked for it.
+
+### 1.10 Open questions
 
 | # | Question | Why it matters |
 |---|---|---|
