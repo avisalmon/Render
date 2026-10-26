@@ -878,6 +878,12 @@ checked afterwards and was clean.
 a file and act on the test command's own exit code; confirm a file pattern
 matched something before passing it on.
 
+**Again, 2026-10-26.** Building the release train, a commit was chained
+after a test run with `;`, and went ahead with one test failing. Caught
+before any push; the commit was redone only after a green run. The
+train itself now acts on pytest's own exit code (`run_pytest`), which is
+the durable form of this rule: a person forgets, a gate does not.
+
 Here: this file
 BKM: FullStackBKM 2458104
 
