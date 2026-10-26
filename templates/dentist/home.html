@@ -1,0 +1,55 @@
+{% extends "dentist/base.html" %}
+{% block title %}Clinic{% endblock %}
+{% block screen %}home{% endblock %}
+{% comment %}The front door, every persona. Signed out it says what this is
+in two sentences and offers the way in; it never shows a patient's name or
+a clinic's numbers. Signed in it is a list of this person's clinics, or
+their own record, or, for a superuser with nothing, the one thing they may
+do (Rule 3.3).{% endcomment %}
+{% block content %}
+{% if signed_out %}
+  <h1>A volunteer dental clinic</h1>
+  <p class="dn-lede">The working system of a clinic run by volunteers: who is coming,
+    who is waiting, what each patient needs, and what was done. This is a pilot, running
+    on invented data.</p>
+  <div class="dn-card">
+    <p>Dentists and administrators are invited by the clinic. Patients receive a link
+      from the front desk. Both sign in here.</p>
+    <a class="dn-btn dn-btn--primary" href="{% url 'dentist:login' %}">Sign in</a>
+  </div>
+
+{% else %}
+  <h1>Your clinics</h1>
+  {% for m in memberships %}
+    <a class="dn-row" href="{% url 'dentist:clinic_home' m.clinic.slug %}">
+      <span class="dn-row-main"><b>{{ m.clinic.name }}</b>
+        <span>{{ m.get_role_display }}{% if m.clinic.is_pilot %} &middot; pilot{% endif %}</span></span>
+      <span class="dn-tag dn-tag--go">Open</span>
+    </a>
+  {% empty %}
+    {% if not patient %}
+      <div class="dn-empty">You are not a member of any clinic. A clinic's administrator
+        invites you by email; the invitation appears here when you sign in with that address.</div>
+    {% endif %}
+  {% endfor %}
+
+  {% if patient %}
+    <p class="dn-cap" style="margin-top:18px">You</p>
+    <div class="dn-row">
+      <span class="dn-row-main"><b>{{ patient.first_name }}</b>
+        <span>{{ patient.clinic.name }} &middot; <span class="dn-mono">{{ patient.clinic_number }}</span></span></span>
+    </div>
+    <p class="dn-fine">Your appointments and your plan arrive here in a later sprint.</p>
+  {% endif %}
+
+  {% if may_create %}
+    <div class="dn-card" style="margin-top:22px">
+      <p class="dn-cap">Site administrator</p>
+      <p>You can create a clinic and invite its first administrator. You will not be a
+        member of it and will see nothing inside it: this app holds health information,
+        and the site administrator's usual bypass is refused here on purpose.</p>
+      <a class="dn-btn" href="{% url 'dentist:clinic_new' %}">Create a clinic</a>
+    </div>
+  {% endif %}
+{% endif %}
+{% endblock %}

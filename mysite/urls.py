@@ -68,6 +68,9 @@ urlpatterns = [
     # Books is the central app (docs/books/spec.md), its own product, same reasoning.
     path("books/", include("books.urls", namespace="books")),
     path("cohort/", include("cohort.urls", namespace="cohort")),
+    # dentist is its own product (docs/dentist/spec.md): a volunteer dental
+    # clinic, sealed both ways, same reasoning as the apps above.
+    path("dentist/", include("dentist.urls", namespace="dentist")),
     path("blackjack/", include("blackjack.urls", namespace="blackjack")),
     # improv is private (docs/improv/spec.md ch. 7): its gate is in the middleware.
     path("improv/", include("improv.urls", namespace="improv")),

@@ -1,0 +1,20 @@
+{% extends "dentist/base.html" %}
+{% block title %}Sign in{% endblock %}
+{% block screen %}login{% endblock %}
+{% block content %}
+<h1>Sign in</h1>
+<p class="dn-lede">With the email address the clinic invited, or the one on your patient link.</p>
+
+<a class="dn-btn dn-btn--wide" href="{{ google_url }}" style="margin-bottom:14px">Continue with Google</a>
+
+<form method="post" class="dn-card">{% csrf_token %}
+  {% if form.non_field_errors %}<p class="dn-error" style="margin-bottom:10px">That email and password do not match. Try again, or reset the password below.</p>{% endif %}
+  <label class="dn-field"><span>Email</span>
+    <input class="dn-input" type="email" name="username" value="{{ form.username.value|default:'' }}" autocomplete="username" required autofocus></label>
+  <label class="dn-field"><span>Password</span>
+    <input class="dn-input" type="password" name="password" autocomplete="current-password" required></label>
+  <input type="hidden" name="next" value="{{ next }}">
+  <button class="dn-btn dn-btn--primary dn-btn--wide" type="submit">Sign in</button>
+</form>
+<p class="dn-fine"><a href="{% url 'dentist:password_reset' %}">Forgotten the password?</a></p>
+{% endblock %}

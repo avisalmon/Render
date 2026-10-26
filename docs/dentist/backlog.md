@@ -1,6 +1,6 @@
 # dentist: Backlog
 
-**Status: D.1 in progress in dev, 2026-10-26.** Avi builds the first version;
+**Status: D.1 built in dev, not shipped, 2026-10-26.** Avi builds the first version;
 Amir takes it over through [spec.md](spec.md) chapter 0 once it is live.
 Nothing is in production.
 
@@ -14,7 +14,7 @@ through the release train.
 
 | Sprint | Name | What it delivers | Status |
 |---|---|---|---|
-| D.1 | The skeleton and the seal | The app exists, sealed both ways: models and migrations, admin, own base with the pilot banner, own sign-in (email and Google), own error pages, registry entry, clinic isolation proven, a demo clinic seeded once | `IN PROGRESS` |
+| D.1 | The skeleton and the seal | The app exists, sealed both ways: models and migrations, admin, own base with the pilot banner, own sign-in (email and Google), own error pages, registry entry, clinic isolation proven, a demo clinic seeded once | `DONE (dev), 2026-10-26` |
 | D.2 | Clinics and people | A superuser creates a clinic and invites its first admin; admins invite dentists and admins by email; chairs and hours; the member's home per role | `TODO` |
 | D.3 | The patient record | Create with a first name; find; details; identification kinds; history with alerts; the access log; export and delete a patient; a patient's one-time login link | `TODO` |
 | D.4 | The mouth | The FDI chart as dated rows, tappable on a tablet; the treatment plan; print | `TODO` |
@@ -25,7 +25,7 @@ through the release train.
 
 ---
 
-## SPR-D.1 — The skeleton and the seal `IN PROGRESS`
+## SPR-D.1 — The skeleton and the seal `DONE (dev), 2026-10-26`
 
 | Feature | Description | Spec |
 | --- | --- | --- |
@@ -37,4 +37,13 @@ through the release train.
 | F-D.1.6 | Clinic scoping: one function, used everywhere; a test per model that clinic A never sees clinic B | Rule 3.1 |
 | F-D.1.7 | The superuser sees nothing clinical, and can only create a clinic and invite its first administrator | Rule 3.3 |
 | F-D.1.8 | A demo clinic with demo patients, seeded once, obviously demo | Rule 10.4 |
-| F-D.1.9 | The isolation tests (imports, links, templates, Hebrew/RTL only where it belongs), screenshots at phone and tablet width | Rule 13.2, 11.7 |
+| F-D.1.9 | The isolation tests (imports, links, templates, Hebrew/RTL only where it belongs), screenshots at phone and tablet width | Rule 13.2, 11.7 | DONE — `tests/test_spr_d_1.py` (34), marker `sprd1` |
+
+**What building it found.** Sign-in landed on babook's front page: Django's
+`LoginView` falls back to the project's `LOGIN_REDIRECT_URL` unless told
+otherwise. The seed matched demo patients by name, so a renamed one came
+back as a second copy on the next run; people's rows are now seeded once as
+a set and never matched on anything a person can edit. Two observations of
+a tooth in the same second tied on time and the older one won the chart;
+the ordering now breaks the tie on id. The figure tiles stacked one per row
+on a phone, the museum lesson again.

@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "improv",
     "crashtech",
     "cohort",
+    "dentist",
 ]
 
 MIDDLEWARE = [

@@ -184,6 +184,9 @@ NOT_IN_THE_PORTAL = {
     # The teachers' course site (2026-10-21): invitation only, reached by the
     # link Avi sends; its own door decides who is inside.
     "cohort",
+    # The volunteer dental clinic (2026-10-26): a pilot on invented data,
+    # entered by invitation or a patient link, never from a portal tile.
+    "dentist",
 }
 
 _BY_SLUG = {a.slug: a for a in APPS}
