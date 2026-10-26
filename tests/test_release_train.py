@@ -486,3 +486,32 @@ def test_a_push_refused_because_main_moved_is_retried_not_failed(world, monkeypa
     assert world.request(rid)["status"] == "queued"
     assert world.request(rid)["retries"] == 1
     assert world.mails() == []  # no alarm for a retry
+
+
+# --------------------------------------------------------------------- poke
+
+
+def test_a_poke_runs_a_waiting_train_at_once(world):
+    write(world.shared, "alpha/logic.py", "VALUE = 12\n")
+    commit(world.shared, "x")
+    train.ship("alpha")
+    out = train.poke(by="avi")
+    assert out["did"] == "train"
+    assert out["result"]["result"] == "shipped"
+
+
+def test_a_poke_with_nothing_waiting_runs_the_full_regression_now(world):
+    """"Poke the train" means put it to work, not report that it is idle
+    (Avi, 2026-10-26), so an empty queue runs the night now, whatever the
+    hour."""
+    out = train.poke(by="avi")
+    assert out["did"] == "nightly"
+    assert out["result"]["result"] == "passed"
+    assert train.load()["nightly"]
+
+
+def test_a_poke_leaves_a_running_train_alone(world):
+    with train.train_lock("train"):
+        out = train.poke(by="avi")
+    assert out["did"] == "nothing"
+    assert out["running"]["purpose"] == "train"

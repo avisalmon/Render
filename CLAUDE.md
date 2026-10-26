@@ -82,3 +82,8 @@ A pre-push hook refuses everything else.
   `scripts\train.py claim <path> --by <app> --why "<what>"`; `release` it after.
 - A test you know fails and cannot fix now goes in `tests/known_failures.txt`
   with its owning app, the date and why, never silently.
+
+**"Poke the train"** (Avi, 2026-10-26): `.\env\Scripts\python.exe scripts\train.py poke`.
+It does the most useful thing at once: the watchdog, then a train if anything
+is waiting, otherwise the full regression right now. If a train is already
+running it says so and leaves it alone. Report what it printed.

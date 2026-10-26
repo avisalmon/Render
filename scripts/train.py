@@ -979,6 +979,29 @@ def watchdog():
     return problems
 
 
+def poke(by="chat"):
+    """Avi's lever: do the most useful thing right now, not in ten minutes.
+
+    The watchdog first. Then a train if anything is waiting. If nothing is
+    waiting, the full regression at once, whatever the hour, because "poke
+    the train" means "put it to work", not "tell me it is idle" (Avi,
+    2026-10-26). If a train is already running, say so and leave it alone.
+    """
+    problems = watchdog()
+    lock = read_lock()
+    if lock:
+        _log(f"poke by {by}: a {lock.get('purpose')} is already running since {lock.get('started')}")
+        return {"did": "nothing", "running": lock, "problems": problems}
+    state = load()
+    if any(r["status"] == "queued" for r in state["requests"]):
+        record = run_train()
+        _log(f"poke by {by}: ran a train")
+        return {"did": "train", "result": record, "problems": problems}
+    record = nightly()
+    _log(f"poke by {by}: nothing waiting, ran the full regression")
+    return {"did": "nightly", "result": record, "problems": problems}
+
+
 def tick():
     """What the scheduled task runs every ten minutes."""
     watchdog()
@@ -1089,7 +1112,7 @@ def main(argv=None):
     r = sub.add_parser("release", help="drop your claim on a shared file")
     r.add_argument("path")
     r.add_argument("--by", required=True)
-    for name in ("run", "nightly", "tick", "watchdog", "status", "setup", "hooks"):
+    for name in ("run", "nightly", "tick", "watchdog", "status", "setup", "hooks", "poke"):
         sub.add_parser(name)
     args = parser.parse_args(argv)
 
@@ -1123,6 +1146,10 @@ def main(argv=None):
         return 0
     if args.cmd == "tick":
         tick()
+        return 0
+    if args.cmd == "poke":
+        out = poke(by=os.environ.get("TRAIN_REQUESTER", "chat"))
+        print(json.dumps(out, ensure_ascii=False, indent=2, default=str))
         return 0
     if args.cmd == "watchdog":
         problems = watchdog()
