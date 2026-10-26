@@ -1,0 +1,11 @@
+{% comment %}The clinic's own navigation, for a member. Four short words at most,
+so it fits a 320px phone beside the clinic's name (mistake 34); a dentist
+sees one. The patient's screen has no nav: one thing, their record.{% endcomment %}
+{% with url_name=request.resolver_match.url_name %}
+<a href="{% url 'dentist:patients' clinic.slug %}"{% if url_name in 'patients patient patient_new patient_edit patient_delete' %} class="is-on"{% endif %}>Patients</a>
+{% if is_admin %}
+<a href="{% url 'dentist:people' clinic.slug %}"{% if url_name == 'people' %} class="is-on"{% endif %}>People</a>
+<a href="{% url 'dentist:setup' clinic.slug %}"{% if url_name == 'setup' %} class="is-on"{% endif %}>Setup</a>
+<a href="{% url 'dentist:access_log' clinic.slug %}"{% if url_name == 'access_log' %} class="is-on"{% endif %}>Log</a>
+{% endif %}
+{% endwith %}

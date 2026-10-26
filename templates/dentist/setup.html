@@ -1,0 +1,35 @@
+{% extends "dentist/base.html" %}
+{% block title %}Setup{% endblock %}
+{% block screen %}setup{% endblock %}
+{% block brand %}{{ clinic.name|truncatechars:28 }}{% endblock %}
+{% block nav %}{% include "dentist/_nav.html" %}{% endblock %}
+{% block role %}<span class="dn-role">{{ member.get_role_display }}</span>{% endblock %}
+{% comment %}Administrator. The clinic's own setup (Rule 3.6): what reminders
+will say about where it is, when it is open, and the chairs.{% endcomment %}
+{% block content %}
+<h1>Setup</h1>
+<p class="dn-lede">What the clinic is called, where it is, when it is open, and its chairs.</p>
+
+<form method="post" class="dn-card">{% csrf_token %}<input type="hidden" name="form" value="clinic">
+  {% for field in form %}
+  <label class="dn-field"><span>{{ field.label }}</span>{{ field }}
+    {% for e in field.errors %}<span class="dn-error">{{ e }}</span>{% endfor %}</label>
+  {% endfor %}
+  <button class="dn-btn dn-btn--primary" type="submit">Save</button>
+</form>
+
+<p class="dn-cap" style="margin-top:22px">Chairs</p>
+{% for chair in chairs %}
+  <div class="dn-row{% if not chair.active %} dn-row--off{% endif %}">
+    <span class="dn-row-main"><b>{{ chair.name }}</b><span>{% if chair.active %}in use{% else %}not in use{% endif %}</span></span>
+    <form method="post" action="{% url 'dentist:chair_toggle' clinic.slug chair.pk %}">{% csrf_token %}
+      <button class="dn-btn dn-btn--sm" type="submit">{% if chair.active %}Take out of use{% else %}Put back{% endif %}</button></form>
+  </div>
+{% empty %}
+  <div class="dn-empty">No chairs yet. Add the first one below.</div>
+{% endfor %}
+<form method="post" class="dn-inline" style="margin-top:10px">{% csrf_token %}<input type="hidden" name="form" value="chair">
+  <label class="dn-field dn-grow"><span>Add a chair</span><input class="dn-input" name="name" placeholder="Chair 3" required maxlength="60"></label>
+  <button class="dn-btn" type="submit">Add</button>
+</form>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends "dentist/base.html" %}
+{% block title %}My clinic{% endblock %}
+{% block screen %}me{% endblock %}
+{% block brand %}{{ clinic.name|truncatechars:28 }}{% endblock %}
+{% block role %}<span class="dn-role">Patient</span>{% endblock %}
+{% comment %}Patient (Rule 11.4, 7.6): one thing, a phone. The next appointment
+first and large, with the address; then the rest. Never the dentist's
+notes (Rule 3.5). English in D.3; the person's language in D.7.{% endcomment %}
+{% block content %}
+<h1>Hello, {{ patient.first_name }}</h1>
+<p class="dn-fine">Your number at the clinic: <span class="dn-mono">{{ patient.clinic_number }}</span></p>
+
+{% if next_one %}
+<div class="dn-card dn-next">
+  <p class="dn-cap">Your next appointment</p>
+  <p class="dn-big dn-mono">{{ next_one.starts_at|date:"l j F" }}<br>{{ next_one.starts_at|date:"H:i" }}</p>
+  <p>{{ clinic.name }}{% if clinic.address %}<br>{{ clinic.address }}{% endif %}</p>
+  {% if next_one.dentist %}<p class="dn-fine">With {{ next_one.dentist.display_name|default:"the dentist on shift" }}</p>{% endif %}
+  <p class="dn-fine">Cannot come? Tell the clinic{% if clinic.opening_notes %}: {{ clinic.opening_notes|truncatechars:120 }}{% endif %}</p>
+</div>
+{% else %}
+<div class="dn-card dn-next"><p class="dn-cap">Your next appointment</p><p>Nothing booked yet. The clinic will tell you when the next one is.</p></div>
+{% endif %}
+
+{% if upcoming %}
+<p class="dn-cap">Also coming</p>
+{% for a in upcoming %}<div class="dn-row"><span class="dn-row-main"><b>{{ a.starts_at|date:"D j M, H:i" }}</b><span>{{ a.reason|default:"" }}</span></span></div>{% endfor %}
+{% endif %}
+
+<h2 style="margin-top:22px">Your treatment plan</h2>
+{% for item in plan %}
+  <div class="dn-row"><span class="dn-row-main"><b>{{ item.procedure.name_en }}{% if item.tooth %} &middot; tooth <span class="dn-mono">{{ item.tooth }}</span>{% endif %}</b><span>{{ item.get_status_display }}</span></span>
+    {% if item.status == 'done' %}<span class="dn-tag dn-tag--go">Done</span>{% endif %}</div>
+{% empty %}
+  <div class="dn-empty">No plan written yet.</div>
+{% endfor %}
+
+<h2 style="margin-top:22px">What was done</h2>
+{% for d in done %}
+  <div class="dn-row"><span class="dn-row-main"><b>{{ d.procedure.name_en }}{% if d.tooth %} &middot; tooth <span class="dn-mono">{{ d.tooth }}</span>{% endif %}</b><span>{{ d.visit.started_at|date:"j M Y" }}</span></span></div>
+{% empty %}
+  <div class="dn-empty">Nothing yet.</div>
+{% endfor %}
+
+{% if past %}
+<h2 style="margin-top:22px">Past appointments</h2>
+{% for a in past %}<div class="dn-row"><span class="dn-row-main"><b>{% if a.starts_at %}{{ a.starts_at|date:"j M Y, H:i" }}{% else %}{{ a.arrived_at|date:"j M Y" }}{% endif %}</b><span>{% if a.status == 'done' %}seen{% elif a.status == 'cancelled' %}cancelled{% else %}{{ a.get_status_display|lower }}{% endif %}</span></span></div>{% endfor %}
+{% endif %}
+
+<h2 style="margin-top:22px">Your details</h2>
+<dl class="dn-kv">
+  <div><dt>Language</dt><dd>{{ patient.get_preferred_language_display }}</dd></div>
+  <div><dt>Phone</dt><dd>{% if patient.phone %}<span class="dn-mono">{{ patient.phone }}</span>{% else %}none given{% endif %}</dd></div>
+  <div><dt>Born</dt><dd>{% if patient.birth_year %}{{ patient.birth_year }}{% else %}not recorded{% endif %}</dd></div>
+</dl>
+<p class="dn-fine">To change these, tell the clinic at your next visit.</p>
+{% endblock %}

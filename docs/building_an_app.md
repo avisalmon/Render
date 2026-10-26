@@ -1177,3 +1177,22 @@ run starts, or the watchdog cries wolf and the real alarm gets ignored.
 The bot's rules live in `C:\Users\avisa\.claude\matazim-mail\check.md` and
 `run.md`, outside this repo.
 
+### 55. A one-time door lets its own holder back in; every door mails
+
+dentist's patient link checked "used or expired" before "is this already
+theirs", so a patient who opened their own link twice (a refresh, a back
+button) was refused. And the first invitation path built (the superuser
+creating a clinic) made the invitation row and sent no mail, because the
+mail function came a sprint later. Both caught by the refusal tests
+written first (postmortems PM-60).
+
+**The rule.** For a one-time link, ownership first, validity second: the
+owner coming back is a no-op success, and the second visit is tested for
+the owner and for a stranger separately. Every path that grants access,
+including the first one built, goes through the one function that also
+sends the mail, and a test counts the mails per path. Two browser-test
+notes from the same sprint: `inner_text` applies `text-transform`, so
+compare lower-case; and strip `<option>` labels before an "English only"
+check, because a language named in its own script is not the UI's
+language.
+

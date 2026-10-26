@@ -1,0 +1,24 @@
+{% extends "dentist/base.html" %}
+{% block title %}Your record{% endblock %}
+{% block screen %}join{% endblock %}
+{% block brand %}{{ clinic.name|truncatechars:28 }}{% endblock %}
+{% comment %}The patient's one-time link (Rule 3.4), seen signed out or refused.
+It names the clinic and nothing about the person: the link may be read over
+a shoulder before it is used.{% endcomment %}
+{% block content %}
+<h1>{{ clinic.name }}</h1>
+{% if refused %}
+  <div class="dn-note dn-note--warn">{{ refused }}</div>
+  <a class="dn-btn" href="{% url 'dentist:home' %}">Back</a>
+{% elif not link.is_valid %}
+  <div class="dn-note dn-note--warn">This link has been used or has expired. Ask the clinic for a new one.</div>
+  <a class="dn-btn dn-btn--primary" href="{% url 'dentist:login' %}">Sign in</a>
+{% else %}
+  <p class="dn-lede">The clinic made this link for you. Sign in once and your appointments and treatment plan will be yours to see, on your phone, any time.</p>
+  <div class="dn-card">
+    <a class="dn-btn dn-btn--primary dn-btn--wide" href="{{ google_url }}" style="margin-bottom:10px">Continue with Google</a>
+    <a class="dn-btn dn-btn--wide" href="{% url 'dentist:login' %}?next={{ next|urlencode }}">I already have an account</a>
+    <p class="dn-fine" style="margin:12px 0 0">This link works once. Only you and the clinic will see your record.</p>
+  </div>
+{% endif %}
+{% endblock %}

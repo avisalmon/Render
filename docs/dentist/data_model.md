@@ -1,7 +1,8 @@
 # dentist: Data model
 
 > **Status: approved by Avi, 2026-10-26**, with the draft answers in section
-> 10 taken as they stand; Amir may change them later. Nothing is built yet.
+> 10 taken as they stand; Amir may change them later. Built as migration
+> 0001 (D.1, live); no change since.
 > This is the shape of the data on its own, kept apart from the spec on
 > purpose ([building_an_app.md](../building_an_app.md), Rule 4). The
 > decisions it rests on are in [spec.md](spec.md) chapter 1 and 1.10.

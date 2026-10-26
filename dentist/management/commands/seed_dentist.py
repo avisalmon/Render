@@ -16,8 +16,16 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from dentist.models import (
-    Appointment, Chair, Clinic, ClinicMember, HistoryItem, Patient, ProcedureType,
-    ReminderTemplate, Shift, ToothState,
+    Appointment,
+    Chair,
+    Clinic,
+    ClinicMember,
+    HistoryItem,
+    Patient,
+    ProcedureType,
+    ReminderTemplate,
+    Shift,
+    ToothState,
 )
 
 SLUG = "demo-clinic"
@@ -129,7 +137,7 @@ class Command(BaseCommand):
                 user.save()
             if not clinic.members.filter(user=user).exists():
                 ClinicMember.objects.create(clinic=clinic, user=user, role=role,
-                                            display_name=f"Dr. Demo" if role == ClinicMember.DENTIST else "Demo Admin")
+                                            display_name="Dr. Demo" if role == ClinicMember.DENTIST else "Demo Admin")
                 added.append(f"member {username}")
 
         dentist = clinic.members.filter(role=ClinicMember.DENTIST).first()
@@ -141,6 +149,29 @@ class Command(BaseCommand):
                 Appointment.objects.create(clinic=clinic, patient=first, dentist=dentist, kind=Appointment.BOOKED,
                                            starts_at=now + timezone.timedelta(hours=1), reason="Check-up")
             added.append("shift and appointment")
+
+        # A demo patient account, connected to the first demo patient, so the
+        # patient's own screen can be opened at once: demo-patient, the same
+        # demo password. Connected only if that record has no account yet.
+        first = clinic.patients.filter(is_demo=True).order_by("id").first()
+        if first is not None:
+            user, made = User.objects.get_or_create(username="demo-patient",
+                                                    defaults={"email": "demo-patient@example.invalid"})
+            if made:
+                user.set_password("demo-clinic-7781")
+                user.first_name = "Demo"
+                user.last_name = "Patient"
+                user.save()
+            if first.user_id is None and not hasattr(user, "dn_patient"):
+                first.user = user
+                first.save(update_fields=["user"])
+                added.append("patient account demo-patient")
+            # Something for the patient's screen to show: a booked appointment next week.
+            if dentist and not first.appointments.filter(starts_at__gt=timezone.now() + timezone.timedelta(days=2)).exists():
+                Appointment.objects.create(clinic=clinic, patient=first, dentist=dentist, kind=Appointment.BOOKED,
+                                           starts_at=(timezone.now() + timezone.timedelta(days=7)).replace(hour=10, minute=30, second=0, microsecond=0),
+                                           reason="Filling, tooth 16")
+                added.append("appointment next week")
 
         if created:
             self.stdout.write(f"seed_dentist: created the demo clinic at /dentist/c/{SLUG}/ ({len(added)} parts)")

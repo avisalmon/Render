@@ -17,6 +17,40 @@ Newest first.
 
 ---
 
+## PM-60 · 2026-10-26 · A one-time door refused its own holder, and a second door forgot the mail
+
+**What happened.** Building the dentist app's two doors (an invitation
+link for staff, a one-time link for a patient). (1) The patient's link
+checked "used or expired" first, so the patient who opened their own link
+a second time, which phones do (a tap, a refresh, a back button), was told
+"this link has been used". (2) In D.1 the superuser's "create a clinic and
+invite its first administrator" created the invitation row and sent no
+mail; the mail lived only on the people screen built a sprint later. Both
+caught by the sprint's own refusal tests before anyone saw them, which is
+the point of writing the refusals first. Two smaller things from the
+browser tests: `inner_text` applies CSS `text-transform`, so a check for
+"Your next appointment" failed against "YOUR NEXT APPOINTMENT"; and a
+screen that lists languages in their own script (עברית, العربية) fails an
+"English only" test unless option labels are excluded.
+
+**Why.** A one-time door was written as a gate (valid or not) before it
+was written as an owner's door (is this already theirs). And the mail for
+the first invitation was never a separate thought because the invitation
+model existed before the mail function did; mistake 53 again, from the
+other side.
+
+**Rule.** For any one-time link: ask "is this already theirs" before
+"is it still valid", so the owner coming back is a no-op success and
+never a refusal; test the second visit by the owner and by a stranger
+separately. Every path that grants access calls the one function that
+also sends the mail, including the first path built, and the test counts
+the mails for every such path. In browser tests compare lower-case when
+the stylesheet transforms case, and strip `<option>` labels before an
+"English only" check.
+
+Here: `dentist/people.py` (`connect`, `invite`), `docs/building_an_app.md` mistake 55, `tests/test_spr_d_2.py`, `tests/test_spr_d_3.py`
+BKM: 4a0912b
+
 ## PM-59 · 2026-10-26 · The mail bot skipped a mail that came in while it worked
 
 **What happened.** Lital wrote at 11:06 and again at 11:33. The bot's run

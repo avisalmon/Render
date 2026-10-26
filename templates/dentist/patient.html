@@ -1,0 +1,83 @@
+{% extends "dentist/base.html" %}
+{% block title %}{{ patient.first_name }} {{ patient.clinic_number }}{% endblock %}
+{% block screen %}patient{% endblock %}
+{% block brand %}{{ clinic.name|truncatechars:28 }}{% endblock %}
+{% block nav %}{% include "dentist/_nav.html" %}{% endblock %}
+{% block role %}<span class="dn-role">{{ member.get_role_display }}</span>{% endblock %}
+{% comment %}Dentist and administrator. Alerts first, in amber, before anything
+else (Rule 4.4); then who they are; history; the plan (read-only until D.4);
+appointments; and, for an administrator, the login link, export and
+deletion. Every form folds with its value showing (mistake 28).{% endcomment %}
+{% block content %}
+{% for a in alerts %}<div class="dn-alert">{{ a.get_what_display }}{% if a.detail %}: {{ a.detail }}{% endif %}</div>{% endfor %}
+
+<div class="dn-pagehead">
+  <h1>{{ patient.first_name }} {{ patient.last_name }} <span class="dn-mono dn-number">{{ patient.clinic_number }}</span></h1>
+  <a class="dn-btn" href="{% url 'dentist:patient_edit' clinic.slug patient.pk %}">Edit details</a>
+</div>
+{% if patient.is_demo %}<p class="dn-fine">A demo record. Nothing here is a real person.</p>{% endif %}
+
+<dl class="dn-kv">
+  <div><dt>Language</dt><dd>{{ patient.get_preferred_language_display }}{% if patient.needs_interpreter %}, needs an interpreter{% endif %}</dd></div>
+  <div><dt>Born</dt><dd>{% if patient.birth_year %}{{ patient.birth_year }}{% else %}not recorded{% endif %}</dd></div>
+  <div><dt>Phone</dt><dd>{% if patient.phone %}<span class="dn-mono">{{ patient.phone }}</span>{% else %}none{% endif %}{% if patient.whatsapp %} &middot; WhatsApp <span class="dn-mono">{{ patient.whatsapp }}</span>{% endif %}</dd></div>
+  <div><dt>Identification</dt><dd>{{ patient.get_id_kind_display }}{% if patient.id_number %} <span class="dn-mono">{{ patient.id_number }}</span>{% endif %}</dd></div>
+  {% if patient.front_desk_notes %}<div><dt>Front desk</dt><dd>{{ patient.front_desk_notes }}</dd></div>{% endif %}
+  <div><dt>Account</dt><dd>{% if patient.user_id %}connected; they can see their own record{% else %}none yet{% endif %}</dd></div>
+</dl>
+
+<h2 style="margin-top:22px">Medical history</h2>
+{% for h in history %}
+  <div class="dn-row">
+    <span class="dn-row-main"><b>{{ h.get_what_display }}</b><span>{{ h.get_kind_display }}{% if h.detail %} &middot; {{ h.detail }}{% endif %} &middot; noted {{ h.noted_at|date:"j M Y" }}</span></span>
+    {% if h.alert %}<span class="dn-tag dn-tag--wait">Alert</span>{% endif %}
+    <form method="post" action="{% url 'dentist:history_resolve' clinic.slug patient.pk h.pk %}">{% csrf_token %}<button class="dn-btn dn-btn--sm dn-btn--quiet" type="submit">Resolved</button></form>
+  </div>
+{% empty %}
+  <div class="dn-empty">Nothing recorded. Ask about allergies, medication and conditions before treating.</div>
+{% endfor %}
+<details class="dn-fold" {% if history_form.errors %}open{% endif %}>
+  <summary><b>Add to the history</b><span>An allergy, a medication, a condition.</span></summary>
+  <form method="post" class="dn-fold-body">{% csrf_token %}<input type="hidden" name="form" value="history">
+    {% for field in history_form %}<label class="dn-field"><span>{{ field.label }}</span>{{ field }}{% for e in field.errors %}<span class="dn-error">{{ e }}</span>{% endfor %}</label>{% endfor %}
+    <button class="dn-btn dn-btn--primary" type="submit">Add</button>
+  </form>
+</details>
+{% if resolved %}<p class="dn-fine" style="margin-top:8px">Resolved, kept: {% for h in resolved %}{{ h.get_what_display }}{% if not forloop.last %}, {% endif %}{% endfor %}.</p>{% endif %}
+
+<h2 style="margin-top:22px">Treatment plan</h2>
+{% for item in plan %}
+  <div class="dn-row"><span class="dn-row-main"><b>{{ item.procedure.name_en }}{% if item.tooth %} &middot; tooth <span class="dn-mono">{{ item.tooth }}</span>{% endif %}</b><span>{{ item.get_status_display }}{% if item.note %} &middot; {{ item.note }}{% endif %}</span></span></div>
+{% empty %}
+  <div class="dn-empty">No plan yet. The chart and the plan are written in sprint D.4.</div>
+{% endfor %}
+
+<h2 style="margin-top:22px">Appointments</h2>
+{% for appt in appointments %}
+  <div class="dn-row"><span class="dn-row-main"><b>{% if appt.starts_at %}{{ appt.starts_at|date:"D j M Y, H:i" }}{% else %}Walk-in {{ appt.arrived_at|date:"D j M Y, H:i" }}{% endif %}</b><span>{{ appt.get_status_display }}{% if appt.reason %} &middot; {{ appt.reason }}{% endif %}</span></span></div>
+{% empty %}
+  <div class="dn-empty">No appointments yet. Booking arrives in sprint D.5.</div>
+{% endfor %}
+
+{% if is_admin %}
+<h2 style="margin-top:22px">Administrator</h2>
+<div class="dn-card">
+  <p class="dn-cap">Their login</p>
+  {% if patient.user_id %}
+    <p>Connected. {{ patient.first_name }} can sign in and see their appointments and plan, never your notes.</p>
+  {% elif link %}
+    <p>A link is live until {{ link.expires_at|date:"j M Y" }}. It works once. Print it on their card or send it to their phone:</p>
+    <p class="dn-link-box dn-mono">{{ link_url }}</p>
+  {% else %}
+    <form method="post" action="{% url 'dentist:patient_link_new' clinic.slug patient.pk %}">{% csrf_token %}
+      <p>{{ patient.first_name }} has no account. Make a one-time link; it expires in a week.</p>
+      <button class="dn-btn" type="submit">Make a login link</button>
+    </form>
+  {% endif %}
+</div>
+<div class="dn-actions">
+  <a class="dn-btn" href="{% url 'dentist:patient_export' clinic.slug patient.pk %}">Export this record</a>
+  <a class="dn-btn dn-btn--danger" href="{% url 'dentist:patient_delete' clinic.slug patient.pk %}">Delete this patient</a>
+</div>
+{% endif %}
+{% endblock %}

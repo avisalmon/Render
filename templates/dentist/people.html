@@ -1,0 +1,49 @@
+{% extends "dentist/base.html" %}
+{% block title %}People{% endblock %}
+{% block screen %}people{% endblock %}
+{% block brand %}{{ clinic.name|truncatechars:28 }}{% endblock %}
+{% block nav %}{% include "dentist/_nav.html" %}{% endblock %}
+{% block role %}<span class="dn-role">{{ member.get_role_display }}</span>{% endblock %}
+{% comment %}Administrator. Who is in, who is invited, invite another (Rule 3.2).
+"Sent" below is the mail backend's own answer, shown as a message.{% endcomment %}
+{% block content %}
+<h1>People</h1>
+<p class="dn-lede">Dentists and administrators exist because you invited them. There is no sign-up.</p>
+
+<details class="dn-fold" {% if errors %}open{% endif %}>
+  <summary><b>Invite someone</b><span>By email. The role is waiting when they open the link.</span></summary>
+  <form method="post" class="dn-fold-body">{% csrf_token %}
+    <label class="dn-field"><span>Email</span>
+      <input class="dn-input" type="email" name="email" value="{{ data.email }}" required autocomplete="off">
+      {% if errors.email %}<span class="dn-error">{{ errors.email }}</span>{% endif %}</label>
+    <label class="dn-field"><span>Role</span>
+      <select class="dn-input" name="role">{% for value, label in roles %}<option value="{{ value }}"{% if data.role == value %} selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+      {% if errors.role %}<span class="dn-error">{{ errors.role }}</span>{% endif %}</label>
+    <button class="dn-btn dn-btn--primary" type="submit">Send the invitation</button>
+  </form>
+</details>
+
+<p class="dn-cap" style="margin-top:22px">In the clinic</p>
+{% for m in members %}
+  <div class="dn-row{% if not m.active %} dn-row--off{% endif %}">
+    <span class="dn-row-main"><b>{{ m.display_name|default:m.user.get_full_name|default:m.user.email }}</b>
+      <span>{{ m.get_role_display }} &middot; {{ m.user.email }}{% if not m.active %} &middot; inactive{% endif %}</span></span>
+    {% if m.pk != member.pk %}
+    <form method="post" action="{% url 'dentist:member_toggle' clinic.slug m.pk %}">{% csrf_token %}
+      <button class="dn-btn dn-btn--sm" type="submit">{% if m.active %}Deactivate{% else %}Bring back{% endif %}</button>
+    </form>
+    {% else %}<span class="dn-tag">You</span>{% endif %}
+  </div>
+{% endfor %}
+
+<p class="dn-cap" style="margin-top:22px">Invited, not yet in</p>
+{% for inv in invitations %}
+  <div class="dn-row">
+    <span class="dn-row-main"><b>{{ inv.email }}</b><span>{{ inv.get_role_display }} &middot; sent {{ inv.sent_at|date:"j M, H:i" }}</span></span>
+    <form method="post" action="{% url 'dentist:invitation_action' clinic.slug inv.pk 'resend' %}">{% csrf_token %}<button class="dn-btn dn-btn--sm" type="submit">Resend</button></form>
+    <form method="post" action="{% url 'dentist:invitation_action' clinic.slug inv.pk 'cancel' %}">{% csrf_token %}<button class="dn-btn dn-btn--sm dn-btn--quiet" type="submit">Withdraw</button></form>
+  </div>
+{% empty %}
+  <div class="dn-empty">Nobody is waiting to join.</div>
+{% endfor %}
+{% endblock %}

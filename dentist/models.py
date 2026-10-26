@@ -143,7 +143,7 @@ class Patient(models.Model):
     """One person the clinic treats. Starts with a first name (Rule 4.1)."""
 
     ID_KINDS = [
-        ("none", "None"), ("passport", "Passport"), ("unhcr", "UNHCR number"),
+        ("none", "No identification"), ("passport", "Passport"), ("unhcr", "UNHCR number"),
         ("clinic", "Clinic's own number"), ("other", "Other"),
     ]
     SEX = [("", "Not recorded"), ("f", "Female"), ("m", "Male"), ("x", "Other")]
