@@ -31,6 +31,7 @@ urlpatterns = [
     # One clinic. Kept last so these never shadow a named route above.
     path("c/<slug:slug>/", views.clinic_home, name="clinic_home"),
     path("c/<slug:slug>/people/", views.people_screen, name="people"),
+    path("c/<slug:slug>/try-as/", views.try_as, name="try_as"),
     path("c/<slug:slug>/people/<int:pk>/toggle/", views.member_toggle, name="member_toggle"),
     path("c/<slug:slug>/people/invitations/<int:pk>/<str:what>/", views.invitation_action, name="invitation_action"),
     path("c/<slug:slug>/setup/", views.setup, name="setup"),
@@ -43,5 +44,10 @@ urlpatterns = [
     path("c/<slug:slug>/p/<int:pk>/link/", views.patient_link_new, name="patient_link_new"),
     path("c/<slug:slug>/p/<int:pk>/export/", views.patient_export, name="patient_export"),
     path("c/<slug:slug>/p/<int:pk>/delete/", views.patient_delete, name="patient_delete"),
+    path("c/<slug:slug>/p/<int:pk>/mouth/", views.mouth_screen, name="mouth"),
+    path("c/<slug:slug>/p/<int:pk>/mouth/record/", views.tooth_record, name="tooth_record"),
+    path("c/<slug:slug>/p/<int:pk>/plan/add/", views.plan_add, name="plan_add"),
+    path("c/<slug:slug>/p/<int:pk>/plan/<int:item>/<str:what>/", views.plan_item_action, name="plan_item_action"),
+    path("c/<slug:slug>/p/<int:pk>/print/", views.patient_print, name="patient_print"),
     path("c/<slug:slug>/log/", views.access_log, name="access_log"),
 ]

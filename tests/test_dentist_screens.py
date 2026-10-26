@@ -32,7 +32,7 @@ ALARM = ["Traceback", "None", "null", "undefined", "Error", "{{", "{%"]
 SHOTS = Path(os.environ.get("DENTIST_SHOTS", str(Path(os.environ.get("TEMP", "/tmp")) / "dentist-shots")))
 
 OVERFLOW_JS = """(w) => [...document.querySelectorAll('body *')].filter(el => {
-    if (el.closest('.dn-table-wrap')) return false;  // the log table scrolls in its own box on purpose
+    if (el.closest('.dn-table-wrap, .dn-mouth')) return false;  // the log table and the mouth scroll in their own box on purpose
     const r = el.getBoundingClientRect();
     return r.height > 0 && r.width > 0 && (r.right > w + 1 || r.left < -1);
   }).slice(0, 5).map(el => el.tagName.toLowerCase() + '.' + String(el.className || '').split(' ')[0] + ' ' + Math.round(el.getBoundingClientRect().right))"""
@@ -119,7 +119,7 @@ def build_world():
         VisitProcedure,
     )
 
-    clinic = Clinic.objects.create(name="Neighbourhood Dental Clinic", slug="neighbourhood", address="12 Levinsky Street, Tel Aviv",
+    clinic = Clinic.objects.create(name="Neighbourhood Dental Clinic", slug="neighbourhood", address="12 Levinsky Street, Tel Aviv", is_demo=True,
                                    opening_notes="Sundays and Tuesdays, 16:00 to 20:00. Call 050-0000000 if you cannot come.")
     admin = User.objects.create_user("admin", "admin@example.com", PASSWORD, first_name="Rina", last_name="Admin")
     dentist = User.objects.create_user("dentist", "dentist@example.com", PASSWORD, first_name="Noa", last_name="Dentist")
@@ -136,7 +136,7 @@ def build_world():
                                              ("Dalia Haddad", "ar", 2001), ("Efrem Gebre", "ti", 1997), ("Fatima Noor", "hi", 1969),
                                              ("Georgios Pappas", "en", 1982), ("Hanna Berg", "he", 1995)]):
         first, last = name.split()
-        p = Patient.objects.create(clinic=clinic, first_name=first, last_name=last, preferred_language=lang, birth_year=year,
+        p = Patient.objects.create(clinic=clinic, first_name=first, last_name=last, preferred_language=lang, birth_year=year, is_demo=True,
                                    phone=f"050-000000{i}", needs_interpreter=lang in ("ti", "hi"))
         people.append(p)
     me = people[0]
@@ -200,6 +200,7 @@ def _screens(clinic, me, other):
         ("patient-dentist", "dentist", f"/dentist/c/{s}/p/{me.pk}/"), ("patient-admin", "admin", f"/dentist/c/{s}/p/{other.pk}/"),
         ("patient-edit", "admin", f"/dentist/c/{s}/p/{me.pk}/edit/"), ("patient-delete", "admin", f"/dentist/c/{s}/p/{me.pk}/delete/"),
         ("log", "admin", f"/dentist/c/{s}/log/"), ("me", "patient", "/dentist/me/"),
+        ("mouth", "dentist", f"/dentist/c/{s}/p/{me.pk}/mouth/?tooth=16"), ("print", "dentist", f"/dentist/c/{s}/p/{me.pk}/print/"),
     ]
 
 
@@ -255,6 +256,32 @@ def test_on_a_phone_the_dentist_finds_a_patient_and_reads_the_alert_first(browse
         page.goto(f"{live_server.url}/dentist/c/{clinic.slug}/patients/", wait_until="networkidle")
         first_row = page.locator("a.dn-row").first.bounding_box()
         assert first_row["y"] < 844 / 2, first_row
+    finally:
+        context.close()
+
+
+def test_on_a_tablet_two_taps_record_a_tooth(browser, live_server):
+    """Rule 5.2: one tap opens the tooth, a second tap on it records what
+    is chosen. Driven through the real buttons on a tablet."""
+    from dentist.models import ToothState
+
+    clinic, me, other = build_world()
+    context, page = _open(browser, live_server, "dentist", f"/dentist/c/{clinic.slug}/p/{other.pk}/mouth/", TABLET)
+    try:
+        assert page.locator("#tooth-panel").is_hidden()
+        page.click('a.dn-tooth[data-tooth="26"]')
+        assert page.locator("#tooth-panel").is_visible()
+        assert page.locator("#tooth-label").inner_text() == "26"
+        page.check('input[name="surface"][value="O"]')
+        page.check('input[name="condition"][value="decay"]')
+        page.click('a.dn-tooth[data-tooth="26"]')
+        page.wait_for_url("**/mouth/?tooth=26*")
+        row = ToothState.objects.get(patient=other)
+        assert (row.tooth, row.surface, row.condition) == (26, "O", "decay")
+        assert "decay" in page.get_attribute('a.dn-tooth[data-tooth="26"]', "aria-label")
+        # Every tooth is a real tap target on the tablet.
+        small = page.evaluate("""[...document.querySelectorAll('a.dn-tooth')].map(e => e.getBoundingClientRect()).filter(r => r.width < 40 || r.height < 44).length""")
+        assert small == 0
     finally:
         context.close()
 

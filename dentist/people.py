@@ -42,8 +42,8 @@ def accept(invitation, user):
     """The role, once. A second visit to the link is a no-op that still
     lands the person in their clinic. Refused for a superuser: Rule 3.3
     says the site admin is a member of nothing."""
-    if user.is_superuser:
-        raise Refused("The site administrator cannot hold a role in a clinic.")
+    if user.is_superuser and not invitation.clinic.is_demo:
+        raise Refused("The site administrator cannot hold a role in a clinic that holds real records.")
     with transaction.atomic():
         member, made = ClinicMember.objects.get_or_create(
             clinic=invitation.clinic, user=user,

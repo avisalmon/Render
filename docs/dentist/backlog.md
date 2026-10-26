@@ -1,7 +1,7 @@
 # dentist: Backlog
 
-**Status: D.1 live on 2026-10-26 (the first release train that shipped); D.2 and
-D.3 built in dev the same day, riding the next train.** Avi builds the first
+**Status: D.1, D.2 and D.3 live on 2026-10-26; D.4 (the mouth) built in dev
+the same evening, riding the next train.** Avi builds the first
 version; Amir takes it over through [spec.md](spec.md) chapter 0 once a basic
 demo runs live. Live: <https://babook.co.il/dentist/> with the seeded demo
 clinic (`demo-clinic`) and three demo accounts: demo-dentist,
@@ -20,7 +20,7 @@ screenshots); every guard broken once. Ships only through the release train.
 | D.1 | The skeleton and the seal | The app exists, sealed both ways: models and migrations, admin, own base with the pilot banner, own sign-in (email and Google), own error pages, registry entry, clinic isolation proven, a demo clinic seeded once | `LIVE 2026-10-26` |
 | D.2 | Clinics and people | A superuser creates a clinic and invites its first admin by mail; admins invite dentists and admins by email, withdraw and resend; members deactivated, never deleted; chairs and the clinic's own details and hours; the member's home per role with every row a working link | `DONE (dev), 2026-10-26` |
 | D.3 | The patient record and the patient's door | Create with a first name; one search box; details; identification kinds; history with alerts, resolved not deleted; the access log; export and delete a patient (asks twice); the one-time login link; the patient's own screen (next appointment, plan, what was done, never the notes); the first DRF API | `DONE (dev), 2026-10-26` |
-| D.4 | The mouth | The FDI chart as dated rows, tappable on a tablet; the treatment plan; print | `TODO` |
+| D.4 | The mouth | The FDI chart as dated rows drawn as a mouth, one tap opens a tooth and a second records it; adult and child teeth; the treatment plan ordered, droppable, never "done" from here; the chart and plan on one printable page; teeth and plan in the API | `DONE (dev), 2026-10-26` |
 | D.5 | The day | Shifts, chairs, booking, the walk-in queue with pain level, the dentist's today screen, no-shows | `TODO` |
 | D.6 | The visit | Open a visit from the day, record procedures from the catalogue, anaesthetic, a photo in one tap, X-rays to cloud storage, consent with wording, sign | `TODO` |
 | D.7 | Languages and the patient | Six languages via strings files, RTL checked by eye, the patient's screens in their language, reminders by SMS or WhatsApp (Q5), templates with nothing medical | `TODO` |
@@ -93,6 +93,20 @@ names are written in their own script (עברית, العربية), which the
 English-only test for staff screens had to learn to allow. `inner_text` in
 a browser applies `text-transform`, so a test for "Your next appointment"
 has to compare lower-case.
+
+## SPR-D.4 — The mouth `DONE (dev), 2026-10-26`
+
+| Feature | Description | Spec |
+| --- | --- | --- |
+| F-D.4.1 | `dentist/mouth.py`: the chart computed as the latest `ToothState` per tooth and surface; the layout a dentist reads (18 to 11, 21 to 28 above; 48 to 41, 31 to 38 below), child teeth 55 to 85 on request or when the record has one | Rule 5.1, 5.2 |
+| F-D.4.2 | Each tooth a five-part glyph (O, B, L, M towards the midline, D away) in a 44px button with its whole state as its label; a legend | Rule 5.2 |
+| F-D.4.3 | One tap opens the tooth's panel (surface and condition as chips, a note, the tooth's history newest first); a second tap on the same tooth records; the last condition is offered again; works without JavaScript | Rule 5.2 |
+| F-D.4.4 | Recording is always a new dated, authored row, logged; a bad tooth, surface or condition is refused in words | Rule 5.1, 4.5 |
+| F-D.4.5 | The plan: add (procedure from the clinic's own catalogue, optional tooth, note), move up and down, drop (kept); "done" has no route and the API refuses it: a visit sets it (D.6) | Rule 5.3 |
+| F-D.4.6 | The print page: alerts, the static chart, the plan, notes on teeth, the clinic and the time; logged as printed | Rule 5.4, 4.5 |
+| F-D.4.7 | API: `teeth` (list, retrieve, create; no update or delete), `plan` (full CRUD, delete drops, done refused), through the screens' scope | Rule 2.6 |
+| F-D.4.9 | The pilot clinic (`pilot-clinic`, demo): the site's superusers as its administrators, the demo dentist, six demo patients with history, teeth and a plan, a week of appointments and shifts; and "try as": an administrator of a demo clinic sees it as a dentist or as a demo patient (session only, every gate honours it, a real clinic refuses it) | Rule 3.3, 3.7. Tests: `tests/test_dentist_try_as.py` (7) |
+| F-D.4.8 | Tests: refusals first; the chart as history; 32 and 20 teeth in reading order; the plan's order and drop; print; the API; the screen contract gains the mouth and the print page and a two-tap journey on a tablet | Rule 13.2. Tests: `tests/test_spr_d_4.py` (11), marker `sprd4`; `tests/test_dentist_screens.py` |
 
 **Not in D.3, said plainly.** A patient with no account and no Google
 account cannot sign up with an email and password: the pilot's patients

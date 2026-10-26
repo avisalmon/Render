@@ -229,3 +229,83 @@ html, body { overflow-x: clip; }
   .dn-big { font-size: 23px; }
 }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* ---- the mouth (Rule 5.2): two arches, each tooth a 44px target ---- */
+
+.dn-mouth { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
+.dn-arch { display: grid; grid-template-columns: repeat(16, minmax(0, 1fr)); gap: 4px; }
+.dn-arch--upper { align-items: end; }
+.dn-tooth {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  min-width: 0; min-height: 60px; padding: 4px 0; border-radius: 10px; border: 1px solid transparent;
+  text-decoration: none; color: var(--dn-ink); background: transparent;
+}
+a.dn-tooth:hover { border-color: var(--dn-line); background: var(--dn-card); }
+.dn-tooth.is-on { border-color: var(--dn-teal); background: var(--dn-teal-soft); }
+.dn-tooth.is-gone { opacity: 0.55; }
+.dn-tooth-n { font-size: 11px; line-height: 1; color: var(--dn-dim); }
+.dn-tooth.is-on .dn-tooth-n { color: var(--dn-teal); font-weight: 700; }
+.dn-glyph { width: 100%; max-width: 40px; height: auto; display: block; }
+.dn-seg { stroke: var(--dn-line); stroke-width: 1; fill: var(--dn-card); }
+.dn-seg--sound { fill: var(--dn-card); }
+.dn-seg--decay { fill: #D9534F; }
+.dn-seg--filling { fill: #6C8EBF; }
+.dn-seg--crown { fill: #D4A017; }
+.dn-seg--root_canal { fill: #8E6BBF; }
+.dn-seg--missing, .dn-seg--to_extract { fill: #CFC8BA; }
+.dn-seg--implant { fill: var(--dn-teal); }
+.dn-seg--fracture { fill: #E0892A; }
+.dn-seg--other { fill: #9AA39E; }
+.dn-gone-x { stroke: var(--dn-ink); stroke-width: 3; fill: none; stroke-linecap: round; }
+.dn-legend { list-style: none; margin: 0 0 14px; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--dn-dim); }
+.dn-legend li { display: inline-flex; align-items: center; gap: 6px; }
+.dn-legend i { width: 14px; height: 14px; border-radius: 3px; border: 1px solid var(--dn-line); display: inline-block; }
+.dn-legend i.dn-seg--decay { background: #D9534F; } .dn-legend i.dn-seg--filling { background: #6C8EBF; }
+.dn-legend i.dn-seg--crown { background: #D4A017; } .dn-legend i.dn-seg--root_canal { background: #8E6BBF; }
+.dn-legend i.dn-seg--implant { background: var(--dn-teal); } .dn-legend i.dn-seg--fracture { background: #E0892A; }
+.dn-legend i.dn-seg--missing { background: #CFC8BA; } .dn-legend i.dn-seg--other { background: #9AA39E; }
+
+/* The tooth's panel: chips are real radios, each a 44px label. */
+.dn-toothpanel { border-color: var(--dn-teal); }
+.dn-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.dn-chip { position: relative; display: inline-flex; }
+.dn-chip input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.dn-chip span {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 10px 16px; border-radius: 999px;
+  border: 1px solid var(--dn-line); background: var(--dn-card); font-weight: 700; font-size: 15px;
+}
+.dn-chip input:checked + span { background: var(--dn-teal); border-color: var(--dn-teal); color: #fff; }
+.dn-chip input:focus-visible + span { outline: 3px solid var(--dn-teal); outline-offset: 2px; }
+.dn-order { font-size: 14px; color: var(--dn-dim); min-width: 22px; text-align: center; }
+.dn-back { color: inherit; text-decoration: none; display: inline-block; padding: 8px 0; margin: -8px 0; }
+.dn-back:hover { text-decoration: underline; }
+
+/* The printable page. */
+.dn-print h2 { margin-top: 10px; }
+@media print {
+  .dn-head, .dn-foot, .dn-noprint { display: none !important; }
+  .dn-pilot { background: #fff !important; color: #000 !important; border-bottom: 1px solid #000; }
+  body { background: #fff; color: #000; font-size: 13px; }
+  .dn-main { padding: 0; max-width: none; }
+  .dn-row, .dn-card, .dn-alert { break-inside: avoid; }
+  .dn-tooth { min-height: 48px; }
+}
+
+@media (max-width: 700px) {
+  /* Each arch wraps to two rows of eight: a quadrant per row, the way
+     the numbers read (18 to 11, then 21 to 28). A tooth never shrinks
+     under a thumb's width; on the narrowest phones the mouth slides
+     sideways inside its own box instead. */
+  .dn-mouth { overflow-x: auto; padding-bottom: 4px; }
+  .dn-arch { grid-template-columns: repeat(8, minmax(43px, 1fr)); gap: 1px; min-width: max-content; }
+  .dn-tooth { min-height: 56px; min-width: 43px; }
+}
+
+/* ---- trying a role in a demo clinic (Rule 3.7) ----------------------- */
+
+.dn-tryas { background: var(--dn-amber-soft); border-bottom: 1px solid var(--dn-amber); }
+.dn-tryas-in { max-width: 1040px; margin: 0 auto; padding: 8px 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.dn-tryas-say { color: var(--dn-amber); font-size: 14px; font-weight: 700; flex: 1 1 220px; }
+.dn-tryas-pick { display: inline-flex; }
+.dn-input--sm { min-height: 40px; padding: 6px 10px; font-size: 16px; width: auto; border-radius: 999px; }
+.dn-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

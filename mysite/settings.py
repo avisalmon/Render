@@ -90,6 +90,7 @@ MIDDLEWARE = [
     # Runs /books/ requests in the person's language, direction and theme,
     # and only those. Same shape as exo's. See books/middleware.py.
     "books.middleware.BooksMiddleware",
+    "dentist.middleware.TryAsMiddleware",  # after auth and session: reads one session key under /dentist/ (spec Rule 3.7)
 ]
 
 ROOT_URLCONF = "mysite.urls"

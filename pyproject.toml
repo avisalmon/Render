@@ -168,6 +168,7 @@ markers = [
     "sprd1: SPR-D.1 dentist, the skeleton and the seal",
     "sprd2: SPR-D.2 dentist, clinics and people",
     "sprd3: SPR-D.3 dentist, the patient record and the patient's door",
+    "sprd4: SPR-D.4 dentist, the mouth",
     "crashtech_e2e: one whole CrashTech event driven through the screens, setup to museum",
     "memzscreens: memz's screen contract - every memz screen, in every state, rendered on a phone (tests/test_memz_screens.py)",
     "screens: the screen contract - every מט״צים screen, in every state, rendered",

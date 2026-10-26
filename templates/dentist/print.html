@@ -1,0 +1,40 @@
+{% extends "dentist/base.html" %}
+{% block title %}Print {{ patient.clinic_number }}{% endblock %}
+{% block screen %}print{% endblock %}
+{% block brand %}{{ clinic.name|truncatechars:28 }}{% endblock %}
+{% block nav %}{% include "dentist/_nav.html" %}{% endblock %}
+{% block role %}<span class="dn-role">{{ member.get_role_display }}</span>{% endblock %}
+{% comment %}The chart and the plan on one page (Rule 5.4), for a patient who
+takes it to another clinic. The banner stays: it is part of the page
+wherever it goes. Nothing the dentist wrote as a working note is here;
+tooth notes are (they describe the tooth, not the person).{% endcomment %}
+{% block content %}
+<div class="dn-print">
+  <div class="dn-pagehead">
+    <h1>{{ patient.first_name }} {{ patient.last_name }} <span class="dn-mono dn-number">{{ patient.clinic_number }}</span></h1>
+    <div class="dn-actions dn-noprint" style="margin:0">
+      <button class="dn-btn dn-btn--primary" type="button" onclick="window.print()">Print this page</button>
+      <a class="dn-btn dn-btn--quiet" href="{% url 'dentist:mouth' clinic.slug patient.pk %}">Back to the chart</a>
+    </div>
+  </div>
+  <p class="dn-fine">{{ clinic.name }}{% if clinic.address %}, {{ clinic.address }}{% endif %} &middot; printed {{ now|date:"j M Y, H:i" }}{% if patient.birth_year %} &middot; born {{ patient.birth_year }}{% endif %}</p>
+  {% for a in alerts %}<div class="dn-alert">{{ a.get_what_display }}{% if a.detail %}: {{ a.detail }}{% endif %}</div>{% endfor %}
+
+  <h2>Tooth chart{% if child %} (child teeth){% endif %}</h2>
+  {% include "dentist/_mouth.html" with static_chart=True %}
+
+  <h2 style="margin-top:18px">Treatment plan</h2>
+  {% for item in plan %}
+    <div class="dn-row"><span class="dn-mono dn-order">{{ item.priority }}</span>
+      <span class="dn-row-main"><b>{{ item.procedure.name_en }}{% if item.tooth %} &middot; tooth <span class="dn-mono">{{ item.tooth }}</span>{% endif %}</b>
+        <span>{{ item.get_status_display }}{% if item.note %} &middot; {{ item.note }}{% endif %}</span></span></div>
+  {% empty %}
+    <p class="dn-fine">No plan written.</p>
+  {% endfor %}
+
+  {% if notes %}
+  <h2 style="margin-top:18px">Notes on teeth</h2>
+  {% for n in notes %}<p class="dn-fine"><span class="dn-mono">{{ n.tooth }}{{ n.surface }}</span> {{ n.get_condition_display|lower }}, {{ n.noted_at|date:"j M Y" }}: {{ n.note }}</p>{% endfor %}
+  {% endif %}
+</div>
+{% endblock %}

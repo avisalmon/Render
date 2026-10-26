@@ -35,7 +35,7 @@ says so and is not a link (Rule 11.6).{% endcomment %}
   <div class="dn-row"><span class="dn-row-main"><b>The diary and the queue</b><span>Shifts, booking, walk-ins. Not built yet (sprint D.5).</span></span></div>
 {% else %}
   <p class="dn-cap">As dentist</p>
-  <a class="dn-row" href="{% url 'dentist:patients' clinic.slug %}"><span class="dn-row-main"><b>A patient</b><span>Alerts, who they are, their history. The chart and the plan arrive in D.4.</span></span><span class="dn-tag dn-tag--go">Open</span></a>
+  <a class="dn-row" href="{% url 'dentist:patients' clinic.slug %}"><span class="dn-row-main"><b>A patient</b><span>Alerts, who they are, their history, the chart and the plan.</span></span><span class="dn-tag dn-tag--go">Open</span></a>
   <div class="dn-row"><span class="dn-row-main"><b>Today</b><span>Who is booked, who is waiting and in how much pain. Not built yet (sprint D.5).</span></span></div>
 {% endif %}
 {% endblock %}

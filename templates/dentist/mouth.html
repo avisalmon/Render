@@ -1,0 +1,83 @@
+{% extends "dentist/base.html" %}
+{% load static %}
+{% block title %}Mouth {{ patient.clinic_number }}{% endblock %}
+{% block screen %}mouth{% endblock %}
+{% block brand %}{{ clinic.name|truncatechars:28 }}{% endblock %}
+{% block nav %}{% include "dentist/_nav.html" %}{% endblock %}
+{% block role %}<span class="dn-role">{{ member.get_role_display }}</span>{% endblock %}
+{% comment %}Dentist (Rule 11.2): the chart and the plan, one screen, a tablet,
+a thumb. One tap on a tooth opens its state below; with a condition
+chosen, a second tap on the same tooth records it (Rule 5.2). Without
+JavaScript every tooth is a link and the form a form.{% endcomment %}
+{% block content %}
+{% for a in alerts %}<div class="dn-alert">{{ a.get_what_display }}{% if a.detail %}: {{ a.detail }}{% endif %}</div>{% endfor %}
+<div class="dn-pagehead">
+  <h1><a class="dn-back" href="{% url 'dentist:patient' clinic.slug patient.pk %}">{{ patient.first_name }} {{ patient.last_name }}</a> <span class="dn-mono dn-number">{{ patient.clinic_number }}</span></h1>
+  <div class="dn-actions" style="margin:0">
+    <a class="dn-btn dn-btn--sm" href="?{% if child %}child=0{% else %}child=1{% endif %}">{% if child %}Adult teeth{% else %}Child teeth{% endif %}</a>
+    <a class="dn-btn dn-btn--sm" href="{% url 'dentist:patient_print' clinic.slug patient.pk %}{% if child %}?child=1{% endif %}">Print</a>
+  </div>
+</div>
+<p class="dn-lede">Tap a tooth. Choose what you see, then tap the tooth again to record it.</p>
+
+{% include "dentist/_mouth.html" %}
+
+<section class="dn-card dn-toothpanel" id="tooth-panel" {% if not selected %}hidden{% endif %}>
+  <form method="post" action="{% url 'dentist:tooth_record' clinic.slug patient.pk %}" id="tooth-form">{% csrf_token %}
+    <input type="hidden" name="tooth" value="{{ selected|default:'' }}" id="tooth-input">
+    <input type="hidden" name="child" value="{% if child %}1{% else %}0{% endif %}">
+    <div class="dn-pagehead"><h2>Tooth <span class="dn-mono" id="tooth-label">{{ selected|default:'' }}</span></h2>
+      <span class="dn-fine" id="tooth-hint">{% if selected %}Tap tooth {{ selected }} again to record.{% endif %}</span></div>
+    <p class="dn-cap">Surface</p>
+    <div class="dn-chips">
+      {% for value, label in surfaces %}<label class="dn-chip"><input type="radio" name="surface" value="{{ value }}"{% if forloop.first %} checked{% endif %}><span>{{ label }}</span></label>{% endfor %}
+    </div>
+    <p class="dn-cap">Condition</p>
+    <div class="dn-chips">
+      {% for value, label in conditions %}<label class="dn-chip"><input type="radio" name="condition" value="{{ value }}"{% if value == last_condition %} checked{% endif %}><span>{{ label }}</span></label>{% endfor %}
+    </div>
+    <label class="dn-field"><span>Note (optional)</span><input class="dn-input" name="note" maxlength="240" autocomplete="off"></label>
+    <div class="dn-actions"><button class="dn-btn dn-btn--primary" type="submit">Record</button></div>
+  </form>
+  {% if history %}
+  <p class="dn-cap" style="margin-top:16px">What was recorded for this tooth</p>
+  {% for h in history %}
+  <div class="dn-row"><span class="dn-row-main"><b>{{ h.get_condition_display }}{% if h.surface %} &middot; {{ h.get_surface_display }}{% endif %}</b>
+    <span>{{ h.noted_at|date:"j M Y, H:i" }}{% if h.noted_by %} &middot; {{ h.noted_by.get_full_name|default:h.noted_by.email }}{% endif %}{% if h.note %} &middot; {{ h.note }}{% endif %}</span></span></div>
+  {% endfor %}
+  {% elif selected %}
+  <p class="dn-fine" style="margin-top:12px">Nothing recorded for this tooth yet.</p>
+  {% endif %}
+</section>
+
+<h2 style="margin-top:24px">Treatment plan</h2>
+<p class="dn-fine">In the order to do them. Doing a procedure in a visit marks it done; nothing else does.</p>
+{% for item in plan %}
+  <div class="dn-row">
+    <span class="dn-mono dn-order">{{ item.priority }}</span>
+    <span class="dn-row-main"><b>{{ item.procedure.name_en }}{% if item.tooth %} &middot; tooth <span class="dn-mono">{{ item.tooth }}</span>{% endif %}</b>
+      <span>{{ item.get_status_display }}{% if item.note %} &middot; {{ item.note }}{% endif %}</span></span>
+    {% if item.status == 'done' %}<span class="dn-tag dn-tag--go">Done</span>{% else %}
+    <form method="post" action="{% url 'dentist:plan_item_action' clinic.slug patient.pk item.pk 'up' %}">{% csrf_token %}<button class="dn-btn dn-btn--sm" type="submit" aria-label="Move up">&uarr;</button></form>
+    <form method="post" action="{% url 'dentist:plan_item_action' clinic.slug patient.pk item.pk 'down' %}">{% csrf_token %}<button class="dn-btn dn-btn--sm" type="submit" aria-label="Move down">&darr;</button></form>
+    <form method="post" action="{% url 'dentist:plan_item_action' clinic.slug patient.pk item.pk 'drop' %}">{% csrf_token %}<button class="dn-btn dn-btn--sm dn-btn--quiet" type="submit">Drop</button></form>
+    {% endif %}
+  </div>
+{% empty %}
+  <div class="dn-empty">No plan yet. Add the first thing to do below.</div>
+{% endfor %}
+{% if dropped %}<p class="dn-fine">Dropped, kept: {% for d in dropped %}{{ d.procedure.name_en }}{% if d.tooth %} {{ d.tooth }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}.</p>{% endif %}
+
+<details class="dn-fold" {% if not plan %}open{% endif %}>
+  <summary><b>Add to the plan</b><span>A procedure, usually for one tooth.</span></summary>
+  <form method="post" class="dn-fold-body" action="{% url 'dentist:plan_add' clinic.slug patient.pk %}">{% csrf_token %}
+    <label class="dn-field"><span>Procedure</span>
+      <select class="dn-input" name="procedure" required>{% for p in procedures %}<option value="{{ p.pk }}">{{ p.name_en }}</option>{% endfor %}</select></label>
+    <label class="dn-field"><span>Tooth (optional)</span>
+      <input class="dn-input dn-mono" name="tooth" inputmode="numeric" value="{{ selected|default:'' }}" placeholder="16" id="plan-tooth"></label>
+    <label class="dn-field"><span>Note (optional)</span><input class="dn-input" name="note" maxlength="240" autocomplete="off"></label>
+    <button class="dn-btn dn-btn--primary" type="submit">Add</button>
+  </form>
+</details>
+{% endblock %}
+{% block scripts %}<script src="{% static 'dentist/mouth.js' %}" defer></script>{% endblock %}
