@@ -1,32 +1,36 @@
 /* dentist: its own look, never babook's (spec Rule 2.2).
  *
- * A clinic, in daylight, on a shared tablet, used by a volunteer who was
- * not taught. So: a light page, high contrast, large targets, and one
- * typeface chosen for legibility rather than character: Atkinson
- * Hyperlegible was designed for low-vision readers and tells 1, l and I
- * apart, which matters on a chart of tooth numbers. Clinic numbers, tooth
- * numbers and times are set in a mono face so a number is always a number.
+ * "Neighbourhood", chosen by Avi on 2026-10-26 from five options: a clinic
+ * run by people, for people who have had enough of screens that look like
+ * a government form. Warm sand, deep green, round shapes, Nunito: friendly
+ * without being childish. Built for the waiting room as much as for the
+ * dentist.
  *
- * Three colours mean something and nothing else uses them: teal is "the
+ * Underneath it keeps the daylight discipline: one accent, large targets
+ * for a shared tablet used by a volunteer who was not taught, and clinic
+ * numbers, tooth numbers and times set in a mono face so a number is
+ * always a number (1, l and I apart on a chart of tooth numbers).
+ *
+ * Three colours mean something and nothing else uses them: green is "the
  * clinic, go"; amber is "alert, read this before you treat"; red is
- * "refused, or irreversible". Everything else is ink and paper.
+ * "refused, or irreversible". Everything else is ink and sand.
  */
 
 :root {
-  --dn-paper: #FAFAF7;
-  --dn-card: #FFFFFF;
-  --dn-line: #D9D6CE;
-  --dn-ink: #1E2321;
-  --dn-dim: #5F6662;
-  --dn-teal: #0F766E;
-  --dn-teal-soft: #E0F2EF;
-  --dn-amber: #B45309;
-  --dn-amber-soft: #FEF3E2;
-  --dn-red: #B91C1C;
-  --dn-red-soft: #FEE2E2;
-  --dn-r: 10px;
+  --dn-paper: #F6F1E7;
+  --dn-card: #FFFDF8;
+  --dn-line: #E1D9C8;
+  --dn-ink: #22302A;
+  --dn-dim: #6B7570;
+  --dn-teal: #2F6F4E;
+  --dn-teal-soft: #E3EFE7;
+  --dn-amber: #9A5B00;
+  --dn-amber-soft: #FFF1D6;
+  --dn-red: #A32D2D;
+  --dn-red-soft: #FFE1E1;
+  --dn-r: 18px;
   --dn-tap: 48px;
-  --dn-sans: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --dn-sans: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
   --dn-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
 }
 
@@ -46,9 +50,8 @@ body {
 /* ---- the pilot banner: on every page, every persona (Rule 2.7) -------- */
 
 .dn-pilot {
-  background: var(--dn-amber-soft);
-  color: var(--dn-amber);
-  border-bottom: 1px solid #F3D9B1;
+  background: var(--dn-teal);
+  color: #fff;
   font-size: 14px;
   font-weight: 700;
   text-align: center;
@@ -126,7 +129,7 @@ a.dn-row:hover { border-color: var(--dn-teal); }
 
 .dn-tag {
   font-family: var(--dn-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
-  padding: 4px 8px; border-radius: 6px; white-space: nowrap; border: 1px solid var(--dn-line); color: var(--dn-dim);
+  padding: 4px 9px; border-radius: 999px; white-space: nowrap; border: 1px solid var(--dn-line); color: var(--dn-dim);
 }
 .dn-tag--go { background: var(--dn-teal-soft); color: var(--dn-teal); border-color: var(--dn-teal); }
 .dn-tag--wait { background: var(--dn-amber-soft); color: var(--dn-amber); border-color: var(--dn-amber); }
@@ -139,7 +142,7 @@ a.dn-row:hover { border-color: var(--dn-teal); }
 
 .dn-btn {
   display: inline-flex; align-items: center; justify-content: center; min-height: var(--dn-tap);
-  padding: 12px 20px; border-radius: var(--dn-r); border: 1px solid var(--dn-line); background: var(--dn-card);
+  padding: 12px 22px; border-radius: 999px; border: 1px solid var(--dn-line); background: var(--dn-card);
   color: var(--dn-ink); font: 700 16px/1 var(--dn-sans); text-decoration: none; cursor: pointer;
 }
 .dn-btn:hover { border-color: var(--dn-teal); }

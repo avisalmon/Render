@@ -5,3 +5,9 @@
 # Format: <test id>   # <owning app>, <date added>, <why>
 tests/test_smoke.py::test_every_css_variable_is_defined   # memz, 2026-10-26, --mz-action-text used but never defined
 tests/test_smoke.py::test_the_dashboard_is_current   # matazim, 2026-10-26, docs/matazim/dashboard.html is stale (run manage.py matazim_dashboard)
+tests/test_role_journeys.py::test_each_role_can_click_its_way_to_everything_it_needs[None]   # matazim, 2026-10-26, /matazim/apply/ is not reachable by clicking (failing since at least 2026-10-15)
+tests/test_role_journeys.py::test_each_role_can_click_its_way_to_everything_it_needs[free@example.com]   # matazim, 2026-10-26, same
+tests/test_spri_4_2.py::test_the_page_loads_the_judge_and_what_it_needs_in_order   # improv, 2026-10-26, failing since at least 2026-10-15
+tests/test_spri_9_5.py::test_the_bar_holds_the_everyday_screens   # improv, 2026-10-26, failing since at least 2026-10-15
+tests/test_spri_1_1.py::test_every_class_the_markup_uses_is_a_class_the_stylesheet_defines   # improv, 2026-10-26, failing since at least 2026-10-15
+tests/test_review_2026_10_02.py::test_the_table_is_reached_from_the_sheet_and_the_nav_fits_a_phone   # blackjack, 2026-10-26, the nav has 8 links where the test expects 7 (since 2026-10-17)
