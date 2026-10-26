@@ -247,7 +247,7 @@ def pid_alive(pid):
         return False
     if os.name == "nt":
         out = subprocess.run(
-            ["tasklist", "/FI", f"PID eq {int(pid)}", "/NH"], capture_output=True, text=True,
+            ["tasklist", "/FI", f"PID eq {int(pid)}", "/NH"], capture_output=True, text=True, encoding="utf-8", errors="replace",
         ).stdout
         return str(int(pid)) in out
     try:
@@ -266,10 +266,10 @@ def process_started(pid):
             out = subprocess.run(
                 ["powershell", "-NoProfile", "-Command",
                  f"(Get-CimInstance Win32_Process -Filter 'ProcessId={int(pid)}').CreationDate.ToString('o')"],
-                capture_output=True, text=True, timeout=30,
+                capture_output=True, text=True, timeout=30, encoding="utf-8", errors="replace",
             ).stdout.strip()
         else:
-            out = subprocess.run(["ps", "-o", "lstart=", "-p", str(int(pid))], capture_output=True, text=True).stdout.strip()
+            out = subprocess.run(["ps", "-o", "lstart=", "-p", str(int(pid))], capture_output=True, text=True, encoding="utf-8", errors="replace").stdout.strip()
         return out or None
     except (OSError, subprocess.SubprocessError, ValueError):
         return None
@@ -374,7 +374,7 @@ def notify(subject, body):
     subprocess.run(
         [claude, "-p", prompt, "--model", "claude-haiku-5-5",
          "--allowedTools", "mcp__claude_ai_Gmail__send_message", "ToolSearch"],
-        capture_output=True, text=True, timeout=300,
+        capture_output=True, text=True, timeout=300, encoding="utf-8", errors="replace",
     )
 
 
@@ -670,6 +670,9 @@ def prepare_clone():
     if not (repo / ".git").exists():
         raise RuntimeError(f"the train's clone is missing at {repo}; run: python scripts/train.py setup")
     git("fetch", "origin", "--prune", cwd=repo)
+    # A stray edit in the clone (someone copied a file in by hand) once
+    # stopped a train at checkout. The clone holds nothing of its own.
+    git("reset", "--hard", cwd=repo)
     git("checkout", "-B", "train-candidate", "origin/main", cwd=repo)
     git("reset", "--hard", "origin/main", cwd=repo)
     git("clean", "-fd", "-e", "env", "-e", "media", "-e", "db.sqlite3", "-e", "staticfiles",
@@ -1014,7 +1017,7 @@ def watchdog():
         problems["nightly"] = f"No nightly regression since {last_night['started']}."
     if os.name == "nt" and os.environ.get("TRAIN_CHECK_TASKS", "1") == "1":
         for task in ("release-train", "matazim-mail"):
-            q = subprocess.run(["schtasks", "/query", "/tn", task, "/fo", "csv", "/nh"], capture_output=True, text=True)
+            q = subprocess.run(["schtasks", "/query", "/tn", task, "/fo", "csv", "/nh"], capture_output=True, text=True, encoding="utf-8", errors="replace")
             if q.returncode != 0:
                 problems[f"task-{task}"] = f"The scheduled task {task} is missing."
             elif "Disabled" in q.stdout:
@@ -1084,7 +1087,7 @@ def setup():
     # with new rules, and the site's lint test failed on 461 findings the
     # developers' ruff never shows them.
     src_py = python_in(source())
-    version = subprocess.run([src_py, "-m", "ruff", "--version"], capture_output=True, text=True).stdout.split()
+    version = subprocess.run([src_py, "-m", "ruff", "--version"], capture_output=True, text=True, encoding="utf-8", errors="replace").stdout.split()
     if len(version) == 2:
         subprocess.run([py, "-m", "pip", "install", "-q", f"ruff=={version[1]}"], check=False)
     sync_local_config(repo)
