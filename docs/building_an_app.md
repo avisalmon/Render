@@ -1196,3 +1196,19 @@ compare lower-case; and strip `<option>` labels before an "English only"
 check, because a language named in its own script is not the UI's
 language.
 
+### 56. A middleware is placed by what it reads, and a sweep knows its own alphabet
+
+dentist's middleware for the tried role was put first in `MIDDLEWARE`
+out of habit, before the session and the user exist, and silently did
+nothing until three tests said so. The same sprint, the class-defined
+sweep (mistake 13) failed on `dn-seg--root_canal` because its regex did
+not allow an underscore (postmortems PM-61).
+
+**The rule.** A middleware that reads the session or the user goes after
+`SessionMiddleware` and `AuthenticationMiddleware`, and one test asserts
+through a real request that the state reached the view. A sweep over
+names matches the alphabet the stylesheet allows (letters, digits, `-`,
+`_`). And a row of tap targets on a phone is sized by the thumb: when
+eight do not fit the width at 44px, the row scrolls in its own box
+rather than shrinking.
+

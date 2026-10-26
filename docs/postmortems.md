@@ -17,6 +17,39 @@ Newest first.
 
 ---
 
+## PM-61 · 2026-10-26 · A middleware placed by habit, and a sweep that did not know its own names
+
+**What happened.** Sprint D.4 of dentist (the mouth, the pilot clinic,
+"try as"). (1) The middleware that reads the tried role from the session
+was put first in `MIDDLEWARE`, before the session and the user exist, so
+it silently did nothing: three tests failed, the page never showed the
+tried role. (2) The class-defined sweep (mistake 13) did not know that a
+class name can hold an underscore (`dn-seg--root_canal`) and failed on a
+class the stylesheet defined. (3) A whole-tooth state painted the button
+and none of its five segments: the layout only looked at a surface's own
+row. (4) The tap-target check found the teeth crowded on a 320px phone
+(eight 34px teeth in a row) and the patient's name link in the heading
+short. All four caught by the sprint's own tests and the screen contract
+before any screenshot was looked at.
+
+**Why.** The middleware was placed by habit ("ours goes first"), not by
+what it reads. The sweep's regex was written for the names that existed
+the day it was written. The segment inheritance was a design decision
+nobody had made explicit until the chart drew a crown as a white square.
+
+**Rule.** A middleware is placed by what it needs: one that reads the
+session or the user goes after `SessionMiddleware` and
+`AuthenticationMiddleware`, and its test asserts through a real request
+that the state reached the view. A sweep over names matches the same
+alphabet the stylesheet allows (letters, digits, `-`, `_`). When a part
+can carry state at two levels (a tooth and its surfaces), write down
+which wins and draw it from that rule. On a phone a row of tap targets is
+sized by the thumb, not by the width: eight teeth do not fit 320px at
+44px each, so the row scrolls in its own box rather than shrinking.
+
+Here: `mysite/settings.py` (MIDDLEWARE), `tests/test_spr_d_3.py` (the sweep), `dentist/mouth.py`, `static/dentist/dentist.css`
+BKM: 9a2ecf5
+
 ## PM-60 · 2026-10-26 · A one-time door refused its own holder, and a second door forgot the mail
 
 **What happened.** Building the dentist app's two doors (an invitation
