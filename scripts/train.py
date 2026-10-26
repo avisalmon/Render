@@ -631,6 +631,39 @@ def site_checks(repo):
 # --------------------------------------------------------------- the clone
 
 
+LOCAL_CONFIG_NEVER = {"SOCIALACCOUNT_PROVIDERS"}  # holds a client secret under a plain name
+
+
+def sync_local_config(repo):
+    """The shared tree's `mysite/settings_local.py`, minus every secret.
+
+    The first train failed three matazim tests that pass in the shared
+    tree, because the video library id they render lives in
+    settings_local.py, which the clone deliberately does not have (it also
+    holds real keys). So the clone gets a derived copy: single-line
+    assignments whose name is not shaped like a secret. Keys, tokens and
+    the Google client never leave the shared tree."""
+    src = source() / "mysite" / "settings_local.py"
+    dst = repo / "mysite" / "settings_local.py"
+    if not src.exists():
+        return 0
+    kept = []
+    for line in src.read_text(encoding="utf-8", errors="replace").splitlines():
+        m = re.match(r"^([A-Z][A-Z0-9_]*)\s*=\s*(.+)$", line)
+        if not m or SECRET_SHAPES.search(m.group(1)) or m.group(1) in LOCAL_CONFIG_NEVER:
+            continue
+        if m.group(2).strip().endswith(("{", "[", "(", "\\")):
+            continue  # a multi-line value; never half of one
+        kept.append(line)
+    dst.write_text(
+        "# Written by scripts/train.py from the shared tree's settings_local.py,\n"
+        "# with every secret left out. Do not edit; it is rewritten every train.\n"
+        + "\n".join(kept) + "\n",
+        encoding="utf-8",
+    )
+    return len(kept)
+
+
 def prepare_clone():
     """The train's own clone: never the shared tree, never the bot's."""
     repo = clone()
@@ -639,8 +672,24 @@ def prepare_clone():
     git("fetch", "origin", "--prune", cwd=repo)
     git("checkout", "-B", "train-candidate", "origin/main", cwd=repo)
     git("reset", "--hard", "origin/main", cwd=repo)
-    git("clean", "-fd", "-e", "env", "-e", "media", "-e", "db.sqlite3", "-e", "mysite/settings_local.py", cwd=repo)
+    git("clean", "-fd", "-e", "env", "-e", "media", "-e", "db.sqlite3", "-e", "staticfiles",
+        "-e", "mysite/settings_local.py", cwd=repo)
+    sync_local_config(repo)
     return repo
+
+
+def collect_static(repo):
+    """Static files as production serves them. A test that asks for a
+    stylesheet got a 404 in the clone and a 200 in the shared tree, which
+    had a `staticfiles/` folder from some earlier day."""
+    if not (repo / "manage.py").exists():
+        return None
+    result = subprocess.run(
+        [python_in(repo), "manage.py", "collectstatic", "--noinput", "-v", "0"],
+        cwd=str(repo), capture_output=True, text=True, encoding="utf-8", errors="replace",
+        env={**os.environ, "PYTHONUTF8": "1"},
+    )
+    return None if result.returncode == 0 else (result.stdout + result.stderr).strip()[-600:]
 
 
 def build_candidate(repo, requests, include_local=True):
@@ -806,6 +855,9 @@ def _ride(record, waiting, include_local):
     if problem:
         return {**out, "result": "failed", "detail": problem, "new_failures": []}
     if scope != "none":
+        problem = collect_static(repo)
+        if problem:
+            return {**out, "result": "failed", "detail": "collectstatic failed: " + problem, "new_failures": []}
         outcome, failures, log = run_pytest(repo, scope, targets, TRAIN_MINUTES * (3 if scope == "full" else 1), record["id"])
         known = known_failures(repo)
         new = [f for f in failures if f not in known]
@@ -1028,6 +1080,14 @@ def setup():
     # Parallel tests, as the mail bot's clone already has: the difference
     # between a nightly that takes one hour and one that takes three.
     subprocess.run([py, "-m", "pip", "install", "-q", "pytest-xdist"], check=True)
+    # The same ruff as the shared tree. A fresh install took a newer one
+    # with new rules, and the site's lint test failed on 461 findings the
+    # developers' ruff never shows them.
+    src_py = python_in(source())
+    version = subprocess.run([src_py, "-m", "ruff", "--version"], capture_output=True, text=True).stdout.split()
+    if len(version) == 2:
+        subprocess.run([py, "-m", "pip", "install", "-q", f"ruff=={version[1]}"], check=False)
+    sync_local_config(repo)
     # No settings_local.py: it holds real keys, and the bot's clone runs the
     # same suite without one. A secret copied into a second folder is a
     # second place it can leak from.
