@@ -269,6 +269,11 @@ code { font-family: var(--f-mono); font-size: .9em; background: #f3ece0; padding
 .bm-upload input { position: absolute; inset: 0; width: 100%; opacity: 0; cursor: pointer; }
 .bm-upload-name { font-weight: 600; color: var(--green); }
 .bm-remove { margin: 4px 0 0; }
+.bm-form-pic { width: 260px; max-width: 100%; aspect-ratio: 4 / 3; object-fit: cover; box-shadow: 0 3px 8px rgba(0,0,0,.25); }
+.bm-check { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; min-height: 44px; cursor: pointer; }
+.bm-check input { width: 22px; height: 22px; }
+.bm-admin-edit { font-size: .85rem; font-weight: 700; color: var(--red); }
+.bm-admin-bar { display: flex; justify-content: flex-end; margin: -24px 0 18px; }
 .bm-danger { color: var(--red); }
 
 /* ---- forms ---- */

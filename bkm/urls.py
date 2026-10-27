@@ -22,5 +22,7 @@ urlpatterns = [
     path("projects/<int:pk>/", views.project_page, name="project"),
     path("projects/<int:pk>/edit/", views.project_edit, name="project_edit"),
     path("api/", include(router.urls)),
+    path("new/", views.bkm_edit, name="bkm_new"),
     path("<slug:slug>/", views.bkm_page, name="bkm"),
+    path("<slug:slug>/edit/", views.bkm_edit, name="bkm_edit"),
 ]

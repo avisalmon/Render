@@ -12,7 +12,7 @@ from django.core.files import File
 
 ASSETS = Path(__file__).resolve().parent / "seed_assets"
 
-RESERVED = {"api", "login", "logout", "signup", "projects"}
+RESERVED = {"api", "login", "logout", "signup", "projects", "new"}
 
 
 def attach_pictures(log=print):

@@ -10,7 +10,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 
 from . import access
-from .forms import CommentForm, ProjectForm
+from .forms import BkmForm, CommentForm, ProjectForm
 from .models import Bkm, Comment, Like, Project, ProjectComment, ProjectLike, Star
 
 
@@ -89,6 +89,30 @@ def bkm_page(request, slug):
         "starred": Star.objects.filter(reader=reader, bkm=bkm).exists(),
         "is_admin": access.is_admin(request.user), "section": "wall", "made": bkm.projects.count(),
     })
+
+
+@access.signed_in
+def bkm_edit(request, slug=None):
+    """REQ-B.23: Avi's form for a BKM, every field and the picture. Nobody
+    else sees it (404)."""
+    if not access.is_admin(request.user):
+        raise Http404
+    bkm = get_object_or_404(Bkm, slug=slug) if slug else None
+    if bkm and request.method == "POST" and request.POST.get("action") == "delete":
+        bkm.delete()
+        messages.success(request, f"{bkm.name} was removed from the wall.")
+        return redirect("bkm:wall")
+    form = BkmForm(request.POST or None, request.FILES or None, instance=bkm, user=request.user)
+    if request.method == "POST" and form.is_valid():
+        b = form.save(commit=False)
+        if not bkm and not b.position:
+            from django.db.models import Max
+
+            b.position = (Bkm.objects.aggregate(m=Max("position"))["m"] or 0) + 10
+        b.save()
+        messages.success(request, f"{b.name} is saved.")
+        return redirect(f"/bkm/#{b.slug}")
+    return render(request, "bkm/bkm_form.html", {"form": form, "bkm": bkm, "section": "wall"})
 
 
 # ---------------------------------------------------------------- projects

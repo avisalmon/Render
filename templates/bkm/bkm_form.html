@@ -1,0 +1,38 @@
+{% extends "bkm/base.html" %}
+{% block title %}{% if bkm %}Edit {{ bkm.name }}{% else %}Add a BKM{% endif %} · Best Known Methods{% endblock %}
+{% block content %}
+<p class="bm-back"><a href="{% url 'bkm:wall' %}{% if bkm %}#{{ bkm.slug }}{% endif %}">Back to the wall</a></p>
+<section class="bm-paper bm-form-paper">
+  <span class="bm-pin" aria-hidden="true"></span>
+  <h1 class="bm-h1">{% if bkm %}Edit {{ bkm.name }}{% else %}Add a BKM to the wall{% endif %}</h1>
+  <p class="bm-muted">Only you see this form. Changes are on the wall the moment you save.</p>
+  {% if bkm and bkm.picture %}
+    <img class="bm-form-pic" src="{{ bkm.picture.url }}" alt="The picture on the card now" width="960" height="720">
+  {% endif %}
+  <form method="post" enctype="multipart/form-data" class="bm-form" id="bm-bkm-form">
+    {% csrf_token %}
+    {% for e in form.non_field_errors %}<p class="bm-error">{{ e }}</p>{% endfor %}
+    {% for field in form %}
+      {% if field.name == "picture" %}
+        <div class="bm-field" data-field="picture"><span>{{ field.label }}</span>
+          <label class="bm-upload"><span class="bm-btn bm-btn-quiet">{% if bkm.picture %}Replace the picture{% else %}Choose a picture{% endif %}</span>{{ field }}</label>
+          <small class="bm-upload-name" data-upload-name></small>
+          <small class="bm-muted">{{ field.help_text }}</small>
+          {% for e in field.errors %}<small class="bm-error">{{ e }}</small>{% endfor %}</div>
+      {% elif field.name == "is_published" %}
+        <label class="bm-check">{{ field }} <span>{{ field.label }}</span></label>
+      {% else %}
+        <label class="bm-field" for="{{ field.id_for_label }}"><span>{{ field.label }}</span>{{ field }}
+          {% for e in field.errors %}<small class="bm-error">{{ e }}</small>{% endfor %}</label>
+      {% endif %}
+    {% endfor %}
+    <button type="submit" class="bm-btn">Save</button>
+  </form>
+  {% if bkm %}
+    <form method="post" class="bm-remove" data-confirm="Remove {{ bkm.name }} from the wall for good? Its likes and comments go with it. To hide it for now, untick 'On the wall' instead.">
+      {% csrf_token %}<input type="hidden" name="action" value="delete">
+      <button type="submit" class="bm-link bm-danger">Remove for good</button>
+    </form>
+  {% endif %}
+</section>
+{% endblock %}

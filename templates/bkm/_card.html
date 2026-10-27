@@ -21,6 +21,7 @@
     </h2>
     <p class="bm-card-line">{{ b.tagline }}</p>
     {% if not b.is_published %}<p class="bm-hidden-tag">Hidden: only you see it</p>{% endif %}
+    {% if user.is_superuser %}<a class="bm-admin-edit" href="{% url 'bkm:bkm_edit' b.slug %}">Edit this BKM</a>{% endif %}
   </div>
   <div class="bm-card-acts">
     {% if signed %}

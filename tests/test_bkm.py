@@ -19,8 +19,11 @@ HEBREW = re.compile(r"[֐-׿]")
 
 
 @pytest.fixture(autouse=True)
-def media(settings, tmp_path):
+def media(settings, tmp_path, monkeypatch):
+    from bkm import images
+
     settings.MEDIA_ROOT = tmp_path
+    monkeypatch.setattr(images, "safe", lambda data, user=None: (True, ""))  # mistake 47: no outside call
 
 
 def _user(email, superuser=False, first=""):
@@ -322,6 +325,77 @@ def test_the_seed_attaches_pictures_once_and_never_over_avis(world):
     assert fs.picture.name == first
     for slug in ("full-stack", "single-button-kit", "de10-lite"):
         assert (Path("bkm/seed_assets") / f"{slug}.jpg").exists()
+
+
+# ------------------------------------------------------------ Avi's own form (REQ-B.23)
+
+
+def _jpeg(size=(1200, 900)):
+    import io
+
+    from django.core.files.uploadedfile import SimpleUploadedFile
+    from PIL import Image
+
+    out = io.BytesIO()
+    Image.new("RGB", size, (20, 140, 60)).save(out, "JPEG")
+    return SimpleUploadedFile("board.jpg", out.getvalue(), content_type="image/jpeg")
+
+
+def _bkm_post(b, **change):
+    data = {"name": b.name, "tagline": b.tagline, "repo_url": b.repo_url, "page_url": b.page_url,
+            "position": b.position, "is_published": "on"}
+    data.update(change)
+    return {k: v for k, v in data.items() if v is not None}
+
+
+def test_only_avi_sees_the_bkm_form(client, world):
+    assert client.get("/bkm/full-stack/edit/").status_code == 302          # sign in first
+    client.force_login(world["dana"])
+    assert client.get("/bkm/full-stack/edit/").status_code == 404
+    assert client.get("/bkm/new/").status_code == 404
+    client.post("/bkm/full-stack/edit/", _bkm_post(world["fs"], name="Hacked"))
+    client.post("/bkm/full-stack/edit/", {"action": "delete"})
+    assert Bkm.objects.get(slug="full-stack").name == "FullStackBKM"
+    for path in ("/bkm/", "/bkm/full-stack/"):
+        html = client.get(path).content.decode()
+        assert "/edit/" not in html and 'id="bm-add-bkm"' not in html
+
+
+def test_avi_changes_text_links_and_picture_with_no_deploy(client, world):
+    client.force_login(world["avi"])
+    html = client.get("/bkm/").content.decode()
+    assert 'href="/bkm/de10-lite/edit/"' in _card(html, "de10-lite") and 'id="bm-add-bkm"' in html
+    r = client.post("/bkm/de10-lite/edit/", _bkm_post(world["de10"], tagline="FFT on an LCD, with an AI beside you.",
+                                                      picture=_jpeg((2400, 1800))))
+    assert r.status_code == 302 and r["Location"] == "/bkm/#de10-lite"
+    de10 = Bkm.objects.get(slug="de10-lite")
+    assert de10.tagline == "FFT on an LCD, with an AI beside you." and de10.picture
+    from PIL import Image
+
+    with Image.open(de10.picture.path) as img:
+        assert max(img.size) == 1600
+    assert "FFT on an LCD" in client.get("/bkm/").content.decode()
+    client.post("/bkm/de10-lite/edit/", _bkm_post(de10, page_url="javascript:alert(1)"))
+    assert Bkm.objects.get(slug="de10-lite").page_url.startswith("https://")
+
+
+def test_avi_adds_hides_and_removes_a_bkm(client, world):
+    client.force_login(world["avi"])
+    new = {"slug": "robo-dog", "name": "RoboDogBKM", "tagline": "Build a robotic dog.",
+           "repo_url": "https://github.com/avisalmon/RoboDogBKM", "page_url": "https://avisalmon.github.io/RoboDogBKM/",
+           "position": "", "is_published": "on", "picture": _jpeg()}
+    client.post("/bkm/new/", new)
+    dog = Bkm.objects.get(slug="robo-dog")
+    assert dog.position == 40 and dog.picture
+    client.post("/bkm/new/", {**new, "slug": "projects", "picture": _jpeg()})
+    assert not Bkm.objects.filter(slug="projects").exists()
+    client.post("/bkm/robo-dog/edit/", _bkm_post(dog, is_published=None))
+    assert not Bkm.objects.get(slug="robo-dog").is_published
+    client.force_login(world["dana"])
+    assert 'id="robo-dog"' not in client.get("/bkm/").content.decode()
+    client.force_login(world["avi"])
+    client.post("/bkm/robo-dog/edit/", {"action": "delete"})
+    assert not Bkm.objects.filter(slug="robo-dog").exists()
 
 
 # ------------------------------------------------------------ the stylesheet
