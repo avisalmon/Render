@@ -6,6 +6,10 @@ django-allauth[socialaccount]>=65.0,<66
 django-axes>=8.0,<9
 nh3>=0.2,<1
 requests>=2.31,<3
+# Render advisory 2026-10-27 (eMudhra intermediate CA keys compromised): requests,
+# httpx and the Google libraries trust certifi's bundle, not the system store, so
+# the bundle itself has to be at least 2026.10.19.
+certifi>=2026.10.19
 Pillow>=10.0,<12
 # memz's own dependency (ACT-Z.12, 2026-09-16): reads a font's cmap table
 # to know exactly which characters it can draw, so a caption's emoji get
