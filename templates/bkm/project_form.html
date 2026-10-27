@@ -1,0 +1,40 @@
+{% extends "bkm/base.html" %}
+{% block title %}{% if project %}Edit {{ project.title }}{% else %}Pin your project{% endif %} · Best Known Methods{% endblock %}
+{% block content %}
+<p class="bm-back"><a href="{% if project %}{% url 'bkm:project' project.pk %}{% else %}{% url 'bkm:projects' %}{% endif %}">Back</a></p>
+<section class="bm-paper bm-form-paper">
+  <span class="bm-pin" aria-hidden="true"></span>
+  <h1 class="bm-h1">{% if project %}Edit your project{% else %}Pin your project{% endif %}</h1>
+  <p class="bm-muted">Everybody sees the card and its picture; signed-in people open it, like it and ask you about it.</p>
+  <form method="post" enctype="multipart/form-data" class="bm-form" id="bm-project-form">
+    {% csrf_token %}
+    {% for e in form.non_field_errors %}<p class="bm-error">{{ e }}</p>{% endfor %}
+    <fieldset class="bm-kinds">
+      <legend>{{ form.kind.label }}</legend>
+      {% for choice in form.kind %}
+        <label class="bm-kind">{{ choice.tag }}<span>{{ choice.choice_label }}</span></label>
+      {% endfor %}
+      {% for e in form.kind.errors %}<small class="bm-error">{{ e }}</small>{% endfor %}
+    </fieldset>
+    {% for field in form %}{% if field.name == "image" %}
+      {# Methodology 28: never the browser's raw file box; a big labelled button with the input over it. #}
+      <div class="bm-field" data-field="image"><span>{{ field.label }}</span>
+        <label class="bm-upload"><span class="bm-btn bm-btn-quiet">Choose a photo</span>{{ field }}</label>
+        <small class="bm-upload-name" data-upload-name>{% if project.image %}A photo is pinned; choose another to replace it.{% endif %}</small>
+        {% if field.help_text %}<small class="bm-muted">{{ field.help_text }}</small>{% endif %}
+        {% for e in field.errors %}<small class="bm-error">{{ e }}</small>{% endfor %}</div>
+    {% elif field.name != "kind" %}
+      <label class="bm-field" for="{{ field.id_for_label }}" data-field="{{ field.name }}"><span>{{ field.label }}</span>{{ field }}
+        {% if field.help_text %}<small class="bm-muted">{{ field.help_text }}</small>{% endif %}
+        {% for e in field.errors %}<small class="bm-error">{{ e }}</small>{% endfor %}</label>
+    {% endif %}{% endfor %}
+    <button type="submit" class="bm-btn">{% if project %}Save{% else %}Pin it{% endif %}</button>
+  </form>
+  {% if project %}
+    <form method="post" class="bm-remove" data-confirm="Take this project off the exhibition? Its likes and comments go with it.">
+      {% csrf_token %}<input type="hidden" name="action" value="delete">
+      <button type="submit" class="bm-link bm-danger">Remove the project</button>
+    </form>
+  {% endif %}
+</section>
+{% endblock %}

@@ -10,9 +10,10 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
 from . import access
-from .models import Bkm, Comment, Like, Reader, Star
+from .models import Bkm, Comment, Like, Project, ProjectComment, ProjectLike, Reader, Star
 from .serializers import (
-    BkmSerializer, CommentSerializer, LikeSerializer, PublicBkmSerializer, ReaderSerializer, StarSerializer,
+    BkmSerializer, CommentSerializer, LikeSerializer, ProjectCommentSerializer, ProjectLikeSerializer,
+    ProjectSerializer, PublicBkmSerializer, PublicProjectSerializer, ReaderSerializer, StarSerializer,
 )
 
 
@@ -144,7 +145,101 @@ class CommentViewSet(viewsets.ModelViewSet):
         instance.save(update_fields=["deleted_at"])
 
 
+class ProjectViewSet(viewsets.ModelViewSet):
+    """The exhibition (REQ-B.30 to B.35). Everybody reads it (a visitor
+    without the links); anybody signed in adds their own; the owner or Avi
+    changes or removes one. `?q=&bkm=&topic=&kind=&purpose=&sort=` filter
+    the same way the page does."""
+
+    def get_permissions(self):
+        if self.action in ("list", "retrieve"):
+            return [permissions.AllowAny()]
+        return [SignedIn()]
+
+    def get_queryset(self):
+        from .views import search_projects
+
+        return search_projects(self.request.query_params)[0]
+
+    def get_serializer_class(self):
+        return ProjectSerializer if self.request.user.is_authenticated else PublicProjectSerializer
+
+    def _photo(self, serializer):
+        """The same check, shrink and strip as the form (bkm/images.py)."""
+        from django.core.exceptions import ValidationError as DjangoValidationError
+
+        from . import images
+
+        upload = serializer.validated_data.get("image")
+        if upload:
+            try:
+                serializer.validated_data["image"] = images.prepare(upload, self.request.user)
+            except DjangoValidationError as exc:
+                raise ValidationError({"image": exc.messages})
+
+    def perform_create(self, serializer):
+        self._photo(serializer)
+        serializer.save(owner=me(self.request))
+
+    def _check(self, project):
+        if project.owner.user_id != self.request.user.pk and not access.is_admin(self.request.user):
+            raise PermissionDenied("This is not your project.")
+
+    def perform_update(self, serializer):
+        self._check(serializer.instance)
+        self._photo(serializer)
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        self._check(instance)
+        instance.delete()
+
+    @action(detail=True, methods=["post"])
+    def like(self, request, pk=None):
+        """Toggle your like; answers with the new public count."""
+        project, reader = self.get_object(), me(request)
+        row = ProjectLike.objects.filter(reader=reader, project=project).first()
+        if row:
+            row.delete()
+        else:
+            ProjectLike.objects.create(reader=reader, project=project)
+        return Response({"on": row is None, "count": ProjectLike.objects.filter(project=project).count()})
+
+
+class ProjectLikeViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
+    """Likes on projects, public to people signed in; you remove your own.
+    Adding goes through `projects/{id}/like/`."""
+
+    serializer_class = ProjectLikeSerializer
+    permission_classes = [SignedIn]
+
+    def get_queryset(self):
+        qs = ProjectLike.objects.all()
+        project = self.request.query_params.get("project")
+        return qs.filter(project_id=project) if project else qs
+
+    def perform_destroy(self, instance):
+        if instance.reader_id != me(self.request).pk:
+            raise PermissionDenied("That is not yours.")
+        instance.delete()
+
+
+class ProjectCommentViewSet(CommentViewSet):
+    serializer_class = ProjectCommentSerializer
+
+    def get_queryset(self):
+        qs = ProjectComment.objects.select_related("author")
+        project = self.request.query_params.get("project")
+        return qs.filter(project_id=project) if project else qs
+
+    def perform_create(self, serializer):
+        serializer.save(author=me(self.request))
+
+
 ROUTES = [
+    ("projects", ProjectViewSet, Project),
+    ("project-likes", ProjectLikeViewSet, ProjectLike),
+    ("project-comments", ProjectCommentViewSet, ProjectComment),
     ("bkms", BkmViewSet, Bkm),
     ("readers", ReaderViewSet, Reader),
     ("likes", LikeViewSet, Like),

@@ -91,6 +91,18 @@ pages, nor linking back to them (Rule 3).
 | REQ-B.21 | Finished BKMs only | A BKM goes on the wall when Avi says it is complete. In production it arrives as a data migration plus its picture in `bkm/seed_assets/<slug>.jpg`, attached once by `seed_bkm` (never over a picture Avi changed). On 2026-10-26: FullStackBKM, SingleButtonKitBKM, De10LiteBKM. | DONE |
 | REQ-B.22 | The picture is the result | A photo of the thing the BKM makes, or a creative illustration when it is not a thing. Kit: the photo from its own repo. DE10-Lite: Terasic's product photo. Full stack: a papercraft illustration made for the card. | DONE |
 
+## Chapter 4b: The exhibition of projects (Avi, 2026-10-27)
+
+| REQ | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-B.30 | A public exhibition | A second tab, "Projects": things people made, as taped photos on the cork (so they never look like a BKM). Anybody with the link sees the cards and their pictures. | DONE |
+| REQ-B.31 | Pin your project | Anybody signed in pins their own: a YouTube video, a website, or a photo. Title, a sentence or two, and the facts below. A photo is checked, made at most 1600px, stripped of where it was taken, and passed through the site's shared image safety check; it lives in the public media folder. The owner edits or removes it; Avi any. | DONE |
+| REQ-B.32 | Signed in to open | A visitor sees the card and the picture (the video's thumbnail, the photo, a screenshot of the site from WordPress's free mShots); pressing anything opens the sign-in window and brings them back to that card. Signed in: a video plays inside its card and has a full screen button, a site opens in a new tab, a photo opens large. The links are not in a visitor's page or API. | DONE |
+| REQ-B.33 | Likes | Public count, one per person, toggled. | DONE |
+| REQ-B.34 | A conversation per project | The same thread as a BKM's: quoted replies, edit and delete your own, Avi deletes any. | DONE |
+| REQ-B.35 | Find a project | No AI, no search engine: words searched in the title, description, tags, maker and BKM name, every word must match; filters by BKM ("made with"), topic, kind and reason; order by newest, most liked, most talked about. Every chip on a card (BKM, topic, tag) is a filter link. A BKM's page shows how many projects were made with it and invites pinning one. | DONE |
+| REQ-B.36 | The API | `projects` (public read without links, signed-in create, owner or Avi change, `like` toggle, the same filters as the page), `project-likes`, `project-comments`. | DONE |
+
 ## Chapter 5: How it must behave
 
 | REQ | Title | Expectation | Status |
@@ -98,6 +110,7 @@ pages, nor linking back to them (Rule 3).
 | REQ-B.40 | Full REST API | Rule 6: DRF over every model under `/bkm/api/`: `bkms` (public read without links, admin write, `like` and `star` toggles), `readers` (your own), `likes`, `stars` (your own only), `comments`. | DONE |
 | REQ-B.41 | Its own frame | Own base template and menu (the wall, my stars), own error pages, no link to babook and not in babook's portal (Rule 3). | DONE |
 | REQ-B.42 | No sideways scroll | No page slides sideways at 320, 360, 375, 390, 412 and 1280. | DONE |
+| REQ-B.43 | The menu is always there | Avi, 2026-10-27: the top menu stays on screen while scrolling. Fixed to the top, the page pushed down by its measured height; tested in Chromium and WebKit (the iPad's engine) at 1280 and 1024. | DONE |
 
 ## Chapter 6: Decisions taken on the way
 

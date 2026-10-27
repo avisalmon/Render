@@ -1,0 +1,63 @@
+{% extends "bkm/base.html" %}
+{% block title %}Projects · Best Known Methods{% endblock %}
+{% block content %}
+<div class="bm-phead">
+  <div>
+    <h1 class="bm-title bm-title-light">The exhibition</h1>
+    <p class="bm-lede bm-lede-light">Things people made: hardware on video, sites, photos. Pin yours, and see what others built with each BKM.</p>
+  </div>
+  {% if user.is_authenticated %}
+    <a class="bm-btn" href="{% url 'bkm:project_new' %}" id="bm-pin-project">+ Pin your project</a>
+  {% else %}
+    <a class="bm-btn" href="{% url 'bkm:login' %}?next=/bkm/projects/new/" data-gate data-next="/bkm/projects/new/" id="bm-pin-project">+ Pin your project</a>
+  {% endif %}
+</div>
+
+{# REQ-B.35: find a project. Plain filters over the database, no AI. #}
+<form class="bm-filters" method="get" action="{% url 'bkm:projects' %}" role="search" id="bm-filters">
+  <label class="bm-search">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg>
+    <input type="search" name="q" value="{{ params.q }}" placeholder="Search projects, tags, makers" aria-label="Search projects">
+  </label>
+  <select name="bkm" aria-label="Made with">
+    <option value="">Any BKM</option>
+    {% for b in bkms %}<option value="{{ b.slug }}"{% if params.bkm == b.slug %} selected{% endif %}>{{ b.name }}</option>{% endfor %}
+  </select>
+  <select name="topic" aria-label="Topic">
+    <option value="">Any topic</option>
+    {% for k, v in topics %}<option value="{{ k }}"{% if params.topic == k %} selected{% endif %}>{{ v }}</option>{% endfor %}
+  </select>
+  <select name="kind" aria-label="Kind">
+    <option value="">Any kind</option>
+    {% for k, v in kinds %}<option value="{{ k }}"{% if params.kind == k %} selected{% endif %}>{{ v }}</option>{% endfor %}
+  </select>
+  <select name="purpose" aria-label="Why it was made">
+    <option value="">Any reason</option>
+    {% for k, v in purposes %}<option value="{{ k }}"{% if params.purpose == k %} selected{% endif %}>{{ v }}</option>{% endfor %}
+  </select>
+  <select name="sort" aria-label="Order">
+    {% for k, v in sorts %}<option value="{{ k }}"{% if sort == k %} selected{% endif %}>{{ v }}</option>{% endfor %}
+  </select>
+  <button type="submit" class="bm-btn bm-btn-small">Find</button>
+</form>
+
+{% if items %}
+  <p class="bm-found">{% if filtering %}{{ items|length }} of {{ total }} project{{ total|pluralize }}{% else %}{{ total }} project{{ total|pluralize }}{% endif %}
+    {% if filtering or sort != "new" %} · <a class="bm-clear" href="{% url 'bkm:projects' %}">Clear the filters</a>{% endif %}</p>
+  <div class="bm-exhibit" id="bm-exhibit">
+    {% for p in items %}{% include "bkm/_project_card.html" %}{% endfor %}
+  </div>
+{% elif filtering %}
+  <div class="bm-paper bm-empty"><p>Nothing matches. Try fewer words, or another filter.</p>
+    <a class="bm-btn bm-btn-quiet" href="{% url 'bkm:projects' %}">Show all projects</a></div>
+{% else %}
+  <div class="bm-paper bm-empty"><p><b>The exhibition is waiting for its first project.</b> Built something with a BKM, or without one? A video of your hardware, your site, a photo: pin it here.</p></div>
+{% endif %}
+
+{% if user.is_authenticated %}
+  <dialog class="bm-zoom" id="bm-zoom" aria-label="Photo">
+    <button type="button" class="bm-gate-close" data-zoom-close aria-label="Close"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13"/></svg></button>
+    <img alt="" id="bm-zoom-img">
+  </dialog>
+{% endif %}
+{% endblock %}

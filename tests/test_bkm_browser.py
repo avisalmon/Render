@@ -21,15 +21,20 @@ SHOTS = os.environ.get("BKM_SHOTS")
 
 
 @pytest.fixture(scope="module")
-def browser():
+def pw():
     playwright = pytest.importorskip("playwright.sync_api")
+    with playwright.sync_playwright() as p:
+        yield p
+
+
+@pytest.fixture(scope="module")
+def browser(pw):
     try:
-        with playwright.sync_playwright() as pw:
-            chrome = pw.chromium.launch()
-            yield chrome
-            chrome.close()
+        chrome = pw.chromium.launch()
     except Exception as exc:  # pragma: no cover
         pytest.skip(f"no browser available: {exc}")
+    yield chrome
+    chrome.close()
 
 
 @pytest.fixture
@@ -134,8 +139,134 @@ def test_on_a_phone_the_notice_comes_first_and_can_be_dismissed(browser, live_se
     ctx.close()
 
 
+def _signed(ctx, user):
+    from django.contrib.auth import BACKEND_SESSION_KEY, HASH_SESSION_KEY, SESSION_KEY
+    from django.contrib.sessions.backends.db import SessionStore
+
+    s = SessionStore()
+    s[SESSION_KEY] = str(user.pk)
+    s[BACKEND_SESSION_KEY] = "django.contrib.auth.backends.ModelBackend"
+    s[HASH_SESSION_KEY] = user.get_session_auth_hash()
+    s.save()
+    ctx.add_cookies([{"name": "sessionid", "value": s.session_key, "domain": "localhost", "path": "/"}])
+
+
+@pytest.fixture
+def projects(world, monkeypatch):
+    from bkm import images
+    from bkm.models import Bkm, Project, Reader
+
+    monkeypatch.setattr(images, "safe", lambda data, user=None: (True, ""))
+    eli = Reader.objects.create(user=world["avi"], display_name="Avi S")
+    kit = Bkm.objects.get(slug="single-button-kit")
+    made = []
+    for i in range(7):
+        made.append(Project.objects.create(owner=eli, title=f"Gadget number {i}", kind="video", url="https://youtu.be/dQw4w9WgXcQ",
+                                           bkm=kit if i % 2 else None, topic="electronics" if i % 2 else "games",
+                                           description="A small thing with a button and a screen.", tags="esp32, oled"))
+    return made
+
+
 @pytest.mark.django_db(transaction=True)
-def test_no_page_slides_sideways(browser, live_server, world):
+def test_the_menu_stays_on_top_while_scrolling(pw, browser, live_server, world, projects):
+    """Avi, 2026-10-27: the top menu is always there when scrolling, on a
+    computer and on an iPad (WebKit), and it never covers the first line."""
+    broken = []
+    try:
+        webkit = pw.webkit.launch()
+    except Exception:  # pragma: no cover
+        webkit = None
+    for engine, b in (("chromium", browser), ("webkit", webkit)):
+        if b is None:
+            continue
+        for vp in ({"width": 1280, "height": 700}, {"width": 1024, "height": 768}):
+            ctx = b.new_context(viewport=vp)
+            page = ctx.new_page()
+            for path in ("/bkm/", "/bkm/projects/"):
+                page.goto(live_server.url + path)
+                bar = page.locator(".bm-bar").bounding_box()
+                first = page.locator(".bm-main").bounding_box()
+                if first["y"] < bar["y"] + bar["height"] - 1:
+                    broken.append(f"{engine} {vp['width']} {path}: the bar covers the page")
+                page.mouse.wheel(0, 1200)
+                page.wait_for_timeout(300)
+                if page.evaluate("window.scrollY") < 100:
+                    broken.append(f"{engine} {vp['width']} {path}: did not scroll")
+                if page.locator(".bm-bar").bounding_box()["y"] != 0:
+                    broken.append(f"{engine} {vp['width']} {path}: the bar scrolled away")
+            ctx.close()
+    if webkit:
+        webkit.close()
+    assert not broken, "\n".join(broken)
+
+
+@pytest.mark.django_db(transaction=True)
+def test_the_exhibition_on_a_computer(browser, live_server, world, projects, tmp_path):
+    """REQ-B.30 to B.35, walked: a visitor is asked in, a maker pins a photo,
+    a video plays in its card, a photo opens large, the filters find."""
+    from PIL import Image
+
+    from bkm.models import Project
+
+    ctx = _context(browser, 1280)
+    page = ctx.new_page()
+    errors = []
+    page.on("pageerror", lambda exc: errors.append(str(exc)))
+    page.goto(live_server.url + "/bkm/projects/")
+    _shot(page, "projects-visitor-1280")
+    first = projects[-1]
+    page.click(f"#p{first.pk} .bm-pmedia-btn")
+    assert page.locator("#bm-gate").is_visible()
+    assert f"%23p{first.pk}" in page.get_attribute("#bm-gate-google", "href")
+    assert page.locator("iframe").count() == 0
+    ctx.close()
+
+    ctx = _context(browser, 1280)
+    _signed(ctx, world["dana"])
+    page = ctx.new_page()
+    page.on("pageerror", lambda exc: errors.append(str(exc)))
+    page.goto(live_server.url + "/bkm/projects/")
+    page.click(f"#p{first.pk} [data-embed]")
+    assert page.locator(f'#p{first.pk} iframe[src*="youtube-nocookie.com/embed/dQw4w9WgXcQ"]').count() == 1
+    page.click(f"#p{first.pk} [data-plike]")
+    page.wait_for_function(f"document.querySelector('#p{first.pk} [data-plike]').getAttribute('aria-pressed') === 'true'")
+
+    page.click("#bm-pin-project")
+    page.wait_for_url("**/bkm/projects/new/")
+    page.check("input[name=kind][value=image]")
+    assert page.locator('[data-field="image"]').is_visible()
+    photo = tmp_path / "board.jpg"
+    Image.new("RGB", (1200, 900), (180, 60, 40)).save(photo)
+    page.fill("#id_title", "My soldered board")
+    page.set_input_files("#id_image", str(photo))
+    page.select_option("#id_topic", "electronics")
+    page.fill("#id_tags", "soldering, first")
+    _shot(page, "project-form-1280")
+    page.click("#bm-project-form button[type=submit]")
+    page.wait_for_url("**/bkm/projects/*/")
+    mine = Project.objects.get(title="My soldered board")
+    assert mine.owner.user == world["dana"] and mine.image
+    page.click(".bm-pcard-big [data-zoom]")
+    assert page.locator("#bm-zoom").is_visible()
+    page.keyboard.press("Escape")
+
+    page.goto(live_server.url + "/bkm/projects/")
+    page.fill(".bm-search input", "soldering")
+    page.click("#bm-filters button[type=submit]")
+    page.wait_for_url("**q=soldering**")
+    assert page.locator(".bm-pcard").count() == 1
+    page.goto(live_server.url + "/bkm/projects/")
+    page.select_option("select[name=bkm]", "single-button-kit")
+    page.click("#bm-filters button[type=submit]")
+    page.wait_for_url("**bkm=single-button-kit**")
+    assert page.locator(".bm-pcard").count() == 3
+    _shot(page, "projects-filtered-1280")
+    assert errors == []
+    ctx.close()
+
+
+@pytest.mark.django_db(transaction=True)
+def test_no_page_slides_sideways(browser, live_server, world, projects):
     """Methodology 29 and 34: every phone width, and a computer."""
     broken = []
     for signed in (False, True):
@@ -152,7 +283,8 @@ def test_no_page_slides_sideways(browser, live_server, world):
                 s.save()
                 ctx.add_cookies([{"name": "sessionid", "value": s.session_key, "domain": "localhost", "path": "/"}])
             page = ctx.new_page()
-            paths = ["/bkm/", "/bkm/de10-lite/", "/bkm/?starred=1"] if signed else ["/bkm/", "/bkm/login/", "/bkm/signup/"]
+            paths = (["/bkm/", "/bkm/de10-lite/", "/bkm/?starred=1", "/bkm/projects/", f"/bkm/projects/{projects[0].pk}/",
+                      "/bkm/projects/new/"] if signed else ["/bkm/", "/bkm/login/", "/bkm/signup/", "/bkm/projects/"])
             for path in paths:
                 page.goto(live_server.url + path)
                 over = page.evaluate(OVERFLOW, width)

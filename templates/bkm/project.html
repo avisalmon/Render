@@ -1,0 +1,59 @@
+{% extends "bkm/base.html" %}
+{% block title %}{{ p.title }} · Projects · Best Known Methods{% endblock %}
+{% block content %}
+<p class="bm-back"><a href="{% url 'bkm:projects' %}#p{{ p.pk }}">Back to the exhibition</a></p>
+
+<div class="bm-pdetail">
+  <article class="bm-pcard bm-pcard-big" id="p{{ p.pk }}">
+    <span class="bm-tape" aria-hidden="true"></span>
+    <div class="bm-pmedia" data-media>
+      {% if p.kind == "video" %}
+        <div class="bm-video"><iframe src="https://www.youtube-nocookie.com/embed/{{ p.youtube_id }}" title="{{ p.title }}"
+             allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen
+             referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
+      {% elif p.kind == "image" %}
+        <button type="button" class="bm-pmedia-btn" data-zoom="{{ p.image.url }}" aria-label="See it large"><img src="{{ p.picture_url }}" alt=""></button>
+      {% else %}
+        <a class="bm-pmedia-btn" href="{{ p.url }}" target="_blank" rel="noopener noreferrer" aria-label="Open the site"><img src="{{ p.picture_url }}" alt=""></a>
+      {% endif %}
+    </div>
+    <div class="bm-card-acts">
+      <button type="button" class="bm-act bm-like" data-plike="{{ p.pk }}" aria-pressed="{{ liked|yesno:'true,false' }}" aria-label="Like {{ p.title }}" title="Like">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 7.9 3.5 4.5 7 4.5c2 0 3.4 1.1 5 3 1.6-1.9 3-3 5-3 3.5 0 5.6 3.4 4.3 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"/></svg>
+        <span class="bm-count" data-count>{{ likes }}</span>
+      </button>
+      {% if p.kind == "video" %}
+        <button type="button" class="bm-act" data-full="{{ p.youtube_id }}" aria-label="Watch full screen" title="Full screen">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg> Full screen
+        </button>
+        <a class="bm-btn bm-btn-small" href="https://www.youtube.com/watch?v={{ p.youtube_id }}" target="_blank" rel="noopener noreferrer">Open on YouTube</a>
+      {% elif p.kind == "site" %}
+        <a class="bm-btn bm-btn-small" href="{{ p.url }}" target="_blank" rel="noopener noreferrer" id="bm-open">Open the site</a>
+      {% endif %}
+    </div>
+  </article>
+
+  <section class="bm-paper bm-pabout">
+    <span class="bm-pin" aria-hidden="true"></span>
+    <h1 class="bm-h1">{{ p.title }}</h1>
+    <p class="bm-pby">by {{ p.owner.display_name }} · {{ p.created_at|date:"j M Y" }}</p>
+    {% if p.description %}<p>{{ p.description }}</p>{% endif %}
+    <dl class="bm-facts">
+      {% if p.bkm %}<dt>Made with</dt><dd><a href="{% url 'bkm:bkm' p.bkm.slug %}">{{ p.bkm.name }}</a></dd>{% endif %}
+      <dt>Topic</dt><dd><a href="{% url 'bkm:projects' %}?topic={{ p.topic }}">{{ p.get_topic_display }}</a></dd>
+      {% if p.purpose %}<dt>Why</dt><dd>{{ p.get_purpose_display }}</dd>{% endif %}
+      {% if p.level %}<dt>Level</dt><dd>{{ p.get_level_display }}</dd>{% endif %}
+      {% if p.kind == "site" %}<dt>Link</dt><dd class="bm-small"><a href="{{ p.url }}" target="_blank" rel="noopener noreferrer">{{ p.url }}</a></dd>{% endif %}
+    </dl>
+    {% if p.tag_list %}<p class="bm-chips">{% for t in p.tag_list %}<a class="bm-chip bm-chip-tag" href="{% url 'bkm:projects' %}?q={{ t|urlencode }}">#{{ t }}</a>{% endfor %}</p>{% endif %}
+    {% if may_change %}<p class="bm-small"><a href="{% url 'bkm:project_edit' p.pk %}" id="bm-project-edit">Edit or remove this project</a></p>{% endif %}
+  </section>
+</div>
+
+{% include "bkm/_thread.html" %}
+
+<dialog class="bm-zoom" id="bm-zoom" aria-label="Photo">
+  <button type="button" class="bm-gate-close" data-zoom-close aria-label="Close"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13"/></svg></button>
+  <img alt="" id="bm-zoom-img">
+</dialog>
+{% endblock %}
