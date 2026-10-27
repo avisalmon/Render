@@ -269,6 +269,11 @@ code { font-family: var(--f-mono); font-size: .9em; background: #f3ece0; padding
 .bm-upload input { position: absolute; inset: 0; width: 100%; opacity: 0; cursor: pointer; }
 .bm-upload-name { font-weight: 600; color: var(--green); }
 .bm-remove { margin: 4px 0 0; }
+.bm-rot { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.bm-rot-box { width: 240px; height: 240px; max-width: 100%; display: grid; place-items: center; background: #efe7da; border: 1px solid #d8cdbb; overflow: hidden; }
+.bm-rot-box img { max-width: 100%; max-height: 100%; object-fit: contain; transition: transform .2s ease; }
+.bm-rot-btns { display: grid; gap: 8px; }
+.bm-rot-btns svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .bm-form-pic { width: 260px; max-width: 100%; aspect-ratio: 4 / 3; object-fit: cover; box-shadow: 0 3px 8px rgba(0,0,0,.25); }
 .bm-check { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; min-height: 44px; cursor: pointer; }
 .bm-check input { width: 22px; height: 22px; }

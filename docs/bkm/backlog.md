@@ -10,6 +10,7 @@ one sprint, built and shipped the day Avi approved the data model.
 | SPR-B.1 | The whole app: the wall and its message, the gate and sign-in (Google first), the phone notice, cards with likes and stars, a BKM's page with the four steps and the conversation, the API, the chat command, the first three BKMs with their pictures | REQ-B.1 to B.5, B.10 to B.16, B.20 to B.22, B.40 to B.42 | **DONE 2026-10-26** |
 | SPR-B.2 | The menu always on top; the public exhibition of projects (video, site, photo), signed in to open, likes, threads, search and filters, the BKM page's "made with it" | REQ-B.30 to B.36, B.43 | **DONE 2026-10-27** |
 | SPR-B.3 | Avi's form for a BKM: edit every field and the picture, add, hide, remove; no deploy for content | REQ-B.23 | **DONE 2026-10-27** |
+| SPR-B.4 | Rotate a picture before saving, in both forms, new or already saved | REQ-B.24 | **DONE 2026-10-27** |
 
 **Adding or changing a BKM** (since SPR-B.3): Avi does it on the wall,
 signed in: "+ Add a BKM", or "Edit this BKM" on a card. No migration, no

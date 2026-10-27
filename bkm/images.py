@@ -14,7 +14,21 @@ MAX_BYTES = 10 * 1024 * 1024
 MAX_SIDE = 1600
 
 
-def prepare(uploaded, user=None):
+ROTATIONS = (0, 90, 180, 270)
+
+
+def clean_rotation(value):
+    """Degrees clockwise, one of 0, 90, 180, 270; anything else is 0."""
+    try:
+        value = int(value or 0) % 360
+    except (TypeError, ValueError):
+        return 0
+    return value if value in ROTATIONS else 0
+
+
+def prepare(uploaded, user=None, rotate=0):
+    """`rotate` turns the photo clockwise by that many degrees, after the
+    phone's own orientation is applied (REQ-B.24)."""
     from PIL import Image, ImageOps, UnidentifiedImageError
 
     if uploaded.size > MAX_BYTES:
@@ -25,6 +39,9 @@ def prepare(uploaded, user=None):
         img = ImageOps.exif_transpose(img).convert("RGB")
     except (UnidentifiedImageError, OSError, ValueError):
         raise ValidationError("That file is not a photo we can read (JPEG, PNG or WebP).")
+    rotate = clean_rotation(rotate)
+    if rotate:
+        img = img.rotate(-rotate, expand=True)
     img.thumbnail((MAX_SIDE, MAX_SIDE))
     out = io.BytesIO()
     img.save(out, "JPEG", quality=85, optimize=True)
@@ -34,6 +51,20 @@ def prepare(uploaded, user=None):
     if not ok:
         raise ValidationError("This photo cannot be shown here. Please choose another one.")
     return ContentFile(data, name="photo.jpg")
+
+
+def rotate_existing(fieldfile, rotate, user=None):
+    """The picture already saved, turned and saved again; no new upload."""
+    import io as _io
+
+    fieldfile.open("rb")
+    try:
+        data = fieldfile.read()
+    finally:
+        fieldfile.close()
+    buf = _io.BytesIO(data)
+    buf.size = len(data)
+    return prepare(buf, user, rotate)
 
 
 def safe(data, user=None):
