@@ -17,6 +17,10 @@ urlpatterns = [
     path("login/", auth_views.LoginView.as_view(), name="login"),
     path("signup/", auth_views.signup, name="signup"),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
+    path("projects/", views.projects, name="projects"),
+    path("projects/new/", views.project_edit, name="project_new"),
+    path("projects/<int:pk>/", views.project_page, name="project"),
+    path("projects/<int:pk>/edit/", views.project_edit, name="project_edit"),
     path("api/", include(router.urls)),
     path("<slug:slug>/", views.bkm_page, name="bkm"),
 ]

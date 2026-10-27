@@ -17,6 +17,30 @@ Newest first.
 
 ---
 
+## PM-64 · 2026-10-27 · bkm's exhibition: known rules caught known slips
+
+**What happened.** Sprint B.2 of bkm (the exhibition of projects, the
+menu fixed on top). Three slips, each caught before the commit by a rule
+we already had: (1) the photo field first showed the browser's raw
+"Choose File" box; the screenshot caught it (mistake 28). (2) A script
+that moved the thread into a partial wrote Windows line endings, which
+would have made a 52-line change look like the whole file; `git diff
+--stat` caught it (mistake 12). (3) A second Playwright session in the
+same test module failed ("Sync API inside the asyncio loop"); one
+session per module now hands out both browsers. Separately, Avi saw the
+menu scroll away; measured, the sticky bar held in Chromium and WebKit,
+so the cause on his device is unknown; the bar is now fixed, the
+sturdier way, and a test holds it in both engines.
+
+**Why.** Nothing new: the existing checks did their job.
+
+**Rule.** None new. When a person reports a layout bug we cannot
+reproduce, say so, make the sturdier change, and test it in the engine
+their device uses.
+
+Here: `tests/test_bkm_browser.py` (one Playwright session, WebKit menu test)
+BKM: deferred - no new rule; the slips were caught by mistakes 12 and 28, already in FullStackBKM
+
 ## PM-63 · 2026-10-26 · An English app printed Hebrew dates, and a command line pushed the page sideways
 
 **What happened.** Sprint B.1, the whole bkm app. (1) The comment dates

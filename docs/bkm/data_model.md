@@ -98,6 +98,34 @@ One thread per BKM; a reply quotes the comment it answers, WhatsApp style.
 
 The author edits or deletes their own; Avi can delete any.
 
+### Project (added 2026-10-27, migration 0003)
+
+Something a person made, in the public exhibition (spec ch. 4b).
+
+| Field | Type | Notes |
+|---|---|---|
+| owner | FK → Reader | cascade; whoever pinned it |
+| title | char 100 | |
+| description | char 400, blank | a sentence or two |
+| kind | choice | `video` (YouTube), `site`, `image` |
+| url | URL, blank | the YouTube link or the site; optional for a photo |
+| youtube_id | char 20, blank | taken from the URL on save |
+| image | image, blank | a photo, re-encoded JPEG at most 1600px, public media folder |
+| bkm | FK → Bkm, null | "made with"; set null if the BKM goes |
+| topic | choice | electronics, robotics, fpga, iot, web, ai, games, science, art, other |
+| purpose | choice, blank | learning, teaching, tool, fun |
+| level | choice, blank | first, some, advanced |
+| tags | char 120, blank | a few words, lower case, comma separated |
+| created_at, updated_at | datetime | |
+
+The card's picture is derived, never stored twice: the photo, else the
+video's thumbnail, else a screenshot URL of the site (mShots).
+
+### ProjectLike and ProjectComment
+
+The same shapes as Like and Comment, on a Project instead of a Bkm, kept
+as their own tables so a BKM's thread and a project's never mix.
+
 ## 3. What is shared, and what is not
 
 - Shared with babook: the `User` table and sign-in only.

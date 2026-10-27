@@ -1,0 +1,75 @@
+{% comment %}
+  One project in the exhibition (REQ-B.30, B.32, B.33). Taped, not pinned,
+  so a project never looks like a BKM. Signed in: a video plays in the card
+  and goes full screen, a site opens, a photo opens large. A visitor sees
+  the card and its picture; anything they press opens the sign-in window,
+  and the project's link is not in the page.
+{% endcomment %}
+{% with signed=user.is_authenticated %}
+<article class="bm-pcard" id="p{{ p.pk }}">
+  <span class="bm-tape" aria-hidden="true"></span>
+  <div class="bm-pmedia" data-media>
+    {% if not signed %}
+      <button type="button" class="bm-pmedia-btn" data-gate aria-label="Sign in to open {{ p.title }}">
+        {% if p.picture_url %}<img src="{{ p.picture_url }}" alt="" loading="lazy">{% endif %}
+        {% if p.kind == "video" %}<span class="bm-play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>{% endif %}
+      </button>
+    {% elif p.kind == "video" %}
+      <button type="button" class="bm-pmedia-btn" data-embed="{{ p.youtube_id }}" aria-label="Play {{ p.title }}">
+        <img src="{{ p.picture_url }}" alt="" loading="lazy">
+        <span class="bm-play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
+      </button>
+    {% elif p.kind == "image" %}
+      <button type="button" class="bm-pmedia-btn" data-zoom="{{ p.image.url }}" aria-label="See {{ p.title }} large">
+        <img src="{{ p.picture_url }}" alt="" loading="lazy">
+      </button>
+    {% else %}
+      <a class="bm-pmedia-btn" href="{{ p.url }}" target="_blank" rel="noopener noreferrer" aria-label="Open {{ p.title }}">
+        <img src="{{ p.picture_url }}" alt="" loading="lazy">
+        <span class="bm-site-tag" aria-hidden="true">{{ p.url|cut:"https://"|cut:"http://"|truncatechars:34 }}</span>
+      </a>
+    {% endif %}
+  </div>
+  <div class="bm-ptext">
+    <h2 class="bm-ptitle">
+      {% if signed %}<a href="{% url 'bkm:project' p.pk %}">{{ p.title }}</a>
+      {% else %}<button type="button" class="bm-linklike" data-gate>{{ p.title }}</button>{% endif %}
+    </h2>
+    <p class="bm-pby">by {{ p.owner.display_name }} · {{ p.created_at|date:"j M Y" }}</p>
+    {% if p.description %}<p class="bm-pdesc">{{ p.description }}</p>{% endif %}
+    <p class="bm-chips">
+      {% if p.bkm %}<a class="bm-chip bm-chip-bkm" href="{% url 'bkm:projects' %}?bkm={{ p.bkm.slug }}">{{ p.bkm.name }}</a>{% endif %}
+      <a class="bm-chip" href="{% url 'bkm:projects' %}?topic={{ p.topic }}">{{ p.get_topic_display }}</a>
+      {% for t in p.tag_list %}<a class="bm-chip bm-chip-tag" href="{% url 'bkm:projects' %}?q={{ t|urlencode }}">#{{ t }}</a>{% endfor %}
+    </p>
+  </div>
+  <div class="bm-card-acts">
+    {% if signed %}
+      <button type="button" class="bm-act bm-like" data-plike="{{ p.pk }}" aria-pressed="{% if p.pk in liked %}true{% else %}false{% endif %}" aria-label="Like {{ p.title }}" title="Like">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 7.9 3.5 4.5 7 4.5c2 0 3.4 1.1 5 3 1.6-1.9 3-3 5-3 3.5 0 5.6 3.4 4.3 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"/></svg>
+        <span class="bm-count" data-count>{{ p.n_likes }}</span>
+      </button>
+      <a class="bm-act" href="{% url 'bkm:project' p.pk %}#thread" aria-label="Talk about {{ p.title }}" title="Comments">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>
+        <span class="bm-count">{{ p.n_comments }}</span>
+      </a>
+      {% if p.kind == "video" %}
+        <button type="button" class="bm-act" data-full="{{ p.youtube_id }}" aria-label="Watch {{ p.title }} full screen" title="Full screen">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+        </button>
+      {% endif %}
+      <a class="bm-start" href="{% url 'bkm:project' p.pk %}">More</a>
+    {% else %}
+      <button type="button" class="bm-act bm-like" data-gate aria-label="Sign in to like {{ p.title }}" title="Like">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 7.9 3.5 4.5 7 4.5c2 0 3.4 1.1 5 3 1.6-1.9 3-3 5-3 3.5 0 5.6 3.4 4.3 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"/></svg>
+        <span class="bm-count">{{ p.n_likes }}</span>
+      </button>
+      <button type="button" class="bm-act" data-gate aria-label="Sign in to talk about {{ p.title }}" title="Comments">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>
+        <span class="bm-count">{{ p.n_comments }}</span>
+      </button>
+      <button type="button" class="bm-start" data-gate>More</button>
+    {% endif %}
+  </div>
+</article>
+{% endwith %}

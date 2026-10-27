@@ -15,6 +15,16 @@
     return m ? decodeURIComponent(m[1]) : "";
   }
 
+  /* ---------- the menu stays on top: room for it under the page ---------- */
+
+  var bar = document.querySelector(".bm-bar");
+  function room() { document.body.style.setProperty("--bm-bar-h", bar.offsetHeight + "px"); }
+  if (bar) {
+    room();
+    window.addEventListener("resize", room);
+    if (window.ResizeObserver) new ResizeObserver(room).observe(bar);
+  }
+
   /* ---------- the phone notice ---------- */
 
   var phone = document.getElementById("bm-phone");
@@ -42,8 +52,8 @@
       var el = e.target.closest("[data-gate]");
       if (!el) return;
       e.preventDefault();
-      var card = el.closest("[data-slug]");
-      var next = location.pathname + (card ? "#" + card.dataset.slug : "");
+      var card = el.closest("article[id]");
+      var next = el.dataset.next || (location.pathname + (card ? "#" + card.id : ""));
       if (next.indexOf("/bkm/") !== 0) next = "/bkm/";
       google.href = "/accounts/google/login/?process=login&next=" + encodeURIComponent(next);
       form.elements.next.value = next;
@@ -58,12 +68,17 @@
   /* ---------- likes and stars ---------- */
 
   document.addEventListener("click", function (e) {
-    var btn = e.target.closest("[data-like], [data-star]");
+    var btn = e.target.closest("[data-like], [data-star], [data-plike]");
     if (!btn || btn.disabled) return;
-    var kind = btn.hasAttribute("data-like") ? "like" : "star";
-    var slug = btn.getAttribute("data-" + kind);
+    var url;
+    if (btn.hasAttribute("data-plike")) {
+      url = "/bkm/api/projects/" + encodeURIComponent(btn.dataset.plike) + "/like/";
+    } else {
+      var kind = btn.hasAttribute("data-like") ? "like" : "star";
+      url = "/bkm/api/bkms/" + encodeURIComponent(btn.getAttribute("data-" + kind)) + "/" + kind + "/";
+    }
     btn.disabled = true;
-    fetch("/bkm/api/bkms/" + encodeURIComponent(slug) + "/" + kind + "/", {
+    fetch(url, {
       method: "POST", credentials: "same-origin",
       headers: { "X-CSRFToken": csrf(), "Accept": "application/json" }
     }).then(function (r) {
@@ -77,6 +92,83 @@
       btn.title = "Did not save. Try again.";
     }).then(function () { btn.disabled = false; });
   });
+
+  /* ---------- a project's video, photo and form (REQ-B.32, B.31) ---------- */
+
+  function embed(media, id) {
+    var have = media.querySelector("iframe");
+    if (have) return have;
+    var box = document.createElement("div");
+    box.className = "bm-video";
+    var frame = document.createElement("iframe");
+    frame.src = "https://www.youtube-nocookie.com/embed/" + id + "?autoplay=1";
+    frame.title = "Video";
+    frame.allow = "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen";
+    frame.allowFullscreen = true;
+    frame.referrerPolicy = "strict-origin-when-cross-origin";
+    box.appendChild(frame);
+    media.innerHTML = "";
+    media.appendChild(box);
+    return frame;
+  }
+
+  document.addEventListener("click", function (e) {
+    var play = e.target.closest("[data-embed]");
+    if (play) {
+      embed(play.closest("[data-media]"), play.dataset.embed);
+      return;
+    }
+    var full = e.target.closest("[data-full]");
+    if (full) {
+      var card = full.closest("article");
+      var media = card.querySelector("[data-media]");
+      var frame = embed(media, full.dataset.full);
+      var box = frame.parentNode;
+      var go = box.requestFullscreen || box.webkitRequestFullscreen;
+      if (go) {
+        try {
+          var p = go.call(box);
+          if (p && p.catch) p.catch(function () { window.open("https://www.youtube.com/watch?v=" + full.dataset.full, "_blank", "noopener"); });
+        } catch (err) { window.open("https://www.youtube.com/watch?v=" + full.dataset.full, "_blank", "noopener"); }
+      } else {
+        window.open("https://www.youtube.com/watch?v=" + full.dataset.full, "_blank", "noopener");
+      }
+      return;
+    }
+    var zoom = e.target.closest("[data-zoom]");
+    var dialog = document.getElementById("bm-zoom");
+    if (zoom && dialog) {
+      document.getElementById("bm-zoom-img").src = zoom.dataset.zoom;
+      dialog.showModal();
+      return;
+    }
+    if (dialog && (e.target.closest("[data-zoom-close]") || e.target === dialog)) dialog.close();
+  });
+
+  var projectForm = document.getElementById("bm-project-form");
+  if (projectForm) {
+    var hints = {
+      video: { url: "The YouTube link of your video", image: false },
+      site: { url: "The link to your site", image: "A picture instead of the automatic screenshot (optional)" },
+      image: { url: "A link about it (optional)", image: "Your photo" }
+    };
+    function shape() {
+      var picked = projectForm.querySelector("input[name=kind]:checked");
+      var h = hints[picked ? picked.value : "video"];
+      var url = projectForm.querySelector('[data-field="url"]');
+      var img = projectForm.querySelector('[data-field="image"]');
+      url.querySelector("span").textContent = h.url;
+      img.hidden = h.image === false;
+      if (h.image) img.querySelector("span").textContent = h.image;
+    }
+    projectForm.addEventListener("change", function (e) {
+      if (e.target.name === "kind") shape();
+      if (e.target.type === "file" && e.target.files.length) {
+        projectForm.querySelector("[data-upload-name]").textContent = "Chosen: " + e.target.files[0].name;
+      }
+    });
+    shape();
+  }
 
   /* ---------- copy ---------- */
 

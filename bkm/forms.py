@@ -5,6 +5,8 @@ from django.contrib.auth import password_validation
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
 
+from .models import Bkm, Project, youtube_id
+
 
 class LoginForm(AuthenticationForm):
     """Sign in with the babook account, by email or user name."""
@@ -63,6 +65,61 @@ class SignupForm(forms.Form):
         first, _, last = d["name"].strip().partition(" ")
         return User.objects.create_user(username=d["email"], email=d["email"], password=d["password1"],
                                         first_name=first[:150], last_name=last[:150])
+
+
+class ProjectForm(forms.ModelForm):
+    """Pin a project (REQ-B.31). One of three kinds, and a little about it so
+    others can find it (REQ-B.35)."""
+
+    image = forms.ImageField(label="Photo", required=False,
+                             help_text="For a photo project. For a site, an optional picture instead of the automatic screenshot.")
+
+    class Meta:
+        model = Project
+        fields = ["kind", "title", "url", "image", "description", "bkm", "topic", "purpose", "level", "tags"]
+        labels = {
+            "kind": "What is it?", "title": "Title", "url": "Link", "description": "In a sentence or two",
+            "bkm": "Made with a BKM?", "topic": "Topic", "purpose": "Why you made it", "level": "Your level",
+            "tags": "Tags",
+        }
+        widgets = {
+            "kind": forms.RadioSelect,
+            "description": forms.Textarea(attrs={"rows": 3, "maxlength": 400}),
+            "url": forms.URLInput(attrs={"placeholder": "https://"}),
+            "tags": forms.TextInput(attrs={"placeholder": "e.g. esp32, oled, game"}),
+        }
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+        self.fields["bkm"].queryset = Bkm.objects.filter(is_published=True)
+        self.fields["bkm"].empty_label = "No, or not one of these"
+        self.fields["purpose"].choices = [("", "Choose (optional)")] + list(self.fields["purpose"].choices)[1:]
+        self.fields["level"].choices = [("", "Choose (optional)")] + list(self.fields["level"].choices)[1:]
+        self.fields["kind"].choices = [c for c in self.fields["kind"].choices if c[0]]
+
+    def clean(self):
+        from . import images
+
+        cleaned = super().clean()
+        kind, url = cleaned.get("kind"), (cleaned.get("url") or "").strip()
+        upload = self.files.get("image")
+        if url and not url.lower().startswith(("http://", "https://")):
+            self.add_error("url", "A link starts with http:// or https://")
+        elif kind == Project.VIDEO and not youtube_id(url):
+            self.add_error("url", "Paste the YouTube link of the video.")
+        elif kind == Project.SITE and not url:
+            self.add_error("url", "Paste the link to the site.")
+        if kind == Project.IMAGE and not upload and not (self.instance.pk and self.instance.image):
+            self.add_error("image", "Choose the photo.")
+        if upload and not self.errors:
+            try:
+                cleaned["image"] = images.prepare(upload, self.user)
+            except forms.ValidationError as exc:
+                self.add_error("image", exc)
+        tags = [t.strip().lower()[:24] for t in (cleaned.get("tags") or "").split(",") if t.strip()]
+        cleaned["tags"] = ", ".join(dict.fromkeys(tags))[:120]
+        return cleaned
 
 
 class CommentForm(forms.Form):

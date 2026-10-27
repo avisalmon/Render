@@ -8,6 +8,7 @@ one sprint, built and shipped the day Avi approved the data model.
 | Sprint | What | Traces | Status |
 |---|---|---|---|
 | SPR-B.1 | The whole app: the wall and its message, the gate and sign-in (Google first), the phone notice, cards with likes and stars, a BKM's page with the four steps and the conversation, the API, the chat command, the first three BKMs with their pictures | REQ-B.1 to B.5, B.10 to B.16, B.20 to B.22, B.40 to B.42 | **DONE 2026-10-26** |
+| SPR-B.2 | The menu always on top; the public exhibition of projects (video, site, photo), signed in to open, likes, threads, search and filters, the BKM page's "made with it" | REQ-B.30 to B.36, B.43 | **DONE 2026-10-27** |
 
 **Adding a BKM later** (Avi says "I have a new BKM"): write
 `bkm/migrations/00NN_<slug>.py` (one `get_or_create`, the pattern of 0002),

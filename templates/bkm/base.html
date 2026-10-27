@@ -20,6 +20,7 @@
     <a class="bm-brand" href="{% url 'bkm:wall' %}"><span class="bm-brand-mark">BKM</span> Best Known Methods</a>
     <nav class="bm-nav" aria-label="Menu">
       <a href="{% url 'bkm:wall' %}" {% if section == 'wall' %}aria-current="page"{% endif %}>The wall</a>
+      <a href="{% url 'bkm:projects' %}" {% if section == 'projects' %}aria-current="page"{% endif %}>Projects</a>
       {% if user.is_authenticated %}
         <a href="{% url 'bkm:wall' %}?starred=1" {% if section == 'stars' %}aria-current="page"{% endif %}>My stars</a>
       {% endif %}
