@@ -17,6 +17,26 @@ Newest first.
 
 ---
 
+## PM-65 · 2026-10-27 · A deploy proposed for a change of content
+
+**What happened.** Avi sent his own DE10-Lite photo for the bkm card. I
+prepared a data migration to clear the old picture so the seed would
+attach the new one on a deploy. Avi: "this should not be a deploy". I then
+built a personal API token so the agent could use the app's REST API on
+production; Avi dropped it before it shipped and asked for an edit form in
+the app, only for him.
+
+**Why.** The habit from the first BKMs (rows by migration, pictures by
+seed) was right for day one and wrong for every change after it. The app
+had a full API but no screen for its owner, so every change looked like a
+job for the agent.
+
+**Rule.** Content has an edit screen in the app for its owner; a deploy is
+for code. Asked to change content, point to the screen, or build it.
+
+Here: `docs/building_an_app.md` ("Content is edited in the app"), `bkm/views.py` (bkm_edit), `tests/test_bkm.py`
+BKM: 309aba0
+
 ## PM-64 · 2026-10-27 · bkm's exhibition: known rules caught known slips
 
 **What happened.** Sprint B.2 of bkm (the exhibition of projects, the

@@ -266,6 +266,34 @@ def test_the_exhibition_on_a_computer(browser, live_server, world, projects, tmp
 
 
 @pytest.mark.django_db(transaction=True)
+def test_avi_replaces_a_cards_picture_from_the_wall(browser, live_server, world, projects, tmp_path):
+    """REQ-B.23, walked: from the card, through the form, back to the card
+    with the new picture. No deploy."""
+    from PIL import Image
+
+    from bkm.models import Bkm
+
+    before = Bkm.objects.get(slug="de10-lite").picture.name
+    ctx = _context(browser, 1280)
+    _signed(ctx, world["avi"])
+    page = ctx.new_page()
+    page.goto(live_server.url + "/bkm/")
+    page.click("#de10-lite .bm-admin-edit")
+    page.wait_for_url("**/bkm/de10-lite/edit/")
+    photo = tmp_path / "lcd.jpg"
+    Image.new("RGB", (1600, 900), (10, 160, 90)).save(photo)
+    page.set_input_files("#id_picture", str(photo))
+    assert "lcd.jpg" in page.inner_text("[data-upload-name]")
+    _shot(page, "bkm-form-1280")
+    page.click("#bm-bkm-form button[type=submit]")
+    page.wait_for_url("**/bkm/#de10-lite")
+    after = Bkm.objects.get(slug="de10-lite").picture.name
+    assert after != before
+    assert after.split("/")[-1] in page.get_attribute("#de10-lite .bm-card-pic img", "src")
+    ctx.close()
+
+
+@pytest.mark.django_db(transaction=True)
 def test_no_page_slides_sideways(browser, live_server, world, projects):
     """Methodology 29 and 34: every phone width, and a computer."""
     broken = []

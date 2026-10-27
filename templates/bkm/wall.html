@@ -26,6 +26,9 @@
   </section>
 {% endif %}
 
+{% if user.is_superuser and not only_stars %}
+  <div class="bm-admin-bar"><a class="bm-btn bm-btn-small" href="{% url 'bkm:bkm_new' %}" id="bm-add-bkm">+ Add a BKM</a></div>
+{% endif %}
 {% if items %}
   <div class="bm-wall" id="bm-wall">
     {% for b in items %}{% include "bkm/_card.html" %}{% endfor %}

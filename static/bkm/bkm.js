@@ -161,14 +161,17 @@
       img.hidden = h.image === false;
       if (h.image) img.querySelector("span").textContent = h.image;
     }
-    projectForm.addEventListener("change", function (e) {
-      if (e.target.name === "kind") shape();
-      if (e.target.type === "file" && e.target.files.length) {
-        projectForm.querySelector("[data-upload-name]").textContent = "Chosen: " + e.target.files[0].name;
-      }
-    });
+    projectForm.addEventListener("change", function (e) { if (e.target.name === "kind") shape(); });
     shape();
   }
+
+  // Any picture button: say which file was chosen.
+  document.addEventListener("change", function (e) {
+    if (e.target.type !== "file" || !e.target.files.length) return;
+    var field = e.target.closest(".bm-field");
+    var name = field && field.querySelector("[data-upload-name]");
+    if (name) name.textContent = "Chosen: " + e.target.files[0].name;
+  });
 
   /* ---------- copy ---------- */
 

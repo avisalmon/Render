@@ -67,11 +67,60 @@ class SignupForm(forms.Form):
                                         first_name=first[:150], last_name=last[:150])
 
 
+class BkmForm(forms.ModelForm):
+    """Avi's own form for a BKM on the wall (REQ-B.23): every field, the
+    picture included, so a change of content is never a deploy."""
+
+    picture = forms.ImageField(label="Picture", required=False, widget=forms.FileInput,
+                               help_text="A photo of what the BKM makes. It is shown 4:3, cropped from the middle.")
+
+    class Meta:
+        model = Bkm
+        fields = ["slug", "name", "tagline", "repo_url", "page_url", "picture", "position", "is_published"]
+        labels = {"slug": "Address on the wall (/bkm/...)", "name": "Name", "tagline": "The line on the card",
+                  "repo_url": "GitHub repository", "page_url": "Its GitHub Pages page (where the card leads)",
+                  "position": "Order on the wall (smaller is first)", "is_published": "On the wall"}
+        widgets = {"tagline": forms.Textarea(attrs={"rows": 2, "maxlength": 160})}
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+        self.fields["position"].required = False   # empty: at the end of the wall
+        if self.instance.pk:
+            del self.fields["slug"]
+
+    def clean_position(self):
+        return self.cleaned_data.get("position") or 0
+
+    def clean_slug(self):
+        from .seed import RESERVED
+
+        slug = self.cleaned_data["slug"]
+        if slug in RESERVED or slug == "new":
+            raise forms.ValidationError("That address is taken by the site itself.")
+        return slug
+
+    def clean(self):
+        from . import images
+
+        cleaned = super().clean()
+        for f in ("repo_url", "page_url"):
+            if cleaned.get(f) and not cleaned[f].lower().startswith(("http://", "https://")):
+                self.add_error(f, "A link starts with http:// or https://")
+        upload = self.files.get("picture")
+        if upload and not self.errors:
+            try:
+                cleaned["picture"] = images.prepare(upload, self.user)
+            except forms.ValidationError as exc:
+                self.add_error("picture", exc)
+        return cleaned
+
+
 class ProjectForm(forms.ModelForm):
     """Pin a project (REQ-B.31). One of three kinds, and a little about it so
     others can find it (REQ-B.35)."""
 
-    image = forms.ImageField(label="Photo", required=False,
+    image = forms.ImageField(label="Photo", required=False, widget=forms.FileInput,
                              help_text="For a photo project. For a site, an optional picture instead of the automatic screenshot.")
 
     class Meta:

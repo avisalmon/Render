@@ -379,6 +379,20 @@ Reference implementation: `ustrip/family_api.py`, tests in
 `tests/test_ustrip_family_api.py`, and the older convention it follows in
 `app/security_api.py`.
 
+### Content is edited in the app, by its owner, never by a deploy (Avi, 2026-10-27)
+
+Replacing one card's photo in bkm was about to take a data migration and a
+deploy. Avi: "this should not be a deploy". A personal API token for the
+agent was built the same morning and dropped by Avi before it shipped, in
+favour of the simpler answer: the app gives its owner a screen.
+
+**The rule.** Every piece of content an app shows has an edit screen in
+the app for whoever owns it (for content only Avi owns, a form only Avi
+sees), covering every field, the picture included. A deploy is for code;
+a migration seeds day one and never changes content after it. When Claude
+is asked to change content, it points Avi to that screen, or builds the
+screen if it is missing; it does not reach for a migration.
+
 ---
 
 ## Mistakes we actually made, and the rules that came out of them
