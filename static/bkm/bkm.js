@@ -165,12 +165,31 @@
     shape();
   }
 
-  // Any picture button: say which file was chosen.
+  // Any picture field: say which file was chosen, show it, and let it be
+  // turned before saving (REQ-B.24). The server does the real turning.
+  function turn(field, deg) {
+    field.querySelector("[data-rot-value]").value = String(deg);
+    field.querySelector("[data-rot-img]").style.transform = deg ? "rotate(" + deg + "deg)" : "";
+  }
   document.addEventListener("change", function (e) {
     if (e.target.type !== "file" || !e.target.files.length) return;
     var field = e.target.closest(".bm-field");
-    var name = field && field.querySelector("[data-upload-name]");
+    if (!field) return;
+    var name = field.querySelector("[data-upload-name]");
     if (name) name.textContent = "Chosen: " + e.target.files[0].name;
+    var rot = field.querySelector("[data-rot]");
+    if (rot && window.URL) {
+      field.querySelector("[data-rot-img]").src = URL.createObjectURL(e.target.files[0]);
+      rot.hidden = false;
+      turn(field, 0);
+    }
+  });
+  document.addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-rot-by]");
+    if (!btn) return;
+    var field = btn.closest(".bm-field");
+    var now = parseInt(field.querySelector("[data-rot-value]").value, 10) || 0;
+    turn(field, (now + parseInt(btn.dataset.rotBy, 10) + 360) % 360);
   });
 
   /* ---------- copy ---------- */

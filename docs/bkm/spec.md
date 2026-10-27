@@ -91,6 +91,7 @@ pages, nor linking back to them (Rule 3).
 | REQ-B.21 | Finished BKMs only | A BKM goes on the wall when Avi says it is complete. In production it arrives as a data migration plus its picture in `bkm/seed_assets/<slug>.jpg`, attached once by `seed_bkm` (never over a picture Avi changed). On 2026-10-26: FullStackBKM, SingleButtonKitBKM, De10LiteBKM. | DONE |
 | REQ-B.22 | The picture is the result | A photo of the thing the BKM makes, or a creative illustration when it is not a thing. Kit: the photo from its own repo. DE10-Lite: Avi's own photo of the board with the LCD add-on running the FFT (2026-10-27; Terasic's product photo until then). Full stack: a papercraft illustration made for the card. | DONE |
 | REQ-B.23 | Avi's own form | Avi, 2026-10-27: a change of content is never a deploy. On the wall and on a BKM's page, "Edit this BKM" (Avi only; 404 for anyone else) opens a form for every field: name, line, repository, Pages link, picture (shown, replaceable; made at most 1600px and checked like every upload), order, on the wall or hidden; and "Remove for good". "+ Add a BKM" on the wall adds one the same way. | DONE |
+| REQ-B.24 | Turn a picture | Avi, 2026-10-27: in the BKM form and the project form, a chosen picture shows as a preview with "Rotate left" and "Rotate right"; it is saved turned as shown. With no new file, the buttons turn the picture already saved. Phone photos are first set upright by their own orientation tag. | DONE |
 
 ## Chapter 4b: The exhibition of projects (Avi, 2026-10-27)
 

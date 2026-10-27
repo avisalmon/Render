@@ -284,12 +284,17 @@ def test_avi_replaces_a_cards_picture_from_the_wall(browser, live_server, world,
     Image.new("RGB", (1600, 900), (10, 160, 90)).save(photo)
     page.set_input_files("#id_picture", str(photo))
     assert "lcd.jpg" in page.inner_text("[data-upload-name]")
+    page.click('[data-rot-by="90"]')
+    assert page.get_attribute("[data-rot-value]", "value") == "90"
+    assert "rotate(90deg)" in page.get_attribute("[data-rot-img]", "style")
     _shot(page, "bkm-form-1280")
     page.click("#bm-bkm-form button[type=submit]")
     page.wait_for_url("**/bkm/#de10-lite")
-    after = Bkm.objects.get(slug="de10-lite").picture.name
-    assert after != before
-    assert after.split("/")[-1] in page.get_attribute("#de10-lite .bm-card-pic img", "src")
+    saved = Bkm.objects.get(slug="de10-lite").picture
+    assert saved.name != before
+    assert saved.name.split("/")[-1] in page.get_attribute("#de10-lite .bm-card-pic img", "src")
+    with Image.open(saved.path) as img:
+        assert img.size == (900, 1600), "saved turned, as previewed"
     ctx.close()
 
 

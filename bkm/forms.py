@@ -67,6 +67,24 @@ class SignupForm(forms.Form):
                                         first_name=first[:150], last_name=last[:150])
 
 
+def _photo(form, name, cleaned):
+    """A new upload, made small and checked; turned first if the person
+    pressed rotate (REQ-B.24). With no upload, rotate turns the picture
+    already saved."""
+    from . import images
+
+    rotate = images.clean_rotation(form.data.get("rotate"))
+    upload = form.files.get(name)
+    current = getattr(form.instance, name, None) if form.instance.pk else None
+    try:
+        if upload:
+            cleaned[name] = images.prepare(upload, form.user, rotate)
+        elif rotate and current:
+            cleaned[name] = images.rotate_existing(current, rotate, form.user)
+    except forms.ValidationError as exc:
+        form.add_error(name, exc)
+
+
 class BkmForm(forms.ModelForm):
     """Avi's own form for a BKM on the wall (REQ-B.23): every field, the
     picture included, so a change of content is never a deploy."""
@@ -101,18 +119,12 @@ class BkmForm(forms.ModelForm):
         return slug
 
     def clean(self):
-        from . import images
-
         cleaned = super().clean()
         for f in ("repo_url", "page_url"):
             if cleaned.get(f) and not cleaned[f].lower().startswith(("http://", "https://")):
                 self.add_error(f, "A link starts with http:// or https://")
-        upload = self.files.get("picture")
-        if upload and not self.errors:
-            try:
-                cleaned["picture"] = images.prepare(upload, self.user)
-            except forms.ValidationError as exc:
-                self.add_error("picture", exc)
+        if not self.errors:
+            _photo(self, "picture", cleaned)
         return cleaned
 
 
@@ -148,8 +160,6 @@ class ProjectForm(forms.ModelForm):
         self.fields["kind"].choices = [c for c in self.fields["kind"].choices if c[0]]
 
     def clean(self):
-        from . import images
-
         cleaned = super().clean()
         kind, url = cleaned.get("kind"), (cleaned.get("url") or "").strip()
         upload = self.files.get("image")
@@ -161,11 +171,8 @@ class ProjectForm(forms.ModelForm):
             self.add_error("url", "Paste the link to the site.")
         if kind == Project.IMAGE and not upload and not (self.instance.pk and self.instance.image):
             self.add_error("image", "Choose the photo.")
-        if upload and not self.errors:
-            try:
-                cleaned["image"] = images.prepare(upload, self.user)
-            except forms.ValidationError as exc:
-                self.add_error("image", exc)
+        if not self.errors:
+            _photo(self, "image", cleaned)
         tags = [t.strip().lower()[:24] for t in (cleaned.get("tags") or "").split(",") if t.strip()]
         cleaned["tags"] = ", ".join(dict.fromkeys(tags))[:120]
         return cleaned

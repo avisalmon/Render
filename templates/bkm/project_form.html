@@ -17,12 +17,8 @@
       {% for e in form.kind.errors %}<small class="bm-error">{{ e }}</small>{% endfor %}
     </fieldset>
     {% for field in form %}{% if field.name == "image" %}
-      {# Methodology 28: never the browser's raw file box; a big labelled button with the input over it. #}
-      <div class="bm-field" data-field="image"><span>{{ field.label }}</span>
-        <label class="bm-upload"><span class="bm-btn bm-btn-quiet">Choose a photo</span>{{ field }}</label>
-        <small class="bm-upload-name" data-upload-name>{% if project.image %}A photo is pinned; choose another to replace it.{% endif %}</small>
-        {% if field.help_text %}<small class="bm-muted">{{ field.help_text }}</small>{% endif %}
-        {% for e in field.errors %}<small class="bm-error">{{ e }}</small>{% endfor %}</div>
+      {# Methodology 28: never the raw file box. Preview and rotate: REQ-B.24. #}
+      {% if project.image %}{% include "bkm/_picture_field.html" with current=project.image.url choose="Replace the photo" %}{% else %}{% include "bkm/_picture_field.html" with current="" choose="Choose a photo" %}{% endif %}
     {% elif field.name != "kind" %}
       <label class="bm-field" for="{{ field.id_for_label }}" data-field="{{ field.name }}"><span>{{ field.label }}</span>{{ field }}
         {% if field.help_text %}<small class="bm-muted">{{ field.help_text }}</small>{% endif %}

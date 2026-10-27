@@ -398,6 +398,46 @@ def test_avi_adds_hides_and_removes_a_bkm(client, world):
     assert not Bkm.objects.filter(slug="robo-dog").exists()
 
 
+def _size(fieldfile):
+    from PIL import Image
+
+    with Image.open(fieldfile.path) as img:
+        return img.size
+
+
+def test_avi_rotates_a_picture_new_or_already_saved(client, world):
+    """REQ-B.24: rotate before saving; with no new file, rotate the one on
+    the card. Degrees are clockwise; anything but 0/90/180/270 is 0."""
+    client.force_login(world["avi"])
+    de10 = world["de10"]
+    client.post("/bkm/de10-lite/edit/", _bkm_post(de10, picture=_jpeg((1200, 900)), rotate="90"))
+    de10.refresh_from_db()
+    assert _size(de10.picture) == (900, 1200)
+    client.post("/bkm/de10-lite/edit/", _bkm_post(de10, rotate="270"))
+    de10.refresh_from_db()
+    assert _size(de10.picture) == (1200, 900), "turned back, with no new upload"
+    name = de10.picture.name
+    client.post("/bkm/de10-lite/edit/", _bkm_post(de10, rotate="45"))
+    de10.refresh_from_db()
+    assert de10.picture.name == name, "a bad angle does nothing"
+    client.post("/bkm/de10-lite/edit/", _bkm_post(de10, tagline="Only the words changed"))
+    de10.refresh_from_db()
+    assert de10.picture.name == name, "saving without rotate keeps the picture as it is"
+
+
+def test_a_project_photo_can_be_rotated_too(client, world):
+    from bkm.models import Project
+
+    client.force_login(world["dana"])
+    client.post("/bkm/projects/new/", {"kind": "image", "title": "Sideways", "topic": "other",
+                                       "image": _jpeg((1200, 900)), "rotate": "90"})
+    p = Project.objects.get(title="Sideways")
+    assert _size(p.image) == (900, 1200)
+    client.post(f"/bkm/projects/{p.pk}/edit/", {"kind": "image", "title": "Sideways", "topic": "other", "rotate": "90"})
+    p.refresh_from_db()
+    assert _size(p.image) == (1200, 900)
+
+
 # ------------------------------------------------------------ the stylesheet
 
 

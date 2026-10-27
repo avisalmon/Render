@@ -1,0 +1,23 @@
+{% comment %}
+  A picture field with a preview and rotate buttons (REQ-B.24). Needs
+  `field`, `current` (the URL of the picture saved now, or empty) and
+  `choose` (the button's words). The rotation is a hidden number of
+  degrees clockwise; the server turns the new upload by it, or the saved
+  picture when nothing new was chosen.
+{% endcomment %}
+<div class="bm-field" data-field="{{ field.name }}"><span>{{ field.label }}</span>
+  <div class="bm-rot" data-rot{% if not current %} hidden{% endif %}>
+    <div class="bm-rot-box"><img data-rot-img src="{{ current }}" alt="Preview"></div>
+    <div class="bm-rot-btns">
+      <button type="button" class="bm-btn bm-btn-small bm-btn-quiet" data-rot-by="-90">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.3-5.7M4 4v5h5"/></svg> Rotate left</button>
+      <button type="button" class="bm-btn bm-btn-small bm-btn-quiet" data-rot-by="90">
+        Rotate right <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></svg></button>
+    </div>
+  </div>
+  <input type="hidden" name="rotate" value="0" data-rot-value>
+  <label class="bm-upload"><span class="bm-btn bm-btn-quiet">{{ choose }}</span>{{ field }}</label>
+  <small class="bm-upload-name" data-upload-name></small>
+  {% if field.help_text %}<small class="bm-muted">{{ field.help_text }}</small>{% endif %}
+  {% for e in field.errors %}<small class="bm-error">{{ e }}</small>{% endfor %}
+</div>
