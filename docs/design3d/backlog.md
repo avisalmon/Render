@@ -49,3 +49,11 @@ to load, so not beside the site.
 **One real turn** (2026-10-28, local, Manifold): "a 100 mm cube with a 20 mm
 hole, all edges filleted 5 mm": model 16 s, build 0.57 s, the hole's rims
 rounded too.
+
+## D3.7 · Print-ready checks (2026-10-28)
+
+- [x] `design3d/printcheck.py`: bed and contact, floating pieces, pieces that fuse, thin walls (axis rays over a 2D grid), size, overhangs
+- [x] Run over all 60 parts of the engine evaluation before wiring: 0.01 to 2.2 s each; false alarms found and fixed (slivers under 0.15 mm, rounded bottom edges counted as overhang, a thread's feather edge now a note)
+- [x] `Version.checks`, the chat line ("ready to print" / "N print warnings", tap opens the findings), the Files panel with Fix it, the self-check told the warnings
+- [x] Older versions checked when first shown; the rename box follows the title the chat gives
+- [x] Tests: 6 unit, 1 phone browser test (warning, tap, Fix it)

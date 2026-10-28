@@ -576,3 +576,74 @@ def test_the_people_screen_names_the_engine(client, world, monkeypatch):
     client.force_login(world["avi"])
     html = client.get("/design3d/people/").content.decode()
     assert "Engine: OpenSCAD 2026.10.27 (Manifold)" in html
+
+
+# ---------- print-ready checks (D3.7) ----------
+
+def _box(x0, y0, z0, x1, y1, z1):
+    """A closed box as triangles, faces looking out."""
+    return [tuple((x0 + (x1 - x0) * a, y0 + (y1 - y0) * b, z0 + (z1 - z0) * c) for a, b, c in t) for t in BOX]
+
+
+def _stl(*boxes):
+    tris = [t for b in boxes for t in b]
+    return (b"solid t\n" + b"".join(
+        b"facet normal 0 0 0\nouter loop\n" + b"".join(f"vertex {x} {y} {z}\n".encode() for x, y, z in t)
+        + b"endloop\nendfacet\n" for t in tris) + b"endsolid t\n")
+
+
+def _codes(stl):
+    from design3d import printcheck
+
+    return {c["code"]: c for c in printcheck.check(stl)}
+
+
+def test_a_plain_block_is_ready_to_print():
+    assert _codes(_stl(_box(0, 0, 0, 40, 30, 10))) == {}
+
+
+def test_a_piece_in_the_air_and_two_that_will_fuse_are_warned():
+    found = _codes(_stl(_box(0, 0, 0, 10, 10, 10), _box(10.1, 0, 0, 20, 10, 10), _box(30, 0, 4, 35, 5, 9)))
+    assert found["floating"]["level"] == "warn" and "4.0 mm above the bed" in found["floating"]["text"]
+    assert found["fuse"]["level"] == "warn" and "0.10 mm" in found["fuse"]["text"]
+
+
+def test_a_thin_wall_and_a_part_too_big_are_warned():
+    found = _codes(_stl(_box(0, 0, 0, 0.5, 30, 20), _box(5, 0, 0, 250, 30, 5)))
+    assert found["thin_wall"]["level"] == "warn" and "0.50 mm" in found["thin_wall"]["text"]
+    assert found["too_big"]["level"] == "warn"
+    assert "1.2 mm" in found["thin_wall"]["fix"]
+
+
+def test_a_part_balanced_on_an_edge_may_tip():
+    # A block whose bottom is not at the bed; a slicer would drop it, so it is a note.
+    found = _codes(_stl(_box(0, 0, 2, 20, 20, 12)))
+    assert found["not_on_bed"]["level"] == "note"
+
+
+def test_the_checks_are_stored_shown_and_told_to_the_model(client, world, monkeypatch, settings):
+    """A built version keeps its findings; the chat line and the Files panel
+    show them with Fix it; the self-check tells the model the warnings."""
+    floating = _stl(_box(0, 0, 0, 10, 10, 10), _box(30, 0, 4, 35, 5, 9))
+    monkeypatch.setattr(builder, "build", lambda code: (builder.check(code), (floating, 0.3))[1])
+    d = _design(client, world["dana"])
+    _say(client, d, "Two cubes")
+    v = d.versions.get()
+    assert [c["code"] for c in v.warnings] == ["floating"] and v.print_summary == "1 print warning"
+    page = client.get(f"/design3d/d/{d.pk}/").content.decode()
+    assert "1 print warning" in page and 'class="d3-btn d3-btn-small d3-btn-quiet d3-fix"' in page
+    assert "Put every separate piece flat on z = 0" in page
+    poll = client.get(f"/design3d/d/{d.pk}/poll/?after=0").json()
+    assert poll["current"]["checks"][0]["code"] == "floating"
+    assert any(m.get("print") == "1 print warning" for m in poll["messages"])
+    assert "Put every separate piece flat" in jobs._findings(v)
+
+
+def test_an_older_version_is_checked_when_first_shown(client, world):
+    d = _design(client, world["dana"])
+    _say(client, d, "A cube")
+    v = d.versions.get()
+    Version.objects.filter(pk=v.pk).update(checks=None)
+    client.get(f"/design3d/d/{d.pk}/")
+    v.refresh_from_db()
+    assert v.checks is not None

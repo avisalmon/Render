@@ -174,3 +174,39 @@ def test_on_a_computer_three_columns_and_no_page_slides_sideways(browser, live_s
     _shot(page, "login-360")
     ctx.close()
     assert not broken, "\n".join(broken)
+
+
+@pytest.mark.django_db(transaction=True)
+def test_on_a_phone_a_print_warning_is_fixed_with_one_tap(browser, live_server, world, monkeypatch):
+    """D3.7: the chat line says what the print check found; Fix it sends the
+    fix to the chat as the person's message."""
+    from design3d import builder
+    from design3d.models import Design, Message
+
+    from tests.test_design3d import _box, _stl
+
+    floating = _stl(_box(0, 0, 0, 10, 10, 10), _box(30, 0, 4, 35, 5, 9))
+    monkeypatch.setattr(builder, "build", lambda code: (floating, 0.2))
+    ctx = browser.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2, has_touch=True, is_mobile=True)
+    _session(ctx, world["dana"])
+    page = ctx.new_page()
+    errors = []
+    page.on("pageerror", lambda exc: errors.append(str(exc)))
+    page.goto(live_server.url + "/design3d/designs/")
+    page.click("#d3-new")
+    page.wait_for_url("**/design3d/d/*/")
+    page.fill("#d3-text", "Two cubes")
+    page.click("#d3-send")
+    page.wait_for_selector(".d3-msg.assistant.done .d3-built .d3-warn", timeout=60000)
+    assert page.inner_text(".d3-msg.assistant.done .d3-built .d3-warn") == "1 print warning"
+    page.click(".d3-msg.assistant.done .d3-built .d3-warn")  # opens the panel at the findings
+    page.wait_for_function("document.getElementById('d3-tools').open")
+    assert "floats in the air" in page.inner_text("#d3-checks")
+    page.wait_for_timeout(700)
+    _shot(page, "print-check-390")
+    page.click("#d3-checks .d3-fix")
+    page.wait_for_function("document.querySelectorAll('.d3-msg.assistant.done').length === 2", timeout=60000)
+    said = list(Message.objects.filter(design=Design.objects.get(), role=Message.PERSON).values_list("text", flat=True))
+    assert said[-1].startswith("Before I print: Some pieces float above the bed.")
+    assert errors == []
+    ctx.close()

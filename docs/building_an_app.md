@@ -1300,3 +1300,13 @@ production until another session fixed it (PM-71).
 **The rule.** The deploy runs a real job with the new program (not
 `--version`) and falls back to the last version that worked. The work is
 done when that job has passed on the server, not on the PC.
+
+### 63. A checker runs over real outputs before people see it
+
+design3d's print checks passed their hand-made test shapes and still raised
+three kinds of false alarm on real parts; running them over the 60 parts of
+the engine evaluation found all three before anyone saw them (PM-72).
+
+**The rule.** A heuristic that judges a person's work runs over a corpus of
+real outputs first, and every alarm there is looked at. An uncertain
+finding is a note, not a warning.

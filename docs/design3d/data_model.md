@@ -108,6 +108,7 @@ One build of the part. Built from the chat, or from moving a slider.
 | preview | image, blank | a still picture for the design's card |
 | size_mm | char 40, blank | the bounding box, e.g. `100 x 80 x 27` |
 | build_seconds | decimal, null | |
+| checks | JSON list, null | print-ready findings [{level warn/note, code, text, fix}]; [] = ready to print, null = not checked yet (added 2026-10-28) |
 | created_at | datetime | |
 
 Each version keeps its whole code, so any version can be rebuilt,
