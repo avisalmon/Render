@@ -47,15 +47,14 @@
             <button class="d3-btn d3-btn-small" id="d3-continue">Continue from version {{ shown.number }}</button></form>
         {% endif %}
       </section>
-      {% if shown and shown.status == "ready" %}
-        <section>
-          <h3>Files</h3>
-          <div class="d3-row">
-            <a class="d3-btn d3-btn-small" href="{% url 'design3d:download' d.pk shown.number 'stl' %}" id="d3-stl">Download STL</a>
-            <a class="d3-btn d3-btn-small d3-btn-quiet" href="{% url 'design3d:download' d.pk shown.number 'scad' %}">OpenSCAD</a>
-          </div>
-        </section>
-      {% endif %}
+      {# Always on the page, so a part built while the page is open can be downloaded at once (Avi, 2026-10-28). #}
+      <section id="d3-filebox" data-stl="{% url 'design3d:download' d.pk 0 'stl' %}" data-scad="{% url 'design3d:download' d.pk 0 'scad' %}" {% if not shown or shown.status != "ready" %}hidden{% endif %}>
+        <h3>Files</h3>
+        <div class="d3-row">
+          <a class="d3-btn d3-btn-small" href="{% if shown %}{% url 'design3d:download' d.pk shown.number 'stl' %}{% endif %}" id="d3-stl">Download STL{% if shown %} (v{{ shown.number }}){% endif %}</a>
+          <a class="d3-btn d3-btn-small d3-btn-quiet" href="{% if shown %}{% url 'design3d:download' d.pk shown.number 'scad' %}{% endif %}" id="d3-scad">OpenSCAD</a>
+        </div>
+      </section>
       <section>
         <h3>Design</h3>
         <form method="post" action="{% url 'design3d:edit' d.pk %}" class="d3-row">{% csrf_token %}
