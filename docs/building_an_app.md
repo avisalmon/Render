@@ -1257,3 +1257,18 @@ columns. Every grid or flex container that holds a form control gets
 min-width: 0`. Put `white-space: pre-wrap` only on the element that holds
 the person's text, never on a wrapper the template indents.
 
+
+### 59. A heavy outside program gets a whole-group kill, a memory ceiling and a recipe
+
+design3d runs OpenSCAD on the model's code (PM-68). An ordinary request,
+"fillet the edges", made the model round a part that already had a hole:
+159 s on a fast PC, minutes on the server. The time limit killed only the
+launcher, not OpenSCAD under it, and nothing capped its memory on a 512 MB
+server, where running out restarts the service and loses every running turn.
+
+**The rule.** Start the program in its own process group, kill the whole
+group at the time limit, and set a memory ceiling well below the server's;
+a test proves a child of the program dies too. Time the heavy common
+request, not only the simple one. A model told "avoid X" also gets the
+fast way to do what X does. A long job keeps a trail the person can open:
+each step, when, and what failed.

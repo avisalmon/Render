@@ -97,6 +97,26 @@
     }
     if (m.version) a.appendChild(el("div", "d3-built", "Version " + m.version));
     var old = document.getElementById("m" + m.id);
+    // The trail: a look inside the turn, open while it runs, folded when
+    // it ends; a person's own open/close is kept across redraws.
+    if (m.trail && m.trail.length) {
+      var det = el("details", "d3-trail");
+      var was = old && old.querySelector(".d3-trail");
+      det.open = was && was.dataset.touched ? was.open : (m.state === "thinking" || m.state === "building");
+      if (was && was.dataset.touched) det.dataset.touched = "1";
+      var sum = el("summary", "", "How this turn went");
+      sum.addEventListener("click", function () { det.dataset.touched = "1"; });
+      det.appendChild(sum);
+      var ol = el("ol");
+      m.trail.forEach(function (t) {
+        var li = el("li");
+        li.appendChild(el("span", "d3-mono", t[0] + " s"));
+        li.appendChild(document.createTextNode(" " + t[1]));
+        ol.appendChild(li);
+      });
+      det.appendChild(ol);
+      a.appendChild(det);
+    }
     if (old) old.replaceWith(a); else msgs.appendChild(a);
     var hello = document.getElementById("d3-hello");
     if (hello) hello.remove();

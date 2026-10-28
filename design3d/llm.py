@@ -51,7 +51,11 @@ SYSTEM = textwrap.dedent("""
       with a sensible range. At most 8.
     - Printable: every part lies flat on z = 0; several parts sit side by side, 10 mm apart,
       not floating; walls at least 1.2 mm; fits have 0.2 to 0.3 mm clearance per side.
-    - Never use import(), include or use. $fn at most 64. Avoid minkowski.
+    - Never use import(), include or use. $fn at most 64 ($fn at most 24 on a rounding sphere).
+    - The server is small and a build must finish in a few seconds. Rounded or filleted
+      edges: round only the plain outer block (minkowski of a cube and a sphere, or hull of
+      spheres), and cut holes and pockets out of it afterwards with difference(). Never
+      minkowski or hull a shape that already has holes or pockets: that takes minutes.
     - When the person asks for a change, give the complete new file, not a fragment.
 """).strip()
 
