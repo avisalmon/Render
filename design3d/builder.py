@@ -91,8 +91,9 @@ def _limit_memory():
     import resource
 
     # RLIMIT_DATA counts what the program really allocates (not the address
-    # space Qt reserves); a normal part peaks near 100 MB.
-    mb = getattr(settings, "DESIGN3D_BUILD_MEMORY_MB", 350)
+    # space Qt reserves). The Manifold engine peaked at 70 MB over the engine
+    # evaluation, and the site needs the rest of the 512 MB server.
+    mb = getattr(settings, "DESIGN3D_BUILD_MEMORY_MB", 200)
     if mb:
         resource.setrlimit(resource.RLIMIT_DATA, (mb * 1024 * 1024, mb * 1024 * 1024))
 

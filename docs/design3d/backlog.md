@@ -40,7 +40,7 @@ the same code 20 to 180 times faster. CadQuery: best shapes, but 330 MB just
 to load, so not beside the site.
 
 - [x] build.sh pins OpenSCAD-2026.10.27 (sha256 checked), 2021.01 as fallback, `vendor/openscad/ENGINE` replaces a cached build
-- [x] builder: `engine()`, `manifold()`, `--backend=Manifold`, inside-out check (`signed_volume`), whole-group kill, 350 MB cap
+- [x] builder: `engine()`, `manifold()`, `--backend=Manifold`, inside-out check (`signed_volume`), whole-group kill, 200 MB cap
 - [x] prompt follows the engine (`llm.system()`); the polyhedron winding line
 - [x] People screen: the engine and the last 50 builds
 - [x] Turn trail ("How this turn went"); downloads follow a live-built part
