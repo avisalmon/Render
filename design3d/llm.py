@@ -30,7 +30,7 @@ SYSTEM = textwrap.dedent("""
     You are design3d, a friendly CAD partner. A person shows you what they want to make,
     in words, with a drawing or hand sketch, a written definition, or a photo of a real
     object, and you talk with them until it is right; then they keep asking for changes.
-    You build every part in OpenSCAD (version 2021.01, no libraries). Units are millimetres.
+    You build every part in OpenSCAD ({engine}, no libraries). Units are millimetres.
 
     Always answer with JSON only, no fences:
       {"title": "a short name for the design, 2 to 4 words",
@@ -51,13 +51,33 @@ SYSTEM = textwrap.dedent("""
       with a sensible range. At most 8.
     - Printable: every part lies flat on z = 0; several parts sit side by side, 10 mm apart,
       not floating; walls at least 1.2 mm; fits have 0.2 to 0.3 mm clearance per side.
-    - Never use import(), include or use. $fn at most 64 ($fn at most 24 on a rounding sphere).
-    - The server is small and a build must finish in a few seconds. Rounded or filleted
-      edges: round only the plain outer block (minkowski of a cube and a sphere, or hull of
-      spheres), and cut holes and pockets out of it afterwards with difference(). Never
-      minkowski or hull a shape that already has holes or pockets: that takes minutes.
+    - Never use import(), include or use. {speed}
+    - polyhedron(): list every face's points clockwise when you look at that face from
+      outside the solid. The server checks the part and rejects one that is inside out.
     - When the person asks for a change, give the complete new file, not a fragment.
 """).strip()
+
+# What the model is told about speed depends on the engine on the server
+# (engine evaluation, 2026-10-28): the old one takes minutes over a rounded
+# part with holes; Manifold takes about a second.
+SPEED_2021 = """$fn at most 64 ($fn at most 24 on a rounding sphere).
+- The server is small and a build must finish in a few seconds. Rounded or filleted
+  edges: round only the plain outer block (minkowski of a cube and a sphere, or hull of
+  spheres), and cut holes and pockets out of it afterwards with difference(). Never
+  minkowski or hull a shape that already has holes or pockets: that takes minutes."""
+SPEED_MANIFOLD = """$fn at most 96.
+- Builds are fast: unions, differences, hull and minkowski take about a second. Still
+  prefer rounding the plain outer block and cutting holes and pockets afterwards."""
+
+
+def system():
+    from . import builder
+
+    if builder.manifold():
+        engine, speed = f"development snapshot {builder.engine()}, Manifold engine", SPEED_MANIFOLD
+    else:
+        engine, speed = "version 2021.01", SPEED_2021
+    return SYSTEM.replace("{engine}", engine).replace("{speed}", speed)
 
 
 def _key():
@@ -91,7 +111,7 @@ def history(design, upto=None, picture_messages=4):
         msgs = [m for m in msgs if m.pk < upto.pk]
     with_pics = [m.pk for m in msgs if m.role == Message.PERSON and m.pictures.all()]
     send_pics = set(with_pics[:1] + with_pics[-picture_messages:])
-    items = [{"role": "system", "content": SYSTEM}]
+    items = [{"role": "system", "content": system()}]
     for m in msgs:
         if m.role == Message.PERSON:
             parts = [{"type": "input_text", "text": m.text or "(see the pictures)"}]

@@ -331,8 +331,18 @@ def people(request):
         n_designs=Count("designs", distinct=True))
     groups = {s: [m for m in makers if m.status == s] for s in (Maker.PENDING, Maker.APPROVED, Maker.DECLINED)}
     from django.conf import settings
+    from django.db.models import Avg, Max
 
-    return render(request, "design3d/people.html", {"groups": groups, "section": "people",
+    from . import builder
+
+    # The engine, for the admin: which OpenSCAD runs and how the last builds went.
+    recent = Version.objects.order_by("-created_at")[:50]
+    times = Version.objects.filter(pk__in=[v.pk for v in recent], status=Version.READY).aggregate(
+        avg=Avg("build_seconds"), max=Max("build_seconds"))
+    engine = {"version": builder.engine() or "not installed", "manifold": builder.manifold(),
+              "avg": times["avg"], "max": times["max"], "n": len(recent),
+              "failed": sum(1 for v in recent if v.status == Version.FAILED)}
+    return render(request, "design3d/people.html", {"groups": groups, "section": "people", "engine": engine,
                                                     "default_limit": settings.DESIGN3D_DAILY_LIMIT_USD})
 
 

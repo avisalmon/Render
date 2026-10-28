@@ -29,3 +29,23 @@ app's own code): $0.0066 including the self-check, a 1.2 s build, the box
 100 x 80 x 27 mm with six sliders.
 
 **Live 2026-10-28** (train T1028-163113). A one-off Render job built the sample part with the server's OpenSCAD: 0.4 s, 99 MB peak, vendor/openscad/AppRun present.
+
+## D3.6 · The fast engine (2026-10-28)
+
+Avi's "10x bigger and fillet the edges" ran for minutes and lost turns. An
+engine evaluation (12 maker requests, three engines, $0.73 of model calls,
+scratchpad eval3d) found OpenSCAD the language strong enough (21 of 24, as
+CadQuery) and the 2021.01 engine the weak part; the Manifold snapshot built
+the same code 20 to 180 times faster. CadQuery: best shapes, but 330 MB just
+to load, so not beside the site.
+
+- [x] build.sh pins OpenSCAD-2026.10.27 (sha256 checked), 2021.01 as fallback, `vendor/openscad/ENGINE` replaces a cached build
+- [x] builder: `engine()`, `manifold()`, `--backend=Manifold`, inside-out check (`signed_volume`), whole-group kill, 350 MB cap
+- [x] prompt follows the engine (`llm.system()`); the polyhedron winding line
+- [x] People screen: the engine and the last 50 builds
+- [x] Turn trail ("How this turn went"); downloads follow a live-built part
+- [ ] Verify on Render after the ship: People screen says "2026.10.27 (Manifold)"
+
+**One real turn** (2026-10-28, local, Manifold): "a 100 mm cube with a 20 mm
+hole, all edges filleted 5 mm": model 16 s, build 0.57 s, the hole's rims
+rounded too.
