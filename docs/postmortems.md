@@ -17,6 +17,21 @@ Newest first.
 
 ---
 
+## PM-70 · 2026-10-28 · Sprint D3.6 end: a test file's own stub hid the real build
+
+**What happened.** The new test for the inside-out check used the builder,
+but the test file's autouse fixture replaces the build with a fixed cube for
+every test, so the check never ran and the test failed for the wrong reason.
+It failed rather than passed, so nothing slipped through. The engine lookup
+also cached "not installed" from a test that pretended OpenSCAD was missing.
+
+**Rule.** A test that must reach the real function takes a reference to it
+at import, before any fixture replaces it, and a cached lookup never keeps an
+empty answer.
+
+Here: `tests/test_design3d.py` (`REAL_BUILD`), `design3d/builder.py` (`engine`), `docs/building_an_app.md` mistake 61
+BKM: 84adf47
+
 ## PM-69 · 2026-10-28 · A part built on an open page could not be downloaded
 
 **What happened.** Avi asked from his phone how to save and export. Reading
