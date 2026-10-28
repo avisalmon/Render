@@ -1,0 +1,13 @@
+{% extends "design3d/base.html" %}
+{% load static %}
+{% block title %}{{ d.title }} · design3d{% endblock %}
+{% block head %}{% include "design3d/_importmap.html" %}{% endblock %}
+{% block content %}
+<div class="d3-head">
+  <div><h1 class="d3-h1">{{ d.title }}</h1><p class="d3-small d3-muted">by {{ d.owner.display_name }} · <span class="d3-mono">{{ v.size_mm }} mm</span></p></div>
+  <a class="d3-btn" href="{% url 'design3d:download' d.pk v.number 'stl' %}" id="d3-download">Download STL</a>
+</div>
+<div class="d3-view d3-bedbg" id="d3-view" data-stl="/design3d/files/{{ v.stl.name }}"><span class="d3-layers"></span></div>
+<p class="d3-small d3-muted"><a href="{% url 'design3d:shared' %}">Back to shared parts</a></p>
+{% endblock %}
+{% block scripts %}<script type="module" src="{% static 'design3d/viewer.js' %}"></script>{% endblock %}

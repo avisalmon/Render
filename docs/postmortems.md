@@ -17,6 +17,35 @@ Newest first.
 
 ---
 
+## PM-66 · 2026-10-28 · design3d: a text box widened the page, twice the same rule
+
+**What happened.** Building design3d (sprints D3.1 to D3.5, in dev). The
+phone test that measures every element against the screen (methodology 39)
+failed twice on the design page: first the 3D view's column, then the chat's,
+were wider than a 320 to 412 px phone. The first fix (`minmax(0, 1fr)` on the
+outer grid) was right but not enough: the chat is itself a grid, and its one
+column was sized by the text box, whose default 20 columns made it 230 px
+wide before any CSS. The screenshots then showed three more: the template's
+own whitespace inside chat bubbles (the bubble had `white-space: pre-wrap`),
+a slider showing 90 as "9E+1" (`Decimal.normalize()`), and the camera framed
+too close on a tall phone view. The unit tests caught two of my own on the
+way: an `ImageField` with `width_field` left the width empty at insert, and
+stub mode built a second version through the self-check.
+
+**Why.** Mistake 58 says grid tracks need `minmax(0, ...)`; I applied it to
+the grid I was looking at, not to the grids inside it (mistake 16, a rule
+applied to the case that prompted it). Form controls have an intrinsic width
+of their own that sizes the track they sit in.
+
+**Rule.** Every grid and flex container that holds a form control gets
+`minmax(0, 1fr)` columns, and the control gets `flex: 1 1 0; width: 0;
+min-width: 0`. `pre-wrap` goes on the element that holds the person's text,
+never on a wrapper a template indents. Numbers for people are formatted with
+`floatformat`, never `Decimal.normalize()`. Methodology 58 extended.
+
+Here: `docs/building_an_app.md` (mistake 58), `static/design3d/design3d.css`, `tests/test_design3d_browser.py`
+BKM: deferred - the same rule as FullStackBKM lesson 67 (grid items on both axes, tracks minmax(0)); the details are recorded here and in methodology 58
+
 ## PM-65 · 2026-10-27 · A deploy proposed for a change of content
 
 **What happened.** Avi sent his own DE10-Lite photo for the bkm card. I

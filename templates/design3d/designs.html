@@ -1,0 +1,28 @@
+{% extends "design3d/base.html" %}
+{% block title %}My designs · design3d{% endblock %}
+{% block content %}
+{# REQ-D3.10 #}
+<div class="d3-head">
+  <div>
+    <h1 class="d3-h1">My designs</h1>
+    {% if limit is not None %}<p class="d3-small d3-muted d3-mono">Today ${{ spent|floatformat:2 }} of ${{ limit|floatformat:2 }}</p>{% endif %}
+  </div>
+  <form method="post" action="{% url 'design3d:new' %}">{% csrf_token %}<button type="submit" class="d3-btn" id="d3-new">+ New design</button></form>
+</div>
+{% if designs %}
+  <div class="d3-cards">
+    {% for d in designs %}
+      <a class="d3-dcard" href="{% url 'design3d:design' d.pk %}" id="d{{ d.pk }}">
+        <div class="d3-dcard-pic d3-bedbg">{% if d.current and d.current.preview %}<img src="/design3d/files/{{ d.current.preview.name }}" alt="" loading="lazy">{% else %}<span>No part yet</span>{% endif %}</div>
+        <div class="d3-dcard-text"><b>{{ d.title }}</b>
+          <span class="d3-small d3-muted">{{ d.updated_at|date:"j M Y" }} · {{ d.n }} version{{ d.n|pluralize }}{% if d.is_shared %} · <span class="d3-chip on">shared</span>{% endif %}</span></div>
+      </a>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="d3-empty">
+    <p><b>No designs yet.</b> Start one and tell the chat what you want to make: a few words, a photo of a sketch, or a photo of the thing it should fit.</p>
+    <form method="post" action="{% url 'design3d:new' %}">{% csrf_token %}<button type="submit" class="d3-btn">Start your first design</button></form>
+  </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "design3d/base.html" %}
+{% block title %}design3d{% endblock %}
+{% block content %}
+{# REQ-D3.1, D3.2: what it is, then exactly one next step for this person. #}
+<section class="d3-door">
+  <div class="d3-card">
+    <h1 class="d3-h1">Describe it. Sketch it. Print it.</h1>
+    <p class="d3-muted">design3d turns a few words, a hand sketch or a photo of a real thing into a 3D part you can print, through a chat that asks what it needs to know.</p>
+
+    {% if not user.is_authenticated %}
+      <p>It is open by invitation. Sign in, then ask to come in.</p>
+      <a class="d3-btn" href="{% url 'design3d:login' %}" id="d3-signin">Sign in</a>
+
+    {% elif not maker %}
+      <form method="post" action="{% url 'design3d:ask' %}" class="d3-form" id="d3-ask">
+        {% csrf_token %}
+        <label class="d3-field" for="{{ form.reason.id_for_label }}"><span>{{ form.reason.label }}</span>{{ form.reason }}</label>
+        <button type="submit" class="d3-btn">Ask to come in</button>
+      </form>
+      <p class="d3-small d3-muted">Avi reads every request. You will get an email when you are in.</p>
+
+    {% elif maker.status == "pending" %}
+      <p class="d3-state" id="d3-waiting"><b>Your request is waiting for Avi.</b> You will get an email at {{ user.email }} when you are in.</p>
+
+    {% elif maker.status == "declined" %}
+      <p class="d3-state" id="d3-declined">Your request was not approved this time.</p>
+      <form method="post" action="{% url 'design3d:ask' %}" class="d3-form">
+        {% csrf_token %}
+        <label class="d3-field" for="{{ form.reason.id_for_label }}"><span>Tell Avi a little more</span>{{ form.reason }}</label>
+        <button type="submit" class="d3-btn d3-btn-quiet" id="d3-ask-again">Ask again</button>
+      </form>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

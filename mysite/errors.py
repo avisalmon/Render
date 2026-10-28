@@ -15,6 +15,7 @@ from django.views import defaults
 from books import errors as books_errors
 from bkm import errors as bkm_errors
 from cohort import errors as cohort_errors
+from design3d import errors as design3d_errors
 from counter import errors as counter_errors
 from crashtech import errors as crashtech_errors
 from dentist import errors as dentist_errors
@@ -42,6 +43,8 @@ def page_not_found(request, exception=None):
         return cohort_errors.page_not_found(request, exception)
     if request.path.startswith(bkm_errors.PREFIX):
         return bkm_errors.page_not_found(request, exception)
+    if request.path.startswith(design3d_errors.PREFIX):
+        return design3d_errors.page_not_found(request, exception)
     if request.path.startswith(counter_errors.PREFIX):
         return counter_errors.page_not_found(request, exception)
     if request.path.startswith(crashtech_errors.PREFIX):
@@ -68,6 +71,8 @@ def server_error(request):
         return cohort_errors.server_error(request)
     if request.path.startswith(bkm_errors.PREFIX):
         return bkm_errors.server_error(request)
+    if request.path.startswith(design3d_errors.PREFIX):
+        return design3d_errors.server_error(request)
     if request.path.startswith(counter_errors.PREFIX):
         return counter_errors.server_error(request)
     if request.path.startswith(crashtech_errors.PREFIX):
@@ -94,6 +99,8 @@ def permission_denied(request, exception=None):
         return cohort_errors.permission_denied(request, exception)
     if request.path.startswith(bkm_errors.PREFIX):
         return bkm_errors.permission_denied(request, exception)
+    if request.path.startswith(design3d_errors.PREFIX):
+        return design3d_errors.permission_denied(request, exception)
     if request.path.startswith(counter_errors.PREFIX):
         return counter_errors.permission_denied(request, exception)
     if request.path.startswith(crashtech_errors.PREFIX):

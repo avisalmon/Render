@@ -1,0 +1,18 @@
+{% extends "design3d/base.html" %}
+{% block title %}Shared · design3d{% endblock %}
+{% block content %}
+{# REQ-D3.31: the model only; never the chat or the pictures. #}
+<div class="d3-head"><div><h1 class="d3-h1">Shared</h1><p class="d3-small d3-muted">Parts the people in design3d chose to share.</p></div></div>
+{% if items %}
+  <div class="d3-cards">
+    {% for d in items %}
+      <a class="d3-dcard" href="{% url 'design3d:shared_design' d.pk %}" id="s{{ d.pk }}">
+        <div class="d3-dcard-pic d3-bedbg">{% if d.current.preview %}<img src="/design3d/files/{{ d.current.preview.name }}" alt="" loading="lazy">{% endif %}</div>
+        <div class="d3-dcard-text"><b>{{ d.title }}</b><span class="d3-small d3-muted">by {{ d.owner.display_name }} · <span class="d3-mono">{{ d.current.size_mm }} mm</span></span></div>
+      </a>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="d3-empty"><p>Nothing is shared yet. Open one of your designs and switch on "Share with people in design3d".</p></div>
+{% endif %}
+{% endblock %}

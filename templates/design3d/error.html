@@ -1,0 +1,12 @@
+{% extends "design3d/base.html" %}
+{% block title %}{{ status }} · design3d{% endblock %}
+{% block content %}
+<section class="d3-door">
+  <div class="d3-card">
+    
+    <h1 class="d3-h1">{{ status }}</h1>
+    <p>{{ text }}</p>
+    <a class="d3-btn" href="/design3d/">To design3d</a>
+  </div>
+</section>
+{% endblock %}

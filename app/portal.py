@@ -190,6 +190,9 @@ NOT_IN_THE_PORTAL = {
     # The BKM gateway (2026-10-26): Avi wants it apart from babook, reached
     # by its own link; only the shared sign-in connects them.
     "bkm",
+    # 3D design through a chat (2026-10-28): invitation only, Avi approves
+    # each person; reached by its own link.
+    "design3d",
 }
 
 _BY_SLUG = {a.slug: a for a in APPS}
