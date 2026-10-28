@@ -5037,3 +5037,26 @@ none is configured. And `history.set_status` takes `from_leader`, so taking a st
 out stays one door (the guard of SPR-M.18).
 
 **Tests.** `tests/test_spr_m_74.py`.
+
+## SPR-M.75: A leader opens the file a student handed in  `DONE 2026-10-28`
+
+Lital's mail of 28.10, 18:37 (spec C33): "תלמידים מעלים תוצרים לאתר ומובילי התכנית לא
+קוראים את הקובץ שמעלים". Run under Avi's standing rule of 2026-10-16.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.75.1 | The student's page: the last screening test file, a picture shown, open and download | REQ-M.206 | DONE |
+| F-M.75.2 | The review page: a handed-in picture shown, "פתיחת הקובץ" beside the download | REQ-M.206 | DONE |
+| F-M.75.3 | `storage.file_response`: `?view=1` shows pictures and PDF inline, everything else downloads | REQ-M.206 | DONE |
+| F-M.75.4 | `may_read`: the student's current leader may open work handed to an earlier leader | REQ-M.206 | DONE |
+
+**What was found.** SPR-M.74 put the screening test's state on the student's page and
+left out the file behind it, so a leader saw "מחכה לצוות" and had nothing to open; only
+the programme team's page linked the file. A hand-in's file was a download only, which on
+a phone is a picture that lands in the downloads folder and is never seen. The mail had a
+screenshot the bot cannot open, so it asked which screen she meant.
+
+**What the bot did not do.** Let a leader approve the screening test (still the team's,
+C8, asked on 26.10), or let any leader open files of students who are not theirs.
+
+**Tests.** `tests/test_spr_m_75.py`.

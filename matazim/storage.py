@@ -54,6 +54,42 @@ def entrance_upload_path(instance, filename):
     return f"entrance/{uuid.uuid4().hex}{suffix}"
 
 
+# REQ-M.206 - the kinds of file a browser shows by itself, so a leader can open
+# the work on the screen instead of downloading it. Only these: an SVG or an
+# HTML file shown inline runs whatever a teenager put in it, on our address.
+SHOWN_INLINE = {
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".gif": "image/gif",
+    ".webp": "image/webp",
+    ".pdf": "application/pdf",
+}
+PICTURES = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
+
+
+def is_picture(name):
+    """True for a file the page can show as a picture."""
+    return Path(str(name or "")).suffix.lower() in PICTURES
+
+
+def file_response(fieldfile, request):
+    """REQ-M.206 - hand back a private file, shown in the browser when it can be.
+
+    `?view=1` asks for it on the screen. A picture or a PDF is shown; anything
+    else (an STL, a Word file) is still a download, because a browser cannot show
+    it and an inline response would only turn into a blank page.
+    """
+    from django.http import FileResponse
+
+    suffix = Path(fieldfile.name).suffix.lower()
+    if request.GET.get("view") and suffix in SHOWN_INLINE:
+        return FileResponse(
+            fieldfile.open("rb"), as_attachment=False, content_type=SHOWN_INLINE[suffix]
+        )
+    return FileResponse(fieldfile.open("rb"), as_attachment=True)
+
+
 def submission_upload_path(instance, filename):
     """REQ-M.122 — the same treatment as an entrance attempt, for the same reason.
 

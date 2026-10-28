@@ -497,10 +497,9 @@ def attempt_file(request, attempt_id):
     Anyone else gets a 404 rather than a 403, because confirming that attempt
     number 91 exists is itself something a stranger has no business learning.
     """
-    from django.http import FileResponse
-
     from .access import is_program_manager, leader_of
     from .models import EntranceAttempt, Student
+    from .storage import file_response
 
     attempt = get_object_or_404(EntranceAttempt, pk=attempt_id)
     if not attempt.model_file:
@@ -517,7 +516,7 @@ def attempt_file(request, attempt_id):
     if not allowed:
         raise Http404("not yours")
 
-    return FileResponse(attempt.model_file.open("rb"), as_attachment=True)
+    return file_response(attempt.model_file, request)
 
 
 @login_required(login_url=LOGIN_URL)
