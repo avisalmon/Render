@@ -2,7 +2,6 @@ from django.contrib.auth import views as auth_views
 from django.urls import path
 
 from . import (
-    openscad_check,
     chat_views,
     classroom_views,
     community_views,
@@ -77,8 +76,6 @@ urlpatterns = [
     path("admin-dashboard/alerts/<int:pk>/dismiss/", dashboard_views.dismiss_alert, name="dashboard_dismiss_alert"),
     # Machine endpoint: weekly GitHub Actions cron POSTs here with X-Backup-Token
     # to run an in-process backup (REQ-1.2.4).
-    # Can OpenSCAD run on this server? (sketch-to-STL experiment, superuser only)
-    path("internal/openscad-check/", openscad_check.check, name="openscad_check"),
     path("internal/run-backup/", dashboard_views.run_backup, name="run_backup"),
     # Machine endpoint: daily GitHub Actions cron POSTs here with X-Capture-Token
     # to refresh all dashboard data in-process (REQ-8.1.4).

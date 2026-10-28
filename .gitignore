@@ -57,7 +57,3 @@ blackjack_model/
 
 # cohort's private files (screenshots, course documents); on Render they live on the disk.
 cohort_private/
-
-# OpenSCAD, downloaded by build.sh (app/openscad_check.py)
-vendor/openscad/
-vendor/openscad.AppImage
