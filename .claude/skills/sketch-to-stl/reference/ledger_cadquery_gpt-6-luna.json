@@ -1,0 +1,42 @@
+{
+  "model": "gpt-6-luna",
+  "steps": [
+    {
+      "step": "1 sketch",
+      "in": 1015,
+      "cached": 0,
+      "out": 1395,
+      "reasoning": 891,
+      "seconds": 17.0,
+      "usd": 0.0008
+    },
+    {
+      "step": "2 self-check",
+      "in": 2074,
+      "cached": 0,
+      "out": 1735,
+      "reasoning": 1263,
+      "seconds": 20.3,
+      "usd": 0.0011
+    },
+    {
+      "step": "3 change: walls, fillets, lid",
+      "in": 2596,
+      "cached": 2071,
+      "out": 2444,
+      "reasoning": 1383,
+      "seconds": 25.0,
+      "usd": 0.0013
+    },
+    {
+      "step": "4 change: USB slot",
+      "in": 3692,
+      "cached": 2593,
+      "out": 1946,
+      "reasoning": 572,
+      "seconds": 18.8,
+      "usd": 0.0011
+    }
+  ],
+  "total_usd": 0.0043
+}

@@ -73,6 +73,8 @@ urlpatterns = [
     path("dentist/", include("dentist.urls", namespace="dentist")),
     # bkm is its own product (docs/bkm/spec.md): the gateway to Avi's BKMs.
     path("bkm/", include("bkm.urls", namespace="bkm")),
+    # design3d is its own product (docs/design3d/spec.md): 3D design through a chat.
+    path("design3d/", include("design3d.urls", namespace="design3d")),
     path("blackjack/", include("blackjack.urls", namespace="blackjack")),
     # improv is private (docs/improv/spec.md ch. 7): its gate is in the middleware.
     path("improv/", include("improv.urls", namespace="improv")),

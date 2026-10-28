@@ -1,0 +1,42 @@
+{
+  "model": "gpt-6.1-sol",
+  "steps": [
+    {
+      "step": "1 sketch",
+      "in": 1015,
+      "cached": 0,
+      "out": 492,
+      "reasoning": 72,
+      "seconds": 9.7,
+      "usd": 0.0069
+    },
+    {
+      "step": "2 self-check",
+      "in": 1990,
+      "cached": 0,
+      "out": 409,
+      "reasoning": 0,
+      "seconds": 5.0,
+      "usd": 0.0081
+    },
+    {
+      "step": "3 change: walls, fillets, lid",
+      "in": 2451,
+      "cached": 1987,
+      "out": 1002,
+      "reasoning": 182,
+      "seconds": 14.8,
+      "usd": 0.0111
+    },
+    {
+      "step": "4 change: USB slot",
+      "in": 3306,
+      "cached": 2448,
+      "out": 993,
+      "reasoning": 100,
+      "seconds": 10.6,
+      "usd": 0.0119
+    }
+  ],
+  "total_usd": 0.038
+}

@@ -1,0 +1,21 @@
+{% extends "design3d/base.html" %}
+{% block title %}Create an account · design3d{% endblock %}
+{% block content %}
+<section class="d3-door">
+  <div class="d3-card">
+    
+    <h1 class="d3-h1">Create an account</h1>
+    <p>Faster with Google: <a href="/accounts/google/login/?process=login&amp;next={{ next|urlencode }}">continue with Google</a> and skip the password.</p>
+    <form method="post" class="d3-form">
+      {% csrf_token %}
+      {% for field in form %}
+        <label class="d3-field" for="{{ field.id_for_label }}"><span>{{ field.label }}</span>{{ field }}
+          {% for e in field.errors %}<small class="d3-error">{{ e }}</small>{% endfor %}</label>
+      {% endfor %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <button type="submit" class="d3-btn">Create the account</button>
+    </form>
+    <p class="d3-small">Already have one? <a href="{% url 'design3d:login' %}?next={{ next|urlencode }}">Sign in</a>.</p>
+  </div>
+</section>
+{% endblock %}

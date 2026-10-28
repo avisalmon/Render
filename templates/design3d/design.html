@@ -1,0 +1,106 @@
+{% extends "design3d/base.html" %}
+{% load static %}
+{% block title %}{{ d.title }} · design3d{% endblock %}
+{% block head %}{% include "design3d/_importmap.html" %}{% endblock %}
+{% block content %}
+{# REQ-D3.11: phone, the part on top and the chat below; computer, three columns. #}
+<div class="d3-work" id="d3-work" data-pk="{{ d.pk }}" data-poll="{% url 'design3d:poll' d.pk %}"
+     data-current="{{ d.current.number|default:'' }}" data-shown="{{ shown.number|default:'' }}">
+  <div class="d3-viewcol">
+    <div class="d3-view d3-bedbg" id="d3-view" data-stl="{% if shown and shown.stl %}/design3d/files/{{ shown.stl.name }}{% endif %}">
+      <span class="d3-layers"></span>
+      <div class="d3-view-empty" id="d3-view-empty" {% if shown and shown.stl %}hidden{% endif %}>
+        <p>Your part will appear here.<br>Tell the chat what you want to make, or send a photo.</p>
+      </div>
+      <span class="d3-busy" id="d3-busy" hidden>Building…</span>
+      <span class="d3-size" id="d3-size" {% if not shown.size_mm %}hidden{% endif %}>{{ shown.size_mm }} mm{% if shown and shown != d.current %} · version {{ shown.number }}{% endif %}</span>
+    </div>
+  </div>
+
+  <details class="d3-tools" id="d3-tools">
+    <summary><span id="d3-title">{{ d.title }}</span><span class="d3-small d3-muted">Sizes, versions, files</span></summary>
+    <div class="d3-tools-body">
+      <section aria-labelledby="d3-sizes-title">
+        <h3 id="d3-sizes-title">Sizes</h3>
+        <form method="post" action="{% url 'design3d:sliders' d.pk %}" id="d3-sliders" class="d3-form">
+          {% csrf_token %}<input type="hidden" name="from" value="{{ shown.number|default:'' }}">
+          <div id="d3-slider-list">
+            {% for p in parameters %}
+              <label class="d3-slider"><span>{{ p.label }}</span><output>{{ p.value|floatformat:"-3" }}{{ p.unit }}</output>
+                <input type="range" name="{{ p.name }}" min="{{ p.minimum }}" max="{{ p.maximum }}" step="{{ p.step }}" value="{{ p.value }}" data-unit="{{ p.unit }}"></label>
+            {% empty %}<p class="d3-small d3-muted">The part's sizes appear here once it is built.</p>{% endfor %}
+          </div>
+          <button type="submit" class="d3-btn d3-btn-small" id="d3-apply" {% if not parameters %}hidden{% endif %} disabled>Apply sizes</button>
+        </form>
+      </section>
+      <section>
+        <h3>Versions</h3>
+        <div class="d3-versions" id="d3-versions">
+          {% for v in versions %}
+            {% if v.status == "ready" %}<a href="?v={{ v.number }}" class="{% if v == shown %}on{% endif %}" title="{{ v.get_made_by_display }}">v{{ v.number }}</a>
+            {% elif v.status == "failed" %}<span class="failed" title="{{ v.error|truncatechars:120 }}">v{{ v.number }} ✕</span>
+            {% else %}<span>v{{ v.number }}…</span>{% endif %}
+          {% empty %}<span class="d3-small d3-muted">None yet.</span>{% endfor %}
+        </div>
+        {% if shown and shown != d.current %}
+          <form method="post" action="{% url 'design3d:use_version' d.pk shown.number %}" style="margin-top:8px">{% csrf_token %}
+            <button class="d3-btn d3-btn-small" id="d3-continue">Continue from version {{ shown.number }}</button></form>
+        {% endif %}
+      </section>
+      {% if shown and shown.status == "ready" %}
+        <section>
+          <h3>Files</h3>
+          <div class="d3-row">
+            <a class="d3-btn d3-btn-small" href="{% url 'design3d:download' d.pk shown.number 'stl' %}" id="d3-stl">Download STL</a>
+            <a class="d3-btn d3-btn-small d3-btn-quiet" href="{% url 'design3d:download' d.pk shown.number 'scad' %}">OpenSCAD</a>
+          </div>
+        </section>
+      {% endif %}
+      <section>
+        <h3>Design</h3>
+        <form method="post" action="{% url 'design3d:edit' d.pk %}" class="d3-row">{% csrf_token %}
+          <input type="hidden" name="action" value="share"><input type="hidden" name="shared" value="{% if d.is_shared %}0{% else %}1{% endif %}">
+          <button class="d3-btn d3-btn-small d3-btn-quiet" id="d3-share" {% if not d.current %}disabled title="Share once there is a part"{% endif %}>{% if d.is_shared %}Stop sharing{% else %}Share with people in design3d{% endif %}</button>
+        </form>
+        <form method="post" action="{% url 'design3d:edit' d.pk %}" class="d3-form" style="margin-top:10px">{% csrf_token %}
+          <input type="hidden" name="action" value="rename">
+          <label class="d3-field"><span class="d3-small">Name</span><input name="title" value="{{ d.title }}" maxlength="100"></label>
+          <button class="d3-btn d3-btn-small d3-btn-quiet">Rename</button>
+        </form>
+        <form method="post" action="{% url 'design3d:edit' d.pk %}" style="margin-top:10px" data-confirm="Delete this design, its chat and all its versions?">{% csrf_token %}
+          <input type="hidden" name="action" value="delete"><button class="d3-link">Delete this design</button></form>
+      </section>
+    </div>
+  </details>
+
+  <section class="d3-chat" aria-label="Chat">
+    <div class="d3-msgs" id="d3-msgs" aria-live="polite">
+      {% for m in chat %}{% include "design3d/_message.html" %}{% empty %}
+        <div class="d3-hello" id="d3-hello"><p><b>What would you like to make?</b></p>
+          <p>Describe it, send a photo of a sketch, or photograph the thing it should fit, like "a holder for this pencil". I will ask what I need to know.</p></div>
+      {% endfor %}
+    </div>
+    <form class="d3-composer" id="d3-composer" method="post" action="{% url 'design3d:send' d.pk %}" enctype="multipart/form-data">
+      {% csrf_token %}
+      {% if stub %}<p class="d3-small d3-muted">Stub mode: no OpenAI key on this server, answers are a sample part.</p>{% endif %}
+      {% if over %}<p class="d3-limit">You reached today's limit of ${{ limit|floatformat:2 }}. It resets at midnight.</p>{% endif %}
+      <div class="d3-chosen" id="d3-chosen"></div>
+      <div class="d3-compose-row">
+        <label class="d3-iconbtn" title="Add pictures" aria-label="Add pictures">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 9"/></svg>
+          <input type="file" name="pictures" accept="image/*" multiple id="d3-files"></label>
+        <label class="d3-iconbtn cam" title="Take a photo" aria-label="Take a photo">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+          <input type="file" name="pictures" accept="image/*" capture="environment" id="d3-camera"></label>
+        <textarea name="text" id="d3-text" rows="1" placeholder="Describe it…" aria-label="Message"></textarea>
+        <button type="submit" class="d3-iconbtn" id="d3-send" aria-label="Send" {% if over %}disabled{% endif %}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l16-8-6 16-2-7z"/></svg></button>
+      </div>
+    </form>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}
+<script type="module" src="{% static 'design3d/viewer.js' %}"></script>
+<script src="{% static 'design3d/design.js' %}" defer></script>
+{% endblock %}

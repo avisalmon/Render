@@ -1,0 +1,46 @@
+{% extends "design3d/base.html" %}
+{% block title %}People · design3d{% endblock %}
+{% block content %}
+{# REQ-D3.3: requests, who is in, what each person spends, their limit. #}
+<div class="d3-head"><div><h1 class="d3-h1">People</h1><p class="d3-small d3-muted">Default limit ${{ default_limit|floatformat:2 }} a day. Admins have none.</p></div></div>
+<div class="d3-people">
+  <section id="d3-pending">
+    <h2>Waiting for you</h2>
+    {% for m in groups.pending %}
+      <div class="d3-person">
+        <div class="d3-person-who"><b>{{ m.display_name }}</b><span class="d3-small d3-muted">{{ m.user.email }} · asked {{ m.requested_at|date:"j M Y H:i" }}</span>{% if m.reason %}<span class="d3-small">“{{ m.reason }}”</span>{% endif %}</div>
+        <div class="d3-row">
+          <form method="post">{% csrf_token %}<input type="hidden" name="maker" value="{{ m.pk }}"><button class="d3-btn d3-btn-small" name="action" value="approve">Approve</button></form>
+          <form method="post">{% csrf_token %}<input type="hidden" name="maker" value="{{ m.pk }}"><button class="d3-btn d3-btn-small d3-btn-quiet" name="action" value="decline">Decline</button></form>
+        </div>
+      </div>
+    {% empty %}<p class="d3-small d3-muted">Nobody is waiting.</p>{% endfor %}
+  </section>
+  <section id="d3-in">
+    <h2>In</h2>
+    {% for m in groups.approved %}
+      <div class="d3-person">
+        <div class="d3-person-who"><b>{{ m.display_name }}{% if m.admin %} (admin){% endif %}</b>
+          <span class="d3-small d3-muted d3-mono">{{ m.user.email }} · {{ m.n_designs }} design{{ m.n_designs|pluralize }} · today ${{ m.today|default:0|floatformat:2 }} · total ${{ m.total|default:0|floatformat:2 }}</span></div>
+        <div class="d3-row">
+          {% if not m.admin %}
+            <form method="post" class="d3-limit-form">{% csrf_token %}<input type="hidden" name="maker" value="{{ m.pk }}"><input type="hidden" name="action" value="limit">
+              <label class="d3-small">$/day <input name="limit" inputmode="decimal" value="{{ m.daily_limit_usd|default_if_none:'' }}" placeholder="{{ default_limit }}" aria-label="Daily limit for {{ m.display_name }}"></label>
+              <button class="d3-btn d3-btn-small d3-btn-quiet">Set</button></form>
+            <form method="post">{% csrf_token %}<input type="hidden" name="maker" value="{{ m.pk }}"><button class="d3-btn d3-btn-small d3-btn-danger" name="action" value="withdraw">Withdraw</button></form>
+          {% endif %}
+        </div>
+      </div>
+    {% empty %}<p class="d3-small d3-muted">Nobody yet.</p>{% endfor %}
+  </section>
+  <section id="d3-declined">
+    <h2>Not approved</h2>
+    {% for m in groups.declined %}
+      <div class="d3-person">
+        <div class="d3-person-who"><b>{{ m.display_name }}</b><span class="d3-small d3-muted">{{ m.user.email }}</span></div>
+        <form method="post">{% csrf_token %}<input type="hidden" name="maker" value="{{ m.pk }}"><button class="d3-btn d3-btn-small d3-btn-quiet" name="action" value="approve">Approve</button></form>
+      </div>
+    {% empty %}<p class="d3-small d3-muted">Nobody.</p>{% endfor %}
+  </section>
+</div>
+{% endblock %}

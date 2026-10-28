@@ -71,14 +71,14 @@ def _shot(page, name):
 
 @pytest.mark.django_db(transaction=True)
 def test_a_visitor_signs_in_from_a_card_and_starts_a_conversation(browser, live_server, world):
-    from bkm.models import Comment, Like, Star
+    from bkm.models import Bkm, Comment, Like, Star
 
     ctx = _context(browser, 1280)
     page = ctx.new_page()
     errors = []
     page.on("pageerror", lambda exc: errors.append(str(exc)))
     page.goto(live_server.url + "/bkm/")
-    assert page.locator(".bm-card").count() == 3
+    assert page.locator(".bm-card").count() == Bkm.objects.filter(is_published=True).count()
     assert not page.locator("#bm-phone").is_visible(), "a computer is not told to use a computer"
     _shot(page, "wall-visitor-1280")
 

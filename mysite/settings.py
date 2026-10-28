@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     "cohort",
     "dentist",
     "bkm",
+    "design3d",
 ]
 
 MIDDLEWARE = [
@@ -136,6 +137,15 @@ COHORT_PRIVATE_DIR = PERSISTENT_ROOT / "cohort_private"
 # Screenshots of participants' sites come from a public screenshot service.
 # The cohort tests replace it with a fake and never reach the network.
 COHORT_SHOTS_ENABLED = os.environ.get("COHORT_SHOTS_ENABLED", "1") == "1"
+# design3d (docs/design3d): sketches, STLs and previews, private to their owners.
+DESIGN3D_PRIVATE_DIR = PERSISTENT_ROOT / "design3d_private"
+# OpenSCAD: on Render the standalone build that build.sh unpacks; on a Windows
+# PC a portable OpenSCAD folder at vendor/openscad-win (sketch-to-stl skill).
+DESIGN3D_OPENSCAD = os.environ.get("DESIGN3D_OPENSCAD") or str(
+    BASE_DIR / "vendor" / ("openscad-win/openscad.com" if os.name == "nt" else "openscad/AppRun"))
+DESIGN3D_MODEL = os.environ.get("DESIGN3D_MODEL", "gpt-6.1-terra")
+DESIGN3D_DAILY_LIMIT_USD = float(os.environ.get("DESIGN3D_DAILY_LIMIT_USD", "2"))
+DESIGN3D_BUILD_TIMEOUT = int(os.environ.get("DESIGN3D_BUILD_TIMEOUT", "90"))
 
 # REQ-M.84 — the guardian-consent gate, switched off while the site is being
 # built. Avi, 2026-09-14: "when sign up, don't force the parents agreement for

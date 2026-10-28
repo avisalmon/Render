@@ -1,0 +1,46 @@
+{% load static i18n design3d_tags %}{% language "en" %}{% d3_frame as f %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#221d14">
+  <title>{% block title %}design3d{% endblock %}</title>
+  {% comment %}
+    Rule 3: design3d's own frame, nothing from babook's base or menu, and no
+    link to babook. The look is direction B, "Print bed" (Avi, 2026-10-28).
+  {% endcomment %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap">
+  <link rel="stylesheet" href="{% static 'design3d/design3d.css' %}">
+  {% block head %}{% endblock %}
+</head>
+<body class="d3">
+  <header class="d3-bar">
+    <a class="d3-brand" href="{% url 'design3d:door' %}"><i aria-hidden="true"></i>design3d</a>
+    {% if f.inside %}
+      <nav class="d3-nav" aria-label="Menu">
+        <a href="{% url 'design3d:designs' %}" {% if section == 'mine' %}aria-current="page"{% endif %}>My designs</a>
+        <a href="{% url 'design3d:shared' %}" {% if section == 'shared' %}aria-current="page"{% endif %}>Shared</a>
+        {% if f.admin %}<a href="{% url 'design3d:people' %}" {% if section == 'people' %}aria-current="page"{% endif %}>People{% if f.waiting %} ({{ f.waiting }}){% endif %}</a>{% endif %}
+      </nav>
+    {% endif %}
+    <div class="d3-account">
+      {% if user.is_authenticated %}
+        <span class="d3-who">{{ user.first_name|default:user.email }}</span>
+        <form method="post" action="{% url 'design3d:logout' %}">{% csrf_token %}<button type="submit" class="d3-link">Sign out</button></form>
+      {% else %}
+        <a class="d3-link" href="{% url 'design3d:login' %}">Sign in</a>
+      {% endif %}
+    </div>
+  </header>
+  <main class="d3-main">
+    {% if messages %}
+      <div class="d3-flash" role="status">{% for m in messages %}<p class="{{ m.tags }}">{{ m }}</p>{% endfor %}</div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+  {% block scripts %}{% endblock %}
+</body>
+</html>{% endlanguage %}

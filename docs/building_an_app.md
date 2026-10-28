@@ -1250,3 +1250,10 @@ at all. Size tracks with `minmax(0, 1fr)`, give children `min-width: 0`,
 let commands scroll in their own box and links break
 (`overflow-wrap: anywhere`).
 
+A third time, design3d (PM-66): the rule went on the outer grid and not on the
+grid inside it, whose one column a text box sized with its default 20
+columns. Every grid or flex container that holds a form control gets
+`minmax(0, 1fr)` columns, and the control `flex: 1 1 0; width: 0;
+min-width: 0`. Put `white-space: pre-wrap` only on the element that holds
+the person's text, never on a wrapper the template indents.
+

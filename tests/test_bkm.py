@@ -50,9 +50,10 @@ def _card(html, slug):
 # ------------------------------------------------------------ the wall
 
 
-def test_the_first_three_bkms_are_on_the_wall_in_order(db):
-    """REQ-B.21: Avi's finished BKMs, put there once by a migration."""
-    assert [b.slug for b in Bkm.objects.all()] == ["full-stack", "single-button-kit", "de10-lite"]
+def test_the_first_bkms_are_on_the_wall_in_order(db):
+    """REQ-B.21: Avi's finished BKMs, put there once by migrations."""
+    assert [b.slug for b in Bkm.objects.all()] == ["full-stack", "single-button-kit", "de10-lite", "fusion-360"]
+    assert (Path("bkm/seed_assets") / "fusion-360.jpg").exists()
     assert not Bkm.objects.filter(slug__icontains="nano").exists(), "De10NanoBKM is not started"
     for b in Bkm.objects.all():
         assert b.page_url.startswith("https://avisalmon.github.io/") and b.repo_url.startswith("https://github.com/avisalmon/")
@@ -245,7 +246,7 @@ def test_a_hidden_bkm_is_seen_by_avi_only(client, world):
 
 def test_a_visitor_reads_the_wall_from_the_api_without_its_links(client, world):
     data = client.get("/bkm/api/bkms/").json()
-    assert [d["slug"] for d in data] == ["full-stack", "single-button-kit", "de10-lite"]
+    assert [d["slug"] for d in data] == ["full-stack", "single-button-kit", "de10-lite", "fusion-360"]
     assert all("page_url" not in d and "repo_url" not in d for d in data)
     client.force_login(world["dana"])
     assert client.get("/bkm/api/bkms/de10-lite/").json()["page_url"] == world["de10"].page_url
@@ -302,7 +303,7 @@ def test_avi_adds_a_bkm_from_the_chat(world, monkeypatch, tmp_path):
     Image.new("RGB", (40, 30), (200, 100, 50)).save(pic)
     call_command("bkm", "add", "https://github.com/avisalmon/RoboDogBKM", "--picture", str(pic), stdout=StringIO())
     dog = Bkm.objects.get(slug="robodog")
-    assert dog.position == 40 and dog.picture and dog.page_url.endswith("/RoboDogBKM/")
+    assert dog.position == 50 and dog.picture and dog.page_url.endswith("/RoboDogBKM/")
     call_command("bkm", "set", "robodog", "tagline", "A dog that walks.", stdout=StringIO())
     call_command("bkm", "hide", "robodog", stdout=StringIO())
     dog.refresh_from_db()
@@ -386,7 +387,7 @@ def test_avi_adds_hides_and_removes_a_bkm(client, world):
            "position": "", "is_published": "on", "picture": _jpeg()}
     client.post("/bkm/new/", new)
     dog = Bkm.objects.get(slug="robo-dog")
-    assert dog.position == 40 and dog.picture
+    assert dog.position == 50 and dog.picture
     client.post("/bkm/new/", {**new, "slug": "projects", "picture": _jpeg()})
     assert not Bkm.objects.filter(slug="projects").exists()
     client.post("/bkm/robo-dog/edit/", _bkm_post(dog, is_published=None))

@@ -1,0 +1,156 @@
+# design3d: Spec
+
+Status: **chapter 1 only, 2026-10-28, for Avi's review.** The data model is
+in [data_model.md](data_model.md) and waits for his approval before the full
+spec. The app is **design3d**, at `babook.co.il/design3d/` (Avi, 2026-10-28).
+
+The technology is settled and measured in the `sketch-to-stl` skill
+(`.claude/skills/sketch-to-stl/`): which model, what it costs, how much a
+build takes, where it runs, and the safety rules.
+
+## Chapter 1: What it is
+
+**design3d is 3D design through a chat.** You tell it what you want to build:
+in words, with a drawing or a hand sketch, with a written definition, or with
+a photo of a real thing in the world. The chat asks about whatever it cannot
+read or guess safely, then builds the part, shows it in 3D, and gives you a
+printable STL. From there you keep changing it by talking ("make the walls
+3 mm", "add a slot for the cable") or by moving its sizes on sliders.
+
+**An example of the photo case.** You photograph your pencil and write "I
+want a holder for this". A photo has no scale, so the chat asks for what it
+cannot know (the pencil's diameter, how many pencils, how tall), and it
+suggests putting a coin or a card next to the object next time. Only then
+does it build.
+
+### Who it is for
+
+Avi, and the people he lets in. Every chat turn costs money (about half a
+cent) and the tool is unusual enough to give only to chosen people.
+
+- Anyone who reaches the site and is not in sees one thing: a form to ask
+  for access, with a line about why they want it.
+- Avi has an admin screen: who asked, approve or decline, who is in, and how
+  much each person has spent.
+- Signing in is the shared babook account (Google first, as in the other
+  apps); being in is a separate approval, as in cohort.
+- Each person has a daily spending limit, so one long evening cannot run up
+  a bill: $2 a day by default (about 400 chat turns), changeable per person
+  by Avi; Avi himself has none.
+- A person Avi declined may ask again; the new request comes back to his
+  screen.
+
+### Designs are projects
+
+A person has many designs. Each design stands on its own: its own chat, its
+own memory of what was agreed, its own images, and its own versions of the
+part.
+
+- **The chat is the design's history.** What you asked, what the chat
+  understood and assumed, and what it built, in order.
+- **Every build is a version.** You can open any earlier version, see it in
+  3D, download it, and continue from it; continuing from an old version does
+  not delete the newer ones.
+- **Sizes as sliders.** The chat names the part's key sizes (wall, height,
+  diameter, clearance). Each becomes a slider; moving one rebuilds the part
+  without asking the model, so it costs nothing, and makes it easy to tune a
+  fit before printing.
+- **Downloads.** The STL, for any version; and the OpenSCAD source, for
+  whoever wants to keep editing it elsewhere.
+- **Always there.** You come back to a design days later and carry on where
+  you stopped; the chat remembers.
+
+### Sharing, only when you choose
+
+A design is private to its owner. Its owner can choose to share it; then the
+other people in design3d see it in a shared gallery: the model only, meaning
+its 3D view, its preview picture and its STL. Never the chat, and never the
+pictures that went into it (Avi, 2026-10-28). Unsharing hides it again.
+
+### Built for the phone
+
+The natural way to use design3d is a phone in your hand: chatting, and taking a
+photo straight from the camera of a sketch on paper or of the thing you want
+to build around. It works on a computer too.
+
+### What it accepts
+
+Text; a photo or an upload of a drawing, a hand sketch or a written
+definition; a photo of a real object. More than one image per message.
+
+### What it is not
+
+- Not for organic shapes (figurines, faces, characters). The method builds
+  functional geometric parts: holders, boxes, mounts, brackets, enclosures,
+  adapters, spacers.
+- Not professional CAD: no STEP or assembly files for industry.
+- Not a slicer or a printer controller: it gives you the STL; you print it.
+- Not open to the public.
+
+### Planned right after the first release
+
+- **Make a copy** of a design someone shared, and continue it as your own;
+  the original stays theirs.
+- **Print-ready checks** before download: the part lies flat on the bed,
+  walls are not thinner than a nozzle can print, fits have clearance.
+
+### Decided by Avi, 2026-10-28
+
+1. Name and address: design3d, `/design3d/`.
+2. A shared design shows the model only (3D view, preview, STL); not the chat,
+   not the pictures.
+3. Daily limit: $2 per person by default.
+4. A declined person may ask again.
+
+---
+
+Data model approved by Avi with "Start", 2026-10-28. Look: direction B,
+"Print bed" (https://claude.ai/artifact/Eyxm3JuRN69LLd4hrdiTU6).
+Requirements are `REQ-D3.n`.
+
+## Chapter 2: The door
+
+| REQ | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-D3.1 | Signed out | `/design3d/` shows what design3d is, in two lines, and "Sign in" (Google first, email and password folded away). Nothing else. | DONE |
+| REQ-D3.2 | Asking | Signed in but not in: one form, "why do you want in" (optional), and a button. Then "waiting for Avi" on every visit. Declined: "not approved" and a way to ask again, which puts the request back to pending. | DONE |
+| REQ-D3.3 | Avi's screen | Requests waiting, people in, people declined; approve, decline, withdraw; each person's spend today and in total, and their daily limit (editable). Approving sends one email: you are in, with the link. | DONE |
+| REQ-D3.4 | Its own frame | Own base template and menu (my designs, shared, and for Avi the people screen), the print-bed look, own error pages, no link to babook, not in babook's portal. | DONE |
+
+## Chapter 3: Designs and the chat
+
+| REQ | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-D3.10 | My designs | A list of my designs, newest first, each with its preview picture, title and when it was last changed; "New design" on top. | DONE |
+| REQ-D3.11 | A design page | On a phone: the part on top, the chat below, the text box with the camera button at the bottom. On a computer: designs and chat on the left, the part in the middle, sizes and versions on the right. | DONE |
+| REQ-D3.12 | A chat turn | I write, and may add pictures (camera or files, several). The turn runs in the background; the page shows "thinking" and then "building", and the answer arrives without a reload. The answer shows the chat's message and its list of assumptions. | DONE |
+| REQ-D3.13 | It asks before it guesses | When something important cannot be read or assumed safely (the scale of a photo), the chat asks instead of building. With a photo of an object it asks for a real measurement and suggests a coin or a card next to the object. | DONE |
+| REQ-D3.14 | Pictures | Each picture is made at most 2000 px, its location data removed, checked by the site's image check, kept privately, and shown in the chat to its owner only. | DONE |
+| REQ-D3.15 | The model and its cost | gpt-6.1-terra (a setting). Every turn records its tokens and cost. Over the person's daily limit, the turn is refused with the time it resets; Avi has none. Without a key the app runs in a stub mode that answers with a fixed part, so it can be developed and tested. | DONE |
+
+## Chapter 4: Builds, versions and sizes
+
+| REQ | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-D3.20 | A build | The chat's OpenSCAD code is built on the server with a time limit (90 s) and refused if it reads files (`import`, `include`, `use`). The result is an STL, a preview picture and the part's size in millimetres. | DONE |
+| REQ-D3.21 | It repairs and checks itself | A failed build goes back to the chat with the error, up to three times. After a design's first successful build the chat is shown a picture of what it built and corrects it if it does not match. | DONE |
+| REQ-D3.22 | Versions | Every successful build is a version, numbered. Any version can be opened, seen in 3D, downloaded, and continued from; continuing from an old one keeps the newer ones. | DONE |
+| REQ-D3.23 | Sizes as sliders | The chat names the key sizes with a sensible range. Each is a slider; "Apply" builds a new version from the sliders with no call to the model. | DONE |
+| REQ-D3.24 | The 3D view | The part in 3D, turned by finger or mouse, on a print-bed floor, with its size written beside it. | DONE |
+| REQ-D3.25 | Downloads | The STL and the OpenSCAD source of any version. | DONE |
+
+## Chapter 5: Sharing
+
+| REQ | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-D3.30 | Share or not | A design is private. Its owner shares it with one switch and can unshare it. | DONE |
+| REQ-D3.31 | The shared gallery | People in design3d see shared designs: preview, title, maker, a 3D view of the current version and its STL. Never the chat or the pictures. | DONE |
+
+## Chapter 6: How it must behave
+
+| REQ | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-D3.40 | Phone first | Every screen works at 320 to 412 px and on a computer, with no sideways scroll. The camera opens straight from the text box. | DONE |
+| REQ-D3.41 | Closed by default | Every page, file and API answer checks: signed in and approved, or Avi. A design's files only to its owner, or to people in when shared. | DONE |
+| REQ-D3.42 | Full REST API | Rule 6: makers, designs, messages, pictures, versions (with a build action), parameters. | DONE |
+| REQ-D3.43 | Runs on babook's server | OpenSCAD is downloaded by the build and runs beside the site; a build never runs inside a web request. If Render cannot hold it, the builds move to Google Cloud Run (sketch-to-stl skill). | BUILT, verified on Render at the first ship |
