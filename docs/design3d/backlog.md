@@ -57,3 +57,4 @@ rounded too.
 - [x] `Version.checks`, the chat line ("ready to print" / "N print warnings", tap opens the findings), the Files panel with Fix it, the self-check told the warnings
 - [x] Older versions checked when first shown; the rename box follows the title the chat gives
 - [x] Tests: 6 unit, 1 phone browser test (warning, tap, Fix it)
+- [x] Memory measured: about 1.1 KB per triangle (30k triangles, 32 MB peak); bodies and walls checked up to 60k triangles, nothing above 150k (a note says to look in the slicer)

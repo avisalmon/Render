@@ -30,7 +30,11 @@ SLIVER = 0.15  # mm: thinner is a modelling sliver a slicer drops, not a wall
 THIN_AREA = 1.0  # mm2 of thin wall before it is worth a note
 THIN_WARN_AREA = 5.0  # mm2: a thin spot (a thread's feather edge) is a note, a thin wall a warning
 BED_FILLET = 3.0  # mm: rounded bottom edges below this print fine
-MAX_TRIANGLES = 300_000
+# Memory: about 1.1 KB per triangle measured (30k triangles, 32 MB), and the
+# site shares a 512 MB server. Bodies and walls are checked up to 60k
+# triangles; above 150k nothing is checked.
+MAX_TRIANGLES = 60_000
+TOO_DETAILED = 150_000
 SAMPLES = 600
 
 
@@ -173,7 +177,15 @@ def _closest_gap(tris, groups, limit):
 
 def check(stl):
     """The findings for one STL (bytes)."""
+    if len(stl) > 84 and not stl[:5].lower() == b"solid" and int.from_bytes(stl[80:84], "little") > TOO_DETAILED:
+        return [{"level": "note", "code": "too_detailed",
+                 "text": "The part is too detailed to check here. Look at it in your slicer before printing.",
+                 "fix": "Make the part less detailed: lower $fn."}]
     tris = read_stl(stl)
+    if len(tris) > TOO_DETAILED:
+        return [{"level": "note", "code": "too_detailed",
+                 "text": "The part is too detailed to check here. Look at it in your slicer before printing.",
+                 "fix": "Make the part less detailed: lower $fn."}]
     if not tris:
         return [{"level": "warn", "code": "empty", "text": "The part is empty.", "fix": "The part came out empty. Build it again."}]
     findings = []
@@ -207,7 +219,7 @@ def check(stl):
                          "text": f"{len(floating)} piece{'s' if len(floating) > 1 else ''} float{'' if len(floating) > 1 else 's'} "
                                  f"in the air ({height:.1f} mm above the bed) and cannot be printed like that.",
                          "fix": "Some pieces float above the bed. Put every separate piece flat on z = 0, side by side, 10 mm apart."})
-    if 1 < len(groups) <= 20 and len(tris) <= 100_000:
+    if 1 < len(groups) <= 20:
         gap = _closest_gap(tris, groups, FUSE_GAP)
         if gap is not None:
             findings.append({"level": "warn", "code": "fuse",

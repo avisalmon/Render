@@ -647,3 +647,12 @@ def test_an_older_version_is_checked_when_first_shown(client, world):
     client.get(f"/design3d/d/{d.pk}/")
     v.refresh_from_db()
     assert v.checks is not None
+
+
+def test_a_part_too_detailed_is_not_checked_beside_the_site(monkeypatch):
+    """Memory: the checks run on the site's 512 MB server."""
+    from design3d import printcheck
+
+    monkeypatch.setattr(printcheck, "TOO_DETAILED", 10)
+    found = printcheck.check(_stl(_box(0, 0, 0, 10, 10, 10), _box(30, 0, 4, 35, 5, 9)))
+    assert [c["code"] for c in found] == ["too_detailed"] and found[0]["level"] == "note"
