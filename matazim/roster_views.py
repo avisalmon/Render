@@ -119,6 +119,22 @@ def roster(request):
     )
 
 
+def _test_file(person):
+    """REQ-M.206 - the last file this student handed in for the entrance test.
+
+    The page is reached only through `visible_students`, and the file itself
+    only through `attempt_file`, which asks again who is looking.
+    """
+    from .entrance_review import latest_submitted
+    from .storage import is_picture
+
+    profile = getattr(person.user, "matazim_profile", None)
+    attempt = latest_submitted(profile) if profile is not None else None
+    if attempt is None or not attempt.model_file:
+        return {"test_attempt": None, "test_picture": False}
+    return {"test_attempt": attempt, "test_picture": is_picture(attempt.model_file.name)}
+
+
 def _tests_and_work(students):
     """REQ-M.204 - the screening test and the tasks, for a page of students.
 
@@ -269,6 +285,7 @@ def student(request, student_id):
             chosen=set(person.classes.values_list("pk", flat=True)),
             # REQ-M.204, REQ-M.203 - the screening test, and taking them out.
             test=_tests_and_work([person])[0].get(person.user_id, "none"),
+            **_test_file(person),
             can_restore=is_program_manager(request.user),
         ),
     )

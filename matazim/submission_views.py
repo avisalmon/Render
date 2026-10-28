@@ -15,7 +15,7 @@ not what to change.
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from django.http import FileResponse, Http404
+from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -26,6 +26,7 @@ from .history import set_status
 from .gate import entrance_gated
 from .models import Feedback, Notification, Student, Submission
 from .notify import notify
+from .storage import file_response, is_picture
 from .views import shell
 
 LOGIN_URL = "/matazim/login/"
@@ -52,6 +53,11 @@ def may_read(user, submission):
         return True
     leader = leader_of(user)
     if leader and submission.leader_id == leader.pk:
+        return True
+    # REQ-M.206 - the student's leader now, when the work was handed to an
+    # earlier one: a student who moved leader brings their work with them, and
+    # the new leader is the one who signs the certificate.
+    if leader and submission.student.leader_id == leader.pk:
         return True
     if is_program_manager(user):
         return visible_students(user).filter(pk=submission.student_id).exists()
@@ -264,6 +270,8 @@ def review(request, submission_id):
             submission=submission,
             feedback=list(submission.feedback.select_related("author")),
             may_decide=may_decide,
+            # REQ-M.206 - a picture is shown on the page, not only downloaded.
+            picture=bool(submission.work_file) and is_picture(submission.work_file.name),
             # REQ-M.5e — the programme's yes belongs to the program manager,
             # because this is the one decision here whose audience is the whole
             # internet rather than one school (§4.4a).
@@ -289,7 +297,7 @@ def work_file(request, submission_id):
     if not may_read(request.user, submission):
         raise Http404("not yours to read")
 
-    return FileResponse(submission.work_file.open("rb"), as_attachment=True)
+    return file_response(submission.work_file, request)
 
 
 @login_required(login_url=LOGIN_URL)

@@ -354,6 +354,27 @@
       {% elif test == "retry" %}<span class="mz-tag mz-tag-idle">בתיקון</span>
       {% else %}<span class="mz-tag mz-tag-idle">לא הוגש</span>{% endif %}
     </p>
+    {% comment %}
+      REQ-M.206 (Lital, 2026-10-28): the leader saw where the test stood and
+      could not open what the student uploaded. The last file they handed in is
+      here now: a picture on the page, and a button to open or download it.
+    {% endcomment %}
+    {% if test_attempt %}
+      <div id="mzStudentTestFile">
+        {% if test_picture %}
+          <p>
+            <img src="{% url 'matazim:attempt_file' test_attempt.pk %}?view=1" alt="הקובץ של מבחן הכניסה"
+                 style="max-width: 100%; height: auto; border-radius: 8px;">
+          </p>
+        {% endif %}
+        <p class="mz-muted">הוגש ב־{{ test_attempt.submitted_at|date:"j.n.Y" }}</p>
+        <p>
+          <a class="mz-btn mz-btn-secondary" href="{% url 'matazim:attempt_file' test_attempt.pk %}?view=1"
+             target="_blank" rel="noopener">פתיחת הקובץ</a>
+          <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:attempt_file' test_attempt.pk %}">הורדת הקובץ</a>
+        </p>
+      </div>
+    {% endif %}
   </section>
 
   <section class="mz-panel" id="mzStudentRemove">
