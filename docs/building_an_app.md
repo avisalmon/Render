@@ -1282,3 +1282,11 @@ part until a reload (PM-69).
 **The rule.** When a page updates something live, list every control that
 depends on it and update them all. The browser test uses that control after
 the live update, not after a reload, and checks that no id is used twice.
+
+### 61. A test that needs the real function keeps it before the fixtures stub it
+
+design3d's test file replaces the build with a fixed cube for every test;
+a new test of the real build silently got the cube (PM-70).
+
+**The rule.** Keep a reference to the real function at import time and call
+that in the tests that need it. A cached lookup never keeps an empty answer.

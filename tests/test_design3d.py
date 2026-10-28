@@ -517,3 +517,62 @@ def test_every_class_the_markup_uses_is_defined():
         ids |= set(re.findall(r'id="(d3-[a-z0-9-]+)"', path.read_text(encoding="utf-8")))
     used |= set(re.findall(r'"(d3-[a-z0-9-]+)', js)) - ids  # strings that are element ids are not classes
     assert used <= defined, sorted(used - defined)
+
+
+# ---------- the engine (engine evaluation, 2026-10-28) ----------
+
+BOX = [((0, 0, 0), (0, 1, 0), (1, 1, 0)), ((0, 0, 0), (1, 1, 0), (1, 0, 0)),  # bottom, facing down
+       ((0, 0, 1), (1, 0, 1), (1, 1, 1)), ((0, 0, 1), (1, 1, 1), (0, 1, 1)),  # top, facing up
+       ((0, 0, 0), (1, 0, 0), (1, 0, 1)), ((0, 0, 0), (1, 0, 1), (0, 0, 1)),
+       ((1, 0, 0), (1, 1, 0), (1, 1, 1)), ((1, 0, 0), (1, 1, 1), (1, 0, 1)),
+       ((1, 1, 0), (0, 1, 0), (0, 1, 1)), ((1, 1, 0), (0, 1, 1), (1, 1, 1)),
+       ((0, 1, 0), (0, 0, 0), (0, 0, 1)), ((0, 1, 0), (0, 0, 1), (0, 1, 1))]
+
+
+REAL_BUILD = builder.build  # the autouse `quiet` fixture replaces builder.build with a cube
+
+
+def test_an_inside_out_mesh_has_a_negative_volume():
+    assert abs(builder.signed_volume(BOX) - 1) < 1e-9
+    assert abs(builder.signed_volume([(a, c, b) for a, b, c in BOX]) + 1) < 1e-9
+
+
+@pytest.mark.skipif(not builder.available(), reason="no OpenSCAD on this PC")
+def test_an_inside_out_polyhedron_goes_back_to_the_model():
+    """The Manifold engine keeps a polyhedron with reversed faces inside out
+    (2021 forgave it); the error tells the model how to fix it."""
+    good = "polyhedron(points=[[0,0,0],[10,0,0],[0,10,0],[0,0,10]], faces=[[0,1,2],[0,3,1],[0,2,3],[1,3,2]]);"
+    bad = "polyhedron(points=[[0,0,0],[10,0,0],[0,10,0],[0,0,10]], faces=[[0,2,1],[0,1,3],[0,3,2],[1,2,3]]);"
+    REAL_BUILD(good)
+    if builder.manifold():
+        with pytest.raises(builder.BuildError, match="inside out"):
+            REAL_BUILD(bad)
+
+
+@pytest.mark.skipif(not builder.available() or not builder.manifold(), reason="needs the Manifold engine")
+def test_rounding_a_part_with_a_hole_takes_seconds_not_minutes():
+    """Avi, 2026-10-28: "fillet the edges" ran for minutes on the 2021 engine (159 s here)."""
+    code = ("$fn=32; minkowski(){ difference(){ cube([90,90,90],center=true); "
+            "cylinder(d=30,h=120,center=true);} sphere(r=5); }")
+    stl, took = REAL_BUILD(code)
+    assert took < 15 and builder.signed_volume(render.read_stl(stl)) > 0
+
+
+def test_the_model_is_told_about_the_engine_on_the_server(monkeypatch):
+    monkeypatch.setattr(builder, "engine", lambda: "2026.10.27")
+    monkeypatch.setattr(builder, "manifold", lambda: True)
+    fast = llm.system()
+    assert "Manifold" in fast and "about a second" in fast and "{" + "speed}" not in fast
+    monkeypatch.setattr(builder, "manifold", lambda: False)
+    slow = llm.system()
+    assert "2021.01" in slow and "Never" in slow and "minkowski or hull a shape" in slow
+    for text in (fast, slow):
+        assert '{"title"' in text and "clockwise" in text
+
+
+def test_the_people_screen_names_the_engine(client, world, monkeypatch):
+    monkeypatch.setattr(builder, "engine", lambda: "2026.10.27")
+    monkeypatch.setattr(builder, "manifold", lambda: True)
+    client.force_login(world["avi"])
+    html = client.get("/design3d/people/").content.decode()
+    assert "Engine: OpenSCAD 2026.10.27 (Manifold)" in html

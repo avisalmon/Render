@@ -2,7 +2,7 @@
 {% block title %}People · design3d{% endblock %}
 {% block content %}
 {# REQ-D3.3: requests, who is in, what each person spends, their limit. #}
-<div class="d3-head"><div><h1 class="d3-h1">People</h1><p class="d3-small d3-muted">Default limit ${{ default_limit|floatformat:2 }} a day. Admins have none.</p></div></div>
+<div class="d3-head"><div><h1 class="d3-h1">People</h1><p class="d3-small d3-muted">Default limit ${{ default_limit|floatformat:2 }} a day. Admins have none.</p><p class="d3-small d3-muted d3-mono" id="d3-engine">Engine: OpenSCAD {{ engine.version }}{% if engine.manifold %} (Manifold){% endif %}{% if engine.n %} · last {{ engine.n }} builds: {{ engine.failed }} failed{% if engine.avg is not None %}, {{ engine.avg|floatformat:1 }} s average, {{ engine.max|floatformat:1 }} s slowest{% endif %}{% endif %}</p></div></div>
 <div class="d3-people">
   <section id="d3-pending">
     <h2>Waiting for you</h2>

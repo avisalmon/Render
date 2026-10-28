@@ -21,6 +21,8 @@ from pathlib import Path
 
 from django.conf import settings
 
+from .render import read_stl
+
 FORBIDDEN = re.compile(r"\b(import|include|use)\s*[(<]")
 _ONE_AT_A_TIME = threading.BoundedSemaphore(1)
 
@@ -36,6 +38,41 @@ def binary():
 def available():
     b = binary()
     return bool(b) and Path(b).exists()
+
+
+_ENGINE = {}
+
+
+def engine():
+    """The installed OpenSCAD's version, e.g. "2026.10.27" or "2021.01", or ""."""
+    b = binary()
+    if not _ENGINE.get(b):  # an empty answer is not kept: OpenSCAD may be installed later
+        version = ""
+        if available():
+            try:
+                p = subprocess.run([b, "--version"], capture_output=True, text=True, timeout=30,
+                                   env=dict(os.environ, QT_QPA_PLATFORM="offscreen"))
+                m = re.search(r"version\s+(\d{4}\.\d{2}(?:\.\d{2})?)", p.stdout + p.stderr)
+                version = m.group(1) if m else ""
+            except (OSError, subprocess.SubprocessError):
+                version = ""
+        _ENGINE[b] = version
+    return _ENGINE[b]
+
+
+def manifold():
+    """True when the installed OpenSCAD has the fast Manifold engine (2024 and
+    later): booleans, minkowski and hull in a second instead of minutes
+    (engine evaluation, 2026-10-28)."""
+    return engine()[:4] >= "2024"
+
+
+def signed_volume(tris):
+    """The mesh's volume in mm3; negative when its faces point inwards."""
+    total = 0.0
+    for (ax, ay, az), (bx, by, bz), (cx, cy, cz) in tris:
+        total += ax * (by * cz - bz * cy) - ay * (bx * cz - bz * cx) + az * (bx * cy - by * cx)
+    return total / 6.0
 
 
 def check(code):
@@ -100,7 +137,8 @@ def build(code):
         src, out = Path(tmp) / "part.scad", Path(tmp) / "part.stl"
         src.write_text(code, encoding="utf-8")
         t = time.time()
-        stdout, stderr, code_ = _run([binary(), "-o", str(out), str(src)], env, tmp)
+        cmd = [binary(), "-o", str(out), str(src)] + (["--backend=Manifold"] if manifold() else [])
+        stdout, stderr, code_ = _run(cmd, env, tmp)
         took = time.time() - t
         log = (stdout + "\n" + stderr).strip()
         if code_ is None:
@@ -116,5 +154,13 @@ def build(code):
             raise BuildError("\n".join(errors[-8:]))
         data = out.read_bytes()
     if b"facet" not in data[:4096] and len(data) <= 84:
+        raise BuildError("The part is empty: nothing to print.")
+
+
+    volume = signed_volume(read_stl(data))
+    if volume < 0:
+        raise BuildError("The part is inside out (its volume is negative). A polyhedron's faces are listed the wrong "
+                         "way round: list each face's points clockwise when you look at that face from outside.")
+    if abs(volume) < 1e-6:
         raise BuildError("The part is empty: nothing to print.")
     return data, took
