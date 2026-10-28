@@ -1,0 +1,42 @@
+{
+  "model": "gpt-6.1-terra",
+  "steps": [
+    {
+      "step": "1 sketch",
+      "in": 1014,
+      "cached": 0,
+      "out": 388,
+      "reasoning": 114,
+      "seconds": 8.6,
+      "usd": 0.003
+    },
+    {
+      "step": "2 self-check",
+      "in": 1843,
+      "cached": 0,
+      "out": 319,
+      "reasoning": 54,
+      "seconds": 5.3,
+      "usd": 0.0034
+    },
+    {
+      "step": "3 change: walls, fillets, lid",
+      "in": 2158,
+      "cached": 1840,
+      "out": 980,
+      "reasoning": 320,
+      "seconds": 12.2,
+      "usd": 0.0053
+    },
+    {
+      "step": "4 change: USB slot",
+      "in": 2853,
+      "cached": 2155,
+      "out": 868,
+      "reasoning": 116,
+      "seconds": 11.7,
+      "usd": 0.0051
+    }
+  ],
+  "total_usd": 0.0168
+}
