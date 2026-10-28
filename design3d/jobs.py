@@ -135,8 +135,24 @@ def run(pk):
                                              text="Something went wrong on our side. Please send it again.")
 
 
+def _note(msg, text):
+    """A line in the turn's trail, so the person can look inside a long
+    turn and see it is moving (Avi, 2026-10-28)."""
+    seconds = int((timezone.now() - msg.created_at).total_seconds())
+    msg.trail = (msg.trail or []) + [[seconds, text[:200]]]
+    Message.objects.filter(pk=msg.pk).update(trail=msg.trail)
+
+
+def _built(msg, version):
+    if version.status == Version.READY:
+        _note(msg, f"Version {version.number} built in {version.build_seconds} s")
+    else:
+        _note(msg, f"Version {version.number} did not build: {version.error.splitlines()[0] if version.error else 'no part'}")
+
+
 def _step(msg, text, state=None):
     """What the turn is doing now, for the page (REQ-D3.12)."""
+    _note(msg, text)
     msg.step = text
     fields = {"step": text}
     if state:
@@ -165,6 +181,7 @@ def _turn(msg, design):
         number = (design.versions.aggregate(m=Max("number"))["m"] or 0) + 1
         _step(msg, f"Building version {number}", Message.BUILDING)
         version = make_version(design, reply["code"], design.current, Version.CHAT, reply["parameters"])
+        _built(msg, version)
         _show(design, version)
         tries = 0
         while version.status == Version.FAILED and tries < REPAIRS:
@@ -178,7 +195,9 @@ def _turn(msg, design):
             if not fixed["code"]:
                 break
             reply = {**reply, **{k: v for k, v in fixed.items() if v}}
+            _note(msg, f"Building version {design.versions.aggregate(m=Max('number'))['m'] + 1}")
             version = make_version(design, fixed["code"], design.current, Version.CHAT, fixed["parameters"] or reply["parameters"])
+            _built(msg, version)
             _show(design, version)
 
         if version.status == Version.READY and not had_ready and not llm.stub_mode():
@@ -228,6 +247,7 @@ def _self_check(msg, design, items, reply, version):
         return version, reply
     _step(msg, "Correcting the part")
     better = make_version(design, checked["code"], version, Version.CHAT, checked["parameters"] or reply["parameters"])
+    _built(msg, better)
     _show(design, better)
     if better.status != Version.READY:
         return version, reply

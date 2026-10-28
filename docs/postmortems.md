@@ -17,6 +17,39 @@ Newest first.
 
 ---
 
+## PM-68 · 2026-10-28 · A simple request ran for minutes, and turns were lost
+
+**What happened.** Right after PM-67 shipped, Avi asked design3d for "10x
+bigger and fillet the edges" on a 10 mm cube with a hole. Two turns ended as
+"This turn was interrupted", and a third sat on "Building version 4" past
+1 min 40 s. He asked again how to know it is not stuck, how long answers
+should take, and whether a serverless machine would be faster. Measured on
+the PC with the same OpenSCAD 2021.01: rounding the whole part with its hole
+by `minkowski` took 159 s; rounding the plain block and cutting the hole
+afterwards took 2 s. Render's half CPU is several times slower than that.
+
+**Why.** Our measurements (the sketch-to-stl skill) were of simple parts, so
+a heavy but ordinary request ("fillet the edges") was never timed. The
+prompt said "avoid minkowski" but gave no way to round edges, so the model
+used it anyway. The time limit killed only the launcher OpenSCAD runs
+through on Linux, not OpenSCAD itself, which could keep the CPU busy for every
+later build, and nothing capped its memory on a 512 MB server, where running
+out restarts the service and loses every running turn. From inside a turn, the
+person saw one line and a clock, never that version 2 failed and a repair
+was under way.
+
+**Rule.** A worker that runs a heavy external program kills its whole
+process group at the time limit and gives it a memory ceiling below the
+server's, and a test proves a child of the launched program dies too
+(`test_a_build_past_its_time_limit_is_killed_with_its_children`). Measure
+the heavy common request (here: fillets, a 100 mm part with a hole), not
+only the simple one, and give the model the fast recipe, not only the ban.
+A long turn keeps a trail the person can open: each step, when, and what
+failed (`Message.trail`, "How this turn went").
+
+Here: `design3d/builder.py` (`_run`, `_limit_memory`), `design3d/llm.py` (SYSTEM), `design3d/jobs.py` (`_note`, `_built`), `docs/building_an_app.md` mistake 59
+BKM: de2e0e3
+
 ## PM-67 · 2026-10-28 · A finished turn kept saying "Building", and nothing said what was happening
 
 **What happened.** Avi's first real use of design3d in production: he asked

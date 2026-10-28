@@ -8,6 +8,7 @@ the real OpenSCAD when it is on this machine.
 """
 
 import io
+import os
 import re
 from datetime import timedelta
 from decimal import Decimal
@@ -200,6 +201,15 @@ def test_a_failed_build_is_repaired_and_the_first_part_is_checked(client, world,
                      ("building", "Checking the part against what you asked", 2)]
     done = d.messages.get(role=Message.ASSISTANT)
     assert done.state == Message.DONE and done.step == ""
+    # Avi, 2026-10-28: "maybe I can peek into the conversation": the trail.
+    assert [t[1] for t in done.trail] == [
+        "Reading your message", "Building version 1", "Version 1 did not build: ERROR: Parser error in line 1",
+        "Fixing a build error, try 1 of 3", "Building version 2", "Version 2 built in 0.2 s",
+        "Checking the part against what you asked"]
+    poll = client.get(f"/design3d/d/{d.pk}/poll/?after=0").json()
+    assert [x for x in poll["messages"] if x["id"] == done.pk][0]["trail"] == done.trail
+    page = client.get(f"/design3d/d/{d.pk}/").content.decode()
+    assert "How this turn went" in page and "Version 1 did not build" in page
 
     calls.clear()
     _say(client, d, "Make it 20")
@@ -212,6 +222,23 @@ def test_code_that_reads_files_is_refused():
         with pytest.raises(builder.BuildError):
             builder.check(bad)
     builder.check("difference(){ cube(10); }  // important note")
+
+
+def test_a_build_past_its_time_limit_is_killed_with_its_children(settings, tmp_path):
+    """Avi, 2026-10-28: a heavy part ran on past the limit. The launcher's
+    child process is killed too, and the build returns at the limit."""
+    import sys
+    import time
+
+    settings.DESIGN3D_BUILD_TIMEOUT = 1
+    marker = tmp_path / "child-still-alive"
+    child = f"import time; time.sleep(4); open(r'{marker}', 'w').write('x')"
+    launcher = f"import subprocess, sys; subprocess.run([sys.executable, '-c', {child!r}])"
+    t = time.time()
+    out, err, code = builder._run([sys.executable, "-c", launcher], dict(os.environ), str(tmp_path))
+    assert code is None and time.time() - t < 3
+    time.sleep(4.5)
+    assert not marker.exists(), "the child kept running after the limit"
 
 
 def test_a_stuck_turn_ends_as_failed(client, world):

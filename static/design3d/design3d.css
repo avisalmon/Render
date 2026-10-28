@@ -131,6 +131,11 @@ img { max-width: 100%; height: auto; display: block; }
 .d3-msg.failed { border: 1px solid var(--bad); }
 .d3-msg .d3-assume { margin: 8px 0 0; padding-left: 18px; font-size: .88rem; color: var(--soft); white-space: normal; }
 .d3-msg .d3-built { margin-top: 6px; font-family: var(--f-mono); font-size: .76rem; color: var(--soft); }
+.d3-msg .d3-trail { margin-top: 8px; font-size: .8rem; color: var(--soft); white-space: normal; }
+.d3-msg .d3-trail summary { cursor: pointer; }
+.d3-msg .d3-trail ol { margin: 4px 0 0; padding-left: 0; list-style: none; display: grid; gap: 2px; }
+.d3-msg .d3-trail li { overflow-wrap: anywhere; }
+.d3-msg .d3-trail .d3-mono { display: inline-block; min-width: 3.4em; }
 .d3-msg .d3-pics { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
 .d3-msg .d3-pics img { width: 84px; height: 84px; object-fit: cover; border-radius: 8px; }
 .d3-thinking { color: var(--soft); font-style: italic; }

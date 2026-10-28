@@ -47,6 +47,48 @@ def check(code):
         raise BuildError("The code is too long.")
 
 
+def _limit_memory():
+    """In the child, before OpenSCAD starts: a memory ceiling, so a heavy
+    part fails on its own instead of running the whole server out of memory
+    (a 512 MB server restarts, and every turn on it is lost)."""
+    import resource
+
+    # RLIMIT_DATA counts what the program really allocates (not the address
+    # space Qt reserves); a normal part peaks near 100 MB.
+    mb = getattr(settings, "DESIGN3D_BUILD_MEMORY_MB", 350)
+    if mb:
+        resource.setrlimit(resource.RLIMIT_DATA, (mb * 1024 * 1024, mb * 1024 * 1024))
+
+
+def _run(cmd, env, cwd):
+    """(stdout, stderr, returncode), or returncode None when the time ran
+    out or the memory ceiling stopped it. OpenSCAD runs in its own process
+    group and the whole group is killed at the time limit: the Linux build
+    starts through a launcher, and killing only the launcher left OpenSCAD
+    running, holding the CPU for every later build (Avi, 2026-10-28)."""
+    posix = os.name == "posix"
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env, cwd=cwd,
+                         start_new_session=posix, preexec_fn=_limit_memory if posix else None)
+    try:
+        stdout, stderr = p.communicate(timeout=settings.DESIGN3D_BUILD_TIMEOUT)
+    except subprocess.TimeoutExpired:
+        if posix:
+            import signal
+
+            try:
+                os.killpg(p.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+        else:
+            subprocess.run(["taskkill", "/F", "/T", "/PID", str(p.pid)], capture_output=True)
+        p.kill()
+        p.communicate()
+        return "", "", None
+    if p.returncode < 0 or "std::bad_alloc" in stderr or "out of memory" in stderr.lower():
+        return stdout, stderr, None
+    return stdout, stderr, p.returncode
+
+
 def build(code):
     """STL bytes and seconds taken, or BuildError with OpenSCAD's message."""
     check(code)
@@ -58,13 +100,15 @@ def build(code):
         src, out = Path(tmp) / "part.scad", Path(tmp) / "part.stl"
         src.write_text(code, encoding="utf-8")
         t = time.time()
-        try:
-            p = subprocess.run([binary(), "-o", str(out), str(src)], capture_output=True, text=True,
-                               timeout=settings.DESIGN3D_BUILD_TIMEOUT, env=env, cwd=tmp)
-        except subprocess.TimeoutExpired:
-            raise BuildError(f"The build took longer than {settings.DESIGN3D_BUILD_TIMEOUT} seconds. Make the part simpler (fewer $fn, no minkowski).")
+        stdout, stderr, code_ = _run([binary(), "-o", str(out), str(src)], env, tmp)
         took = time.time() - t
-        log = (p.stdout + "\n" + p.stderr).strip()
+        log = (stdout + "\n" + stderr).strip()
+        if code_ is None:
+            raise BuildError(
+                f"The build took longer than {settings.DESIGN3D_BUILD_TIMEOUT} seconds or ran out of memory. "
+                "Make it simpler: round only the plain outer block and cut holes afterwards, never minkowski "
+                "or hull a shape with holes, and use a lower $fn.")
+        p = subprocess.CompletedProcess([], code_, stdout, stderr)
         errors = [line for line in log.splitlines() if line.startswith(("ERROR", "WARNING: Ignoring unknown"))]
         if p.returncode != 0 or not out.exists() or out.stat().st_size == 0:
             raise BuildError("\n".join(errors[-8:]) or log[-1500:] or "OpenSCAD made no part.")
