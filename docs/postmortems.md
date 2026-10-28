@@ -17,6 +17,26 @@ Newest first.
 
 ---
 
+## PM-69 · 2026-10-28 · A part built on an open page could not be downloaded
+
+**What happened.** Avi asked from his phone how to save and export. Reading
+the page to answer, I found the Files section was drawn only on page load:
+a part built while the page was open had no download button, or a button for
+the previous version, until a reload. The first fix then gave the new
+section an id the picture input already used; the browser test caught it.
+
+**Why.** The live update (poll) redrew the 3D view, sizes and versions, but
+nobody listed everything on the page that depends on "the current part".
+The tests downloaded through the server, never through the live page.
+
+**Rule.** When a page updates something live, list every control that
+depends on it and update them all (here: files, share, continue-from); the
+browser test uses the control after the live update, not after a reload,
+and checks that no id appears twice on the page.
+
+Here: `static/design3d/design.js` (`drawVersion`), `templates/design3d/design.html`, `tests/test_design3d_browser.py`, `docs/building_an_app.md` mistake 60
+BKM: dc70e60
+
 ## PM-68 · 2026-10-28 · A simple request ran for minutes, and turns were lost
 
 **What happened.** Right after PM-67 shipped, Avi asked design3d for "10x

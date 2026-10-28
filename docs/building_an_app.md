@@ -1272,3 +1272,13 @@ a test proves a child of the program dies too. Time the heavy common
 request, not only the simple one. A model told "avoid X" also gets the
 fast way to do what X does. A long job keeps a trail the person can open:
 each step, when, and what failed.
+
+### 60. A live update moves everything that depends on it
+
+design3d's page redrew the part, its sizes and its versions when a new part
+was built, but not the download buttons, which still pointed at the old
+part until a reload (PM-69).
+
+**The rule.** When a page updates something live, list every control that
+depends on it and update them all. The browser test uses that control after
+the live update, not after a reload, and checks that no id is used twice.

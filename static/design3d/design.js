@@ -145,6 +145,17 @@
     apply.hidden = !v.parameters.length;
     apply.disabled = true;
     document.querySelector('#d3-sliders input[name="from"]').value = v.number;
+    // The files, the share button and "continue from" follow the new part.
+    var box = document.getElementById("d3-filebox");
+    var stl = document.getElementById("d3-stl");
+    stl.href = box.dataset.stl.replace("/v/0/", "/v/" + v.number + "/");
+    stl.textContent = "Download STL (v" + v.number + ")";
+    document.getElementById("d3-scad").href = box.dataset.scad.replace("/v/0/", "/v/" + v.number + "/");
+    box.hidden = false;
+    var share = document.getElementById("d3-share");
+    if (share) { share.disabled = false; share.removeAttribute("title"); }
+    var cont = document.getElementById("d3-continue");
+    if (cont) cont.closest("form").remove();
   }
 
   function drawVersions(list) {

@@ -87,6 +87,10 @@ def test_on_a_phone_a_maker_describes_a_part_sees_it_and_changes_its_size(browse
     d = Design.objects.get()
     assert d.current and d.current.number == 1
     assert page.locator("#d3-view canvas").count() == 1
+    # Avi, 2026-10-28: a part built while the page is open can be downloaded without a reload.
+    assert "/v/1/stl/" in page.get_attribute("#d3-stl", "href")
+    assert page.get_attribute("#d3-filebox", "hidden") is None
+    assert page.evaluate("[...document.querySelectorAll('[id]')].map(e => e.id).filter((x, i, a) => a.indexOf(x) !== i)") == []
     page.wait_for_timeout(800)
     _shot(page, "design-phone-390")
 
@@ -96,6 +100,8 @@ def test_on_a_phone_a_maker_describes_a_part_sees_it_and_changes_its_size(browse
     page.wait_for_function("document.querySelector('#d3-versions a.on') && document.querySelector('#d3-versions a.on').textContent === 'v2'", timeout=60000)
     v2 = Version.objects.get(design=d, number=2)
     assert v2.made_by == Version.SLIDERS and "height = 60;" in v2.code
+    assert "/v/2/stl/" in page.get_attribute("#d3-stl", "href")
+    assert page.inner_text("#d3-stl") == "Download STL (v2)"
     _shot(page, "design-phone-sliders-390")
     assert errors == []
     ctx.close()

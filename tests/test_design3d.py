@@ -512,7 +512,8 @@ def test_every_class_the_markup_uses_is_defined():
         for classes in re.findall(r'class="([^"]+)"', path.read_text(encoding="utf-8")):
             used |= {c for c in re.sub(r"\{[%{].*?[%}]\}", " ", classes).split() if c.startswith("d3-")}
     js = Path("static/design3d/design.js").read_text(encoding="utf-8")
-    used |= set(re.findall(r'"(d3-[a-z0-9-]+)', js)) - {"d3-msgs", "d3-composer", "d3-text", "d3-files", "d3-camera", "d3-chosen",
-                                                          "d3-send", "d3-tools", "d3-busy", "d3-work", "d3-size", "d3-slider-list",
-                                                          "d3-apply", "d3-sliders", "d3-versions", "d3-hello", "d3-view", "d3-view-empty", "d3-title"}
+    ids = set()
+    for path in Path("templates/design3d").rglob("*.html"):
+        ids |= set(re.findall(r'id="(d3-[a-z0-9-]+)"', path.read_text(encoding="utf-8")))
+    used |= set(re.findall(r'"(d3-[a-z0-9-]+)', js)) - ids  # strings that are element ids are not classes
     assert used <= defined, sorted(used - defined)
