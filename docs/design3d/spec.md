@@ -153,4 +153,4 @@ Requirements are `REQ-D3.n`.
 | REQ-D3.40 | Phone first | Every screen works at 320 to 412 px and on a computer, with no sideways scroll. The camera opens straight from the text box. | DONE |
 | REQ-D3.41 | Closed by default | Every page, file and API answer checks: signed in and approved, or Avi. A design's files only to its owner, or to people in when shared. | DONE |
 | REQ-D3.42 | Full REST API | Rule 6: makers, designs, messages, pictures, versions (with a build action), parameters. | DONE |
-| REQ-D3.43 | Runs on babook's server | OpenSCAD is downloaded by the build and runs beside the site; a build never runs inside a web request. If Render cannot hold it, the builds move to Google Cloud Run (sketch-to-stl skill). | BUILT, verified on Render at the first ship |
+| REQ-D3.43 | Runs on babook's server | OpenSCAD is downloaded by the build and runs beside the site; a build never runs inside a web request. If Render cannot hold it, the builds move to Google Cloud Run (sketch-to-stl skill). | DONE: verified on Render 2026-10-28, a build in 0.4 s at 99 MB peak |
