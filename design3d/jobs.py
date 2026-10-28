@@ -135,20 +135,41 @@ def run(pk):
                                              text="Something went wrong on our side. Please send it again.")
 
 
+def _step(msg, text, state=None):
+    """What the turn is doing now, for the page (REQ-D3.12)."""
+    msg.step = text
+    fields = {"step": text}
+    if state:
+        msg.state = state
+        fields["state"] = state
+    Message.objects.filter(pk=msg.pk).update(**fields)
+
+
+def _show(design, version):
+    """A ready version goes on screen at once, before the turn ends."""
+    if version.status == Version.READY:
+        design.current = version
+        Design.objects.filter(pk=design.pk).update(current=version, updated_at=timezone.now())
+
+
 def _turn(msg, design):
     items = llm.history(design, upto=msg)
+    _step(msg, "Reading your message")
     reply, usage, model = llm.ask(items)
     _add_usage(msg, usage, model)
     had_ready = design.versions.filter(status=Version.READY).exists()
     version = None
 
     if reply["code"]:
-        msg.state = Message.BUILDING
-        msg.save(update_fields=["state", "model", "tokens_in", "tokens_cached", "tokens_out", "cost_usd"])
+        msg.save(update_fields=["model", "tokens_in", "tokens_cached", "tokens_out", "cost_usd"])
+        number = (design.versions.aggregate(m=Max("number"))["m"] or 0) + 1
+        _step(msg, f"Building version {number}", Message.BUILDING)
         version = make_version(design, reply["code"], design.current, Version.CHAT, reply["parameters"])
+        _show(design, version)
         tries = 0
         while version.status == Version.FAILED and tries < REPAIRS:
             tries += 1
+            _step(msg, f"Fixing a build error, try {tries} of {REPAIRS}")
             items = items + [{"role": "assistant", "content": _as_json(reply)},
                              {"role": "user", "content": [{"type": "input_text", "text":
                                  f"The OpenSCAD build failed:\n{version.error}\nFix it and answer in the same JSON."}]}]
@@ -158,6 +179,7 @@ def _turn(msg, design):
                 break
             reply = {**reply, **{k: v for k, v in fixed.items() if v}}
             version = make_version(design, fixed["code"], design.current, Version.CHAT, fixed["parameters"] or reply["parameters"])
+            _show(design, version)
 
         if version.status == Version.READY and not had_ready and not llm.stub_mode():
             version, reply = _self_check(msg, design, items, reply, version)
@@ -168,6 +190,7 @@ def _turn(msg, design):
     msg.assumptions = reply["assumptions"]
     msg.version = version
     msg.state = Message.DONE
+    msg.step = ""
     msg.save()
     fields = []
     if version is not None and version.status == Version.READY:
@@ -198,11 +221,14 @@ def _self_check(msg, design, items, reply, version):
                                            "what I asked and my pictures. If it is right, answer with code null and a short "
                                            "message for me; if not, give the corrected full code."},
             {"type": "input_image", "image_url": "data:image/png;base64," + base64.b64encode(sheet).decode()}]}]
+    _step(msg, "Checking the part against what you asked")
     checked, usage, model = llm.ask(items)
     _add_usage(msg, usage, model)
     if not checked["code"]:
         return version, reply
+    _step(msg, "Correcting the part")
     better = make_version(design, checked["code"], version, Version.CHAT, checked["parameters"] or reply["parameters"])
+    _show(design, better)
     if better.status != Version.READY:
         return version, reply
     return better, {**reply, **{k: v for k, v in checked.items() if v and k != "message"},

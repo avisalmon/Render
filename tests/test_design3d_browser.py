@@ -102,6 +102,30 @@ def test_on_a_phone_a_maker_describes_a_part_sees_it_and_changes_its_size(browse
 
 
 @pytest.mark.django_db(transaction=True)
+def test_an_older_turn_that_finishes_late_is_redrawn(browser, live_server, world):
+    """Avi, 2026-10-28: the first turn kept saying "Building the part" after
+    it was done, because a newer message had been sent and the page only
+    asked for messages after the newest one."""
+    from django.utils import timezone
+
+    from design3d.models import Design, Maker, Message
+
+    d = Design.objects.create(owner=Maker.objects.get(user=world["dana"]))
+    first = Message.objects.create(design=d, role=Message.ASSISTANT, state=Message.BUILDING, step="Building version 1")
+    Message.objects.create(design=d, role=Message.PERSON, text="Make it bigger")
+    Message.objects.create(design=d, role=Message.ASSISTANT, state=Message.THINKING, step="Reading your message")
+    ctx = browser.new_context(viewport={"width": 1280, "height": 800})
+    _session(ctx, world["dana"])
+    page = ctx.new_page()
+    page.goto(live_server.url + f"/design3d/d/{d.pk}/")
+    page.wait_for_function(f"document.querySelector('#m{first.pk} .d3-elapsed').textContent.includes('s')", timeout=10000)
+    Message.objects.filter(pk=first.pk).update(state=Message.DONE, step="", text="Here is your cube.", created_at=timezone.now())
+    page.wait_for_function(f"document.querySelector('#m{first.pk}').dataset.state === 'done'", timeout=10000)
+    assert page.inner_text(f"#m{first.pk}") == "Here is your cube."
+    ctx.close()
+
+
+@pytest.mark.django_db(transaction=True)
 def test_on_a_computer_three_columns_and_no_page_slides_sideways(browser, live_server, world, client):
     from django.test import Client
 

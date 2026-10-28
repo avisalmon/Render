@@ -164,11 +164,14 @@ def test_a_failed_build_is_repaired_and_the_first_part_is_checked(client, world,
     part is shown to the model once (not in stub mode: a fake key here, and
     `llm.ask` is replaced, so nothing reaches OpenAI)."""
     settings.OPENAI_API_KEY = "test-key-not-real"
-    calls = []
+    calls, steps = [], []
     good = "size = 10;\ncube(size);"
 
     def ask(items):
         calls.append(items[-1]["content"])
+        m = Message.objects.filter(role=Message.ASSISTANT).latest("id")
+        d_now = Design.objects.get(pk=m.design_id)
+        steps.append((m.state, m.step, d_now.current.number if d_now.current else None))
         n = len(calls)
         code = "cube(" if n == 1 else good
         return ({"title": "Cube", "message": f"turn {n}", "assumptions": [], "code": code if n < 3 else None,
@@ -190,6 +193,13 @@ def test_a_failed_build_is_repaired_and_the_first_part_is_checked(client, world,
     assert [v.status for v in d.versions.order_by("number")] == ["failed", "ready"]
     d.refresh_from_db()
     assert d.current.number == 2
+    # Avi, 2026-10-28: the page says what a turn is doing, so it never looks stuck;
+    # and a ready part is on screen during the self-check, not after it.
+    assert steps == [("thinking", "Reading your message", None),
+                     ("building", "Fixing a build error, try 1 of 3", None),
+                     ("building", "Checking the part against what you asked", 2)]
+    done = d.messages.get(role=Message.ASSISTANT)
+    assert done.state == Message.DONE and done.step == ""
 
     calls.clear()
     _say(client, d, "Make it 20")
@@ -211,6 +221,16 @@ def test_a_stuck_turn_ends_as_failed(client, world):
     Message.objects.filter(pk=m.pk).update(created_at=timezone.now() - timedelta(minutes=30))
     poll = client.get(f"/design3d/d/{d.pk}/poll/").json()
     assert any(x["id"] == m.pk and x["state"] == "failed" and "again" in x["text"] for x in poll["messages"])
+
+
+def test_poll_reports_the_step_and_its_seconds_from_the_server(client, world):
+    d = _design(client, world["dana"])
+    m = Message.objects.create(design=d, role=Message.ASSISTANT, state=Message.BUILDING, step="Building version 3")
+    Message.objects.filter(pk=m.pk).update(created_at=timezone.now() - timedelta(seconds=42))
+    got = [x for x in client.get(f"/design3d/d/{d.pk}/poll/").json()["messages"] if x["id"] == m.pk][0]
+    assert got["step"] == "Building version 3" and 41 <= got["seconds"] <= 45
+    html = client.get(f"/design3d/d/{d.pk}/").content.decode()
+    assert "Building version 3" in html.split(f'id="m{m.pk}"', 1)[1].split("</article>", 1)[0]
 
 
 def test_one_turn_at_a_time(client, world):

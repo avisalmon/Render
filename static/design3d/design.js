@@ -39,10 +39,30 @@
     return e;
   }
 
+  // Ask again from the oldest unfinished message, so a turn that finishes
+  // after a newer one was sent is still redrawn (Avi, 2026-10-28: a done
+  // turn kept saying "Building" once the next one had started).
   function lastId() {
+    var pending = msgs.querySelectorAll('.d3-msg[data-state="thinking"], .d3-msg[data-state="building"]');
+    if (pending.length) return Number(pending[0].dataset.id) - 1;
     var all = msgs.querySelectorAll(".d3-msg[data-id]");
     return all.length ? all[all.length - 1].dataset.id : 0;
   }
+
+  // The running clock beside a turn's step. The seconds come from the
+  // server (a phone's clock may be off) and are counted on from there.
+  function tick() {
+    var now = Date.now();
+    Array.prototype.forEach.call(msgs.querySelectorAll(".d3-elapsed[data-seconds]"), function (e) {
+      var s = Math.max(0, Math.round(Number(e.dataset.seconds) + (now - Number(e.dataset.at)) / 1000));
+      e.textContent = "· " + (s < 60 ? s + " s" : Math.floor(s / 60) + " min " + (s % 60) + " s");
+      var msg = e.closest(".d3-msg");
+      if (s >= 120 && !msg.querySelector(".d3-slow")) {
+        msg.appendChild(el("span", "d3-slow", "Taking longer than usual. It is still working; if nothing changes in 10 minutes it stops and you can send it again."));
+      }
+    });
+  }
+  setInterval(tick, 1000);
 
   function scrollDown() { msgs.scrollTop = msgs.scrollHeight; }
 
@@ -51,9 +71,16 @@
     a.id = "m" + m.id;
     a.dataset.id = m.id;
     a.dataset.state = m.state;
-    if (m.state === "thinking") a.appendChild(el("span", "d3-thinking", "Thinking"));
-    else if (m.state === "building") a.appendChild(el("span", "d3-thinking", "Building the part"));
-    else a.appendChild(el("span", "d3-msg-text", m.text || ""));
+    if (m.state === "thinking" || m.state === "building") {
+      a.appendChild(el("span", "d3-thinking", m.step || "Reading your message"));
+      a.appendChild(document.createTextNode(" "));
+      var clock = el("span", "d3-elapsed d3-mono");
+      clock.dataset.seconds = m.seconds || 0;
+      clock.dataset.at = Date.now();
+      a.appendChild(clock);
+    } else {
+      a.appendChild(el("span", "d3-msg-text", m.text || ""));
+    }
     if (m.assumptions && m.assumptions.length) {
       var ul = el("ul", "d3-assume");
       m.assumptions.forEach(function (t) { ul.appendChild(el("li", "", t)); });
@@ -124,7 +151,10 @@
           drawMessage(m);
           if (m.state === "thinking" || m.state === "building") pending = true;
         });
-        busy.hidden = !(data.building || data.messages.some(function (m) { return m.state === "building"; }));
+        var working = data.messages.filter(function (m) { return m.state === "building"; })[0];
+        busy.hidden = !(data.building || working);
+        busy.textContent = working && working.step ? working.step + "…" : "Building…";
+        tick();
         var cur = data.current;
         if (cur && String(cur.number) !== String(current)) {
           current = cur.number;

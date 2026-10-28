@@ -165,6 +165,7 @@ def send(request, pk):
 def _message_json(m):
     return {
         "id": m.pk, "role": m.role, "state": m.state, "text": m.text, "assumptions": m.assumptions,
+        "step": m.step, "seconds": int((timezone.now() - m.created_at).total_seconds()),
         "version": m.version.number if m.version else None,
         "pictures": [f"/design3d/files/{p.image.name}" for p in m.pictures.all()],
     }

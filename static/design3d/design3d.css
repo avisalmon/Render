@@ -135,6 +135,12 @@ img { max-width: 100%; height: auto; display: block; }
 .d3-msg .d3-pics img { width: 84px; height: 84px; object-fit: cover; border-radius: 8px; }
 .d3-thinking { color: var(--soft); font-style: italic; }
 .d3-thinking::after { content: "…"; }
+.d3-elapsed { font-size: .78rem; color: var(--soft); }
+.d3-slow { display: block; margin-top: 4px; font-size: .82rem; color: var(--soft); }
+@media (prefers-reduced-motion: no-preference) {
+  .d3-msg.thinking .d3-thinking, .d3-msg.building .d3-thinking { animation: d3-breathe 1.6s ease-in-out infinite; }
+  @keyframes d3-breathe { 50% { opacity: .45; } }
+}
 .d3-hello { color: var(--soft); font-size: .95rem; display: grid; gap: 6px; }
 .d3-hello p { margin: 0; }
 

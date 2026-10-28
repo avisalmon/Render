@@ -17,6 +17,33 @@ Newest first.
 
 ---
 
+## PM-67 · 2026-10-28 · A finished turn kept saying "Building", and nothing said what was happening
+
+**What happened.** Avi's first real use of design3d in production: he asked
+for a cube, then, while the page still showed "Building the part" under the
+first answer, asked to make it ten times bigger. The cube was already built
+and on screen, but the first message never changed: the page polled for
+messages "after the newest one on screen", and once his second message was
+on screen, the first, older message finishing was never asked for again.
+And a turn only ever said "Thinking" or "Building the part", so he asked:
+"how can I know it's not stuck?"
+
+**Why.** The poll was written for one turn at a time and tested that way;
+the browser test sent one message and waited. A state change on an older
+row is invisible to an "after the last id" query. And the progress shown was
+the state machine's two names, not what the person needs: what is happening,
+for how long, and whether that is normal.
+
+**Rule.** A page that polls a list asks from its oldest unfinished item, not
+its newest item, and a test finishes an older item after a newer one exists
+(`test_an_older_turn_that_finishes_late_is_redrawn`, proven to fail on the
+old code). Long work shows its current step in words, its running time
+counted from the server's clock, and a line once it is slower than usual;
+whatever is ready (the part) shows as soon as it is ready.
+
+Here: `static/design3d/design.js`, `design3d/jobs.py` (`_step`, `_show`), `tests/test_design3d_browser.py`
+BKM: 00141df
+
 ## PM-66 · 2026-10-28 · design3d: a text box widened the page, twice the same rule
 
 **What happened.** Building design3d (sprints D3.1 to D3.5, in dev). The
