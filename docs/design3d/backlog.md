@@ -12,7 +12,7 @@ nothing ships without his word.
 | SPR-D3.2 | Designs and the chat: my designs, a design page on phone and computer, chat turns in the background with pictures, the model call with cost and the daily limit, stub mode | REQ-D3.10 to D3.15 | **DONE 2026-10-28** |
 | SPR-D3.3 | Builds: OpenSCAD runner with limits and the file guard, STL and preview, repair up to three times, the self-check, versions | REQ-D3.20 to D3.22 | **DONE 2026-10-28** |
 | SPR-D3.4 | The 3D view, sliders, continuing from a version, downloads | REQ-D3.23 to D3.25 | **DONE 2026-10-28** |
-| SPR-D3.5 | Sharing and the gallery; the full API; phone and computer walk-throughs; OpenSCAD in build.sh and the check that it runs on Render | REQ-D3.30, D3.31, D3.40 to D3.43 | **DONE 2026-10-28**, except running on Render, checked at the first ship |
+| SPR-D3.5 | Sharing and the gallery; the full API; phone and computer walk-throughs; OpenSCAD in build.sh and the check that it runs on Render | REQ-D3.30, D3.31, D3.40 to D3.43 | **DONE 2026-10-28**, live the same day |
 
 **Tests.** `tests/test_design3d.py` (25: the door and asking again, the
 people screen and limits, a chat turn in stub mode, asking before
@@ -28,5 +28,4 @@ computer's three columns; no sideways scroll at five phone widths).
 app's own code): $0.0066 including the self-check, a 1.2 s build, the box
 100 x 80 x 27 mm with six sliders.
 
-**At the first ship:** build.sh downloads OpenSCAD; check a turn builds on
-Render (memory and time) before telling anyone it is open.
+**Live 2026-10-28** (train T1028-163113). A one-off Render job built the sample part with the server's OpenSCAD: 0.4 s, 99 MB peak, vendor/openscad/AppRun present.

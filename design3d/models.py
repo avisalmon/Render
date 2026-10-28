@@ -119,6 +119,7 @@ class Message(models.Model):
     design = models.ForeignKey(Design, on_delete=models.CASCADE, related_name="messages")
     role = models.CharField(max_length=10, choices=ROLES)
     state = models.CharField(max_length=10, choices=STATES, default=DONE)
+    step = models.CharField(max_length=80, blank=True, help_text="What a running turn is doing now, for the page")
     text = models.TextField(blank=True)
     assumptions = models.JSONField(default=list, blank=True)
     version = models.ForeignKey("Version", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")

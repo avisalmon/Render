@@ -67,6 +67,7 @@ history sent to the model is built from these rows.
 | design | FK → Design | cascade |
 | role | choice | `person`, `assistant` |
 | state | choice | `thinking`, `building`, `done`, `failed` (an assistant turn runs in the background; the page polls it) |
+| step | char 80, blank | what a running turn is doing now, shown on the page (added 2026-10-28) |
 | text | text | what was said |
 | assumptions | JSON list, blank | the assistant's list of what it assumed (shown to the person, so they can correct it) |
 | version | FK → Version, null | the build this assistant turn produced, if any |
