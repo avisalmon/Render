@@ -25,6 +25,7 @@ urlpatterns = [
     path("d/<int:pk>/poll/", views.poll, name="poll"),
     path("d/<int:pk>/sliders/", views.sliders, name="sliders"),
     path("d/<int:pk>/edit/", views.edit, name="edit"),
+    path("d/<int:pk>/email/", views.email_chat, name="email_chat"),
     path("d/<int:pk>/v/<int:number>/use/", views.use_version, name="use_version"),
     path("d/<int:pk>/v/<int:number>/<str:kind>/", views.download, name="download"),
     path("shared/", views.shared, name="shared"),

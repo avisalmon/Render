@@ -31,3 +31,111 @@ def welcome(maker, request=None):
     maker.welcomed_at = timezone.now()
     maker.save(update_fields=["welcomed_at"])
     return True
+
+
+# ---------- "Email me this chat" (Avi, 2026-10-29) ----------
+
+EXPORT_LIMIT = 15 * 1024 * 1024  # bytes of attachments: Gmail takes 25 MB, base64 adds a third
+
+
+def _version_line(v):
+    if v is None:
+        return ""
+    bits = [f"version {v.number}", v.made_by, v.status]
+    if v.size_mm:
+        bits.append(f"{v.size_mm} mm")
+    if v.build_seconds is not None:
+        bits.append(f"built in {v.build_seconds} s")
+    if v.print_summary:
+        bits.append(v.print_summary)
+    line = " · ".join(bits)
+    if v.error:
+        line += "\n      error: " + v.error.splitlines()[0][:300]
+    return line
+
+
+def chat_text(design):
+    """The whole chat as plain text: every message, the model, the cost, the
+    assumptions, how each turn went and what it built."""
+    from . import builder
+
+    out = [f"design3d chat #{design.pk}: {design.title}",
+           f"Owner: {design.owner.display_name} · created {timezone.localtime(design.created_at):%Y-%m-%d %H:%M}",
+           f"Model now: {settings.DESIGN3D_MODEL} · engine: OpenSCAD {builder.engine() or 'not installed'}"
+           f"{' (Manifold)' if builder.manifold() else ''}",
+           f"Current version: {design.current.number if design.current else 'none'}", ""]
+    total = 0
+    for m in design.messages.prefetch_related("pictures").select_related("version"):
+        when = f"{timezone.localtime(m.created_at):%H:%M:%S}"
+        if m.role == m.PERSON:
+            out.append(f"[{when}] PERSON")
+        else:
+            total += m.cost_usd
+            out.append(f"[{when}] DESIGN3D ({m.model or '-'}, ${m.cost_usd}, tokens in {m.tokens_in} "
+                       f"cached {m.tokens_cached} out {m.tokens_out}, {m.state})")
+        out.append("  " + (m.text or "").replace("\n", "\n  "))
+        for a in m.assumptions or []:
+            out.append(f"  assumed: {a}")
+        for n, p in enumerate(m.pictures.all(), 1):
+            out.append(f"  picture: msg{m.pk}-{n}.jpg ({p.width} x {p.height})")
+        if m.version_id:
+            out.append("  -> " + _version_line(m.version))
+        for seconds, what in m.trail or []:
+            out.append(f"     {seconds:>4} s  {what}")
+        out.append("")
+    out.append(f"Model cost of this chat: ${total}")
+    out += ["", "VERSIONS"]
+    for v in design.versions.order_by("number"):
+        out.append("  " + _version_line(v))
+        for c in v.checks or []:
+            out.append(f"      {c['level']}: {c['text']}")
+    return "\n".join(out)
+
+
+def email_chat(design, to):
+    """Send the chat to `to` with the pictures, every version's code, the
+    previews and the current STL. True when the backend took it."""
+    from django.core.mail import EmailMessage
+
+    body = chat_text(design)
+    msg = EmailMessage(f"design3d chat #{design.pk}: {design.title}", body, settings.DEFAULT_FROM_EMAIL, [to])
+    used, skipped = 0, []
+
+    def attach(name, data, kind):
+        nonlocal used
+        if used + len(data) > EXPORT_LIMIT:
+            skipped.append(name)
+            return
+        used += len(data)
+        msg.attach(name, data, kind)
+
+    msg.attach(f"design3d-{design.pk}-chat.txt", body.encode("utf-8"), "text/plain")
+    for v in design.versions.order_by("number"):
+        attach(f"v{v.number}.scad", v.code.encode("utf-8"), "text/plain")
+    for m in design.messages.prefetch_related("pictures"):
+        for n, p in enumerate(m.pictures.all(), 1):
+            try:
+                with p.image.open("rb") as fh:
+                    attach(f"msg{m.pk}-{n}.jpg", fh.read(), "image/jpeg")
+            except OSError:
+                skipped.append(f"msg{m.pk}-{n}.jpg (missing)")
+    for v in design.versions.filter(status="ready").order_by("number"):
+        if v.preview:
+            try:
+                with v.preview.open("rb") as fh:
+                    attach(f"v{v.number}.png", fh.read(), "image/png")
+            except OSError:
+                skipped.append(f"v{v.number}.png (missing)")
+    if design.current and design.current.stl:
+        try:
+            with design.current.stl.open("rb") as fh:
+                attach(f"v{design.current.number}.stl", fh.read(), "model/stl")
+        except OSError:
+            skipped.append(f"v{design.current.number}.stl (missing)")
+    if skipped:
+        msg.body += "\n\nNot attached (too big or missing): " + ", ".join(skipped)
+    try:
+        return bool(msg.send())
+    except Exception:
+        log.exception("design3d: emailing chat %s failed", design.pk)
+        return False

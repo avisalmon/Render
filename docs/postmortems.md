@@ -17,6 +17,18 @@ Newest first.
 
 ---
 
+## PM-73 · 2026-10-29 · Sprint D3.8 end: nothing new
+
+**What happened.** "Email me this chat" was built and tested in one pass.
+Avi had asked whether I could sign in as him to read a chat; I said no and
+built a way for the chat to come to his own mail instead.
+
+**Rule.** Nothing new. The standing rules held: the admin's own data only,
+to his own address, with a test that nobody else gets it.
+
+Here: `design3d/mail.py`, `design3d/views.py` (`email_chat`)
+BKM: deferred - nothing general beyond existing rules
+
 ## PM-72 · 2026-10-28 · Sprint D3.7 end: a checker run on real parts before people see it
 
 **What happened.** The print-ready checks were run over all 60 parts of the
