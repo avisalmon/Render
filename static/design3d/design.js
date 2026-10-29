@@ -95,7 +95,14 @@
       });
       a.appendChild(pics);
     }
-    if (m.version) a.appendChild(el("div", "d3-built", "Version " + m.version));
+    if (m.version) {
+      var built = el("div", "d3-built", "Version " + m.version);
+      if (m.print) {
+        built.appendChild(document.createTextNode(" · "));
+        built.appendChild(el("span", m.print === "ready to print" ? "d3-ok" : "d3-warn", m.print));
+      }
+      a.appendChild(built);
+    }
     var old = document.getElementById("m" + m.id);
     // The trail: a look inside the turn, open while it runs, folded when
     // it ends; a person's own open/close is kept across redraws.
@@ -152,11 +159,53 @@
     stl.textContent = "Download STL (v" + v.number + ")";
     document.getElementById("d3-scad").href = box.dataset.scad.replace("/v/0/", "/v/" + v.number + "/");
     box.hidden = false;
+    drawChecks(v.checks);
     var share = document.getElementById("d3-share");
     if (share) { share.disabled = false; share.removeAttribute("title"); }
     var cont = document.getElementById("d3-continue");
     if (cont) cont.closest("form").remove();
   }
+
+  // Print-ready checks (D3.7): the same markup as _checks.html.
+  function drawChecks(checks) {
+    var box = document.getElementById("d3-checks");
+    box.textContent = "";
+    if (checks === null || checks === undefined) return;
+    if (!checks.length) {
+      box.appendChild(el("p", "d3-check d3-ok", "Ready to print: it lies flat, nothing floats, no wall is too thin, and it fits a 220 mm bed."));
+      return;
+    }
+    var ul = el("ul", "d3-check-list");
+    checks.forEach(function (c) {
+      var li = el("li", "d3-check " + (c.level === "warn" ? "d3-warn" : "d3-note"));
+      li.appendChild(el("span", "", c.text));
+      if (c.level === "warn") {
+        var b = el("button", "d3-btn d3-btn-small d3-btn-quiet d3-fix", "Fix it");
+        b.type = "button";
+        b.dataset.fix = c.fix;
+        li.appendChild(document.createTextNode(" "));
+        li.appendChild(b);
+      }
+      ul.appendChild(li);
+    });
+    box.appendChild(ul);
+  }
+
+  // Tapping "N print warnings" in the chat opens the panel at the findings.
+  msgs.addEventListener("click", function (e) {
+    if (!e.target.closest(".d3-built .d3-warn")) return;
+    tools.open = true;
+    document.getElementById("d3-checks").scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+
+  // "Fix it" sends the finding to the chat as the person's own message.
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest(".d3-fix");
+    if (!b || send.disabled) return;
+    text.value = "Before I print: " + b.dataset.fix;
+    if (window.matchMedia("(max-width: 979px)").matches) tools.open = false;
+    form.requestSubmit();
+  });
 
   function drawVersions(list) {
     var box = document.getElementById("d3-versions");
@@ -196,6 +245,8 @@
         if (title && data.title && title.textContent !== data.title) {
           title.textContent = data.title;
           document.title = data.title + " · design3d";
+          var rename = document.querySelector('input[name="title"]');
+          if (rename && document.activeElement !== rename) rename.value = data.title;
         }
         if (data.messages.length) scrollDown();
         if (pending || data.building) timer = setTimeout(poll, 1500);

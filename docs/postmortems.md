@@ -17,6 +17,50 @@ Newest first.
 
 ---
 
+## PM-72 · 2026-10-28 · Sprint D3.7 end: a checker run on real parts before people see it
+
+**What happened.** The print-ready checks were run over all 60 parts of the
+engine evaluation before they were wired into the app. That found three
+false alarms the hand-made test shapes never would have: modelling slivers
+(0.01 to 0.08 mm) reported as walls, rounded bottom edges counted as
+overhangs, and a thread's feather edge reported as a thin wall. All three
+were fixed before anyone saw them. The phone screenshot then showed the
+warning buried under the sliders, so the chat line now opens it.
+
+**Rule.** A heuristic checker (anything that judges a person's work and can
+be wrong) is run over a corpus of real outputs before it is shown, and each
+alarm on that corpus is looked at by hand. A finding that is not certain is
+a note, not a warning.
+
+Here: `design3d/printcheck.py`, `docs/design3d/backlog.md` (D3.7), `docs/building_an_app.md` mistake 63
+BKM: 99dea3d
+
+## PM-71 · 2026-10-28 · The new engine could not start on Render, and every build failed
+
+**What happened.** Sprint D3.6 pinned the OpenSCAD 2026.10.27 snapshot. On
+Render it could not start ("libOpenGL.so.0: cannot open shared object
+file"): the snapshot AppImage leaves about fifteen desktop libraries out,
+and Render's runtime has none of them. Every design3d build in production
+failed until another session found it, and bb03548 and c43e56c fixed it:
+`scripts/openscad_libs.py` asks the server with ldd what is missing and fetches
+exactly those from Debian (checksums checked), and build.sh now builds a real
+1 mm cube with Manifold on every deploy, falling back to 2021.01 only if
+that fails.
+
+**Why.** The engine was measured and tested on the Windows PC only. The
+2021.01 release had been proven on Render with a one-off job before it
+shipped; the snapshot was not, and I called the sprint done and asked Avi to
+look at a status line instead. The fallback in build.sh checked only that
+the download worked, not that the program ran.
+
+**Rule.** A new program for the server is proven on the server before the
+work is called done: the deploy itself runs a real job with it (not
+`--version`) and falls back to the last version that worked. A PC test proves
+nothing about the server's libraries.
+
+Here: `build.sh`, `scripts/openscad_libs.py`, `docs/building_an_app.md` mistake 62
+BKM: 3ede49a
+
 ## PM-70 · 2026-10-28 · Sprint D3.6 end: a test file's own stub hid the real build
 
 **What happened.** The new test for the inside-out check used the builder,

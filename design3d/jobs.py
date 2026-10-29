@@ -21,7 +21,7 @@ from django.db import close_old_connections, transaction
 from django.db.models import Max, Sum
 from django.utils import timezone
 
-from . import builder, llm, params, render
+from . import builder, llm, params, printcheck, render
 from .models import Design, Message, Parameter, Version
 
 log = logging.getLogger(__name__)
@@ -94,6 +94,26 @@ def _add_usage(msg, usage, model):
                              usage["in"], usage["cached"], usage["out"]) if model != "stub" else Decimal("0")
 
 
+def run_checks(stl):
+    """The print-ready findings, or None if the check itself broke: a check
+    never stops a part from being shown."""
+    try:
+        return printcheck.check(stl)
+    except Exception:
+        log.exception("design3d: print check failed")
+        return None
+
+
+def checks_for(version):
+    """A ready version's findings, checking an older version on first look."""
+    if version is not None and version.status == Version.READY and version.checks is None and version.stl:
+        with version.stl.open("rb") as fh:
+            version.checks = run_checks(fh.read())
+        if version.checks is not None:
+            Version.objects.filter(pk=version.pk).update(checks=version.checks)
+    return version
+
+
 def make_version(design, code, parent, made_by, proposed=None, from_values=None):
     """Build `code` into the next version of the design. Returns the
     version, ready or failed; parameters come from the chat's proposal, or
@@ -112,6 +132,7 @@ def make_version(design, code, parent, made_by, proposed=None, from_values=None)
     v.build_seconds = Decimal(str(round(took, 1)))
     v.stl.save(f"v{number}.stl", ContentFile(stl), save=False)
     v.preview.save(f"v{number}.png", ContentFile(render.preview(stl)), save=False)
+    v.checks = run_checks(stl)
     v.status = Version.READY
     v.save()
     if from_values is not None and parent is not None:
@@ -227,6 +248,14 @@ def _as_json(reply):
     return json.dumps({k: reply.get(k) for k in ("title", "message", "assumptions", "code")})
 
 
+def _findings(version):
+    warns = version.warnings
+    if not warns:
+        return ""
+    return ("\nThe server's print check found: " + " ".join(w["fix"] for w in warns)
+            + " Fix these too, unless the person asked for it that way.")
+
+
 def _self_check(msg, design, items, reply, version):
     """Show the model what it built, once, and let it correct itself."""
     import base64
@@ -238,7 +267,7 @@ def _self_check(msg, design, items, reply, version):
         {"role": "user", "content": [
             {"type": "input_text", "text": f"This is what your code built (size {version.size_mm} mm). Compare it with "
                                            "what I asked and my pictures. If it is right, answer with code null and a short "
-                                           "message for me; if not, give the corrected full code."},
+                                           "message for me; if not, give the corrected full code." + _findings(version)},
             {"type": "input_image", "image_url": "data:image/png;base64," + base64.b64encode(sheet).decode()}]}]
     _step(msg, "Checking the part against what you asked")
     checked, usage, model = llm.ask(items)

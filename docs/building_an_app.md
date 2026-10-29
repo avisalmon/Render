@@ -1290,3 +1290,23 @@ a new test of the real build silently got the cube (PM-70).
 
 **The rule.** Keep a reference to the real function at import time and call
 that in the tests that need it. A cached lookup never keeps an empty answer.
+
+### 62. A new program for the server is proven on the server
+
+design3d's faster OpenSCAD passed every test on the PC and could not start
+on Render, which lacked the libraries it needs; every build failed in
+production until another session fixed it (PM-71).
+
+**The rule.** The deploy runs a real job with the new program (not
+`--version`) and falls back to the last version that worked. The work is
+done when that job has passed on the server, not on the PC.
+
+### 63. A checker runs over real outputs before people see it
+
+design3d's print checks passed their hand-made test shapes and still raised
+three kinds of false alarm on real parts; running them over the 60 parts of
+the engine evaluation found all three before anyone saw them (PM-72).
+
+**The rule.** A heuristic that judges a person's work runs over a corpus of
+real outputs first, and every alarm there is looked at. An uncertain
+finding is a note, not a warning.

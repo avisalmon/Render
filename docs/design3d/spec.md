@@ -93,6 +93,7 @@ definition; a photo of a real object. More than one image per message.
   the original stays theirs.
 - **Print-ready checks** before download: the part lies flat on the bed,
   walls are not thinner than a nozzle can print, fits have clearance.
+  (Built in D3.7, REQ-D3.45.)
 
 ### Decided by Avi, 2026-10-28
 
@@ -155,3 +156,4 @@ Requirements are `REQ-D3.n`.
 | REQ-D3.42 | Full REST API | Rule 6: makers, designs, messages, pictures, versions (with a build action), parameters. | DONE |
 | REQ-D3.43 | Runs on babook's server | OpenSCAD is downloaded by the build and runs beside the site; a build never runs inside a web request. If Render cannot hold it, the builds move to Google Cloud Run (sketch-to-stl skill). | DONE: verified on Render 2026-10-28, a build in 0.4 s at 99 MB peak |
 | REQ-D3.44 | A fast engine, checked | The server runs a pinned OpenSCAD development snapshot (2026.10.27) for its Manifold engine, 20 to 180 times faster than 2021.01 on the engine evaluation of 2026-10-28; 2021.01 is the fallback if the snapshot cannot be downloaded. Every part is checked for an inside-out mesh (negative volume) and the error goes back to the model. The model's rules about rounding follow the engine installed. Every build is killed with its children at 90 s and capped at 200 MB (the site shares the 512 MB server; Manifold peaked at 70 MB). The admin's People screen names the engine and how the last builds went. | DONE in dev 2026-10-28 |
+| REQ-D3.45 | Print-ready checks | Every built version is checked on the server (pure Python, under 1 s on the evaluation's parts): it sits on the bed with enough contact, no piece floats, no two pieces will fuse (under 0.2 mm apart), no wall is under 0.8 mm (a small thin spot is a note), it fits 220 x 220 x 250 mm, and overhangs that need supports are a note. The chat line says "ready to print" or "N print warnings" (tap opens the findings); each warning has Fix it, which sends the fix to the chat. The first part's self-check also tells the model the warnings. Older versions are checked when first shown. | DONE in dev 2026-10-28 |

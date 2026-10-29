@@ -82,6 +82,7 @@ def design(request, pk):
     shown = d.current
     if request.GET.get("v"):
         shown = d.versions.filter(number=request.GET["v"]).first() or shown
+    jobs.checks_for(shown)
     return render(request, "design3d/design.html", {
         "d": d, "shown": shown, "chat": d.messages.prefetch_related("pictures").select_related("version"),
         "versions": d.versions.order_by("-number"),
@@ -167,6 +168,7 @@ def _message_json(m):
         "id": m.pk, "role": m.role, "state": m.state, "text": m.text, "assumptions": m.assumptions,
         "step": m.step, "trail": m.trail, "seconds": int((timezone.now() - m.created_at).total_seconds()),
         "version": m.version.number if m.version else None,
+        "print": m.version.print_summary if m.version else "",
         "pictures": [f"/design3d/files/{p.image.name}" for p in m.pictures.all()],
     }
 
@@ -177,7 +179,7 @@ def _version_json(v):
     return {
         "number": v.number, "status": v.status, "size": v.size_mm, "error": v.error[:500],
         "stl": f"/design3d/files/{v.stl.name}" if v.stl else None,
-        "made_by": v.made_by,
+        "made_by": v.made_by, "checks": v.checks,
         "parameters": [{"name": p.name, "label": p.label, "value": float(p.value), "min": float(p.minimum),
                         "max": float(p.maximum), "step": float(p.step), "unit": p.unit} for p in v.parameters.all()],
     }
@@ -191,7 +193,7 @@ def poll(request, pk):
     after = int(request.GET.get("after") or 0)
     msgs = d.messages.filter(Q(pk__gt=after) | Q(state__in=[Message.THINKING, Message.BUILDING])).prefetch_related("pictures").select_related("version")
     pending = d.versions.filter(status=Version.BUILDING).order_by("-number").first()
-    return JsonResponse({"messages": [_message_json(m) for m in msgs], "current": _version_json(d.current),
+    return JsonResponse({"messages": [_message_json(m) for m in msgs], "current": _version_json(jobs.checks_for(d.current)),
                          "title": d.title, "building": pending.number if pending else None,
                          "versions": [{"number": v.number, "status": v.status, "made_by": v.made_by}
                                       for v in d.versions.order_by("-number")]})

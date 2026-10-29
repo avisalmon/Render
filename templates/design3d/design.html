@@ -50,6 +50,8 @@
       {# Always on the page, so a part built while the page is open can be downloaded at once (Avi, 2026-10-28). #}
       <section id="d3-filebox" data-stl="{% url 'design3d:download' d.pk 0 'stl' %}" data-scad="{% url 'design3d:download' d.pk 0 'scad' %}" {% if not shown or shown.status != "ready" %}hidden{% endif %}>
         <h3>Files</h3>
+        {# Print-ready checks (sprint D3.7): what may go wrong on the printer, and a button that asks the chat to fix it. #}
+        <div class="d3-checks" id="d3-checks">{% include "design3d/_checks.html" with checks=shown.checks %}</div>
         <div class="d3-row">
           <a class="d3-btn d3-btn-small" href="{% if shown %}{% url 'design3d:download' d.pk shown.number 'stl' %}{% endif %}" id="d3-stl">Download STL{% if shown %} (v{{ shown.number }}){% endif %}</a>
           <a class="d3-btn d3-btn-small d3-btn-quiet" href="{% if shown %}{% url 'design3d:download' d.pk shown.number 'scad' %}{% endif %}" id="d3-scad">OpenSCAD</a>

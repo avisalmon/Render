@@ -167,7 +167,21 @@ class Version(models.Model):
     preview = models.ImageField(upload_to=preview_path, storage=private_storage, blank=True)
     size_mm = models.CharField(max_length=40, blank=True)
     build_seconds = models.DecimalField(max_digits=6, decimal_places=1, null=True, blank=True)
+    checks = models.JSONField(null=True, blank=True,
+                              help_text="Print-ready findings (design3d/printcheck.py); [] is ready to print, null not checked yet")
     created_at = models.DateTimeField(default=timezone.now)
+
+    @property
+    def warnings(self):
+        return [c for c in self.checks or [] if c.get("level") == "warn"]
+
+    @property
+    def print_summary(self):
+        """One line for the chat: ready to print, or how many warnings."""
+        if self.checks is None:
+            return ""
+        n = len(self.warnings)
+        return "ready to print" if not n else f"{n} print warning{'s' if n > 1 else ''}"
 
     class Meta:
         ordering = ["design", "number"]

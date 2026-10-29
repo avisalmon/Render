@@ -184,3 +184,17 @@ img { max-width: 100%; height: auto; display: block; }
 .d3-person-who span { overflow-wrap: anywhere; }
 .d3-limit-form { display: flex; gap: 6px; align-items: center; }
 .d3-limit-form input { width: 80px; font: inherit; font-size: 16px; min-height: 38px; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+
+/* Print-ready checks (D3.7) */
+.d3-checks { margin-bottom: 10px; }
+.d3-check-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.d3-check { margin: 0; font-size: .86rem; line-height: 1.4; overflow-wrap: anywhere; }
+.d3-check-list .d3-check { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; padding-left: 10px; border-left: 3px solid var(--line); }
+.d3-check-list .d3-check > span { flex: 1 1 14em; min-width: 0; }
+.d3-check-list .d3-warn { border-left-color: var(--bad); }
+.d3-check-list .d3-note { border-left-color: var(--soft); color: var(--soft); }
+.d3-ok { color: var(--good); }
+.d3-warn { color: var(--bad); }
+.d3-built .d3-warn { cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.d3-check-list .d3-warn > span { color: var(--ink); }
+.d3-check-list .d3-fix { flex: none; }
