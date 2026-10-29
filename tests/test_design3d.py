@@ -42,7 +42,7 @@ def quiet(settings, tmp_path, monkeypatch):
     settings.OPENAI_API_KEY = ""
     settings.EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
     monkeypatch.setattr("app.safety.image_is_safe", lambda *a, **k: (True, ""), raising=False)
-    monkeypatch.setattr(builder, "build", lambda code: (builder.check(code), (CUBE, 0.4))[1])
+    monkeypatch.setattr(builder, "build", lambda code, part=None: (builder.check(code), (CUBE, 0.4))[1])
 
 
 def _user(email, superuser=False, first="", status=None):
@@ -626,7 +626,7 @@ def test_the_checks_are_stored_shown_and_told_to_the_model(client, world, monkey
     """A built version keeps its findings; the chat line and the Files panel
     show them with Fix it; the self-check tells the model the warnings."""
     floating = _stl(_box(0, 0, 0, 10, 10, 10), _box(30, 0, 4, 35, 5, 9))
-    monkeypatch.setattr(builder, "build", lambda code: (builder.check(code), (floating, 0.3))[1])
+    monkeypatch.setattr(builder, "build", lambda code, part=None: (builder.check(code), (floating, 0.3))[1])
     d = _design(client, world["dana"])
     _say(client, d, "Two cubes")
     v = d.versions.get()
@@ -855,3 +855,96 @@ def test_only_avi_invites(client, world):
     assert client.get("/design3d/api/invites/").status_code in (401, 403)
     client.force_login(world["avi"])
     assert client.get("/design3d/api/invites/").status_code == 200
+
+
+# ---------- Chapter 7: several parts (approved by Avi 2026-10-29) ----------
+
+BOX_AND_LID = """
+part = "all";
+clear = 0.3;
+w = 60; d = 40; h = 30; wall = 2; lid_h = 4; lip = 5;
+module box() { difference() { cube([w, d, h]); translate([wall, wall, wall]) cube([w - 2*wall, d - 2*wall, h]); } }
+module lid() {
+  translate([0, 0, h]) cube([w, d, lid_h]);
+  translate([wall + clear, wall + clear, h - lip]) cube([w - 2*wall - 2*clear, d - 2*wall - 2*clear, lip]);
+}
+if (part == "all" || part == "box") box();
+if (part == "all" || part == "lid") lid();
+"""
+TWO_PARTS = [{"name": "box", "label": "Box", "count": 1, "printed": True, "print": [0, 0, 0]},
+             {"name": "lid", "label": "Lid", "count": 1, "printed": True, "print": [0, 0, 0]}]
+
+
+def _parts_reply(monkeypatch, code, declared=TWO_PARTS):
+    monkeypatch.setattr(llm, "ask", lambda items: ({"title": "Box with lid", "message": "Here it is.", "assumptions": [],
+                                                    "code": code, "parameters": [{"name": "clear", "label": "Fit", "min": 0, "max": 1}],
+                                                    "parts": declared}, {"in": 1, "cached": 0, "out": 1}, "stub"))
+    monkeypatch.setattr(builder, "build", REAL_BUILD)
+
+
+@pytest.mark.skipif(not builder.available(), reason="no OpenSCAD on this PC")
+def test_a_box_and_its_lid_are_built_as_two_parts(client, world, monkeypatch):
+    import zipfile
+
+    _parts_reply(monkeypatch, BOX_AND_LID)
+    d = _design(client, world["dana"])
+    _say(client, d, "A box with a lid")
+    v = d.versions.get()
+    assert v.status == Version.READY, v.error
+    box, lid = v.parts.order_by("position")
+    assert (box.name, lid.name) == ("box", "lid") and box.printed and lid.printed
+    assert lid.orientation == "180,0,0 auto", "the lid is drawn on its plug and printed upside down"
+    assert v.fit == [] and v.print_summary == "ready to print"
+    assert v.size_mm == "60 x 40 x 34", "the assembly's size"
+    with zipfile.ZipFile(v.file_3mf.open("rb")) as z:
+        model = z.read("3D/3dmodel.model").decode()
+    assert model.count("<object ") == 2 and 'name="Box"' in model and 'name="Lid"' in model
+
+    data = client.get(f"/design3d/d/{d.pk}/poll/?after=0").json()["current"]
+    assert [p["name"] for p in data["parts"]] == ["box", "lid"] and data["file_3mf"].endswith("/3mf/")
+    assert client.get(data["file_3mf"]).status_code == 200
+    assert client.get(data["parts"][1]["download"]).status_code == 200
+    assert client.get(data["parts"][0]["stl"]).status_code == 200, "a part's file passes the private file check"
+    client.force_login(world["eli"])
+    assert client.get(data["parts"][0]["stl"]).status_code == 404, "and only for its owner"
+    client.force_login(world["dana"])
+
+    # Sliders keep the parts; the model is told them next time.
+    client.post(f"/design3d/d/{d.pk}/sliders/", {"from": 1, "clear": "0.4"})
+    v2 = d.versions.get(number=2)
+    assert v2.status == Version.READY and [p.name for p in v2.parts.all()] == ["box", "lid"] and "clear = 0.4;" in v2.code
+    said = [i for i in llm.history(d) if i["role"] == "assistant"][-1]["content"]
+    assert '"parts"' in said and '"lid"' in said
+
+
+@pytest.mark.skipif(not builder.available(), reason="no OpenSCAD on this PC")
+def test_a_lid_too_tight_or_overlapping_is_a_fit_warning(client, world, monkeypatch):
+    for clear, code_name in (("0.05", "too_tight"), ("-0.5", "overlap")):
+        _parts_reply(monkeypatch, BOX_AND_LID.replace("clear = 0.3;", f"clear = {clear};"))
+        d = _design(client, world["dana"])
+        _say(client, d, "A box with a lid")
+        v = d.versions.get()
+        assert [f["code"] for f in v.fit] == [code_name], clear
+        assert v.warnings and v.print_summary.endswith("print warning")
+        assert "Box and Lid" in client.get(f"/design3d/d/{d.pk}/").content.decode()
+
+
+@pytest.mark.skipif(not builder.available(), reason="no OpenSCAD on this PC")
+def test_a_part_the_code_does_not_draw_fails_the_build_with_a_reason(client, world, monkeypatch):
+    declared = TWO_PARTS + [{"name": "handle", "label": "Handle", "count": 1, "printed": True, "print": [0, 0, 0]}]
+    _parts_reply(monkeypatch, BOX_AND_LID, declared)
+    d = _design(client, world["dana"])
+    _say(client, d, "A box with a lid and a handle")
+    v = d.versions.order_by("number").first()
+    assert v.status == Version.FAILED and 'part "handle" came out empty' in v.error
+    assert not v.parts.exists()
+
+
+def test_the_part_list_is_cleaned():
+    from design3d import parts
+
+    assert parts.clean([{"name": "only"}]) == [], "one part is not several"
+    got = parts.clean([{"name": "Box"}, {"name": "box"}, {"name": "bad name"}, {"name": "all"}, {"name": "lid", "count": 99,
+                                                                                                   "printed": False, "print": "x"}])
+    assert [(p["name"], p["count"], p["printed"], p["print"]) for p in got] == [("box", 1, True, [0, 0, 0]), ("lid", 20, False, [0, 0, 0])]
+    assert len(parts.clean([{"name": f"p{i}"} for i in range(12)])) == 8

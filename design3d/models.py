@@ -83,6 +83,10 @@ def stl_path(instance, filename):
     return f"stl/{instance.design_id}/v{instance.number}-{timezone.now():%Y%m%d%H%M%S}.stl"
 
 
+def mf_path(instance, filename):
+    return f"stl/{instance.design_id}/v{instance.number}-{timezone.now():%Y%m%d%H%M%S}.3mf"
+
+
 def preview_path(instance, filename):
     return f"previews/{instance.design_id}/v{instance.number}-{timezone.now():%Y%m%d%H%M%S}.png"
 
@@ -216,11 +220,21 @@ class Version(models.Model):
     build_seconds = models.DecimalField(max_digits=6, decimal_places=1, null=True, blank=True)
     checks = models.JSONField(null=True, blank=True,
                               help_text="Print-ready findings (design3d/printcheck.py); [] is ready to print, null not checked yet")
+    file_3mf = models.FileField(upload_to=mf_path, storage=private_storage, blank=True,
+                                help_text="Several parts: every printed part as its own object, on the plate (Chapter 7)")
+    fit = models.JSONField(null=True, blank=True, help_text="Several parts: findings between parts in the assembly")
     created_at = models.DateTimeField(default=timezone.now)
 
     @property
     def warnings(self):
-        return [c for c in self.checks or [] if c.get("level") == "warn"]
+        return [c for c in (self.checks or []) + (self.fit or []) if c.get("level") == "warn"]
+
+    @property
+    def all_checks(self):
+        """Print findings and fit findings together; None until checked."""
+        if self.checks is None:
+            return None
+        return list(self.checks) + list(self.fit or [])
 
     @property
     def print_summary(self):
@@ -236,6 +250,48 @@ class Version(models.Model):
 
     def __str__(self):
         return f"{self.design} v{self.number}"
+
+
+def part_path(part, filename):
+    """Under stl/, so the private file view (REQ-D3.41) serves it after its check."""
+    return f"stl/{part.version.design_id}/v{part.version.number}-{timezone.now():%Y%m%d%H%M%S}-{filename}"
+
+
+class Part(models.Model):
+    """One part of a version that has several (Chapter 7, approved by Avi
+    2026-10-29). A one-part version has none and works as before; for several,
+    `Version.stl` is the print plate."""
+
+    version = models.ForeignKey(Version, on_delete=models.CASCADE, related_name="parts")
+    name = models.CharField(max_length=40)
+    label = models.CharField(max_length=80)
+    position = models.PositiveIntegerField(default=0)
+    count = models.PositiveIntegerField(default=1)
+    printed = models.BooleanField(default=True)
+    stl = models.FileField(upload_to=part_path, storage=private_storage, blank=True)
+    print_stl = models.FileField(upload_to=part_path, storage=private_storage, blank=True)
+    orientation = models.CharField(max_length=40, blank=True)
+    size_mm = models.CharField(max_length=40, blank=True)
+    checks = models.JSONField(null=True, blank=True)
+    color = models.CharField(max_length=7, default="#ff7a1a")
+
+    class Meta:
+        ordering = ["version", "position"]
+        unique_together = [("version", "name")]
+
+    def __str__(self):
+        return f"{self.label} (v{self.version.number})"
+
+    @property
+    def rotation(self):
+        """The rotation it was printed with, as the model's hint for next time."""
+        try:
+            return [float(r) for r in self.orientation.split()[0].split(",")][:3]
+        except (ValueError, IndexError):
+            return [0.0, 0.0, 0.0]
+
+    def declaration(self):
+        return {"name": self.name, "label": self.label, "count": self.count, "printed": self.printed, "print": self.rotation}
 
 
 class Parameter(models.Model):

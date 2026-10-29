@@ -20,7 +20,7 @@
     <div class="d3-done-acts">
       <section>
         <h2 class="d3-h2">Print check</h2>
-        <div class="d3-checks" id="d3-checks">{% include "design3d/_checks.html" with checks=v.checks %}</div>
+        <div class="d3-checks" id="d3-checks">{% include "design3d/_checks.html" with checks=v.all_checks %}</div>
         {% if v.warnings %}<p class="d3-small d3-muted">Use Fix it in the chat: <a href="{% url 'design3d:design' d.pk %}">back to the chat</a>.</p>{% endif %}
       </section>
       <section>
@@ -28,7 +28,18 @@
         <div class="d3-row">
           <a class="d3-btn" id="d3-done-stl" href="{% url 'design3d:download' d.pk v.number 'stl' %}">Download STL</a>
           <a class="d3-btn d3-btn-quiet" href="{% url 'design3d:download' d.pk v.number 'scad' %}">OpenSCAD file</a>
+          {% if v.file_3mf %}<a class="d3-btn d3-btn-quiet" id="d3-done-3mf" href="{% url 'design3d:download' d.pk v.number '3mf' %}">All parts (3MF)</a>{% endif %}
         </div>
+        {% if v.parts.all %}
+          <ul class="d3-partlist">
+            {% for p in v.parts.all %}
+              <li><span class="d3-part-dot" style="background:{{ p.color }}"></span>
+                <span class="d3-part-name">{{ p.label }}{% if p.count > 1 %} x{{ p.count }}{% endif %}{% if not p.printed %} (bought, not printed){% endif %}</span>
+                <span class="d3-small d3-muted d3-mono">{{ p.size_mm }} mm</span>
+                <a class="d3-btn d3-btn-small d3-btn-quiet" href="{% url 'design3d:download_part' d.pk v.number 'part' p.name %}">STL</a></li>
+            {% endfor %}
+          </ul>
+        {% endif %}
       </section>
       <section>
         <h2 class="d3-h2">Send</h2>
@@ -54,5 +65,6 @@
 </div>
 {% endblock %}
 {% block scripts %}
+{{ shown_json|json_script:"design3d-shown" }}
 <script type="module" src="{% static 'design3d/viewer.js' %}"></script>
 {% endblock %}

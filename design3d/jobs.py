@@ -21,8 +21,8 @@ from django.db import close_old_connections, transaction
 from django.db.models import Max, Sum
 from django.utils import timezone
 
-from . import builder, llm, params, printcheck, render
-from .models import Design, Message, Parameter, Version
+from . import builder, llm, params, parts, printcheck, render
+from .models import Design, Message, Parameter, Part, Version
 
 log = logging.getLogger(__name__)
 
@@ -114,25 +114,97 @@ def checks_for(version):
     return version
 
 
-def make_version(design, code, parent, made_by, proposed=None, from_values=None):
+def view_stl(version):
+    """The part as people see it: for several parts, all of them in their
+    assembled places (the version's own STL is then the print plate)."""
+    if version.parts.exists():
+        stls = []
+        for p in version.parts.all():
+            with p.stl.open("rb") as fh:
+                stls.append(fh.read())
+        return parts.assembled(stls)
+    with version.stl.open("rb") as fh:
+        return fh.read()
+
+
+def _build_parts(v, code, declared):
+    """Chapter 7: each part alone, then flat, on the plate, the 3MF and the
+    fit. Returns seconds of building; raises BuildError."""
+    built, took = [], 0.0
+    for d in declared:
+        empty = builder.BuildError(f'The part "{d["name"]}" came out empty. Draw it when part == "{d["name"]}": '
+                                   f'end the file with if (part == "all" || part == "{d["name"]}") {d["name"]}();')
+        try:
+            stl, seconds = builder.build(code, part=d["name"])
+        except builder.BuildError as exc:
+            if "empty" in str(exc).lower():
+                raise empty from exc
+            raise builder.BuildError(f'Building the part "{d["name"]}": {exc}') from exc
+        took += seconds
+        tris = render.read_stl(stl)
+        if not tris:
+            raise empty
+        built.append((d, stl, tris))
+    pieces = []
+    for i, (d, stl, tris) in enumerate(built):
+        p = Part(version=v, name=d["name"], label=d["label"], position=i, count=d["count"], printed=d["printed"],
+                 color=parts.COLORS[i % len(parts.COLORS)], size_mm=render.size_mm(tris))
+        p.stl.save(f"{d['name']}.stl", ContentFile(stl), save=False)
+        if d["printed"]:
+            flat, how = parts.orient(tris, d["print"])
+            p.orientation = how
+            flat_stl = parts.to_stl(flat)
+            p.print_stl.save(f"{d['name']}-print.stl", ContentFile(flat_stl), save=False)
+            p.checks = run_checks(flat_stl)
+            for c in range(d["count"]):
+                pieces.append((d["label"] + (f" {c + 1}" if d["count"] > 1 else ""), flat))
+        p.save()
+    if not pieces:
+        raise builder.BuildError("No part is printed. At least one part needs \"printed\": true.")
+    laid = parts.plate(pieces)
+    plate_stl = parts.to_stl([t for _, tris in laid for t in tris])
+    v.stl.save(f"v{v.number}.stl", ContentFile(plate_stl), save=False)
+    v.file_3mf.save(f"v{v.number}.3mf", ContentFile(parts.to_3mf(laid)), save=False)
+    v.checks = run_checks(plate_stl)
+    try:
+        v.fit = parts.fit([(d["name"], d["label"], d["printed"], tris) for d, _, tris in built])
+    except Exception:
+        log.exception("design3d: fit check failed for version %s", v.pk)
+        v.fit = None
+    together = parts.assembled([stl for _, stl, _ in built])
+    v.size_mm = render.size_mm(render.read_stl(together))
+    v.preview.save(f"v{v.number}.png", ContentFile(render.preview(together)), save=False)
+    return took
+
+
+def make_version(design, code, parent, made_by, proposed=None, from_values=None, declared=None):
     """Build `code` into the next version of the design. Returns the
     version, ready or failed; parameters come from the chat's proposal, or
-    are carried over from the parent with the slider values."""
+    are carried over from the parent with the slider values. `declared` is
+    the chat's part list (Chapter 7); slider builds keep the parent's."""
+    if from_values is not None and parent is not None:
+        declared = [p.declaration() for p in parent.parts.all()]
+    declared = parts.clean(declared or [])
     with transaction.atomic():
         number = (design.versions.aggregate(m=Max("number"))["m"] or 0) + 1
         v = Version.objects.create(design=design, number=number, parent=parent, made_by=made_by, code=code)
     try:
-        stl, took = builder.build(code)
+        if declared:
+            took = _build_parts(v, code, declared)
+        else:
+            stl, took = builder.build(code)
     except builder.BuildError as exc:
+        v.parts.all().delete()
         v.status, v.error = Version.FAILED, str(exc)[:4000]
         v.save(update_fields=["status", "error"])
         return v
-    tris = render.read_stl(stl)
-    v.size_mm = render.size_mm(tris)
+    if not declared:
+        tris = render.read_stl(stl)
+        v.size_mm = render.size_mm(tris)
+        v.stl.save(f"v{number}.stl", ContentFile(stl), save=False)
+        v.preview.save(f"v{number}.png", ContentFile(render.preview(stl)), save=False)
+        v.checks = run_checks(stl)
     v.build_seconds = Decimal(str(round(took, 1)))
-    v.stl.save(f"v{number}.stl", ContentFile(stl), save=False)
-    v.preview.save(f"v{number}.png", ContentFile(render.preview(stl)), save=False)
-    v.checks = run_checks(stl)
     v.status = Version.READY
     v.save()
     if from_values is not None and parent is not None:
@@ -200,7 +272,8 @@ def _turn(msg, design):
         msg.save(update_fields=["model", "tokens_in", "tokens_cached", "tokens_out", "cost_usd"])
         number = (design.versions.aggregate(m=Max("number"))["m"] or 0) + 1
         _step(msg, f"Building version {number}", Message.BUILDING)
-        version = make_version(design, reply["code"], design.current, Version.CHAT, reply["parameters"])
+        version = make_version(design, reply["code"], design.current, Version.CHAT, reply["parameters"],
+                               declared=reply.get("parts"))
         _built(msg, version)
         _show(design, version)
         tries = 0
@@ -216,7 +289,8 @@ def _turn(msg, design):
                 break
             reply = {**reply, **{k: v for k, v in fixed.items() if v}}
             _note(msg, f"Building version {design.versions.aggregate(m=Max('number'))['m'] + 1}")
-            version = make_version(design, fixed["code"], design.current, Version.CHAT, fixed["parameters"] or reply["parameters"])
+            version = make_version(design, fixed["code"], design.current, Version.CHAT, fixed["parameters"] or reply["parameters"],
+                                   declared=fixed.get("parts") or reply.get("parts"))
             _built(msg, version)
             _show(design, version)
 
@@ -262,8 +336,7 @@ def _self_check(msg, design, items, reply, version):
     """Show the model what it built, once, and let it correct itself."""
     import base64
 
-    with version.stl.open("rb") as fh:
-        sheet = render.sheet(fh.read())
+    sheet = render.sheet(view_stl(version))
     items = items + [
         {"role": "assistant", "content": _as_json(reply)},
         {"role": "user", "content": [
@@ -277,7 +350,8 @@ def _self_check(msg, design, items, reply, version):
     if not checked["code"]:
         return version, reply
     _step(msg, "Correcting the part")
-    better = make_version(design, checked["code"], version, Version.CHAT, checked["parameters"] or reply["parameters"])
+    better = make_version(design, checked["code"], version, Version.CHAT, checked["parameters"] or reply["parameters"],
+                          declared=checked.get("parts") or reply.get("parts"))
     _built(msg, better)
     _show(design, better)
     if better.status != Version.READY:

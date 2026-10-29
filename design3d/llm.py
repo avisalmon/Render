@@ -37,7 +37,8 @@ SYSTEM = textwrap.dedent("""
        "message": "what you tell the person: short, plain, friendly",
        "assumptions": ["each thing you assumed that they did not say"],
        "code": "the complete OpenSCAD file for the whole part, or null if you must ask first",
-       "parameters": [{"name": "wall", "label": "Wall thickness", "min": 1, "max": 5, "step": 0.5, "unit": "mm"}]}
+       "parameters": [{"name": "wall", "label": "Wall thickness", "min": 1, "max": 5, "step": 0.5, "unit": "mm"}],
+       "parts": only for several parts, see below}
 
     How to work:
     - Read every dimension written on a sketch or definition.
@@ -68,6 +69,22 @@ SYSTEM = textwrap.dedent("""
     - polyhedron(): list every face's points clockwise when you look at that face from
       outside the solid. The server checks the part and rejects one that is inside out.
     - When the person asks for a change, give the complete new file, not a fragment.
+
+    Several parts (at most 8), when the thing is made of pieces that fit or fasten
+    together (a box and its lid, a clip and its rail, a case and its cover, or screws,
+    nuts or magnets that hold them):
+    - Add "parts": [{"name": "box", "label": "Box", "count": 1, "printed": true,
+      "print": [0, 0, 0]}, {"name": "lid", "label": "Lid", "count": 1, "printed": true,
+      "print": [180, 0, 0]}]. "print" is the rotation that lays the part flat for printing.
+    - In the code: put part = "all"; near the top. Write one module per part, with the
+      part's name, each drawn where it sits in the assembly (not laid out on the bed).
+      End the file with one line per part:
+      if (part == "all" || part == "box") box();
+    - The server builds each part alone, lays the printed ones flat on the bed and checks
+      how they fit: leave 0.2 to 0.3 mm between parts that fit together, and no overlap.
+    - Hardware the person buys (a screw, a nut, a magnet) is a part with "printed": false,
+      drawn at its real size where it goes, so the server can check its holes.
+    - One part needs no "parts" and no part variable.
 """).strip()
 
 # What the model is told about speed depends on the engine on the server
@@ -125,6 +142,8 @@ def pin_text(pin):
     axis = max(("x", "y", "z"), key=lambda a: abs(pin["n" + a]))
     face = FACES[(axis, 1 if pin["n" + axis] >= 0 else -1)]
     on = f" of version {pin['version']}" if pin.get("version") else ""
+    if pin.get("part"):
+        on += f", on the part {pin['part']}"
     return (f"\n[The person tapped a point on the part{on}: x={pin['x']}, y={pin['y']}, z={pin['z']} mm in your code's "
             f"coordinates, on a face that looks toward {face} (normal {pin['nx']}, {pin['ny']}, {pin['nz']}). "
             "\"Here\" or \"this\" means that point. The last picture, if any, is the view with the point marked.]")
@@ -149,9 +168,11 @@ def history(design, upto=None, picture_messages=4):
                 parts += [_image_part(p) for p in m.pictures.all()]
             items.append({"role": "user", "content": parts})
         else:
-            items.append({"role": "assistant", "content": json.dumps({
-                "title": design.title, "message": m.text, "assumptions": m.assumptions,
-                "code": m.version.code if m.version else None})})
+            said = {"title": design.title, "message": m.text, "assumptions": m.assumptions,
+                    "code": m.version.code if m.version else None}
+            if m.version is not None and m.version.parts.exists():
+                said["parts"] = [p.declaration() for p in m.version.parts.all()]
+            items.append({"role": "assistant", "content": json.dumps(said)})
     return items
 
 
@@ -159,7 +180,7 @@ def parse(text):
     try:
         data = json.loads(text[text.index("{"): text.rindex("}") + 1])
     except ValueError:
-        return {"title": "", "message": text.strip()[:2000], "assumptions": [], "code": None, "parameters": []}
+        return {"title": "", "message": text.strip()[:2000], "assumptions": [], "code": None, "parameters": [], "parts": []}
     code = data.get("code")
     return {
         "title": str(data.get("title") or "")[:100],
@@ -167,6 +188,7 @@ def parse(text):
         "assumptions": [str(a)[:300] for a in (data.get("assumptions") or []) if a][:12],
         "code": code if isinstance(code, str) and code.strip() else None,
         "parameters": data.get("parameters") if isinstance(data.get("parameters"), list) else [],
+        "parts": data.get("parts") if isinstance(data.get("parts"), list) else [],
     }
 
 

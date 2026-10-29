@@ -1320,3 +1320,10 @@ them (PM-74).
 **The rule.** Test a hand-off through the reader's own channel before calling
 it done. Write code with escape sequences with the file editor, not through a
 shell heredoc.
+
+### 65. A multi-file edit checks every anchor before it changes anything
+
+A patch script for design3d's several-parts sprint wrote three edits, then
+failed on the fourth, leaving the tree half changed (PM-76).
+
+**The rule.** Check that every anchor matches first; write only when all do.

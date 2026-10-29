@@ -39,7 +39,7 @@ def world(transactional_db, settings, tmp_path, monkeypatch):
     settings.OPENAI_API_KEY = ""
     monkeypatch.setattr("app.safety.image_is_safe", lambda *a, **k: (True, ""), raising=False)
     if not builder.available():
-        monkeypatch.setattr(builder, "build", lambda code: (CUBE, 0.2))
+        monkeypatch.setattr(builder, "build", lambda code, part=None: (CUBE, 0.2))
     dana = User.objects.create_user("dana@example.com", "dana@example.com", "d3-pass-55821", first_name="Dana")
     Maker.objects.create(user=dana, display_name="Dana", status=Maker.APPROVED)
     return {"dana": dana}
@@ -202,7 +202,7 @@ def test_on_a_phone_a_print_warning_is_fixed_with_one_tap(browser, live_server, 
     from tests.test_design3d import _box, _stl
 
     floating = _stl(_box(0, 0, 0, 10, 10, 10), _box(30, 0, 4, 35, 5, 9))
-    monkeypatch.setattr(builder, "build", lambda code: (floating, 0.2))
+    monkeypatch.setattr(builder, "build", lambda code, part=None: (floating, 0.2))
     ctx = browser.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2, has_touch=True, is_mobile=True)
     _session(ctx, world["dana"])
     page = ctx.new_page()
@@ -289,5 +289,63 @@ def test_on_a_phone_mark_a_point_measure_keep_the_part_on_top_and_finish(browser
     page.wait_for_function("document.getElementById('d3-view').dataset.loaded", timeout=30000)
     assert page.evaluate(OVERFLOW, 390) <= 1
     _shot(page, "done-390")
+    assert errors == []
+    ctx.close()
+
+
+@pytest.mark.django_db(transaction=True)
+def test_on_a_phone_a_box_and_its_lid(browser, live_server, world, monkeypatch):
+    """Chapter 7: two parts in their colours, the plate, hide a part, pull
+    them apart, and a marked point that knows its part."""
+    from design3d import builder, llm
+    from design3d.models import Design, Message
+
+    from tests.test_design3d import BOX_AND_LID, REAL_BUILD, TWO_PARTS
+
+    if not builder.available():
+        pytest.skip("no OpenSCAD on this PC")
+    monkeypatch.setattr(builder, "build", REAL_BUILD)
+    monkeypatch.setattr(llm, "ask", lambda items: ({"title": "Box with lid", "message": "Here it is.", "assumptions": [],
+                                                    "code": BOX_AND_LID, "parameters": [], "parts": TWO_PARTS},
+                                                   {"in": 1, "cached": 0, "out": 1}, "stub"))
+    ctx = browser.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2, has_touch=True, is_mobile=True)
+    _session(ctx, world["dana"])
+    page = ctx.new_page()
+    errors = []
+    page.on("pageerror", lambda exc: errors.append(str(exc)))
+    page.goto(live_server.url + "/design3d/designs/")
+    page.click("#d3-new")
+    page.wait_for_url("**/design3d/d/*/")
+    page.fill("#d3-text", "A box with a lid")
+    page.click("#d3-send")
+    page.wait_for_selector("#d3-parts-bar:not([hidden]) [data-part='lid']", timeout=60000)
+    page.wait_for_function("(document.getElementById('d3-view').dataset.loaded || '').split(' ').length === 2", timeout=30000)
+    assert page.inner_text(".d3-part-chips").replace("\n", " ").strip() == "Box Lid"
+    page.locator("#d3-explode").fill("0.6")
+    page.wait_for_timeout(500)
+    _shot(page, "parts-exploded-390")
+    page.click("[data-part='lid']")
+    assert page.get_attribute("[data-part='lid']", "aria-pressed") == "false"
+    page.click("[data-part='lid']")
+    page.locator("#d3-explode").fill("0")
+
+    canvas = page.locator("#d3-view canvas").bounding_box()
+    page.click('[data-d3-mode="pin"]')
+    page.touchscreen.tap(canvas["x"] + canvas["width"] * 0.5, canvas["y"] + canvas["height"] * 0.5)
+    page.wait_for_selector("#d3-pinned:not([hidden])", timeout=5000)
+    page.fill("#d3-text", "Make this thicker")
+    page.click("#d3-send")
+    page.wait_for_function("document.querySelectorAll('.d3-msg.assistant.done').length === 2", timeout=60000)
+    pin = Message.objects.filter(design=Design.objects.get(), role=Message.PERSON).last().pin
+    assert pin and pin.get("part") in ("box", "lid")
+
+    page.click("[data-view='plate']")
+    page.wait_for_function("(document.getElementById('d3-view').dataset.loaded || '').split(' ').length === 1", timeout=30000)
+    page.wait_for_timeout(400)
+    _shot(page, "parts-plate-390")
+    page.click("#d3-tools > summary")
+    assert page.locator("#d3-partlist li").count() == 2 and page.is_visible("#d3-3mf")
+    assert page.evaluate(OVERFLOW, 390) <= 1
+    _shot(page, "parts-list-390")
     assert errors == []
     ctx.close()

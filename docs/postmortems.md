@@ -17,6 +17,22 @@ Newest first.
 
 ---
 
+## PM-76 · 2026-10-29 · Sprint D3.11-12 end: a patch script that stopped halfway
+
+**What happened.** A script that edits several files stopped on its fourth
+edit (the template had changed since I read it). The first three edits were
+already written; I had to cut them out of the script before running it
+again. The fit check also found a real overlap in a sliding lid the model
+drew, on a first real turn.
+
+**Why.** The script checked each anchor only just before using it.
+
+**Rule.** A script that edits several files checks every anchor first and
+changes nothing unless all of them match.
+
+Here: the patch scripts of this sprint, `docs/building_an_app.md` mistake 65
+BKM: 84019cb
+
 ## PM-75 · 2026-10-29 · Sprint D3.10 end: a script that never ran
 
 **What happened.** The first attempt to add the invitation code was one long

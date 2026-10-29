@@ -2,6 +2,7 @@
 
 import io
 import mimetypes
+import re
 from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages as flash
@@ -14,7 +15,7 @@ from django.views.decorators.http import require_POST
 
 from . import access, jobs, llm, mail, params
 from .forms import AskForm
-from .models import PRIVATE, Design, Invite, Maker, Message, Picture, Version
+from .models import PRIVATE, Design, Invite, Maker, Message, Part, Picture, Version
 
 MAX_PICTURES = 4
 
@@ -113,6 +114,7 @@ def design(request, pk):
         shown = d.versions.filter(number=request.GET["v"]).first() or shown
     jobs.checks_for(shown)
     return render(request, "design3d/design.html", {
+        "shown_json": _version_json(shown) if shown is not None and shown.status == Version.READY else None,
         "d": d, "shown": shown, "chat": d.messages.prefetch_related("pictures").select_related("version"),
         "versions": d.versions.order_by("-number"),
         "parameters": shown.parameters.all() if shown else [],
@@ -210,6 +212,9 @@ def _pin(raw):
         return None
     if not all(math.isfinite(v) and abs(v) < 1e5 for v in pin.values()):
         return None
+    part = str(data.get("part") or "")
+    if re.match(r"^[a-z][a-z0-9_]{0,39}$", part):  # the tapped part of a several-part design (Chapter 7)
+        pin["part"] = part
     return pin
 
 
@@ -230,7 +235,11 @@ def _version_json(v):
     return {
         "number": v.number, "status": v.status, "size": v.size_mm, "error": v.error[:500],
         "stl": f"/design3d/files/{v.stl.name}" if v.stl else None,
-        "made_by": v.made_by, "checks": v.checks,
+        "made_by": v.made_by, "checks": v.checks, "fit": v.fit,
+        "file_3mf": f"/design3d/d/{v.design_id}/v/{v.number}/3mf/" if v.file_3mf else None,
+        "parts": [{"name": p.name, "label": p.label, "count": p.count, "printed": p.printed, "color": p.color,
+                   "size": p.size_mm, "checks": p.checks, "stl": f"/design3d/files/{p.stl.name}" if p.stl else None,
+                   "download": f"/design3d/d/{v.design_id}/v/{v.number}/part/{p.name}/"} for p in v.parts.all()],
         "parameters": [{"name": p.name, "label": p.label, "value": float(p.value), "min": float(p.minimum),
                         "max": float(p.maximum), "step": float(p.step), "unit": p.unit} for p in v.parameters.all()],
     }
@@ -320,7 +329,7 @@ def done(request, pk):
     v = jobs.checks_for(d.current)
     if v is None:
         return redirect("design3d:design", pk=d.pk)
-    return render(request, "design3d/done.html", {"d": d, "v": v, "section": "mine"})
+    return render(request, "design3d/done.html", {"d": d, "v": v, "section": "mine", "shown_json": _version_json(v)})
 
 
 @require_POST
@@ -388,9 +397,10 @@ def export(request, token):
 
 
 @access.inside
-def download(request, pk, number, kind):
-    """REQ-D3.25: the STL or the OpenSCAD source of a version."""
-    if kind not in ("stl", "scad"):
+def download(request, pk, number, kind, part=None):
+    """REQ-D3.25: the STL or the OpenSCAD source of a version; for several
+    parts (REQ-D3.65) also the 3MF and each part's STL, laid flat."""
+    if kind not in ("stl", "scad", "3mf", "part"):
         raise Http404
     d = get_object_or_404(Design, pk=pk)
     mine = d.owner_id == request.maker.pk
@@ -404,6 +414,16 @@ def download(request, pk, number, kind):
         resp = HttpResponse(v.code, content_type="text/plain; charset=utf-8")
         resp["Content-Disposition"] = f'attachment; filename="{stem}-v{v.number}.scad"'
         return resp
+    if kind == "3mf":
+        if not v.file_3mf:
+            raise Http404
+        return FileResponse(v.file_3mf.open("rb"), as_attachment=True, filename=f"{stem}-v{v.number}.3mf",
+                            content_type="model/3mf")
+    if kind == "part":
+        p = get_object_or_404(v.parts, name=part)
+        f = p.print_stl or p.stl
+        return FileResponse(f.open("rb"), as_attachment=True, filename=f"{stem}-v{v.number}-{p.name}.stl",
+                            content_type="model/stl")
     if not v.stl:
         raise Http404
     return FileResponse(v.stl.open("rb"), as_attachment=True, filename=f"{stem}-v{v.number}.stl", content_type="model/stl")
@@ -519,7 +539,10 @@ def file(request, path):
         if not pic or pic.message.design.owner_id != maker.pk:
             raise Http404
     else:
-        v = Version.objects.filter(Q(stl=path) | Q(preview=path)).select_related("design").first()
+        v = Version.objects.filter(Q(stl=path) | Q(preview=path) | Q(file_3mf=path)).select_related("design").first()
+        if v is None:
+            part = Part.objects.filter(Q(stl=path) | Q(print_stl=path)).select_related("version__design").first()
+            v = part.version if part else None
         if not v:
             raise Http404
         if v.design.owner_id != maker.pk and not (v.design.is_shared and v.design.current_id == v.pk):

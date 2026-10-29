@@ -167,7 +167,7 @@ Requirements are `REQ-D3.n`.
 | REQ-D3.53 | Invite one person | On the People screen Avi enters an email (and a name). They get a link with a one-time key: the first person who opens it signed in is let in at once (with the welcome email) and the key is burned. That person may open it again; anyone else is refused, as is everyone after 14 days or once Avi withdraws it. The People screen lists every invitation and its state. | DONE in dev 2026-10-29 |
 
 
-## Chapter 7: Designs with several parts (proposed 2026-10-29, waiting for Avi)
+## Chapter 7: Designs with several parts (approved by Avi 2026-10-29)
 
 Avi, 2026-10-29: parts that fit together (a box and its lid, a clip on a
 rail, a case and its cover) and parts joined by hardware (screws, nuts,
@@ -204,10 +204,10 @@ and all of them in one 3MF. Multi-colour and print-in-place come later.
 
 | REQ | Name | Requirement | Status |
 |---|---|---|---|
-| REQ-D3.60 | Parts | The model may answer with up to 8 named parts in one file; each has a label, a count, printed or not, and a print orientation. | PROPOSED |
-| REQ-D3.61 | Built one by one | The server builds each part alone, in its assembled place; each gets its own STL, size and print check. | PROPOSED |
-| REQ-D3.62 | Plate and 3MF | The server turns each printed part flat (the hint, or the best of six sides), lays them out on one plate, and writes one 3MF with every part as its own object. The plate STL stays the version's main file, so downloads and sharing keep working. | PROPOSED |
-| REQ-D3.63 | Fit check | In the assembly: no two parts overlap; mating faces have the clearance asked for; hardware passes through its holes. Findings carry Fix it. | PROPOSED |
-| REQ-D3.64 | Assembled and plate views | The 3D view switches between assembled (a colour per part, hide and show, explode) and plate. | PROPOSED |
-| REQ-D3.65 | Per-part downloads | Each part's STL, the plate STL, the 3MF, and the OpenSCAD file. | PROPOSED |
-| REQ-D3.66 | Per-part chat | A marked point names its part; the model is told which part it is. | PROPOSED |
+| REQ-D3.60 | Parts | The model may answer with up to 8 named parts in one file; each has a label, a count, printed or not, and a print orientation. | DONE in dev 2026-10-29 |
+| REQ-D3.61 | Built one by one | The server builds each part alone, in its assembled place; each gets its own STL, size and print check. | DONE in dev 2026-10-29 |
+| REQ-D3.62 | Plate and 3MF | The server turns each printed part flat (the hint, or the best of six sides), lays them out on one plate, and writes one 3MF with every part as its own object. The plate STL stays the version's main file, so downloads and sharing keep working. | DONE in dev 2026-10-29 |
+| REQ-D3.63 | Fit check | In the assembly: no two parts overlap; mating faces have the clearance asked for; hardware passes through its holes. Findings carry Fix it. | DONE in dev 2026-10-29 |
+| REQ-D3.64 | Assembled and plate views | The 3D view switches between assembled (a colour per part, hide and show, explode) and plate. | DONE in dev 2026-10-29 |
+| REQ-D3.65 | Per-part downloads | Each part's STL, the plate STL, the 3MF, and the OpenSCAD file. | DONE in dev 2026-10-29 |
+| REQ-D3.66 | Per-part chat | A marked point names its part; the model is told which part it is. | DONE in dev 2026-10-29 |

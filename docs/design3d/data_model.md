@@ -155,7 +155,7 @@ decline), `designs` (yours; shared ones read-only for others), `messages`
 1. Shared designs never show the pictures or the chat (Avi, 2026-10-28).
 2. A declined person may ask again; their row goes back to `pending`.
 
-## Part (proposed 2026-10-29, waiting for Avi's approval)
+## Part (approved by Avi 2026-10-29)
 
 One part of a version that has several (Chapter 7). A version with one part
 has no Part rows and works as today. `Version.stl` stays the file people

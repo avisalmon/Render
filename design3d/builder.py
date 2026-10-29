@@ -127,8 +127,9 @@ def _run(cmd, env, cwd):
     return stdout, stderr, p.returncode
 
 
-def build(code):
-    """STL bytes and seconds taken, or BuildError with OpenSCAD's message."""
+def build(code, part=None):
+    """STL bytes and seconds taken, or BuildError with OpenSCAD's message.
+    `part` (a checked identifier) builds one part of a several-part design."""
     check(code)
     if not available():
         raise BuildError("OpenSCAD is not installed on this server.")
@@ -139,6 +140,10 @@ def build(code):
         src.write_text(code, encoding="utf-8")
         t = time.time()
         cmd = [binary(), "-o", str(out), str(src)] + (["--backend=Manifold"] if manifold() else [])
+        if part is not None:
+            if not re.match(r"^[a-z][a-z0-9_]{0,39}$", part):
+                raise BuildError("A part name must be a plain identifier.")
+            cmd += ["-D", f'part="{part}"']
         stdout, stderr, code_ = _run(cmd, env, tmp)
         took = time.time() - t
         log = (stdout + "\n" + stderr).strip()

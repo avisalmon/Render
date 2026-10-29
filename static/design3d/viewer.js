@@ -39,7 +39,8 @@ if (box) {
   const material = new THREE.MeshStandardMaterial({ color: 0xff7a1a, roughness: 0.55, metalness: 0.05 });
   const markMaterial = new THREE.MeshBasicMaterial({ color: 0x35d0ff, depthTest: false });
   const lineMaterial = new THREE.LineBasicMaterial({ color: 0x35d0ff, depthTest: false });
-  let part = null;
+  let model = null;      // a Group: one mesh, or one per part (Chapter 7)
+  let meshes = [];       // [{name, mesh, dir}] for parts: hide, show, explode
   let grid = null;
   let span = 10;
   const offset = new THREE.Vector3();  // view + offset = the code's coordinates
@@ -57,13 +58,12 @@ if (box) {
     camera.updateProjectionMatrix();
   }
 
-  function frame(geometry) {
-    geometry.computeBoundingBox();
-    const bb = geometry.boundingBox;
+  function frame(group) {
+    const bb = new THREE.Box3().setFromObject(group);
     const c = new THREE.Vector3();
     bb.getCenter(c);
     offset.set(c.x, c.y, bb.min.z);
-    geometry.translate(-c.x, -c.y, -bb.min.z);
+    group.position.set(-c.x, -c.y, -bb.min.z);
     const s = new THREE.Vector3();
     bb.getSize(s);
     span = Math.max(s.x, s.y, s.z) || 10;
@@ -121,20 +121,69 @@ if (box) {
     if (mode !== "measure") clearMeasure();
   }
 
+  function swap(group, key) {
+    if (model) {
+      scene.remove(model);
+      model.traverse((o) => { if (o.geometry) o.geometry.dispose(); });
+    }
+    model = group;
+    scene.add(model);
+    frame(model);
+    clearPin();
+    clearMeasure();
+    const empty = document.getElementById("d3-view-empty");
+    if (empty) empty.hidden = true;
+    box.dataset.loaded = key;
+  }
+
   function load(url) {
     if (!url) return;
     new STLLoader().load(url, (geometry) => {
       geometry.computeVertexNormals();
-      if (part) { scene.remove(part); part.geometry.dispose(); }
-      part = new THREE.Mesh(geometry, material);
-      scene.add(part);
-      frame(geometry);
-      clearPin();
-      clearMeasure();
-      const empty = document.getElementById("d3-view-empty");
-      if (empty) empty.hidden = true;
-      box.dataset.loaded = url;
+      const group = new THREE.Group();
+      group.add(new THREE.Mesh(geometry, material));
+      meshes = [];
+      swap(group, url);
     });
+  }
+
+  // Several parts, each in its place and its own colour; hardware the
+  // person buys is shown see-through.
+  function loadParts(parts) {
+    if (!parts || !parts.length) return;
+    const loader = new STLLoader();
+    Promise.all(parts.map((p) => loader.loadAsync(p.stl))).then((geoms) => {
+      const group = new THREE.Group();
+      const list = [];
+      geoms.forEach((g, i) => {
+        g.computeVertexNormals();
+        const p = parts[i];
+        const mat = new THREE.MeshStandardMaterial({ color: p.color, roughness: 0.55, metalness: p.printed ? 0.05 : 0.6,
+                                                     transparent: !p.printed, opacity: p.printed ? 1 : 0.55 });
+        const mesh = new THREE.Mesh(g, mat);
+        mesh.userData.name = p.name;
+        group.add(mesh);
+        list.push({ name: p.name, mesh });
+      });
+      const all = new THREE.Box3().setFromObject(group).getCenter(new THREE.Vector3());
+      list.forEach((m) => {
+        const c = new THREE.Box3().setFromObject(m.mesh).getCenter(new THREE.Vector3());
+        // Pulled out from the middle, but never down through the bed.
+        m.dir = c.sub(all);
+        m.dir.z = Math.max(m.dir.z, 0);
+        if (m.dir.length() > 1e-6) m.dir.normalize();
+      });
+      meshes = list;
+      swap(group, parts.map((p) => p.stl).join(" "));
+    });
+  }
+
+  function explode(t) {
+    meshes.forEach((m) => m.mesh.position.copy(m.dir).multiplyScalar(t * span * 0.7));
+  }
+
+  function setVisible(name, on) {
+    meshes.forEach((m) => { if (m.name === name) m.mesh.visible = on; });
   }
 
   // ---- taps ----
@@ -142,24 +191,29 @@ if (box) {
   let down = null;
   renderer.domElement.addEventListener("pointerdown", (e) => { down = { x: e.clientX, y: e.clientY }; });
   renderer.domElement.addEventListener("pointerup", (e) => {
-    if (!down || !mode || !part) return;
+    if (!down || !mode || !model) return;
     const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
     down = null;
     if (moved > 6) return;
     const r = renderer.domElement.getBoundingClientRect();
     ray.setFromCamera(new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1), camera);
-    const hit = ray.intersectObject(part)[0];
+    const hit = ray.intersectObject(model, true).find((h) => h.object.visible);
     if (!hit) return;
-    tapped(hit.point.clone(), hit.face ? hit.face.normal.clone() : new THREE.Vector3(0, 0, 1));
+    tapped(hit.point.clone(), hit.face ? hit.face.normal.clone() : new THREE.Vector3(0, 0, 1), hit.object.userData.name);
   });
 
-  function tapped(at, normal) {
+  function tapped(at, normal, partName) {
     if (mode === "pin") {
       drop(pinMark);
       pinMark = marker(at);
+      // The code's coordinates: the view's, plus how far the view moved the
+      // model, less how far an exploded part was pulled out.
+      const hitPart = meshes.find((m) => m.name === partName);
       const p = at.clone().add(offset);
+      if (hitPart) p.sub(hitPart.mesh.position);
       pin = { x: p.x, y: p.y, z: p.z, nx: normal.x, ny: normal.y, nz: normal.z,
               version: Number(document.getElementById("d3-work")?.dataset.shown || 0) };
+      if (partName) pin.part = partName;
       box.dispatchEvent(new CustomEvent("d3:pin", { bubbles: true, detail: pin }));
     } else if (mode === "measure") {
       if (measure.length === 2) clearMeasure();
@@ -196,6 +250,8 @@ if (box) {
 
   document.querySelectorAll("[data-d3-mode]").forEach((b) => b.addEventListener("click", () => setMode(b.dataset.d3Mode)));
 
-  window.d3View = { load, snapshot, clearPin, getPin: () => pin, tap: tapped, setMode, offset };
-  load(box.dataset.stl);
+  window.d3View = { load, loadParts, explode, setVisible, snapshot, clearPin, getPin: () => pin, tap: tapped, setMode, offset };
+  let first = null;
+  try { first = JSON.parse(document.getElementById("design3d-shown")?.textContent || "null"); } catch (err) { first = null; }
+  if (first && first.parts && first.parts.length) loadParts(first.parts); else load(box.dataset.stl);
 }

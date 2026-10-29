@@ -96,3 +96,19 @@ pocket; sol's words were richer, the shape no better.
 - [x] The token is burned by a conditional update, so two people opening it at once cannot both get in
 - [x] API: /design3d/api/invites/ (admin only; creating one sends the email)
 - [x] Tests: the notice once per request; signed out burns nothing; first person in with one welcome email; the same person again; a second person refused; withdrawn and expired refused; only Avi invites
+
+## D3.11 and D3.12 · Several parts (2026-10-29, Chapter 7)
+
+- [x] `design3d/parts.py`: the part list cleaned (8 at most), orientation (the hint unless a flat side is clearly better), plate rows on a 220 mm bed, a 3MF writer, the fit check (ray parity for overlap, point to triangle for tight fits)
+- [x] `Part` model, `Version.file_3mf` and `Version.fit`; files under stl/ so the private file view serves them after its check
+- [x] Builder `part=`; jobs build each part alone; a part's error names the part; slider builds keep the parts; the self-check sees the assembly and the fit warnings
+- [x] Prompt: the parts contract (`part = "all";`, one module per part, the closing if-lines, hardware as `printed: false`)
+- [x] Page: Assembled and Print plate, a chip per part to hide it, Pull apart, the parts list with each part's STL, All parts (3MF); a marked point names its part; Done page lists the parts
+- [x] API: /design3d/api/parts/ (read only)
+- [x] Tests: box and lid (two parts, the lid turned upside down, a 3MF with two objects, downloads, the file check, sliders, history), too tight and overlap, an undrawn part, the part list cleaned, a phone test of the whole flow
+
+**Real turns** (2026-10-29, gpt-6.1-terra): "a box with a sliding lid" gave
+two parts, the lid turned for printing; one sample overlapped (found by the
+fit check), another had 0.25 mm clearance. "A two-piece pipe clamp with M3
+screws and nuts" gave six parts, four of them hardware, and no fit findings.
+About $0.011 to $0.015 a turn.
