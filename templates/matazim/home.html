@@ -134,8 +134,8 @@
     {% include "matazim/_year_banner.html" %}
     <h1 class="mz-home-title">{% if certified %}מטצ{% else %}תהליך ההכשרה{% endif %}</h1>
     <ul class="mz-tiles">
-      {% if hero.kind == 'staff' and not previewing %}<li><a class="mz-tile mz-tile-role" href="{% url 'matazim:staff_home' %}">ניהול</a></li>{% endif %}
-      {% if hero.kind == 'leader' and not previewing %}<li><a class="mz-tile mz-tile-role" href="{% url 'matazim:leader_home' %}">האזור שלי</a></li>{% endif %}
+      {% if hero.kind == 'staff' and not previewing and not viewing_leader %}<li><a class="mz-tile mz-tile-role" href="{% url 'matazim:staff_home' %}">ניהול</a></li>{% endif %}
+      {% if hero.kind == 'leader' and not previewing or viewing_leader %}<li><a class="mz-tile mz-tile-role" href="{% url 'matazim:leader_home' %}">האזור שלי</a></li>{% endif %}
       <li><a class="mz-tile" href="{% url 'matazim:courses' %}">ההדרכות</a></li>
       <li><a class="mz-tile" href="{% url 'matazim:my_path' %}">המסלול שלי</a></li>
       <li><a class="mz-tile" href="{% url 'matazim:community' %}">הקהילה</a></li>
@@ -154,6 +154,7 @@
           {% if not is_candidate %}<a class="mz-btn mz-btn-secondary" href="{% url 'matazim:preview' 'member' %}">משויך למוביל</a>{% endif %}
         </p>
       </section>
+      {% if hero.kind == 'staff' and not viewing_leader %}{% include "matazim/_as_leader_entry.html" %}{% endif %}
     {% endif %}
 
   {% elif stage == 'test' %}

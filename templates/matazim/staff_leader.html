@@ -10,6 +10,12 @@
     <p class="mz-eyebrow"><a href="{% url 'matazim:staff_leaders' %}">מובילים</a></p>
     <h1>{{ leader.user.profile.display_name|default:leader.user.email }}</h1>
     <p>{{ leader.user.email }}</p>
+    {% if leader.is_approved and leader.is_active %}
+      {# REQ-M.207 - her leader's area, the way they see it. #}
+      <p class="mz-page-actions">
+        <a class="mz-btn mz-btn-secondary" href="{% url 'matazim:as_leader' %}?leader={{ leader.pk }}">לראות את האתר כמוביל/ה הזה</a>
+      </p>
+    {% endif %}
   </div>
 
   {% if notice %}<div class="mz-alert mz-alert-ok" role="status">{{ notice }}</div>{% endif %}

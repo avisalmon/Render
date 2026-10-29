@@ -5060,3 +5060,26 @@ screenshot the bot cannot open, so it asked which screen she meant.
 C8, asked on 26.10), or let any leader open files of students who are not theirs.
 
 **Tests.** `tests/test_spr_m_75.py`.
+
+## SPR-M.76: A program manager sees the site as one of her leaders  `DONE 2026-10-29`
+
+Naomi's mail of 29.10, 09:44 (spec C34): "לראות את האתר כמוביל", like "לראות את האתר
+כתלמיד", so that she and Lital see the site from every place in the programme. Run under
+Avi's standing rule of 2026-10-16.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.76.1 | `matazim/as_leader.py`: `leaders_to_view`, `viewed_leader`, `acting_leader`, `refuse_writes` | REQ-M.207 | DONE |
+| F-M.76.2 | `/matazim/as-leader/?leader=<id>` starts, `?leader=off` stops and returns to that leader's page | REQ-M.207 | DONE |
+| F-M.76.3 | האזור שלי, המטצים שלי, a student's page, הכיתות, the guide and the shelf use the viewed leader; writes refused | REQ-M.207 | DONE |
+| F-M.76.4 | The leader's menu and a bar naming the leader; the entry on the staff home, the home page and each leader's page | REQ-M.207 | DONE |
+
+**How it was read.** A leader's screens are all about that leader's own students, so
+"as a leader" means as one leader in particular. She picks one of her own. Nothing new is
+shown to her: she already sees those students on the staff pages.
+
+**What the bot did not do.** Let her act in a leader's name: approving, returning work,
+taking a student out or adding a class from inside the view is refused, since that would
+look like the leader did it. She still does those as herself on the staff pages.
+
+**Tests.** `tests/test_spr_m_76.py`.
