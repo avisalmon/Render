@@ -312,6 +312,15 @@ def home(request):
         from .as_leader import leaders_to_view
 
         ctx["as_leaders"] = list(leaders_to_view(request.user))
+    if stage is None and request.user.is_authenticated and not _preview_stage(request):
+        # REQ-M.208 - a leader's prominent button to the entrance hand-ins.
+        from .as_leader import acting_leader
+
+        if (leader := acting_leader(request)) is not None:
+            from .joining_views import tests_waiting
+
+            ctx["tests_leader"] = True
+            ctx["tests_waiting"] = tests_waiting(leader)
     return render(request, "matazim/home.html", shell(request, "home", **ctx))
 
 
