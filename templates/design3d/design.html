@@ -68,6 +68,8 @@
           <label class="d3-field"><span class="d3-small">Name</span><input name="title" value="{{ d.title }}" maxlength="100"></label>
           <button class="d3-btn d3-btn-small d3-btn-quiet">Rename</button>
         </form>
+        {% if admin %}<form method="post" action="{% url 'design3d:email_chat' d.pk %}" style="margin-top:10px">{% csrf_token %}
+          <button class="d3-btn d3-btn-small d3-btn-quiet" id="d3-email">Email me this chat</button></form>{% endif %}
         <form method="post" action="{% url 'design3d:edit' d.pk %}" style="margin-top:10px" data-confirm="Delete this design, its chat and all its versions?">{% csrf_token %}
           <input type="hidden" name="action" value="delete"><button class="d3-link">Delete this design</button></form>
       </section>

@@ -58,3 +58,13 @@ rounded too.
 - [x] Older versions checked when first shown; the rename box follows the title the chat gives
 - [x] Tests: 6 unit, 1 phone browser test (warning, tap, Fix it)
 - [x] Memory measured: about 1.1 KB per triangle (30k triangles, 32 MB peak); bodies and walls checked up to 60k triangles, nothing above 150k (a note says to look in the slicer)
+
+## D3.8 · Email me this chat (2026-10-29)
+
+Avi: the chat "did not understand what I want"; would a better model do
+better? Claude cannot see production data, and should not sign in as him.
+
+- [x] `mail.chat_text` and `mail.email_chat`: the transcript plus code, pictures, previews and the current STL (15 MB cap, the rest listed)
+- [x] `POST /design3d/d/<pk>/email/`: the admin, on his own designs only, to his own address; the button in the Design panel
+- [x] Tests: the whole chat arrives; nobody else, and not Avi on someone else's design
+- [ ] Replay Avi's chat through gpt-6.1-terra and gpt-6.1-sol and compare the parts and the cost

@@ -656,3 +656,39 @@ def test_a_part_too_detailed_is_not_checked_beside_the_site(monkeypatch):
     monkeypatch.setattr(printcheck, "TOO_DETAILED", 10)
     found = printcheck.check(_stl(_box(0, 0, 0, 10, 10, 10), _box(30, 0, 4, 35, 5, 9)))
     assert [c["code"] for c in found] == ["too_detailed"] and found[0]["level"] == "note"
+
+
+# ---------- "Email me this chat" (Avi, 2026-10-29) ----------
+
+def test_avi_emails_himself_a_whole_chat(client, world):
+    """Every message, the model and its cost, the trail, every version's
+    code, the pictures, the previews and the current STL."""
+    Maker.objects.create(user=world["avi"], display_name="Avi", status=Maker.APPROVED, is_admin=True)
+    d = _design(client, world["avi"])
+    _say(client, d, "A holder for three pencils", pictures=_jpeg((800, 600)))
+    _say(client, d, "Make it taller")
+    page = client.get(f"/design3d/d/{d.pk}/").content.decode()
+    assert 'id="d3-email"' in page
+    mail.outbox.clear()
+    r = client.post(f"/design3d/d/{d.pk}/email/")
+    assert r.status_code == 302
+    sent = mail.outbox[-1]
+    assert sent.to == ["avi@example.com"] and sent.subject.startswith(f"design3d chat #{d.pk}:")
+    assert "PERSON\n  A holder for three pencils" in sent.body and "Make it taller" in sent.body
+    assert "DESIGN3D (" in sent.body and "-> version 1" in sent.body and "Reading your message" in sent.body
+    names = [a[0] for a in sent.attachments]
+    assert {"v1.scad", "v2.scad", "v1.png", "v2.stl", f"design3d-{d.pk}-chat.txt"} <= set(names)
+    assert any(n.startswith("msg") and n.endswith(".jpg") for n in names)
+
+
+def test_nobody_else_can_email_a_chat(client, world):
+    """The button is the admin's, on the admin's own designs: a maker's chat
+    is theirs (REQ-D3.41)."""
+    d = _design(client, world["dana"])
+    _say(client, d, "A box")
+    assert 'id="d3-email"' not in client.get(f"/design3d/d/{d.pk}/").content.decode()
+    mail.outbox.clear()
+    assert client.post(f"/design3d/d/{d.pk}/email/").status_code == 404
+    client.force_login(world["avi"])
+    assert client.post(f"/design3d/d/{d.pk}/email/").status_code == 404, "not even Avi, on Dana's design"
+    assert mail.outbox == []

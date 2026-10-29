@@ -88,6 +88,7 @@ def design(request, pk):
         "versions": d.versions.order_by("-number"),
         "parameters": shown.parameters.all() if shown else [],
         "section": "mine", "stub": llm.stub_mode(),
+        "admin": access.is_admin(request.user) and d.owner_id == request.maker.pk,
         "over": jobs.over_limit(request.maker), "limit": request.maker.limit,
     })
 
@@ -256,6 +257,25 @@ def edit(request, pk):
         d.delete()
         flash.success(request, "The design was deleted.")
         return redirect("design3d:designs")
+    return redirect("design3d:design", pk=d.pk)
+
+
+@require_POST
+@access.inside
+def email_chat(request, pk):
+    """Avi, 2026-10-29: "Email me this chat", so the chat can be read and
+    replayed off the site (a better model, a better prompt). The admin's own
+    designs only, to the admin's own address: another person's chat stays
+    theirs."""
+    if not access.is_admin(request.user):
+        raise Http404
+    d = _mine(request, pk)
+    if not request.user.email:
+        flash.error(request, "Your account has no email address.")
+    elif mail.email_chat(d, request.user.email):
+        flash.success(request, f"Sent to {request.user.email}.")
+    else:
+        flash.error(request, "The email could not be sent. Try again in a minute.")
     return redirect("design3d:design", pk=d.pk)
 
 
