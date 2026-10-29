@@ -380,3 +380,33 @@ def test_on_a_phone_a_picture_opens_full_size(browser, live_server, world, tmp_p
     assert page.locator("#d3-lightbox[open]").count() == 0
     assert errors == []
     ctx.close()
+
+
+@pytest.mark.django_db(transaction=True)
+def test_home_puts_the_view_back(browser, live_server, world):
+    """Avi, 2026-10-29: a Home button in the 3D view, back to the first view."""
+    ctx = browser.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2, has_touch=True, is_mobile=True)
+    _session(ctx, world["dana"])
+    page = ctx.new_page()
+    page.goto(live_server.url + "/design3d/designs/")
+    page.click("#d3-new")
+    page.wait_for_url("**/design3d/d/*/")
+    page.fill("#d3-text", "A pencil holder")
+    page.click("#d3-send")
+    page.wait_for_function("document.getElementById('d3-view').dataset.loaded", timeout=60000)
+    page.wait_for_timeout(500)
+    first = page.evaluate("window.d3View.camera()")
+    box = page.locator("#d3-view canvas").bounding_box()
+    page.mouse.move(box["x"] + box["width"] * 0.3, box["y"] + box["height"] * 0.5)
+    page.mouse.down()
+    page.mouse.move(box["x"] + box["width"] * 0.8, box["y"] + box["height"] * 0.3, steps=8)
+    page.mouse.up()
+    page.wait_for_timeout(800)
+    turned = page.evaluate("window.d3View.camera()")
+    assert max(abs(a - b) for a, b in zip(first, turned)) > 5, "the drag turned the view"
+    assert page.is_visible("#d3-home")
+    page.click("#d3-home")
+    page.wait_for_timeout(300)
+    back = page.evaluate("window.d3View.camera()")
+    assert max(abs(a - b) for a, b in zip(first, back)) < 0.5
+    ctx.close()
