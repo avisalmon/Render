@@ -202,8 +202,8 @@ class Version(models.Model):
     """One build of the part, from the chat or from the sliders (REQ-D3.22).
     It keeps its whole code, so it can be rebuilt or continued from alone."""
 
-    CHAT, SLIDERS = "chat", "sliders"
-    MADE_BY = [(CHAT, "Chat"), (SLIDERS, "Sliders")]
+    CHAT, SLIDERS, COPY = "chat", "sliders", "copy"
+    MADE_BY = [(CHAT, "Chat"), (SLIDERS, "Sliders"), (COPY, "A copy of a shared design")]
     BUILDING, READY, FAILED = "building", "ready", "failed"
     STATES = [(BUILDING, "Building"), (READY, "Ready"), (FAILED, "Failed")]
 

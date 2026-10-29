@@ -177,6 +177,43 @@ def _build_parts(v, code, declared):
     return took
 
 
+def _copy_file(src, dst, name):
+    if src:
+        with src.open("rb") as fh:
+            dst.save(name, ContentFile(fh.read()), save=False)
+
+
+def copy_design(source, maker):
+    """A shared design's current part as the first version of a new design
+    of `maker` (Avi, 2026-10-29). The part, its sizes and its parts come
+    along; the chat and the pictures stay with their owner (REQ-D3.30)."""
+    src = source.current
+    with transaction.atomic():
+        d = Design.objects.create(owner=maker, title=f"{source.title} (copy)"[:100], copied_from=source)
+        v = Version(design=d, number=1, made_by=Version.COPY, code=src.code, status=Version.READY,
+                    size_mm=src.size_mm, build_seconds=src.build_seconds, checks=src.checks, fit=src.fit)
+        _copy_file(src.stl, v.stl, "v1.stl")
+        _copy_file(src.preview, v.preview, "v1.png")
+        _copy_file(src.file_3mf, v.file_3mf, "v1.3mf")
+        v.save()
+        for p in src.parameters.all():
+            Parameter.objects.create(version=v, name=p.name, label=p.label, value=p.value, minimum=p.minimum,
+                                     maximum=p.maximum, step=p.step, unit=p.unit, position=p.position)
+        for p in src.parts.all():
+            q = Part(version=v, name=p.name, label=p.label, position=p.position, count=p.count, printed=p.printed,
+                     orientation=p.orientation, size_mm=p.size_mm, checks=p.checks, color=p.color)
+            _copy_file(p.stl, q.stl, f"{p.name}.stl")
+            _copy_file(p.print_stl, q.print_stl, f"{p.name}-print.stl")
+            q.save()
+        Message.objects.create(
+            design=d, role=Message.ASSISTANT, state=Message.DONE, version=v,
+            text=f"This is a copy of \u201c{source.title}\u201d by {source.owner.display_name}. It is yours now: "
+                 "tell me what to change, or move the sizes.")
+        d.current = v
+        d.save(update_fields=["current"])
+    return d
+
+
 def make_version(design, code, parent, made_by, proposed=None, from_values=None, declared=None):
     """Build `code` into the next version of the design. Returns the
     version, ready or failed; parameters come from the chat's proposal, or

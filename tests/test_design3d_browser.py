@@ -349,3 +349,34 @@ def test_on_a_phone_a_box_and_its_lid(browser, live_server, world, monkeypatch):
     _shot(page, "parts-list-390")
     assert errors == []
     ctx.close()
+
+
+@pytest.mark.django_db(transaction=True)
+def test_on_a_phone_a_picture_opens_full_size(browser, live_server, world, tmp_path):
+    """Avi, 2026-10-29: tap a picture in the chat to see it, save it or share it."""
+    from PIL import Image
+
+    photo = tmp_path / "sketch.jpg"
+    Image.new("RGB", (900, 600), (220, 200, 160)).save(photo)
+    ctx = browser.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2, has_touch=True, is_mobile=True)
+    _session(ctx, world["dana"])
+    page = ctx.new_page()
+    errors = []
+    page.on("pageerror", lambda exc: errors.append(str(exc)))
+    page.goto(live_server.url + "/design3d/designs/")
+    page.click("#d3-new")
+    page.wait_for_url("**/design3d/d/*/")
+    page.set_input_files("#d3-files", str(photo))
+    page.fill("#d3-text", "A bracket like this")
+    page.click("#d3-send")
+    page.wait_for_selector(".d3-msg.person .d3-pic", timeout=60000)
+    page.click(".d3-msg.person .d3-pic")
+    page.wait_for_selector("#d3-lightbox[open]", timeout=5000)
+    assert page.get_attribute("#d3-pic-save", "href").endswith("?download=1")
+    page.wait_for_function("document.querySelector('#d3-lightbox img').naturalWidth > 0", timeout=10000)
+    assert page.evaluate(OVERFLOW, 390) <= 1
+    _shot(page, "picture-390")
+    page.click("#d3-pic-close")
+    assert page.locator("#d3-lightbox[open]").count() == 0
+    assert errors == []
+    ctx.close()

@@ -35,6 +35,7 @@ urlpatterns = [
     path("d/<int:pk>/v/<int:number>/<str:kind>/<str:part>/", views.download, name="download_part"),
     path("shared/", views.shared, name="shared"),
     path("shared/<int:pk>/", views.shared_design, name="shared_design"),
+    path("shared/<int:pk>/copy/", views.copy_design, name="copy"),
     path("people/", views.people, name="people"),
     path("files/<path:path>", views.file, name="file"),
     path("api/", include(router.urls)),

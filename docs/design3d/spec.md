@@ -83,14 +83,17 @@ definition; a photo of a real object. More than one image per message.
 - Not for organic shapes (figurines, faces, characters). The method builds
   functional geometric parts: holders, boxes, mounts, brackets, enclosures,
   adapters, spacers.
-- Not professional CAD: no STEP or assembly files for industry.
+- Not professional CAD: no STEP or assembly files for industry. Fusion 360
+  opens the STL or the 3MF as a mesh (Insert Mesh, then Convert Mesh to a solid).
+  A real STEP needs the CadQuery engine, which does not fit beside the site
+  (engine evaluation, 2026-10-28); a later "precise mode" on its own server.
 - Not a slicer or a printer controller: it gives you the STL; you print it.
 - Not open to the public.
 
 ### Planned right after the first release
 
 - **Make a copy** of a design someone shared, and continue it as your own;
-  the original stays theirs.
+  the original stays theirs. (Built 2026-10-29, REQ-D3.54.)
 - **Print-ready checks** before download: the part lies flat on the bed,
   walls are not thinner than a nozzle can print, fits have clearance.
   (Built in D3.7, REQ-D3.45.)
@@ -165,6 +168,8 @@ Requirements are `REQ-D3.n`.
 | REQ-D3.51 | The part stays on top | On a phone the 3D view stays at the top while the chat scrolls; a Pinned button lets it scroll away, remembered on that phone. | DONE in dev 2026-10-29 |
 | REQ-D3.52 | Avi hears about requests | Asking to join (and asking again after a decline) emails Avi: who, why, and a link to the People screen. | DONE in dev 2026-10-29 |
 | REQ-D3.53 | Invite one person | On the People screen Avi enters an email (and a name). They get a link with a one-time key: the first person who opens it signed in is let in at once (with the welcome email) and the key is burned. That person may open it again; anyone else is refused, as is everyone after 14 days or once Avi withdraws it. The People screen lists every invitation and its state. | DONE in dev 2026-10-29 |
+| REQ-D3.54 | Make a copy | On a shared design, "Make a copy" starts a new design of your own with that part as version 1 (made by "copy"): its code, sizes, parts and files; not the chat or the pictures, which stay their owner's. The first chat line says whose it was. | DONE in dev 2026-10-29 |
+| REQ-D3.55 | A picture, full size | Tapping a picture in the chat opens it full size, with Save (a download) and, on a phone that can, Share (the phone's share sheet with the picture itself). | DONE in dev 2026-10-29 |
 
 
 ## Chapter 7: Designs with several parts (approved by Avi 2026-10-29)

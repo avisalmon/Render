@@ -5,8 +5,12 @@
 {% block content %}
 <div class="d3-head">
   <div><h1 class="d3-h1">{{ d.title }}</h1><p class="d3-small d3-muted">by {{ d.owner.display_name }} · <span class="d3-mono">{{ v.size_mm }} mm</span></p></div>
-  <a class="d3-btn" href="{% url 'design3d:download' d.pk v.number 'stl' %}" id="d3-download">Download STL</a>
+  <div class="d3-row">
+    <a class="d3-btn" href="{% url 'design3d:download' d.pk v.number 'stl' %}" id="d3-download">Download STL</a>
+    <form method="post" action="{% url 'design3d:copy' d.pk %}">{% csrf_token %}<button class="d3-btn d3-btn-quiet" id="d3-copy">Make a copy</button></form>
+  </div>
 </div>
+<p class="d3-small d3-muted">Make a copy to change it in your own chat. The original stays {{ d.owner.display_name }}'s.</p>
 <div class="d3-view d3-bedbg" id="d3-view" data-stl="/design3d/files/{{ v.stl.name }}"><span class="d3-layers"></span></div>
 <p class="d3-small d3-muted"><a href="{% url 'design3d:shared' %}">Back to shared parts</a></p>
 {% endblock %}

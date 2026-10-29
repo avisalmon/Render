@@ -90,9 +90,14 @@
     if (m.pictures && m.pictures.length) {
       var pics = el("div", "d3-pics");
       m.pictures.forEach(function (src) {
+        var b = el("button", "d3-pic");
+        b.type = "button";
+        b.dataset.full = src;
+        b.setAttribute("aria-label", "Open the picture");
         var img = el("img");
         img.src = src; img.alt = "Picture sent"; img.width = 84; img.height = 84;
-        pics.appendChild(img);
+        b.appendChild(img);
+        pics.appendChild(b);
       });
       a.appendChild(pics);
     }
@@ -449,6 +454,29 @@
     var firstShown = JSON.parse((document.getElementById("design3d-shown") || {}).textContent || "null");
     if (firstShown) drawParts(firstShown);
   } catch (err) { /* no version yet */ }
+
+  /* ---------- a picture, full size: save or share (Avi, 2026-10-29) ---------- */
+
+  var box3 = document.getElementById("d3-lightbox");
+  var shown = null;
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest(".d3-pic");
+    if (!b) return;
+    shown = b.dataset.full;
+    box3.querySelector("img").src = shown;
+    box3.querySelector("#d3-pic-save").href = shown + "?download=1";
+    var share = box3.querySelector("#d3-pic-share");
+    share.hidden = !(navigator.canShare && window.File);
+    if (box3.showModal) box3.showModal(); else box3.setAttribute("open", "");
+  });
+  box3.querySelector("#d3-pic-close").addEventListener("click", function () { box3.close ? box3.close() : box3.removeAttribute("open"); });
+  box3.addEventListener("click", function (e) { if (e.target === box3) box3.close(); });
+  box3.querySelector("#d3-pic-share").addEventListener("click", function () {
+    fetch(shown, { credentials: "same-origin" }).then(function (r) { return r.blob(); }).then(function (blob) {
+      var file = new File([blob], "design3d-picture.jpg", { type: blob.type || "image/jpeg" });
+      if (navigator.canShare({ files: [file] })) return navigator.share({ files: [file], title: document.title });
+    }).catch(function () { /* the person closed the share sheet */ });
+  });
 
   /* ---------- the marked point, and the part pinned to the top ---------- */
 
