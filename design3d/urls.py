@@ -32,6 +32,7 @@ urlpatterns = [
     path("x/<str:token>/", views.export, name="export"),
     path("d/<int:pk>/v/<int:number>/use/", views.use_version, name="use_version"),
     path("d/<int:pk>/v/<int:number>/<str:kind>/", views.download, name="download"),
+    path("d/<int:pk>/v/<int:number>/<str:kind>/<str:part>/", views.download, name="download_part"),
     path("shared/", views.shared, name="shared"),
     path("shared/<int:pk>/", views.shared_design, name="shared_design"),
     path("people/", views.people, name="people"),

@@ -238,3 +238,17 @@ img { max-width: 100%; height: auto; display: block; }
 .d3-invite-form { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; max-width: 520px; }
 .d3-invite-form input { width: 100%; min-width: 0; box-sizing: border-box; }
 .d3-invite-list { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 8px; }
+
+/* Several parts (Chapter 7) */
+.d3-parts-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 8px; }
+.d3-parts-bar .d3-chip { border: 1px solid var(--line); background: var(--panel-2); color: var(--ink); font-size: .78rem; padding: 6px 10px; min-height: 34px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.d3-parts-bar .d3-chip[aria-pressed="true"] { border-color: var(--hi); }
+.d3-parts-bar .d3-part-chip[aria-pressed="false"] { opacity: .45; }
+.d3-seg, .d3-part-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.d3-seg .d3-chip[aria-pressed="true"] { background: var(--hi); color: var(--hi-ink); }
+.d3-explode { display: flex; align-items: center; gap: 8px; font-size: .82rem; color: var(--soft); flex: 1 1 160px; min-width: 0; }
+.d3-explode input { flex: 1 1 0; width: 0; min-width: 0; accent-color: var(--hi); }
+.d3-part-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.d3-partlist { list-style: none; margin: 10px 0; padding: 0; display: grid; gap: 6px; }
+.d3-partlist li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: .88rem; }
+.d3-partlist .d3-part-name { flex: 1 1 8em; min-width: 0; overflow-wrap: anywhere; }

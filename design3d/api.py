@@ -9,7 +9,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
 from . import access
-from .models import Design, Invite, Maker, Message, Parameter, Picture, Version
+from .models import Design, Invite, Maker, Message, Parameter, Part, Picture, Version
 
 
 class Inside(permissions.BasePermission):
@@ -179,6 +179,20 @@ class ParameterViewSet(_OwnedReadOnly):
     design_path = "version__design"
 
 
+class PartSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Part
+        fields = ["id", "version", "name", "label", "position", "count", "printed", "orientation", "size_mm", "checks", "color"]
+
+
+class PartViewSet(_OwnedReadOnly):
+    """A version's parts (Chapter 7). Built by the server, so read only."""
+
+    serializer_class = PartSerializer
+    model = Part
+    design_path = "version__design"
+
+
 class Admin(permissions.BasePermission):
     def has_permission(self, request, view):
         return access.is_admin(request.user)
@@ -216,4 +230,5 @@ ROUTES = [
     ("versions", VersionViewSet, Version),
     ("parameters", ParameterViewSet, Parameter),
     ("invites", InviteViewSet, Invite),
+    ("parts", PartViewSet, Part),
 ]

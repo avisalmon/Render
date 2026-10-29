@@ -130,9 +130,96 @@
     if (hello) hello.remove();
   }
 
+  /* ---------- several parts (Chapter 7) ---------- */
+
+  var shownParts = null;
+  function drawParts(v) {
+    var bar = document.getElementById("d3-parts-bar");
+    var list = document.getElementById("d3-partlist");
+    var mf = document.getElementById("d3-3mf");
+    bar.textContent = "";
+    list.textContent = "";
+    var multi = !!(v && v.parts && v.parts.length);
+    bar.hidden = list.hidden = !multi;
+    mf.hidden = !(v && v.file_3mf);
+    if (v && v.file_3mf) mf.href = v.file_3mf;
+    shownParts = multi ? v : null;
+    if (!multi) return;
+
+    var views = el("div", "d3-seg");
+    [["assembled", "Assembled"], ["plate", "Print plate"]].forEach(function (pair) {
+      var b = el("button", "d3-chip", pair[1]);
+      b.type = "button";
+      b.dataset.view = pair[0];
+      b.setAttribute("aria-pressed", String(pair[0] === "assembled"));
+      views.appendChild(b);
+    });
+    bar.appendChild(views);
+    var chips = el("div", "d3-part-chips");
+    v.parts.forEach(function (p) {
+      var b = el("button", "d3-chip d3-part-chip");
+      b.type = "button";
+      b.dataset.part = p.name;
+      b.setAttribute("aria-pressed", "true");
+      var dot = el("span", "d3-part-dot");
+      dot.style.background = p.color;
+      b.appendChild(dot);
+      b.appendChild(document.createTextNode(p.label + (p.count > 1 ? " x" + p.count : "")));
+      chips.appendChild(b);
+    });
+    bar.appendChild(chips);
+    var ex = el("label", "d3-explode");
+    ex.appendChild(el("span", "", "Pull apart"));
+    var range = el("input");
+    range.type = "range"; range.min = 0; range.max = 1; range.step = 0.05; range.value = 0;
+    range.id = "d3-explode";
+    ex.appendChild(range);
+    bar.appendChild(ex);
+
+    v.parts.forEach(function (p) {
+      var li = el("li");
+      var dot = el("span", "d3-part-dot");
+      dot.style.background = p.color;
+      li.appendChild(dot);
+      li.appendChild(el("span", "d3-part-name", p.label + (p.count > 1 ? " x" + p.count : "") + (p.printed ? "" : " (bought, not printed)")));
+      li.appendChild(el("span", "d3-small d3-muted d3-mono", p.size + " mm"));
+      var warns = (p.checks || []).filter(function (c) { return c.level === "warn"; }).length;
+      if (p.printed && p.checks) li.appendChild(el("span", warns ? "d3-warn" : "d3-ok", warns ? warns + " print warning" + (warns > 1 ? "s" : "") : "ready"));
+      var a = el("a", "d3-btn d3-btn-small d3-btn-quiet", "STL");
+      a.href = p.download;
+      li.appendChild(a);
+      list.appendChild(li);
+    });
+  }
+
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest("#d3-parts-bar [data-view]");
+    if (b && shownParts && window.d3View) {
+      document.querySelectorAll("#d3-parts-bar [data-view]").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+      var assembled = b.dataset.view === "assembled";
+      document.querySelector(".d3-part-chips").hidden = !assembled;
+      document.querySelector(".d3-explode").hidden = !assembled;
+      if (assembled) window.d3View.loadParts(shownParts.parts); else window.d3View.load(shownParts.stl);
+      return;
+    }
+    var c = e.target.closest("#d3-parts-bar [data-part]");
+    if (c && window.d3View) {
+      var on = c.getAttribute("aria-pressed") !== "true";
+      c.setAttribute("aria-pressed", String(on));
+      window.d3View.setVisible(c.dataset.part, on);
+    }
+  });
+  document.addEventListener("input", function (e) {
+    if (e.target.id === "d3-explode" && window.d3View) window.d3View.explode(Number(e.target.value));
+  });
+
   function drawVersion(v) {
     if (!v || v.status !== "ready") return;
-    if (window.d3View && v.stl) window.d3View.load(v.stl);
+    if (window.d3View) {
+      if (v.parts && v.parts.length) window.d3View.loadParts(v.parts);
+      else if (v.stl) window.d3View.load(v.stl);
+    }
+    drawParts(v);
     var size = document.getElementById("d3-size");
     size.textContent = v.size + " mm · grid 10 mm";
     size.hidden = !v.size;
@@ -160,7 +247,7 @@
     stl.textContent = "Download STL (v" + v.number + ")";
     document.getElementById("d3-scad").href = box.dataset.scad.replace("/v/0/", "/v/" + v.number + "/");
     box.hidden = false;
-    drawChecks(v.checks);
+    drawChecks(v.checks === null || v.checks === undefined ? v.checks : (v.checks || []).concat(v.fit || []));
     work.dataset.shown = v.number;  // a marked point names the version it is on
     document.getElementById("d3-view-tools").hidden = false;
     document.getElementById("d3-done").hidden = false;
@@ -357,6 +444,11 @@
     var f = e.target.closest("[data-confirm]");
     if (f && !confirm(f.dataset.confirm)) e.preventDefault();
   });
+
+  try {
+    var firstShown = JSON.parse((document.getElementById("design3d-shown") || {}).textContent || "null");
+    if (firstShown) drawParts(firstShown);
+  } catch (err) { /* no version yet */ }
 
   /* ---------- the marked point, and the part pinned to the top ---------- */
 
