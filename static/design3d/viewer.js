@@ -152,7 +152,11 @@ if (box) {
   function loadParts(parts) {
     if (!parts || !parts.length) return;
     const loader = new STLLoader();
-    Promise.all(parts.map((p) => loader.loadAsync(p.stl))).then((geoms) => {
+    // A part file that does not come (a shaky phone connection) is asked for
+    // once more after a moment, and never breaks the page.
+    const fetchPart = (url) => loader.loadAsync(url).catch(() => new Promise((ok) => setTimeout(ok, 800)).then(() => loader.loadAsync(url)));
+    Promise.all(parts.map((p) => fetchPart(p.stl))).catch(() => null).then((geoms) => {
+      if (!geoms) return;
       const group = new THREE.Group();
       const list = [];
       geoms.forEach((g, i) => {
