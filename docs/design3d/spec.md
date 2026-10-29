@@ -165,3 +165,49 @@ Requirements are `REQ-D3.n`.
 | REQ-D3.51 | The part stays on top | On a phone the 3D view stays at the top while the chat scrolls; a Pinned button lets it scroll away, remembered on that phone. | DONE in dev 2026-10-29 |
 | REQ-D3.52 | Avi hears about requests | Asking to join (and asking again after a decline) emails Avi: who, why, and a link to the People screen. | DONE in dev 2026-10-29 |
 | REQ-D3.53 | Invite one person | On the People screen Avi enters an email (and a name). They get a link with a one-time key: the first person who opens it signed in is let in at once (with the welcome email) and the key is burned. That person may open it again; anyone else is refused, as is everyone after 14 days or once Avi withdraws it. The People screen lists every invitation and its state. | DONE in dev 2026-10-29 |
+
+
+## Chapter 7: Designs with several parts (proposed 2026-10-29, waiting for Avi)
+
+Avi, 2026-10-29: parts that fit together (a box and its lid, a clip on a
+rail, a case and its cover) and parts joined by hardware (screws, nuts,
+magnets, a hinge pin) come first. Up to 8 parts. Each part as its own STL
+and all of them in one 3MF. Multi-colour and print-in-place come later.
+
+### How it works
+
+- **The model names the parts.** Its JSON lists them (name, label, how many
+  to print, printed or not, a print orientation); the code has one module per
+  part, drawn where it sits **in the assembly**. Hardware the person buys (a
+  screw, a magnet) is a part that is not printed: it is shown in the assembly
+  and checked for fit, and never goes on the plate.
+- **The server builds each part on its own**, then does the rest itself, in
+  Python: it turns each printed part to its print orientation (the model's
+  hint, checked by trying the six flat sides when the hint gives a poor
+  bed contact), lays the parts out on one plate 10 mm apart, and writes the
+  3MF. The model writes one file, as today.
+- **The fit check** runs on the parts in their assembled places: two parts
+  that overlap, or mating faces closer than the clearance asked for (0.2 to
+  0.4 mm), or a screw that does not go through its hole, are findings like
+  the print checks, with Fix it.
+
+### What the person sees
+
+- **Assembled**: every part in its own colour. Tap a part's name to hide or
+  show it; an "explode" slider pulls the parts apart.
+- **Print plate**: what goes on the bed.
+- A list of parts, each with its size, its print check, how many to print
+  and its own Download STL; and Download all as 3MF.
+- The chat works per part ("make the lid tighter"), and a marked point
+  knows which part it is on.
+- A one-part design looks and works exactly as today.
+
+| REQ | Name | Requirement | Status |
+|---|---|---|---|
+| REQ-D3.60 | Parts | The model may answer with up to 8 named parts in one file; each has a label, a count, printed or not, and a print orientation. | PROPOSED |
+| REQ-D3.61 | Built one by one | The server builds each part alone, in its assembled place; each gets its own STL, size and print check. | PROPOSED |
+| REQ-D3.62 | Plate and 3MF | The server turns each printed part flat (the hint, or the best of six sides), lays them out on one plate, and writes one 3MF with every part as its own object. The plate STL stays the version's main file, so downloads and sharing keep working. | PROPOSED |
+| REQ-D3.63 | Fit check | In the assembly: no two parts overlap; mating faces have the clearance asked for; hardware passes through its holes. Findings carry Fix it. | PROPOSED |
+| REQ-D3.64 | Assembled and plate views | The 3D view switches between assembled (a colour per part, hide and show, explode) and plate. | PROPOSED |
+| REQ-D3.65 | Per-part downloads | Each part's STL, the plate STL, the 3MF, and the OpenSCAD file. | PROPOSED |
+| REQ-D3.66 | Per-part chat | A marked point names its part; the model is told which part it is. | PROPOSED |

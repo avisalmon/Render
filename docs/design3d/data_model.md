@@ -155,6 +155,44 @@ decline), `designs` (yours; shared ones read-only for others), `messages`
 1. Shared designs never show the pictures or the chat (Avi, 2026-10-28).
 2. A declined person may ask again; their row goes back to `pending`.
 
+## Part (proposed 2026-10-29, waiting for Avi's approval)
+
+One part of a version that has several (Chapter 7). A version with one part
+has no Part rows and works as today. `Version.stl` stays the file people
+download and share: for several parts it is the print plate.
+
+| Field | Type | Meaning |
+|---|---|---|
+| version | FK Version | the version it belongs to (cascade) |
+| name | char 40 | the module name in the code (`lid`), unique in the version |
+| label | char 80 | what people read ("Lid") |
+| position | int | order in the list |
+| count | int, default 1 | how many to print (4 clips) |
+| printed | bool, default true | false for hardware the person buys (a screw, a magnet): shown and fit-checked, never on the plate |
+| stl | file, private | the part in its assembled place (for the assembled view and the fit check) |
+| print_stl | file, private, blank | the part turned flat for printing (printed parts only) |
+| orientation | char 20 | how it was turned for printing: the model's hint or the side the server chose |
+| size_mm | char 40 | its size |
+| checks | JSON, null | its print check |
+| color | char 7 | its colour in the assembled view (set by the server) |
+
+### Version gets
+
+| Field | Type | Meaning |
+|---|---|---|
+| file_3mf | file, private, blank | every printed part as its own object, on the plate |
+| fit | JSON, null | the fit findings between parts, in the same shape as `checks` |
+
+### Message.pin gets
+
+A `part` key (the part's name) when the tapped point is on a part of a
+several-part version. No schema change: `pin` is JSON.
+
+### What is shared
+
+Unchanged: a shared design shows the model only. For several parts that is
+the parts, the plate and the 3MF; never the chat or the pictures.
+
 ## Invite (added 2026-10-29, at Avi's request)
 
 One invitation to one person. Its token is the key in the link; the first
