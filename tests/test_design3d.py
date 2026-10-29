@@ -213,7 +213,7 @@ def test_a_failed_build_is_repaired_and_the_first_part_is_checked(client, world,
 
     calls.clear()
     _say(client, d, "Make it 20")
-    assert len(calls) == 2, "no self-check after the first part"
+    assert len(calls) == 3, "every part the chat builds is checked (Avi, 2026-10-29)"
 
 
 def test_code_that_reads_files_is_refused():
@@ -692,3 +692,77 @@ def test_nobody_else_can_email_a_chat(client, world):
     client.force_login(world["avi"])
     assert client.post(f"/design3d/d/{d.pk}/email/").status_code == 404, "not even Avi, on Dana's design"
     assert mail.outbox == []
+
+
+def test_the_chat_email_carries_the_code_and_a_link_for_a_day(client, world, monkeypatch):
+    """Claude reads the mail through a connection that cannot open
+    attachments, so the code is in the body and the pictures are on a page
+    behind a signed link that lasts a day."""
+    from design3d import mail as d3mail
+
+    Maker.objects.create(user=world["avi"], display_name="Avi", status=Maker.APPROVED, is_admin=True)
+    d = _design(client, world["avi"])
+    _say(client, d, "A holder for this", pictures=_jpeg((800, 600)))
+    mail.outbox.clear()
+    client.post(f"/design3d/d/{d.pk}/email/")
+    body = mail.outbox[-1].body
+    assert "----- v1.scad -----" in body and d.versions.get().code[:30] in body
+    link = re.search(r"https?://\S+/design3d/x/(\S+)/", body)
+    assert link
+    client.logout()
+    page = client.get(f"/design3d/x/{link.group(1)}/")
+    assert page.status_code == 200 and page["X-Robots-Tag"] == "noindex"
+    html = page.content.decode()
+    assert "data:image/jpeg;base64," in html and "data:image/png;base64," in html and "v1.scad" in html
+    assert client.get(f"/design3d/x/{link.group(1)}x/").status_code == 404, "a changed link opens nothing"
+    monkeypatch.setattr(d3mail, "EXPORT_HOURS", -1)
+    assert client.get(f"/design3d/x/{link.group(1)}/").status_code == 404, "after a day it opens nothing"
+
+
+# ---------- D3.9: a marked point, the Done page (Avi, 2026-10-29) ----------
+
+def test_a_marked_point_goes_to_the_model_in_the_codes_coordinates(client, world):
+    from design3d import llm as d3llm
+
+    d = _design(client, world["dana"])
+    _say(client, d, "A box")
+    pin = '{"x": 12.5, "y": -3, "z": 40, "nx": 0, "ny": -0.98, "nz": 0.1, "version": 1}'
+    client.post(f"/design3d/d/{d.pk}/send/", {"text": "Add a hook here", "pin": pin}, HTTP_ACCEPT="application/json")
+    m = d.messages.filter(role=Message.PERSON).last()
+    assert m.pin == {"x": 12.5, "y": -3.0, "z": 40.0, "nx": 0.0, "ny": -0.98, "nz": 0.1, "version": 1}
+    said = [i for i in d3llm.history(d) if i["role"] == "user"][-1]["content"][0]["text"]
+    assert said.startswith("Add a hook here") and "x=12.5, y=-3.0, z=40.0" in said and "the front (-y)" in said
+    assert "of version 1" in said
+    poll = client.get(f"/design3d/d/{d.pk}/poll/?after=0").json()
+    assert [x["pin"] for x in poll["messages"] if x["id"] == m.pk] == [True]
+    assert "Point marked on the part" in client.get(f"/design3d/d/{d.pk}/").content.decode()
+
+
+def test_a_bad_marked_point_is_dropped(client, world):
+    d = _design(client, world["dana"])
+    for bad in ("not json", '{"x": 1}', '{"x": "nan", "y": 0, "z": 0, "nx": 0, "ny": 0, "nz": 1}',
+                '{"x": 1e9, "y": 0, "z": 0, "nx": 0, "ny": 0, "nz": 1}'):
+        Message.objects.filter(design=d).delete()
+        client.post(f"/design3d/d/{d.pk}/send/", {"text": "here", "pin": bad}, HTTP_ACCEPT="application/json")
+        assert d.messages.filter(role=Message.PERSON).get().pin is None, bad
+
+
+def test_the_done_page_downloads_sends_shares_and_promises_a_print(client, world):
+    d = _design(client, world["dana"])
+    assert client.get(f"/design3d/d/{d.pk}/done/").status_code == 302, "no part yet: back to the chat"
+    _say(client, d, "A box")
+    page = client.get(f"/design3d/d/{d.pk}/").content.decode()
+    assert f'href="/design3d/d/{d.pk}/done/"' in page and 'id="d3-done"' in page
+    html = client.get(f"/design3d/d/{d.pk}/done/").content.decode()
+    for words in ("Download STL", "OpenSCAD file", "Email me the files", "Share with people in design3d", "Coming soon"):
+        assert words in html, words
+    assert re.search(r"<button[^>]*disabled[^>]*>Coming soon", html)
+    r = client.post(f"/design3d/d/{d.pk}/edit/", {"action": "share", "shared": "1", "next": "done"})
+    assert r["Location"] == f"/design3d/d/{d.pk}/done/" and Design.objects.get(pk=d.pk).is_shared
+    mail.outbox.clear()
+    client.post(f"/design3d/d/{d.pk}/send-files/")
+    sent = mail.outbox[-1]
+    assert sent.to == ["dana@example.com"] and {a[0].rsplit(".", 1)[1] for a in sent.attachments} == {"stl", "scad"}
+    client.force_login(world["eli"])
+    assert client.get(f"/design3d/d/{d.pk}/done/").status_code == 404, "another person's part"
+    assert client.post(f"/design3d/d/{d.pk}/send-files/").status_code == 404

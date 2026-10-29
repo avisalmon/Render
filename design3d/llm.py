@@ -41,11 +41,24 @@ SYSTEM = textwrap.dedent("""
 
     How to work:
     - Read every dimension written on a sketch or definition.
-    - A photo of a real object has no scale. Do not guess the size of the object the part
-      must fit: ask for the one or two measurements that matter (with code null), and
-      suggest putting a coin or a card next to the object in the next photo.
-    - Otherwise, if something small is missing, assume sensibly and say so in assumptions
-      rather than stopping.
+    - Build first, ask alongside. A photo of a real object: look for something of known size
+      in it (a bank card is 85.6 x 54 mm, a coin, an A4 sheet is 210 x 297 mm, a ruler, a
+      hand) and estimate from it. Then build a first version at once from your best
+      estimates, list every estimate in assumptions, and in the message ask once for all the
+      measurements that matter, together (for something the part holds: its length, width
+      and thickness, and where it is widest). Give code null only when nothing in the photos
+      or the words gives any idea of size, and then ask for every measurement in one question.
+    - When the person answers, use the answer. If it is ambiguous ("30 mm" with two sizes
+      asked), take the most likely reading, say so in assumptions, and build.
+    - If something small is missing, assume sensibly and say so in assumptions rather than
+      stopping.
+    - A part that holds something: think about the whole object and how it stays put: its
+      length matters as much as its width; gravity and where its weight sits; how it goes in
+      and comes out; what keeps it from tipping or falling out.
+    - "Creative" means a real design idea that suits the object (a shape, a theme, a
+      character), not only holes or decoration.
+    - Every turn you also get a picture of what your code built; look at it before you
+      answer the next request.
     - One parametric file. Put every key size at the top as a numeric variable
       (name = number;), and list the ones a person would want to change in parameters,
       with a sensible range. At most 8.
@@ -100,6 +113,23 @@ def _image_part(picture):
     return {"type": "input_image", "image_url": f"data:image/jpeg;base64,{data}"}
 
 
+FACES = {("x", 1): "the right side (+x)", ("x", -1): "the left side (-x)", ("y", 1): "the back (+y)",
+         ("y", -1): "the front (-y)", ("z", 1): "the top (+z)", ("z", -1): "the bottom (-z)"}
+
+
+def pin_text(pin):
+    """What a tapped point tells the model: where, on which face, on which
+    version, and that the picture with an orange marker shows it."""
+    if not pin:
+        return ""
+    axis = max(("x", "y", "z"), key=lambda a: abs(pin["n" + a]))
+    face = FACES[(axis, 1 if pin["n" + axis] >= 0 else -1)]
+    on = f" of version {pin['version']}" if pin.get("version") else ""
+    return (f"\n[The person tapped a point on the part{on}: x={pin['x']}, y={pin['y']}, z={pin['z']} mm in your code's "
+            f"coordinates, on a face that looks toward {face} (normal {pin['nx']}, {pin['ny']}, {pin['nz']}). "
+            "\"Here\" or \"this\" means that point. The last picture, if any, is the view with the point marked.]")
+
+
 def history(design, upto=None, picture_messages=4):
     """The design's conversation as model input. Pictures are sent for the
     first message that had any and the last few that had any, so a long
@@ -114,7 +144,7 @@ def history(design, upto=None, picture_messages=4):
     items = [{"role": "system", "content": system()}]
     for m in msgs:
         if m.role == Message.PERSON:
-            parts = [{"type": "input_text", "text": m.text or "(see the pictures)"}]
+            parts = [{"type": "input_text", "text": (m.text or "(see the pictures)") + pin_text(m.pin)}]
             if m.pk in send_pics:
                 parts += [_image_part(p) for p in m.pictures.all()]
             items.append({"role": "user", "content": parts})

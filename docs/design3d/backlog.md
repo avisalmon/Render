@@ -68,3 +68,23 @@ better? Claude cannot see production data, and should not sign in as him.
 - [x] `POST /design3d/d/<pk>/email/`: the admin, on his own designs only, to his own address; the button in the Design panel
 - [x] Tests: the whole chat arrives; nobody else, and not Avi on someone else's design
 - [ ] Replay Avi's chat through gpt-6.1-terra and gpt-6.1-sol and compare the parts and the cost
+
+## D3.9 · Build first, mark a point, measure, Done, the part on top (2026-10-29)
+
+From Avi's remote-holder chat (#4): three rounds of questions before any
+part, the remote's length never asked, the changes never looked at, and
+"creative" taken as a few holes.
+
+- [x] Prompt: build first from estimates (card, coin, A4 for scale), ask everything at once with the length; ambiguous answers read, not re-asked; how a held object stays put; "creative" is a design idea
+- [x] Self-check on every chat-built part, not only the first
+- [x] Chat email: every version's code in the body and a signed link for a day to a page with the pictures (Claude's Gmail connection cannot open attachments)
+- [x] Point mode (`Message.pin`, `llm.pin_text`, a picture of the view with the marker), Measure mode, grid 10 mm
+- [x] Done page: view, print check, downloads, email me the files, share, order a print (coming soon)
+- [x] The part stays on top on a phone, Pinned / Pin to top, remembered
+- [x] babook main page: design3d and BKM cards
+- [ ] Replay chat #4 with its photos on gpt-6.1-terra and gpt-6.1-sol (needs a new chat email after the ship)
+
+**Two real turns** (2026-10-29, "a wall holder for my TV remote, creative,
+50 x 30 mm"): both models built at once and asked for the length. terra
+$0.012, 29 s; sol $0.019, 37 s. Both made a rocket-shaped back plate with a
+pocket; sol's words were richer, the shape no better.

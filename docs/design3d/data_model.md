@@ -68,6 +68,7 @@ history sent to the model is built from these rows.
 | role | choice | `person`, `assistant` |
 | state | choice | `thinking`, `building`, `done`, `failed` (an assistant turn runs in the background; the page polls it) |
 | step | char 80, blank | what a running turn is doing now, shown on the page (added 2026-10-28) |
+| pin | JSON, null | a point the person tapped: {x, y, z, nx, ny, nz, version}, mm in the code's coordinates (added 2026-10-29) |
 | trail | JSON list, blank | how the turn went: [seconds from the start, what happened], opened under "How this turn went" (added 2026-10-28) |
 | text | text | what was said |
 | assumptions | JSON list, blank | the assistant's list of what it assumed (shown to the person, so they can correct it) |

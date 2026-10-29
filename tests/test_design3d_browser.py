@@ -158,7 +158,7 @@ def test_on_a_computer_three_columns_and_no_page_slides_sideways(browser, live_s
         ctx = browser.new_context(viewport={"width": width, "height": 800})
         _session(ctx, world["dana"])
         page = ctx.new_page()
-        for p in ("/design3d/designs/", path, "/design3d/shared/"):
+        for p in ("/design3d/designs/", path, path + "done/", "/design3d/shared/"):
             page.goto(live_server.url + p)
             over = page.evaluate(OVERFLOW, width)
             wide = page.evaluate("(w) => [...document.querySelectorAll('body *')].filter(e => e.getBoundingClientRect().right > w + 1 && !e.closest('canvas')).map(e => e.tagName + '.' + e.className).slice(0, 3)", width)
@@ -208,5 +208,70 @@ def test_on_a_phone_a_print_warning_is_fixed_with_one_tap(browser, live_server, 
     page.wait_for_function("document.querySelectorAll('.d3-msg.assistant.done').length === 2", timeout=60000)
     said = list(Message.objects.filter(design=Design.objects.get(), role=Message.PERSON).values_list("text", flat=True))
     assert said[-1].startswith("Before I print: Some pieces float above the bed.")
+    assert errors == []
+    ctx.close()
+
+
+@pytest.mark.django_db(transaction=True)
+def test_on_a_phone_mark_a_point_measure_keep_the_part_on_top_and_finish(browser, live_server, world):
+    """D3.9 (Avi, 2026-10-29): tap the part to say "here", tap two points to
+    measure, the part stays at the top while the chat scrolls (and can be
+    unpinned), and Done opens the finished part."""
+    from design3d.models import Design, Message
+
+    ctx = browser.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2, has_touch=True, is_mobile=True)
+    _session(ctx, world["dana"])
+    page = ctx.new_page()
+    errors = []
+    page.on("pageerror", lambda exc: errors.append(str(exc)))
+    page.goto(live_server.url + "/design3d/designs/")
+    page.click("#d3-new")
+    page.wait_for_url("**/design3d/d/*/")
+    page.fill("#d3-text", "A pencil holder")
+    page.click("#d3-send")
+    page.wait_for_function("document.getElementById('d3-view').dataset.loaded", timeout=60000)
+    page.wait_for_timeout(600)
+    assert page.is_visible("#d3-view-tools") and page.is_visible("#d3-done")
+
+    # Measure: two taps on the part.
+    canvas = page.locator("#d3-view canvas")
+    box = canvas.bounding_box()
+    page.click('[data-d3-mode="measure"]')
+    page.touchscreen.tap(box["x"] + box["width"] * 0.5, box["y"] + box["height"] * 0.55)
+    page.touchscreen.tap(box["x"] + box["width"] * 0.5, box["y"] + box["height"] * 0.3)
+    page.wait_for_selector("#d3-measure-label:not([hidden])", timeout=5000)
+    assert page.inner_text("#d3-measure-label").split(" mm")[0].replace(".", "").isdigit()
+    _shot(page, "measure-390")
+
+    # Point: tap the part, say what to do there, send.
+    page.click('[data-d3-mode="pin"]')
+    page.touchscreen.tap(box["x"] + box["width"] * 0.5, box["y"] + box["height"] * 0.55)
+    page.wait_for_selector("#d3-pinned:not([hidden])", timeout=5000)
+    _shot(page, "pin-390")
+    page.fill("#d3-text", "Make the wall thicker here")
+    page.click("#d3-send")
+    page.wait_for_function("document.querySelectorAll('.d3-msg.assistant.done').length === 2", timeout=60000)
+    said = Message.objects.filter(design=Design.objects.get(), role=Message.PERSON).last()
+    assert said.pin and set(said.pin) == {"x", "y", "z", "nx", "ny", "nz", "version"} and said.pin["version"] == 1
+    assert said.pictures.count() == 1, "a picture of the view with the marker"
+    assert page.is_hidden("#d3-pinned")
+
+    # The part stays at the top while the page scrolls; unpinned, it scrolls away.
+    bar = page.locator(".d3-bar").bounding_box()["height"]
+    page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+    page.wait_for_timeout(300)
+    assert abs(page.locator(".d3-viewcol").bounding_box()["y"] - bar) < 3
+    page.click("#d3-stick")
+    page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+    page.wait_for_timeout(300)
+    assert page.locator(".d3-viewcol").bounding_box()["y"] < 0, "unpinned, it scrolls away"
+    page.reload()
+    assert page.get_attribute("#d3-stick", "aria-pressed") == "false", "remembered"
+
+    page.click("#d3-done")
+    page.wait_for_url("**/done/")
+    page.wait_for_function("document.getElementById('d3-view').dataset.loaded", timeout=30000)
+    assert page.evaluate(OVERFLOW, 390) <= 1
+    _shot(page, "done-390")
     assert errors == []
     ctx.close()

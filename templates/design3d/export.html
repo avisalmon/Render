@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex"><title>design3d chat #{{ d.pk }}: {{ d.title }}</title>
+<style>body{font:15px/1.5 system-ui,sans-serif;margin:0 auto;max-width:900px;padding:16px;background:#fff;color:#222}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f6f3ee;padding:12px;border-radius:8px}
+figure{margin:12px 0}img{max-width:100%;height:auto;border:1px solid #ddd}figcaption{font:13px monospace;color:#666}</style></head>
+<body>
+<h1>design3d chat #{{ d.pk }}: {{ d.title }}</h1>
+<p>A private copy for the owner, good for a day.</p>
+<h2>The chat</h2>
+<pre id="chat">{{ text }}</pre>
+<h2>Pictures sent</h2>
+{% for name, src in pictures %}<figure><img src="{{ src }}" alt="{{ name }}"><figcaption>{{ name }}</figcaption></figure>{% empty %}<p>None.</p>{% endfor %}
+<h2>Versions</h2>
+{% for name, src in previews %}<figure><img src="{{ src }}" alt="{{ name }}"><figcaption>{{ name }}</figcaption></figure>{% endfor %}
+{% for v in versions %}<h3>v{{ v.number }}.scad</h3><pre>{{ v.code }}</pre>{% endfor %}
+</body></html>

@@ -13,7 +13,14 @@
         <p>Your part will appear here.<br>Tell the chat what you want to make, or send a photo.</p>
       </div>
       <span class="d3-busy" id="d3-busy" hidden>Building…</span>
-      <span class="d3-size" id="d3-size" {% if not shown.size_mm %}hidden{% endif %}>{{ shown.size_mm }} mm{% if shown and shown != d.current %} · version {{ shown.number }}{% endif %}</span>
+      {# Tap modes and the pin to the top (Avi, 2026-10-29). #}
+      <div class="d3-view-tools" {% if not shown or not shown.stl %}hidden{% endif %} id="d3-view-tools">
+        <button type="button" class="d3-chip" data-d3-mode="pin" aria-pressed="false" title="Tap the part to mark a point for the chat">Point</button>
+        <button type="button" class="d3-chip" data-d3-mode="measure" aria-pressed="false" title="Tap two points on the part">Measure</button>
+        <button type="button" class="d3-chip d3-stick" id="d3-stick" aria-pressed="true" title="Keep the part at the top while you scroll">Pinned</button>
+      </div>
+      <span class="d3-measure-label d3-mono" id="d3-measure-label" hidden></span>
+      <span class="d3-size" id="d3-size" {% if not shown.size_mm %}hidden{% endif %}>{{ shown.size_mm }} mm{% if shown and shown != d.current %} · version {{ shown.number }}{% endif %} · grid 10 mm</span>
     </div>
   </div>
 
@@ -88,6 +95,8 @@
       {% if stub %}<p class="d3-small d3-muted">Stub mode: no OpenAI key on this server, answers are a sample part.</p>{% endif %}
       {% if over %}<p class="d3-limit">You reached today's limit of ${{ limit|floatformat:2 }}. It resets at midnight.</p>{% endif %}
       <div class="d3-chosen" id="d3-chosen"></div>
+      <p class="d3-pinned" id="d3-pinned" hidden><span>A point on the part is marked. Say what to do there.</span>
+        <button type="button" class="d3-link" id="d3-unpin">Remove</button></p>
       <div class="d3-compose-row">
         <label class="d3-iconbtn" title="Add pictures" aria-label="Add pictures">
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 9"/></svg>
@@ -99,6 +108,7 @@
         <button type="submit" class="d3-iconbtn" id="d3-send" aria-label="Send" {% if over %}disabled{% endif %}>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l16-8-6 16-2-7z"/></svg></button>
       </div>
+      <div class="d3-compose-foot"><a class="d3-btn d3-btn-small d3-done" id="d3-done" href="{% url 'design3d:done' d.pk %}" {% if not d.current %}hidden{% endif %}>Done: download, share, print</a></div>
     </form>
   </section>
 </div>

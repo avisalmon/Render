@@ -17,6 +17,28 @@ Newest first.
 
 ---
 
+## PM-74 · 2026-10-29 · The chat email I built for myself, I could not read
+
+**What happened.** D3.8's "Email me this chat" put the pictures, the code
+and the previews in attachments. When Avi sent the remote-holder chat, I
+could read the text but not one attachment: the Gmail connection I read
+mail through cannot open them. The comparison he asked for had to wait for
+another sprint. On the way, three edits broke the same way: Python code with
+"\n" inside, written through a shell heredoc, came out with real line
+breaks and a syntax error.
+
+**Why.** The test checked that the attachments were in the email, which they
+were; nothing checked that the reader could open them. The one reader that
+mattered was me, through a specific connection.
+
+**Rule.** When you build a way to hand data to someone (an AI, a person, a
+script), test it through that reader's own channel before calling it done.
+Code with escape sequences is written with the file editor, not through a
+shell heredoc.
+
+Here: `design3d/mail.py` (code in the body, a signed link for a day), `docs/building_an_app.md` mistake 64
+BKM: 0237fc9
+
 ## PM-73 · 2026-10-29 · Sprint D3.8 end: nothing new
 
 **What happened.** "Email me this chat" was built and tested in one pass.

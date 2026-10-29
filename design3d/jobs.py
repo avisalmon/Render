@@ -194,7 +194,6 @@ def _turn(msg, design):
     _step(msg, "Reading your message")
     reply, usage, model = llm.ask(items)
     _add_usage(msg, usage, model)
-    had_ready = design.versions.filter(status=Version.READY).exists()
     version = None
 
     if reply["code"]:
@@ -221,7 +220,10 @@ def _turn(msg, design):
             _built(msg, version)
             _show(design, version)
 
-        if version.status == Version.READY and not had_ready and not llm.stub_mode():
+        # Every part the chat builds is shown back to the model once (Avi,
+        # 2026-10-29: after "wall mount" and "it may fall" the chat changed the
+        # part without looking at it). About half a cent a turn.
+        if version.status == Version.READY and not llm.stub_mode():
             version, reply = _self_check(msg, design, items, reply, version)
 
     msg.text = reply["message"] or ("Here it is." if version else "")
