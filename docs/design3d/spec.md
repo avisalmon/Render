@@ -170,6 +170,7 @@ Requirements are `REQ-D3.n`.
 | REQ-D3.53 | Invite one person | On the People screen Avi enters an email (and a name). They get a link with a one-time key: the first person who opens it signed in is let in at once (with the welcome email) and the key is burned. That person may open it again; anyone else is refused, as is everyone after 14 days or once Avi withdraws it. The People screen lists every invitation and its state. | DONE in dev 2026-10-29 |
 | REQ-D3.54 | Make a copy | On a shared design, "Make a copy" starts a new design of your own with that part as version 1 (made by "copy"): its code, sizes, parts and files; not the chat or the pictures, which stay their owner's. The first chat line says whose it was. | DONE in dev 2026-10-29 |
 | REQ-D3.55 | A picture, full size | Tapping a picture in the chat opens it full size, with Save (a download) and, on a phone that can, Share (the phone's share sheet with the picture itself). | DONE in dev 2026-10-29 |
+| REQ-D3.56 | Home | A Home button in the corner of every 3D view puts the camera back where it was when the part loaded. | DONE in dev 2026-10-29 |
 
 
 ## Chapter 7: Designs with several parts (approved by Avi 2026-10-29)

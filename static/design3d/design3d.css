@@ -204,7 +204,7 @@ img { max-width: 100%; height: auto; display: block; }
 .d3-view-tools .d3-chip { border: 1px solid var(--line); background: rgba(23,20,15,.78); color: var(--ink); font-size: .78rem; padding: 6px 12px; min-height: 36px; cursor: pointer; }
 .d3-view-tools .d3-chip[aria-pressed="true"] { background: var(--hi); color: var(--hi-ink); border-color: var(--hi); }
 .d3-view-tools .d3-stick[aria-pressed="false"] { color: var(--soft); }
-.d3-measure-label { position: absolute; left: 50%; bottom: 36px; transform: translateX(-50%); max-width: calc(100% - 20px); overflow-wrap: anywhere; text-align: center;
+.d3-measure-label { position: absolute; left: 50%; bottom: 56px; transform: translateX(-50%); max-width: calc(100% - 20px); overflow-wrap: anywhere; text-align: center;
   background: #0f2a33; color: #bfefff; border: 1px solid #35d0ff; padding: 4px 10px; border-radius: 8px; font-size: .8rem; }
 .d3-view[data-mode="pin"] canvas, .d3-view[data-mode="measure"] canvas { cursor: crosshair; }
 .d3-pinned { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: .86rem; color: #bfefff;
@@ -259,3 +259,9 @@ img { max-width: 100%; height: auto; display: block; }
   max-width: min(96vw, 900px); max-height: 92vh; }
 .d3-lightbox::backdrop { background: rgba(10, 8, 5, .82); }
 .d3-lightbox img { display: block; max-width: 100%; max-height: 74vh; margin: 0 auto 10px; border-radius: 8px; }
+
+/* Home: back to the first view (Avi, 2026-10-29) */
+.d3-home { position: absolute; right: 10px; bottom: 8px; width: 40px; height: 40px; display: grid; place-items: center; padding: 0;
+  border: 1px solid var(--line); border-radius: 10px; background: rgba(23,20,15,.78); color: var(--ink); cursor: pointer; }
+.d3-home svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.d3-home:hover { border-color: var(--hi); }

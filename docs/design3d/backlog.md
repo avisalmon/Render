@@ -120,3 +120,5 @@ About $0.011 to $0.015 a turn.
 - [x] A picture in the chat is a button: full size in a dialog, Save (`?download=1`), Share (Web Share with the file, where the phone has it)
 - [x] Fusion 360: answered in the spec (mesh import now; STEP needs the CadQuery engine, later)
 - [x] Tests: the copy without the chat or pictures, the original untouched, only shared designs; Save is a download, still owner only; a phone test of the picture
+
+- [x] 2026-10-29: Home button in the 3D view (REQ-D3.56), on the design, Done and shared pages; a phone test turns the view and comes back

@@ -44,6 +44,7 @@ if (box) {
   let grid = null;
   let span = 10;
   const offset = new THREE.Vector3();  // view + offset = the code's coordinates
+  const home = { position: new THREE.Vector3(), target: new THREE.Vector3(), set: false };
   let mode = "";
   let pin = null;        // {x, y, z, nx, ny, nz, version}
   let pinMark = null;
@@ -83,6 +84,17 @@ if (box) {
     camera.near = dist / 100;
     camera.far = dist * 20;
     camera.updateProjectionMatrix();
+    controls.update();
+    home.position.copy(camera.position);
+    home.target.copy(controls.target);
+    home.set = true;
+  }
+
+  // Home (Avi, 2026-10-29): the view as it was when the part loaded.
+  function goHome() {
+    if (!home.set) return;
+    camera.position.copy(home.position);
+    controls.target.copy(home.target);
     controls.update();
   }
 
@@ -244,6 +256,16 @@ if (box) {
     return new Promise((resolve) => renderer.domElement.toBlob(resolve, "image/jpeg", 0.85));
   }
 
+  const homeBtn = document.createElement("button");
+  homeBtn.type = "button";
+  homeBtn.className = "d3-home";
+  homeBtn.id = "d3-home";
+  homeBtn.title = "Back to the first view";
+  homeBtn.setAttribute("aria-label", "Back to the first view");
+  homeBtn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5h5v-6h3v6h5V10"/></svg>';
+  homeBtn.addEventListener("click", goHome);
+  box.appendChild(homeBtn);
+
   new ResizeObserver(size).observe(box);
   size();
   (function tick() {
@@ -254,7 +276,8 @@ if (box) {
 
   document.querySelectorAll("[data-d3-mode]").forEach((b) => b.addEventListener("click", () => setMode(b.dataset.d3Mode)));
 
-  window.d3View = { load, loadParts, explode, setVisible, snapshot, clearPin, getPin: () => pin, tap: tapped, setMode, offset };
+  window.d3View = { load, loadParts, explode, setVisible, snapshot, clearPin, getPin: () => pin, tap: tapped, setMode, offset, home: goHome,
+                    camera: () => camera.position.toArray() };
   let first = null;
   try { first = JSON.parse(document.getElementById("design3d-shown")?.textContent || "null"); } catch (err) { first = null; }
   if (first && first.parts && first.parts.length) loadParts(first.parts); else load(box.dataset.stl);
