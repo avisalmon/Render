@@ -112,3 +112,11 @@ two parts, the lid turned for printing; one sample overlapped (found by the
 fit check), another had 0.25 mm clearance. "A two-piece pipe clamp with M3
 screws and nuts" gave six parts, four of them hardware, and no fit findings.
 About $0.011 to $0.015 a turn.
+
+## D3.13 · Make a copy; a picture full size (2026-10-29)
+
+- [x] `jobs.copy_design`: the shared part as version 1 of a new design (`Version.COPY`, `Design.copied_from`), with its own copies of every file, its sizes and its parts; one chat line saying whose it was
+- [x] `POST /design3d/shared/<pk>/copy/`, "Make a copy" on the shared page
+- [x] A picture in the chat is a button: full size in a dialog, Save (`?download=1`), Share (Web Share with the file, where the phone has it)
+- [x] Fusion 360: answered in the spec (mesh import now; STEP needs the CadQuery engine, later)
+- [x] Tests: the copy without the chat or pictures, the original untouched, only shared designs; Save is a download, still owner only; a phone test of the picture

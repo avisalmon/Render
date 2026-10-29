@@ -116,6 +116,14 @@
     </form>
   </section>
 </div>
+<dialog class="d3-lightbox" id="d3-lightbox" aria-label="Picture">
+  <img alt="A picture from the chat">
+  <div class="d3-row">
+    <a class="d3-btn d3-btn-small" id="d3-pic-save" href="" download>Save</a>
+    <button type="button" class="d3-btn d3-btn-small d3-btn-quiet" id="d3-pic-share" hidden>Share</button>
+    <button type="button" class="d3-btn d3-btn-small d3-btn-quiet" id="d3-pic-close">Close</button>
+  </div>
+</dialog>
 {% endblock %}
 {% block scripts %}
 {{ shown_json|json_script:"design3d-shown" }}

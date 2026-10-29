@@ -948,3 +948,50 @@ def test_the_part_list_is_cleaned():
                                                                                                    "printed": False, "print": "x"}])
     assert [(p["name"], p["count"], p["printed"], p["print"]) for p in got] == [("box", 1, True, [0, 0, 0]), ("lid", 20, False, [0, 0, 0])]
     assert len(parts.clean([{"name": f"p{i}"} for i in range(12)])) == 8
+
+
+# ---------- a copy of a shared design; a picture full size (Avi, 2026-10-29) ----------
+
+def test_a_shared_design_is_copied_without_its_chat(client, world):
+    d = _design(client, world["dana"])
+    _say(client, d, "A secret pencil holder", pictures=_jpeg((800, 600)))
+    client.post(f"/design3d/d/{d.pk}/edit/", {"action": "share", "shared": "1"})
+    d.refresh_from_db()
+    client.force_login(world["eli"])
+    assert 'id="d3-copy"' in client.get(f"/design3d/shared/{d.pk}/").content.decode()
+    r = client.post(f"/design3d/shared/{d.pk}/copy/")
+    mine = Design.objects.get(owner__user=world["eli"])
+    assert r["Location"] == f"/design3d/d/{mine.pk}/" and mine.copied_from == d and mine.title.endswith("(copy)")
+    v = mine.current
+    assert v.number == 1 and v.made_by == Version.COPY and v.code == d.current.code and v.status == Version.READY
+    assert v.stl.name != d.current.stl.name, "its own files"
+    assert client.get(f"/design3d/files/{v.stl.name}").status_code == 200
+    said = list(mine.messages.values_list("role", "text"))
+    assert len(said) == 1 and said[0][0] == Message.ASSISTANT and "Dana" in said[0][1]
+    assert not Picture.objects.filter(message__design=mine).exists(), "the pictures stay with their owner"
+    assert "secret pencil holder" not in client.get(f"/design3d/d/{mine.pk}/").content.decode().lower()
+    assert [p.name for p in v.parameters.all()] == [p.name for p in d.current.parameters.all()]
+    _say(client, mine, "Make it taller")
+    assert mine.versions.count() == 2, "and it carries on in its new owner's chat"
+    assert Design.objects.get(pk=d.pk).versions.count() == 1, "the original is untouched"
+
+
+def test_only_a_shared_design_can_be_copied(client, world):
+    d = _design(client, world["dana"])
+    _say(client, d, "A box")
+    client.force_login(world["eli"])
+    assert client.post(f"/design3d/shared/{d.pk}/copy/").status_code == 404
+    assert not Design.objects.filter(owner__user=world["eli"]).exists()
+
+
+def test_a_picture_in_the_chat_opens_full_size_and_saves(client, world):
+    d = _design(client, world["dana"])
+    _say(client, d, "Like this", pictures=_jpeg((800, 600)))
+    page = client.get(f"/design3d/d/{d.pk}/").content.decode()
+    src = re.search(r'class="d3-pic" data-full="([^"]+)"', page).group(1)
+    assert 'id="d3-lightbox"' in page and 'id="d3-pic-save"' in page
+    saved = client.get(src + "?download=1")
+    assert saved.status_code == 200 and saved["Content-Disposition"].startswith("attachment")
+    assert "attachment" not in client.get(src).get("Content-Disposition", "")
+    client.force_login(world["eli"])
+    assert client.get(src + "?download=1").status_code == 404, "still the owner's only"

@@ -17,6 +17,18 @@ Newest first.
 
 ---
 
+## PM-77 · 2026-10-29 · Sprint D3.13 end: nothing new
+
+**What happened.** Make a copy and the full-size picture went in one pass;
+the patch script checked every anchor first (PM-76). One test read a
+design's current version from a stale object and failed; refreshing it
+fixed the test, not the code.
+
+**Rule.** Nothing new.
+
+Here: `docs/design3d/backlog.md` (D3.13)
+BKM: deferred - nothing general
+
 ## PM-76 · 2026-10-29 · Sprint D3.11-12 end: a patch script that stopped halfway
 
 **What happened.** A script that edits several files stopped on its fourth

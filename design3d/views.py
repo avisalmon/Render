@@ -445,6 +445,19 @@ def shared_design(request, pk):
     return render(request, "design3d/shared_design.html", {"d": d, "v": d.current, "section": "shared"})
 
 
+@require_POST
+@access.inside
+def copy_design(request, pk):
+    """Make a copy of a shared design and continue it as your own (spec,
+    "planned right after the first release"; Avi, 2026-10-29)."""
+    d = get_object_or_404(Design.objects.select_related("owner", "current"), pk=pk, is_shared=True, current__isnull=False)
+    if d.current.status != Version.READY:
+        raise Http404
+    mine = jobs.copy_design(d, request.maker)
+    flash.success(request, "Copied. It is yours now.")
+    return redirect("design3d:design", pk=mine.pk)
+
+
 # ---------------------------------------------------------------- Avi's people screen
 
 
@@ -550,6 +563,7 @@ def file(request, path):
     if not PRIVATE.exists(path):
         raise Http404
     ctype = mimetypes.guess_type(path)[0] or ("model/stl" if path.endswith(".stl") else "application/octet-stream")
-    resp = FileResponse(open(PRIVATE.path(path), "rb"), content_type=ctype)
+    resp = FileResponse(open(PRIVATE.path(path), "rb"), content_type=ctype,
+                        as_attachment=request.GET.get("download") == "1", filename=path.rsplit("/", 1)[-1])
     resp["Cache-Control"] = "private, max-age=3600"
     return resp
