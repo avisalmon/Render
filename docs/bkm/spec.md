@@ -58,8 +58,8 @@ good.
 audience.
 
 **What it is not.** Not a place to read the BKMs (their pages do that), not
-a place for other people's BKMs, and not linked from babook's portal or
-pages, nor linking back to them (Rule 3).
+a place for other people's BKMs, and not linking back to babook (Rule 3).
+Since 2026-10-29 it has a card on babook's main page, at Avi's request.
 
 ## Chapter 2: The wall
 
@@ -110,7 +110,7 @@ pages, nor linking back to them (Rule 3).
 | REQ | Title | Expectation | Status |
 |---|---|---|---|
 | REQ-B.40 | Full REST API | Rule 6: DRF over every model under `/bkm/api/`: `bkms` (public read without links, admin write, `like` and `star` toggles), `readers` (your own), `likes`, `stars` (your own only), `comments`. | DONE |
-| REQ-B.41 | Its own frame | Own base template and menu (the wall, my stars), own error pages, no link to babook and not in babook's portal (Rule 3). | DONE |
+| REQ-B.41 | Its own frame | Own base template and menu (the wall, my stars), own error pages, no link to babook (Rule 3). Not in babook's portal until Avi asked for a card on the main page (2026-10-29, `app/portal.py`, EVERYONE). | DONE |
 | REQ-B.42 | No sideways scroll | No page slides sideways at 320, 360, 375, 390, 412 and 1280. | DONE |
 | REQ-B.43 | The menu is always there | Avi, 2026-10-27: the top menu stays on screen while scrolling. Fixed to the top, the page pushed down by its measured height; tested in Chromium and WebKit (the iPad's engine) at 1280 and 1024. | DONE |
 

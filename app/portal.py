@@ -130,6 +130,28 @@ APPS = [
         blurb="צלמו מדף, והספרים שלכם בקטלוג. השאלה, החלפה וקריאה עם שכנים.",
     ),
     App(
+        slug="design3d",
+        icon="box",
+        name="design3d",
+        path="/design3d/",
+        audience=EVERYONE,
+        # Avi, 2026-10-29: a card on the main page. EVERYONE for the reason
+        # exo is: the app is invite-only and its own door polices that (a
+        # request form, Avi approves), so a card only for approved people
+        # would hide the way to ask from everybody else.
+        blurb="מתארים חלק, מצלמים סקיצה או חפץ, ומקבלים קובץ מוכן להדפסה בתלת־ממד.",
+    ),
+    App(
+        slug="bkm",
+        icon="journal-code",
+        name="BKM",
+        path="/bkm/",
+        audience=EVERYONE,
+        # Avi, 2026-10-29: a card on the main page. The wall is public; the
+        # app's own door asks for sign-in before anything opens.
+        blurb="מדריכי BKM של אבי: איך בונים פרויקט מההתחלה ועד הסוף, ותערוכה של מה שבניתם.",
+    ),
+    App(
         slug="ustrip",
         icon="suitcase",
         name="ustrip",
@@ -187,12 +209,6 @@ NOT_IN_THE_PORTAL = {
     # The volunteer dental clinic (2026-10-26): a pilot on invented data,
     # entered by invitation or a patient link, never from a portal tile.
     "dentist",
-    # The BKM gateway (2026-10-26): Avi wants it apart from babook, reached
-    # by its own link; only the shared sign-in connects them.
-    "bkm",
-    # 3D design through a chat (2026-10-28): invitation only, Avi approves
-    # each person; reached by its own link.
-    "design3d",
 }
 
 _BY_SLUG = {a.slug: a for a in APPS}

@@ -116,7 +116,7 @@ Requirements are `REQ-D3.n`.
 | REQ-D3.1 | Signed out | `/design3d/` shows what design3d is, in two lines, and "Sign in" (Google first, email and password folded away). Nothing else. | DONE |
 | REQ-D3.2 | Asking | Signed in but not in: one form, "why do you want in" (optional), and a button. Then "waiting for Avi" on every visit. Declined: "not approved" and a way to ask again, which puts the request back to pending. | DONE |
 | REQ-D3.3 | Avi's screen | Requests waiting, people in, people declined; approve, decline, withdraw; each person's spend today and in total, and their daily limit (editable). Approving sends one email: you are in, with the link. | DONE |
-| REQ-D3.4 | Its own frame | Own base template and menu (my designs, shared, and for Avi the people screen), the print-bed look, own error pages, no link to babook, not in babook's portal. | DONE |
+| REQ-D3.4 | Its own frame | Own base template and menu (my designs, shared, and for Avi the people screen), the print-bed look, own error pages, no link to babook. Not in babook's portal until Avi asked for a card on the main page (2026-10-29, `app/portal.py`, EVERYONE: the app's own door asks to join). | DONE |
 
 ## Chapter 3: Designs and the chat
 
