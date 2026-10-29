@@ -17,6 +17,25 @@ Newest first.
 
 ---
 
+## PM-78 · 2026-10-29 · A commit went in while a test failed
+
+**What happened.** For D3.13 I ran the design3d tests and committed in one
+command: `pytest ... | grep ... && git commit`. One browser test failed (a
+part file of a two-part design answered 404, once in three runs), and the
+commit still went in, because `grep` succeeded in printing the failure. It
+was not shipped. The failure did not come back in two more runs; the viewer
+now asks for a part file a second time instead of breaking the page.
+
+**Why.** The gate tested that the test output was printed, not that the
+tests passed.
+
+**Rule.** A commit after tests is gated on the test result itself (the exit
+code, or a check for "failed" in the summary), never on a pipe that prints
+it. A test that fails once and then passes is written down, not forgotten.
+
+Here: `static/design3d/viewer.js` (`fetchPart`), `docs/building_an_app.md` mistake 66
+BKM: 041e118
+
 ## PM-77 · 2026-10-29 · Sprint D3.13 end: nothing new
 
 **What happened.** Make a copy and the full-size picture went in one pass;

@@ -1327,3 +1327,12 @@ A patch script for design3d's several-parts sprint wrote three edits, then
 failed on the fourth, leaving the tree half changed (PM-76).
 
 **The rule.** Check that every anchor matches first; write only when all do.
+
+### 66. A commit is gated on the test result, not on its output
+
+A design3d commit went in with a failing browser test, because the command
+was `pytest | grep && git commit` and grep succeeded (PM-78).
+
+**The rule.** Gate a commit on the tests' exit code or on "failed" in the
+summary, never on a pipe that prints the result. A test that failed once
+and then passed is written down.
