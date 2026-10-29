@@ -198,3 +198,38 @@ img { max-width: 100%; height: auto; display: block; }
 .d3-built .d3-warn { cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
 .d3-check-list .d3-warn > span { color: var(--ink); }
 .d3-check-list .d3-fix { flex: none; }
+
+/* The 3D view's tools: Point, Measure, Pinned (D3.9, Avi 2026-10-29) */
+.d3-view-tools { position: absolute; left: 10px; top: 10px; display: flex; flex-wrap: wrap; gap: 6px; max-width: calc(100% - 120px); }
+.d3-view-tools .d3-chip { border: 1px solid var(--line); background: rgba(23,20,15,.78); color: var(--ink); font-size: .78rem; padding: 6px 12px; min-height: 36px; cursor: pointer; }
+.d3-view-tools .d3-chip[aria-pressed="true"] { background: var(--hi); color: var(--hi-ink); border-color: var(--hi); }
+.d3-view-tools .d3-stick[aria-pressed="false"] { color: var(--soft); }
+.d3-measure-label { position: absolute; left: 50%; bottom: 36px; transform: translateX(-50%); max-width: calc(100% - 20px); overflow-wrap: anywhere; text-align: center;
+  background: #0f2a33; color: #bfefff; border: 1px solid #35d0ff; padding: 4px 10px; border-radius: 8px; font-size: .8rem; }
+.d3-view[data-mode="pin"] canvas, .d3-view[data-mode="measure"] canvas { cursor: crosshair; }
+.d3-pinned { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: .86rem; color: #bfefff;
+  border-left: 3px solid #35d0ff; padding-left: 10px; }
+.d3-pinned > span { flex: 1 1 12em; min-width: 0; }
+.d3-compose-foot { display: flex; justify-content: flex-end; }
+.d3-done { text-decoration: none; }
+.d3-msg .d3-pin-tag { display: inline-block; margin-top: 6px; font-family: var(--f-mono); font-size: .74rem; color: #bfefff; border: 1px solid #35d0ff; border-radius: 8px; padding: 1px 8px; }
+
+/* On a phone the part stays at the top while the chat scrolls, unless the
+   person unpins it. --d3-bar-h is the header's height, set by design.js. */
+@media (max-width: 979px) {
+  .d3-work:not(.d3-unstuck) .d3-viewcol { position: sticky; top: var(--d3-bar-h, 104px); z-index: 5; background: var(--bg); padding-bottom: 6px; }
+  .d3-work:not(.d3-unstuck) .d3-view { height: 36vh; min-height: 220px; }
+}
+@media (min-width: 980px) { .d3-stick { display: none; } }
+
+/* The Done page (D3.9) */
+.d3-done-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.d3-done-grid > * { min-width: 0; }
+.d3-done-acts { display: grid; gap: 18px; }
+.d3-done-acts section { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+.d3-done-acts form { margin: 0; }
+.d3-h2 { margin: 0 0 10px; font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--soft); font-weight: 600; }
+@media (min-width: 980px) {
+  .d3-done-grid { grid-template-columns: minmax(0, 1fr) 340px; align-items: start; }
+  .d3-done-page .d3-view { height: calc(100vh - 220px); }
+}

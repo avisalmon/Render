@@ -148,7 +148,7 @@ def send(request, pk):
             cleaned.append(_clean_picture(f, request.user))
         except ValueError as exc:
             return fail(str(exc))
-    person = Message.objects.create(design=d, role=Message.PERSON, text=text)
+    person = Message.objects.create(design=d, role=Message.PERSON, text=text, pin=_pin(request.POST.get("pin")))
     from PIL import Image
 
     for i, data in enumerate(cleaned):
@@ -164,12 +164,33 @@ def send(request, pk):
     return redirect("design3d:design", pk=d.pk)
 
 
+def _pin(raw):
+    """A tapped point from the 3D view, checked: six finite numbers and a
+    version number, or None (Avi, 2026-10-29: "mark a part of the 3D view
+    to tell the chat to do something here")."""
+    import json
+    import math
+
+    if not raw:
+        return None
+    try:
+        data = json.loads(raw)
+        pin = {k: round(float(data[k]), 2) for k in ("x", "y", "z", "nx", "ny", "nz")}
+        pin["version"] = int(data.get("version") or 0)
+    except (ValueError, TypeError, KeyError):
+        return None
+    if not all(math.isfinite(v) and abs(v) < 1e5 for v in pin.values()):
+        return None
+    return pin
+
+
 def _message_json(m):
     return {
         "id": m.pk, "role": m.role, "state": m.state, "text": m.text, "assumptions": m.assumptions,
         "step": m.step, "trail": m.trail, "seconds": int((timezone.now() - m.created_at).total_seconds()),
         "version": m.version.number if m.version else None,
         "print": m.version.print_summary if m.version else "",
+        "pin": bool(m.pin),
         "pictures": [f"/design3d/files/{p.image.name}" for p in m.pictures.all()],
     }
 
@@ -253,11 +274,40 @@ def edit(request, pk):
         d.shared_at = timezone.now() if d.is_shared else None
         d.save(update_fields=["is_shared", "shared_at", "updated_at"])
         flash.success(request, "Shared with the people in design3d." if d.is_shared else "Private again.")
+        if request.POST.get("next") == "done":
+            return redirect("design3d:done", pk=d.pk)
     elif action == "delete":
         d.delete()
         flash.success(request, "The design was deleted.")
         return redirect("design3d:designs")
     return redirect("design3d:design", pk=d.pk)
+
+
+@access.inside
+def done(request, pk):
+    """Avi, 2026-10-29: "Done" beside the chat input opens the finished part
+    with what to do with it: download, share, send, and later order a print."""
+    d = _mine(request, pk)
+    v = jobs.checks_for(d.current)
+    if v is None:
+        return redirect("design3d:design", pk=d.pk)
+    return render(request, "design3d/done.html", {"d": d, "v": v, "section": "mine"})
+
+
+@require_POST
+@access.inside
+def send_files(request, pk):
+    """The current part's STL and code to the person's own email."""
+    d = _mine(request, pk)
+    if d.current is None:
+        raise Http404
+    if not request.user.email:
+        flash.error(request, "Your account has no email address.")
+    elif mail.send_files(d, request.user.email):
+        flash.success(request, f"Sent to {request.user.email}.")
+    else:
+        flash.error(request, "The email could not be sent. Try again in a minute.")
+    return redirect("design3d:done", pk=d.pk)
 
 
 @require_POST
@@ -272,11 +322,40 @@ def email_chat(request, pk):
     d = _mine(request, pk)
     if not request.user.email:
         flash.error(request, "Your account has no email address.")
-    elif mail.email_chat(d, request.user.email):
+    elif mail.email_chat(d, request.user.email, request.build_absolute_uri("/").rstrip("/")):
         flash.success(request, f"Sent to {request.user.email}.")
     else:
         flash.error(request, "The email could not be sent. Try again in a minute.")
     return redirect("design3d:design", pk=d.pk)
+
+
+def export(request, token):
+    """The page a chat email links to: the chat, every picture sent and every
+    version's preview, as one page, for a day. No sign-in: the signed link is
+    the key, and only the admin's own designs are ever mailed (REQ-D3.46)."""
+    import base64
+
+    d = mail.export_design(token)
+    if d is None:
+        raise Http404
+
+    def data_uri(field, kind):
+        try:
+            with field.open("rb") as fh:
+                return f"data:{kind};base64," + base64.b64encode(fh.read()).decode()
+        except (OSError, ValueError):
+            return ""
+
+    pictures = [(f"msg{m.pk}-{n}.jpg", data_uri(p.image, "image/jpeg"))
+                for m in d.messages.prefetch_related("pictures") for n, p in enumerate(m.pictures.all(), 1)]
+    previews = [(f"v{v.number}.png", data_uri(v.preview, "image/png"))
+                for v in d.versions.filter(status=Version.READY).order_by("number") if v.preview]
+    response = render(request, "design3d/export.html", {
+        "d": d, "text": mail.chat_text(d), "pictures": pictures, "previews": previews,
+        "versions": d.versions.order_by("number")})
+    response["X-Robots-Tag"] = "noindex"
+    response["Cache-Control"] = "private, no-store"
+    return response
 
 
 @access.inside

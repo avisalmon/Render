@@ -392,3 +392,13 @@ def test_each_door_asks_the_registry_rather_than_repeating_it():
         body = re.search(rf"def {name}\(.*?\n(?=\n\ndef |\n\n# )", src, re.S)
         assert body, f"{name} not found in {path}"
         assert "portal" in body.group(0), f"{path}:{name} decides for itself"
+
+
+def test_design3d_and_bkm_have_cards_on_the_main_page(people, client):
+    """Avi, 2026-10-29: both apps as cards on babook's main page. Their own
+    doors still decide what a person sees inside (design3d asks to join)."""
+    for who in ("stranger", "relative", "owner", "staff"):
+        assert {"design3d", "bkm"} <= set(_slugs(people[who])), who
+    client.force_login(people["stranger"])
+    html = client.get("/babook/").content.decode()
+    assert 'href="/design3d/" class="app-card"' in html and 'href="/bkm/" class="app-card"' in html

@@ -1,0 +1,58 @@
+{% extends "design3d/base.html" %}
+{% load static %}
+{% block title %}{{ d.title }}: done · design3d{% endblock %}
+{% block head %}{% include "design3d/_importmap.html" %}{% endblock %}
+{% block content %}
+{# Avi, 2026-10-29: "Done" opens the finished part and what to do with it. #}
+<div class="d3-done-page">
+  <div class="d3-head">
+    <div>
+      <h1 class="d3-h1">{{ d.title }}</h1>
+      <p class="d3-small d3-muted d3-mono">Version {{ v.number }}{% if v.size_mm %} · {{ v.size_mm }} mm{% endif %}{% if v.print_summary %} · <span class="{% if v.warnings %}d3-warn{% else %}d3-ok{% endif %}">{{ v.print_summary }}</span>{% endif %}</p>
+    </div>
+    <a class="d3-btn d3-btn-small d3-btn-quiet" href="{% url 'design3d:design' d.pk %}">Back to the chat</a>
+  </div>
+  <div class="d3-done-grid">
+    <div class="d3-view d3-bedbg" id="d3-view" data-stl="/design3d/files/{{ v.stl.name }}">
+      <span class="d3-layers"></span>
+      <span class="d3-measure-label d3-mono" id="d3-measure-label" hidden></span>
+    </div>
+    <div class="d3-done-acts">
+      <section>
+        <h2 class="d3-h2">Print check</h2>
+        <div class="d3-checks" id="d3-checks">{% include "design3d/_checks.html" with checks=v.checks %}</div>
+        {% if v.warnings %}<p class="d3-small d3-muted">Use Fix it in the chat: <a href="{% url 'design3d:design' d.pk %}">back to the chat</a>.</p>{% endif %}
+      </section>
+      <section>
+        <h2 class="d3-h2">Download</h2>
+        <div class="d3-row">
+          <a class="d3-btn" id="d3-done-stl" href="{% url 'design3d:download' d.pk v.number 'stl' %}">Download STL</a>
+          <a class="d3-btn d3-btn-quiet" href="{% url 'design3d:download' d.pk v.number 'scad' %}">OpenSCAD file</a>
+        </div>
+      </section>
+      <section>
+        <h2 class="d3-h2">Send</h2>
+        <form method="post" action="{% url 'design3d:send_files' d.pk %}">{% csrf_token %}
+          <button class="d3-btn d3-btn-quiet" id="d3-done-send">Email me the files</button></form>
+        <p class="d3-small d3-muted">The STL and the OpenSCAD file, to {{ request.user.email }}.</p>
+      </section>
+      <section>
+        <h2 class="d3-h2">Share</h2>
+        <form method="post" action="{% url 'design3d:edit' d.pk %}">{% csrf_token %}
+          <input type="hidden" name="action" value="share"><input type="hidden" name="next" value="done">
+          <input type="hidden" name="shared" value="{% if d.is_shared %}0{% else %}1{% endif %}">
+          <button class="d3-btn d3-btn-quiet" id="d3-done-share">{% if d.is_shared %}Stop sharing{% else %}Share with people in design3d{% endif %}</button></form>
+        <p class="d3-small d3-muted">Only the part is shared: not the chat, not your pictures.</p>
+      </section>
+      <section>
+        <h2 class="d3-h2">Order a print</h2>
+        <button class="d3-btn d3-btn-quiet" disabled aria-disabled="true">Coming soon</button>
+        <p class="d3-small d3-muted">Soon you will be able to have it printed and delivered.</p>
+      </section>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script type="module" src="{% static 'design3d/viewer.js' %}"></script>
+{% endblock %}

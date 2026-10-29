@@ -92,12 +92,42 @@ def chat_text(design):
     return "\n".join(out)
 
 
-def email_chat(design, to):
+EXPORT_SALT = "design3d-export"
+EXPORT_HOURS = 24
+
+
+def export_token(design):
+    from django.core import signing
+
+    return signing.dumps({"d": design.pk}, salt=EXPORT_SALT)
+
+
+def export_design(token):
+    """The design a link points to, or None when it is wrong or older than a day."""
+    from django.core import signing
+
+    from .models import Design
+
+    try:
+        data = signing.loads(token, salt=EXPORT_SALT, max_age=EXPORT_HOURS * 3600)
+    except signing.BadSignature:
+        return None
+    return Design.objects.filter(pk=data.get("d")).first()
+
+
+def email_chat(design, to, base_url="https://babook.co.il"):
     """Send the chat to `to` with the pictures, every version's code, the
-    previews and the current STL. True when the backend took it."""
+    previews and the current STL. True when the backend took it.
+
+    The body also carries every version's code and a private link, good for
+    a day, to a page with the pictures: Claude reads the mail through a
+    Gmail connection that cannot open attachments (Avi, 2026-10-29)."""
     from django.core.mail import EmailMessage
 
     body = chat_text(design)
+    body += f"\n\nPictures and previews, for a day: {base_url}/design3d/x/{export_token(design)}/\n"
+    for v in design.versions.order_by("number"):
+        body += f"\n----- v{v.number}.scad -----\n{v.code}\n"
     msg = EmailMessage(f"design3d chat #{design.pk}: {design.title}", body, settings.DEFAULT_FROM_EMAIL, [to])
     used, skipped = 0, []
 
@@ -138,4 +168,28 @@ def email_chat(design, to):
         return bool(msg.send())
     except Exception:
         log.exception("design3d: emailing chat %s failed", design.pk)
+        return False
+
+
+def send_files(design, to):
+    """The current part's STL and OpenSCAD code to the owner's own address
+    (the Done page's Send). True when the backend took it."""
+    from django.core.mail import EmailMessage
+
+    v = design.current
+    body = (f"{design.title}, version {v.number}" + (f", {v.size_mm} mm" if v.size_mm else "") + ".\n\n"
+            "The STL is ready for your slicer; the .scad file opens in OpenSCAD.\n\n"
+            f"https://babook.co.il/design3d/d/{design.pk}/\n")
+    msg = EmailMessage(f"{design.title}: your design3d files", body, settings.DEFAULT_FROM_EMAIL, [to])
+    name = "".join(c if c.isalnum() else "-" for c in design.title.lower()).strip("-") or "part"
+    try:
+        with v.stl.open("rb") as fh:
+            msg.attach(f"{name}-v{v.number}.stl", fh.read(), "model/stl")
+    except (OSError, ValueError):
+        return False
+    msg.attach(f"{name}-v{v.number}.scad", v.code.encode("utf-8"), "text/plain")
+    try:
+        return bool(msg.send())
+    except Exception:
+        log.exception("design3d: sending the files of %s failed", design.pk)
         return False

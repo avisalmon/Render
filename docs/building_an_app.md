@@ -1310,3 +1310,13 @@ the engine evaluation found all three before anyone saw them (PM-72).
 **The rule.** A heuristic that judges a person's work runs over a corpus of
 real outputs first, and every alarm there is looked at. An uncertain
 finding is a note, not a warning.
+
+### 64. A hand-off is tested through its reader's channel
+
+design3d's chat email carried everything as attachments, and the reader it
+was built for (Claude, through a Gmail connection) could not open any of
+them (PM-74).
+
+**The rule.** Test a hand-off through the reader's own channel before calling
+it done. Write code with escape sequences with the file editor, not through a
+shell heredoc.

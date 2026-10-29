@@ -81,6 +81,7 @@
     } else {
       a.appendChild(el("span", "d3-msg-text", m.text || ""));
     }
+    if (m.pin) a.appendChild(el("span", "d3-pin-tag", "Point marked on the part"));
     if (m.assumptions && m.assumptions.length) {
       var ul = el("ul", "d3-assume");
       m.assumptions.forEach(function (t) { ul.appendChild(el("li", "", t)); });
@@ -133,7 +134,7 @@
     if (!v || v.status !== "ready") return;
     if (window.d3View && v.stl) window.d3View.load(v.stl);
     var size = document.getElementById("d3-size");
-    size.textContent = v.size + " mm";
+    size.textContent = v.size + " mm · grid 10 mm";
     size.hidden = !v.size;
     var list = document.getElementById("d3-slider-list");
     list.textContent = "";
@@ -160,6 +161,9 @@
     document.getElementById("d3-scad").href = box.dataset.scad.replace("/v/0/", "/v/" + v.number + "/");
     box.hidden = false;
     drawChecks(v.checks);
+    work.dataset.shown = v.number;  // a marked point names the version it is on
+    document.getElementById("d3-view-tools").hidden = false;
+    document.getElementById("d3-done").hidden = false;
     var share = document.getElementById("d3-share");
     if (share) { share.disabled = false; share.removeAttribute("title"); }
     var cont = document.getElementById("d3-continue");
@@ -288,6 +292,19 @@
     }
   });
 
+  // A marked point goes with the message, with a picture of the view
+  // showing the marker (D3.9).
+  function withPin(body) {
+    var pin = window.d3View && window.d3View.getPin();
+    if (!pin) return Promise.resolve(body);
+    body.append("pin", JSON.stringify(pin));
+    if (picked.length >= 4) return Promise.resolve(body);
+    return window.d3View.snapshot().then(function (blob) {
+      if (blob) body.append("pictures", blob, "marked-point.jpg");
+      return body;
+    });
+  }
+
   form.addEventListener("submit", function (e) {
     e.preventDefault();
     if (!text.value.trim() && !picked.length) return;
@@ -295,12 +312,15 @@
     body.append("text", text.value);
     picked.forEach(function (f) { body.append("pictures", f, f.name); });
     send.disabled = true;
-    fetch(form.action, { method: "POST", body: body, credentials: "same-origin",
-                         headers: { "X-CSRFToken": csrf(), "Accept": "application/json" } })
+    withPin(body).then(function (body) {
+      return fetch(form.action, { method: "POST", body: body, credentials: "same-origin",
+                                  headers: { "X-CSRFToken": csrf(), "Accept": "application/json" } });
+    })
       .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
       .then(function (res) {
         if (!res.ok) { alertLine(res.d.error || "Could not send. Try again."); send.disabled = false; return; }
         text.value = ""; text.style.height = ""; picked = []; showChosen();
+        if (window.d3View) { window.d3View.clearPin(); window.d3View.setMode(""); }
         poll();
       })
       .catch(function () { alertLine("Could not send. Check the connection and try again."); send.disabled = false; });
@@ -337,6 +357,34 @@
     var f = e.target.closest("[data-confirm]");
     if (f && !confirm(f.dataset.confirm)) e.preventDefault();
   });
+
+  /* ---------- the marked point, and the part pinned to the top ---------- */
+
+  var pinned = document.getElementById("d3-pinned");
+  document.addEventListener("d3:pin", function (e) {
+    pinned.hidden = !e.detail;
+    if (e.detail && !text.value) text.focus({ preventScroll: true });
+  });
+  document.getElementById("d3-unpin").addEventListener("click", function () {
+    if (window.d3View) window.d3View.clearPin();
+  });
+
+  var bar = document.querySelector(".d3-bar");
+  function barHeight() { document.documentElement.style.setProperty("--d3-bar-h", (bar ? bar.offsetHeight : 0) + "px"); }
+  if (bar && window.ResizeObserver) new ResizeObserver(barHeight).observe(bar);
+  barHeight();
+
+  var stick = document.getElementById("d3-stick");
+  function setStuck(on) {
+    work.classList.toggle("d3-unstuck", !on);
+    stick.setAttribute("aria-pressed", String(on));
+    stick.textContent = on ? "Pinned" : "Pin to top";
+    try { localStorage.setItem("design3d.stuck", on ? "1" : "0"); } catch (err) { /* private mode */ }
+  }
+  var stuckWas = "1";
+  try { stuckWas = localStorage.getItem("design3d.stuck") || "1"; } catch (err) { /* private mode */ }
+  setStuck(stuckWas !== "0");
+  stick.addEventListener("click", function () { setStuck(work.classList.contains("d3-unstuck")); });
 
   scrollDown();
   if (msgs.querySelector('[data-state="thinking"], [data-state="building"]')) poll();
