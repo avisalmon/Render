@@ -505,7 +505,7 @@ def attempt_file(request, attempt_id):
     Anyone else gets a 404 rather than a 403, because confirming that attempt
     number 91 exists is itself something a stranger has no business learning.
     """
-    from .access import is_program_manager, leader_of
+    from .access import is_program_manager, leader_entrance_attempts, leader_of
     from .models import EntranceAttempt, Student
     from .storage import file_response
 
@@ -518,8 +518,12 @@ def attempt_file(request, attempt_id):
 
     if not allowed and (mine := leader_of(request.user)):
         # The same boundary join every other leader screen uses: their students,
-        # and the query cannot reach anyone else's (REQ-M.22).
-        allowed = Student.objects.filter(user_id=owner_id, leader=mine).exists()
+        # and the query cannot reach anyone else's (REQ-M.22). REQ-M.208 adds the
+        # test-takers of their school who are nobody's yet, the ones they decide.
+        allowed = (
+            Student.objects.filter(user_id=owner_id, leader=mine).exists()
+            or leader_entrance_attempts(mine).filter(pk=attempt.pk).exists()
+        )
 
     if not allowed:
         raise Http404("not yours")
@@ -692,6 +696,97 @@ def staff_entrance(request):
             error=request.GET.get("error", ""),
         ),
     )
+
+
+def leader_entrance_rows(leader):
+    """REQ-M.208 - one row per person, their latest hand-in, waiting ones first."""
+    from . import entrance_review
+    from .access import leader_entrance_attempts
+    from .storage import is_picture
+
+    latest = {}
+    for attempt in (
+        leader_entrance_attempts(leader)
+        .select_related("member__user", "member__user__profile", "member__school")
+        .order_by("member_id", "-number")
+    ):
+        latest.setdefault(attempt.member_id, attempt)
+
+    rows = []
+    for attempt in latest.values():
+        rows.append({
+            "attempt": attempt,
+            "name": _display_name_of(attempt.member.user),
+            "school": attempt.member.school.name if attempt.member.school_id else "",
+            "state": entrance_review.attempt_state(attempt),
+            "picture": bool(attempt.model_file) and is_picture(attempt.model_file.name),
+        })
+    rows.sort(key=lambda r: (r["state"] != EntranceAttempt.WAITING, r["name"]))
+    return rows
+
+
+@login_required(login_url=LOGIN_URL)
+def leader_tests(request):
+    """REQ-M.208 - the leader's list of entrance hand-ins, and the decision.
+
+    Naomi, 2026-10-29: "שלמובילים יהיה כפתור בולט בעמוד הראשי ובו הם יוכלו לראות
+    את כל מי שביצע את מבחן הכניסה כולל את הקובץ הסופי שהתלמיד העלאה", beside each
+    one approve or not, and the student is told. A program manager looking as a
+    leader (REQ-M.207) reads it and cannot decide from here.
+    """
+    from .access import leader_schools
+    from .as_leader import acting_leader, viewed_leader
+
+    leader = acting_leader(request)
+    if leader is None:
+        from .access import candidate_of
+
+        if candidate_of(request.user):
+            return redirect("matazim:leader_entrance")
+        raise PermissionDenied
+
+    rows = leader_entrance_rows(leader)
+    return render(
+        request,
+        "matazim/leader_tests.html",
+        shell(
+            request,
+            "leader",
+            leader=leader,
+            rows=rows,
+            waiting=sum(1 for r in rows if r["state"] == EntranceAttempt.WAITING),
+            schools=leader_schools(leader),
+            looking=viewed_leader(request) is not None,
+            error=request.GET.get("error", ""),
+        ),
+    )
+
+
+@require_POST
+@login_required(login_url=LOGIN_URL)
+def leader_decide(request, attempt_id):
+    """REQ-M.208 - a leader approves a test-taker of their school, or does not."""
+    from . import entrance_review
+    from .access import leader_entrance_attempts, leader_of
+    from .as_leader import refuse_writes
+
+    refuse_writes(request)
+    leader = leader_of(request.user)
+    if leader is None:
+        raise PermissionDenied
+
+    attempt = get_object_or_404(
+        leader_entrance_attempts(leader).select_related("member__user"), pk=attempt_id
+    )
+    action = request.POST.get("action")
+    if action == "approve":
+        entrance_review.approve(attempt, request.user)
+    elif action == "return":
+        try:
+            entrance_review.return_attempt(attempt, request.user, request.POST.get("note"))
+        except ValueError:
+            return redirect(f"{reverse('matazim:leader_tests')}?error=note#attempt-{attempt.pk}")
+    return redirect("matazim:leader_tests")
 
 
 @require_POST

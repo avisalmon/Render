@@ -5083,3 +5083,28 @@ taking a student out or adding a class from inside the view is refused, since th
 look like the leader did it. She still does those as herself on the staff pages.
 
 **Tests.** `tests/test_spr_m_76.py`.
+
+## SPR-M.77: A leader sees who took the entrance test, and approves them or not  `DONE 2026-10-29`
+
+Naomi's mail of 29.10, 10:49 (spec C35): a prominent button for leaders on the main page,
+everyone who took the entrance test with the file they uploaded, and beside each one approve
+for the site or not; the students are told. Run under Avi's standing rule of 2026-10-16.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.77.1 | `access.leader_schools`, `access.leader_entrance_attempts`; `visible_entrance_attempts` uses it for a leader | REQ-M.208 | DONE |
+| F-M.77.2 | `/matazim/leader/tests/` (`leader_tests`) and `/matazim/leader/tests/<id>/decide/` (`leader_decide`), template `leader_tests.html` | REQ-M.208 | DONE |
+| F-M.77.3 | The button `mzLeaderTestsButton` with the count waiting, on the home page and on האזור שלי | REQ-M.208 | DONE |
+| F-M.77.4 | `attempt_file` opens for a leader whose test-taker it is | REQ-M.208 | DONE |
+| F-M.77.5 | `ENTRANCE_APPROVED` and `ENTRANCE_RETURNED` are mailed, not only a bell | REQ-M.208 | DONE |
+
+**How it was read.** Test first, then a leader (C14): somebody who took the test is nobody's
+student yet, so "all who took the test" for a leader means those who chose the leader's school
+when they signed up, plus the leader's own students. A leader's schools are their classes' and
+the school they chose themselves. This answers the question C30 asked back.
+
+**What the bot did not do.** Show a leader test-takers from other schools, or those who chose no
+school: they stay on the programme team's screen. Attach an approved student to the leader who
+approved them: the student still chooses a leader after approval, as C14 says.
+
+**Tests.** `tests/test_spr_m_77.py`.

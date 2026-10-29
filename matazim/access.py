@@ -312,10 +312,42 @@ def visible_entrance_attempts(user):
             Q(member__user_id__in=owned) | ~Q(member__user_id__in=claimed)
         )
     if leader := leader_of(user):
-        return base.filter(
-            member__user_id__in=Student.objects.filter(leader=leader).values("user_id")
-        )
+        return leader_entrance_attempts(leader)
     return base.none()
+
+
+def leader_schools(leader):
+    """REQ-M.208 - the schools a leader is at: their classes', and their own.
+
+    A leader on day one has no class yet, and the school they chose when they
+    signed up (REQ-M.195) is the only thing that says where they are.
+    """
+    names = set(leader.school_names)
+    profile = MemberProfile.objects.filter(user_id=leader.user_id).select_related("school").first()
+    if profile is not None and profile.school_id:
+        names.add(profile.school.name)
+    return sorted(names)
+
+
+def leader_entrance_attempts(leader):
+    """REQ-M.208, §4.4 - the entrance hand-ins a leader reads and decides.
+
+    Naomi, 2026-10-29: the leaders see everyone who took the entrance test, with
+    the file, and approve them or not. The test comes before joining a leader
+    (C14), so a test-taker is nobody's student yet. A leader reads their own
+    students' hand-ins and those of test-takers who are nobody's and chose the
+    leader's school when signing up. A test-taker from another school, or one who
+    chose no school, stays with the programme team (`visible_entrance_attempts`).
+    """
+    from .models import EntranceAttempt
+
+    own = Student.objects.filter(leader=leader).values("user_id")
+    claimed = Student.objects.filter(leader__isnull=False).values("user_id")
+    return EntranceAttempt.objects.filter(submitted_at__isnull=False).filter(
+        Q(member__user_id__in=own)
+        | (~Q(member__user_id__in=claimed) & Q(member__user__matazim_leader__isnull=True)
+           & Q(member__school__name__in=leader_schools(leader)))
+    )
 
 
 def visible_site_updates(user):

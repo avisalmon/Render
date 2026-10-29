@@ -45,6 +45,8 @@
       {% endif %}
     </div>
     <div class="mz-hello-actions">
+      {% comment %}REQ-M.208 - Naomi: a prominent button to everyone who took the entrance test.{% endcomment %}
+      <a class="mz-btn mz-btn-primary" id="mzLeaderTestsButton" href="{% url 'matazim:leader_tests' %}">מבחני הכניסה{% if tests_waiting %} <span class="mz-count">{{ tests_waiting }}</span>{% endif %}</a>
       {% if mine %}
         <a class="mz-btn mz-btn-primary" href="{% url 'matazim:roster' %}">המטצים שלי</a>
       {% endif %}

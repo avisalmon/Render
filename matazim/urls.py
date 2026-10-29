@@ -127,6 +127,8 @@ urlpatterns = [
     ),
     path("leader/", joining_views.leader_home, name="leader_home"),
     path("leader/guide/", guide_views.leader_guide, name="leader_guide"),
+    path("leader/tests/", entrance_views.leader_tests, name="leader_tests"),
+    path("leader/tests/<int:attempt_id>/decide/", entrance_views.leader_decide, name="leader_decide"),
     path("leader/test/", joining_views.leader_test_switch, name="leader_test_switch"),
     path("leader/confirm/<int:student_id>/", joining_views.leader_confirm, name="leader_confirm"),
     # The desk, once someone is standing at it (SPR-M.8).

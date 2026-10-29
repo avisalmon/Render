@@ -416,8 +416,18 @@ def leader_home(request):
                 _work_waiting(leader).select_related("student__user", "student__user__profile")
             ),
             mine=Student.objects.filter(leader=leader).select_related("user", "user__profile"),
+            # REQ-M.208 - the entrance hand-ins waiting on this leader's yes.
+            tests_waiting=tests_waiting(leader),
         ),
     )
+
+
+def tests_waiting(leader):
+    """REQ-M.208 - how many entrance hand-ins wait on this leader's decision."""
+    from .entrance_views import leader_entrance_rows
+    from .models import EntranceAttempt
+
+    return sum(1 for r in leader_entrance_rows(leader) if r["state"] == EntranceAttempt.WAITING)
 
 
 def _name_of(leader):

@@ -133,6 +133,12 @@
     {% endcomment %}
     {% include "matazim/_year_banner.html" %}
     <h1 class="mz-home-title">{% if certified %}מטצ{% else %}תהליך ההכשרה{% endif %}</h1>
+    {% if tests_leader %}
+      {% comment %}REQ-M.208 - Naomi: a prominent button on the main page, to everyone who took the entrance test.{% endcomment %}
+      <p class="mz-home-do" id="mzLeaderTestsButton">
+        <a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:leader_tests' %}">מבחני הכניסה של התלמידים{% if tests_waiting %} <span class="mz-count">{{ tests_waiting }} מחכים לאישור</span>{% endif %}</a>
+      </p>
+    {% endif %}
     <ul class="mz-tiles">
       {% if hero.kind == 'staff' and not previewing and not viewing_leader %}<li><a class="mz-tile mz-tile-role" href="{% url 'matazim:staff_home' %}">ניהול</a></li>{% endif %}
       {% if hero.kind == 'leader' and not previewing or viewing_leader %}<li><a class="mz-tile mz-tile-role" href="{% url 'matazim:leader_home' %}">האזור שלי</a></li>{% endif %}
