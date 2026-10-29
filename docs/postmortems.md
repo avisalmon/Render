@@ -17,6 +17,20 @@ Newest first.
 
 ---
 
+## PM-75 · 2026-10-29 · Sprint D3.10 end: a script that never ran
+
+**What happened.** The first attempt to add the invitation code was one long
+shell command with a Python heredoc inside; the shell could not match a quote
+and ran none of it. I checked, found nothing applied, and wrote the change as
+a script file instead. The new notice email also changed an older test's mail
+count, which the test caught.
+
+**Rule.** Nothing new beyond PM-74: large code changes go through files, not
+shell heredocs. Tests that count mail count the one subject they are about.
+
+Here: `docs/design3d/backlog.md` (D3.10)
+BKM: deferred - covered by lesson 75
+
 ## PM-74 · 2026-10-29 · The chat email I built for myself, I could not read
 
 **What happened.** D3.8's "Email me this chat" put the pictures, the code

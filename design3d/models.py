@@ -87,6 +87,51 @@ def preview_path(instance, filename):
     return f"previews/{instance.design_id}/v{instance.number}-{timezone.now():%Y%m%d%H%M%S}.png"
 
 
+def _invite_token():
+    import secrets
+
+    return secrets.token_urlsafe(32)
+
+
+def _invite_expiry():
+    from datetime import timedelta
+
+    return timezone.now() + timedelta(days=14)
+
+
+class Invite(models.Model):
+    """Avi invites one person by email (2026-10-29). The link carries a
+    one-time token: whoever opens it first, signed in, is let in and the
+    token is burned. That same person may open it again; nobody else can
+    (methodology 55). Unused, it ends after 14 days or when Avi revokes it."""
+
+    email = models.EmailField()
+    name = models.CharField(max_length=80, blank=True)
+    token = models.CharField(max_length=64, unique=True, default=_invite_token)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL, related_name="+")
+    created_at = models.DateTimeField(default=timezone.now)
+    expires_at = models.DateTimeField(default=_invite_expiry)
+    used_at = models.DateTimeField(null=True, blank=True)
+    used_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    revoked_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Invite for {self.email} ({self.status})"
+
+    @property
+    def status(self):
+        if self.used_at:
+            return "used"
+        if self.revoked_at:
+            return "revoked"
+        if self.expires_at <= timezone.now():
+            return "expired"
+        return "open"
+
+
 class Design(models.Model):
     """One project: its own chat, pictures and versions (REQ-D3.10)."""
 

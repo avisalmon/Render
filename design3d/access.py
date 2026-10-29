@@ -30,6 +30,17 @@ def maker_of(user):
     return maker
 
 
+def let_in(maker, by, request=None):
+    """The one way a person is let in: approved by Avi, or by an invite he
+    sent. It also sends the welcome email (methodology 55: every door
+    mails). Returns whether the email went."""
+    from . import mail
+
+    maker.status, maker.decided_at, maker.decided_by = Maker.APPROVED, timezone.now(), by
+    maker.save(update_fields=["status", "decided_at", "decided_by"])
+    return mail.welcome(maker, request)
+
+
 def can_enter(user):
     if not getattr(user, "is_authenticated", False):
         return False

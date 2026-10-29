@@ -154,3 +154,21 @@ decline), `designs` (yours; shared ones read-only for others), `messages`
 
 1. Shared designs never show the pictures or the chat (Avi, 2026-10-28).
 2. A declined person may ask again; their row goes back to `pending`.
+
+## Invite (added 2026-10-29, at Avi's request)
+
+One invitation to one person. Its token is the key in the link; the first
+person who opens it signed in is let in and the token is burned
+(`used_at`, `used_by`). Methodology 55: that person may come back.
+
+| Field | Type | Meaning |
+|---|---|---|
+| email | email | who it was sent to |
+| name | char 80, blank | for the email's greeting |
+| token | char 64, unique | the one-time key (secrets.token_urlsafe) |
+| created_by | FK User, null | who sent it (Avi) |
+| created_at, expires_at | datetime | sent, and 14 days later it ends |
+| used_at, used_by | datetime, FK User, null | when and by whom it was used |
+| revoked_at | datetime, null | Avi withdrew it |
+
+`status` (a property): open, used, revoked or expired.

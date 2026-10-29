@@ -88,3 +88,11 @@ part, the remote's length never asked, the changes never looked at, and
 50 x 30 mm"): both models built at once and asked for the length. terra
 $0.012, 29 s; sol $0.019, 37 s. Both made a rocket-shaped back plate with a
 pocket; sol's words were richer, the shape no better.
+
+## D3.10 · Requests mail Avi; invitations (2026-10-29)
+
+- [x] `mail.request_notice`: asking, and asking again after a decline, emails every admin
+- [x] `Invite` model, `access.let_in` (the one way in, which also mails the welcome), `views.invited`, the People screen form and list, withdraw
+- [x] The token is burned by a conditional update, so two people opening it at once cannot both get in
+- [x] API: /design3d/api/invites/ (admin only; creating one sends the email)
+- [x] Tests: the notice once per request; signed out burns nothing; first person in with one welcome email; the same person again; a second person refused; withdrawn and expired refused; only Avi invites
