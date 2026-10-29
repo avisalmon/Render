@@ -108,6 +108,8 @@ urlpatterns = [
     path("join-leader/", joining_views.join_leader, name="join_leader"),
     path("school/", views.set_school, name="set_school"),
     path("preview/<str:stage>/", views.preview, name="preview"),
+    # REQ-M.207 - a program manager looks at the site as one of her leaders.
+    path("as-leader/", views.as_leader, name="as_leader"),
     path("joined/", joining_views.joined, name="joined"),
     path("apply/", joining_views.apply, name="apply"),
     path("leaders/", joining_views.leader_entrance, name="leader_entrance"),

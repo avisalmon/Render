@@ -365,7 +365,10 @@ def leader_home(request):
     a later sprint; without this the open door has no exit, because nobody can
     accept anyone.
     """
-    leader = leader_of(request.user)
+    from .as_leader import acting_leader
+
+    # REQ-M.207 - or the leader a program manager is looking at.
+    leader = acting_leader(request)
     if leader is None:
         # SPR-M.44 — a candidate is not a trespasser.
         #

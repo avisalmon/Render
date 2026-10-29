@@ -289,6 +289,12 @@ def _display_name_of(user):
     return _display_name(user)
 
 
+def _as_leaders(user):
+    from .as_leader import leaders_to_view
+
+    return list(leaders_to_view(user))
+
+
 @login_required(login_url=LOGIN_URL)
 def staff_home(request):
     """REQ-M.69 — one door, so the nav does not grow an item per tool."""
@@ -336,6 +342,8 @@ def staff_home(request):
             year=year_context(request.user),
             patrol=patrol_by_school(visible_students(request.user)),
             dashboard=dashboard,
+            # REQ-M.207 - whom she may look through.
+            as_leaders=_as_leaders(request.user),
             manager_name=_display_name_of(request.user),
             # REQ-M.87 — standing, so nobody has to remember to go looking.
             overdue=overdue_count(),
