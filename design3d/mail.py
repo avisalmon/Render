@@ -193,3 +193,49 @@ def send_files(design, to):
     except Exception:
         log.exception("design3d: sending the files of %s failed", design.pk)
         return False
+
+
+# ---------- asking and inviting (Avi, 2026-10-29) ----------
+
+def _admins():
+    from django.contrib.auth import get_user_model
+
+    from .models import Maker
+
+    emails = set(get_user_model().objects.filter(is_superuser=True, is_active=True).exclude(email="").values_list("email", flat=True))
+    emails |= set(Maker.objects.filter(is_admin=True).exclude(user__email="").values_list("user__email", flat=True))
+    return sorted(emails)
+
+
+def request_notice(maker, request=None):
+    """Tell Avi that someone asked to come in. True when the backend took it."""
+    to = _admins()
+    if not to:
+        return False
+    link = request.build_absolute_uri("/design3d/people/") if request else "https://babook.co.il/design3d/people/"
+    body = (f"{maker.display_name} ({maker.user.email or 'no email'}) asked to join design3d.\n\n"
+            + (f"Why: {maker.reason}\n\n" if maker.reason else "")
+            + f"Approve or decline: {link}\n")
+    try:
+        return bool(send_mail(f"design3d: {maker.display_name} asks to join", body, settings.DEFAULT_FROM_EMAIL, to))
+    except Exception:
+        log.exception("design3d: the request notice for %s failed", maker.pk)
+        return False
+
+
+def invite(inv, request=None):
+    """The invitation: one link with a one-time key. True when the backend took it."""
+    link = (request.build_absolute_uri(f"/design3d/i/{inv.token}/") if request
+            else f"https://babook.co.il/design3d/i/{inv.token}/")
+    hello = f"Hi {inv.name},\n\n" if inv.name else "Hi,\n\n"
+    body = (hello
+            + "Avi Salmon invites you to design3d: describe a part, send a sketch or a photo, and get a printable STL.\n\n"
+            + f"Your invitation: {link}\n\n"
+            + "Open it and sign in (Google, or an email and password). The link works once, for one person, "
+            + f"and ends on {timezone.localtime(inv.expires_at):%d %B %Y}.\n\n"
+            + "Avi Salmon")
+    try:
+        return bool(send_mail("You are invited to design3d", body, settings.DEFAULT_FROM_EMAIL, [inv.email]))
+    except Exception:
+        log.exception("design3d: the invite to %s failed", inv.email)
+        return False

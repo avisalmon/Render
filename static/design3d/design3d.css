@@ -233,3 +233,8 @@ img { max-width: 100%; height: auto; display: block; }
   .d3-done-grid { grid-template-columns: minmax(0, 1fr) 340px; align-items: start; }
   .d3-done-page .d3-view { height: calc(100vh - 220px); }
 }
+
+/* Invitations on the People screen (Avi, 2026-10-29) */
+.d3-invite-form { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; max-width: 520px; }
+.d3-invite-form input { width: 100%; min-width: 0; box-sizing: border-box; }
+.d3-invite-list { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 8px; }

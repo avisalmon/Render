@@ -4,6 +4,30 @@
 {# REQ-D3.3: requests, who is in, what each person spends, their limit. #}
 <div class="d3-head"><div><h1 class="d3-h1">People</h1><p class="d3-small d3-muted">Default limit ${{ default_limit|floatformat:2 }} a day. Admins have none.</p><p class="d3-small d3-muted d3-mono" id="d3-engine">Engine: OpenSCAD {{ engine.version }}{% if engine.manifold %} (Manifold){% endif %}{% if engine.n %} · last {{ engine.n }} builds: {{ engine.failed }} failed{% if engine.avg is not None %}, {{ engine.avg|floatformat:1 }} s average, {{ engine.max|floatformat:1 }} s slowest{% endif %}{% endif %}</p></div></div>
 <div class="d3-people">
+  {# Invitations (Avi, 2026-10-29): one link, one person, burned when used. #}
+  <section id="d3-invites">
+    <h2>Invite someone</h2>
+    <form method="post" class="d3-form d3-invite-form">{% csrf_token %}<input type="hidden" name="action" value="invite">
+      <label class="d3-field"><span class="d3-small">Email</span><input type="email" name="email" required autocomplete="off" id="d3-invite-email"></label>
+      <label class="d3-field"><span class="d3-small">Name (for the email, optional)</span><input name="name" maxlength="80" id="d3-invite-name"></label>
+      <button class="d3-btn d3-btn-small" id="d3-invite-send">Send the invitation</button>
+    </form>
+    <p class="d3-small d3-muted">They get a link that lets one person in, once, within 14 days.</p>
+    {% if invites %}
+      <ul class="d3-invite-list">
+        {% for i in invites %}
+          <li class="d3-person">
+            <div class="d3-person-who"><b>{{ i.name|default:i.email }}</b>
+              <span class="d3-small d3-muted d3-mono">{{ i.email }} · sent {{ i.created_at|date:"j M" }} ·
+                {% if i.status == "used" %}used by {{ i.used_by.email|default:"someone" }} {{ i.used_at|date:"j M" }}{% elif i.status == "open" %}open until {{ i.expires_at|date:"j M" }}{% else %}{{ i.status }}{% endif %}</span></div>
+            {% if i.status == "open" %}
+              <form method="post">{% csrf_token %}<input type="hidden" name="invite" value="{{ i.pk }}"><button class="d3-btn d3-btn-small d3-btn-quiet" name="action" value="revoke">Withdraw</button></form>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </section>
   <section id="d3-pending">
     <h2>Waiting for you</h2>
     {% for m in groups.pending %}

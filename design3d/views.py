@@ -14,7 +14,7 @@ from django.views.decorators.http import require_POST
 
 from . import access, jobs, llm, mail, params
 from .forms import AskForm
-from .models import PRIVATE, Design, Maker, Message, Picture, Version
+from .models import PRIVATE, Design, Invite, Maker, Message, Picture, Version
 
 MAX_PICTURES = 4
 
@@ -39,12 +39,41 @@ def ask(request):
     reason = form.cleaned_data["reason"] if form.is_valid() else ""
     maker = access.maker_of(request.user)
     if maker is None:
-        Maker.objects.create(user=request.user, display_name=access.display_name_for(request.user), reason=reason)
+        maker = Maker.objects.create(user=request.user, display_name=access.display_name_for(request.user), reason=reason)
+        mail.request_notice(maker, request)
     elif maker.status == Maker.DECLINED:
         maker.status, maker.reason, maker.requested_at = Maker.PENDING, reason or maker.reason, timezone.now()
         maker.decided_at = maker.decided_by = None
         maker.save(update_fields=["status", "reason", "requested_at", "decided_at", "decided_by"])
+        mail.request_notice(maker, request)
     return redirect("design3d:door")
+
+
+def invited(request, token):
+    """An invitation link (Avi, 2026-10-29): one key, one person. The first
+    person to open it signed in is let in and the key is burned; that person
+    opening it again just comes in (ownership before validity, methodology
+    55); anyone else, or after 14 days or a revoke, is refused."""
+    inv = Invite.objects.filter(token=token).first()
+    if inv is None:
+        raise Http404
+    if not request.user.is_authenticated:
+        return render(request, "design3d/invited.html", {"inv": inv, "state": "sign_in", "next": request.path})
+    if inv.used_by_id == request.user.pk:
+        return redirect("design3d:designs")
+    if inv.status != "open":
+        return render(request, "design3d/invited.html", {"inv": inv, "state": inv.status}, status=410)
+    now = timezone.now()
+    taken = Invite.objects.filter(pk=inv.pk, used_at__isnull=True, revoked_at__isnull=True,
+                                  expires_at__gt=now).update(used_at=now, used_by=request.user)
+    if not taken:  # someone else took it a moment ago
+        return render(request, "design3d/invited.html", {"inv": inv, "state": "used"}, status=410)
+    maker = access.maker_of(request.user) or Maker.objects.create(
+        user=request.user, display_name=access.display_name_for(request.user), reason=f"Invited ({inv.email})")
+    if maker.status != Maker.APPROVED:
+        access.let_in(maker, inv.created_by, request)
+    flash.success(request, "Welcome to design3d.")
+    return redirect("design3d:designs")
 
 
 # ---------------------------------------------------------------- designs
@@ -399,15 +428,43 @@ def shared_design(request, pk):
 # ---------------------------------------------------------------- Avi's people screen
 
 
+def _invites(request):
+    """Avi's invitations: send one, or revoke one not used yet."""
+    from django.core.exceptions import ValidationError
+    from django.core.validators import validate_email
+
+    if request.POST["action"] == "revoke":
+        Invite.objects.filter(pk=request.POST.get("invite"), used_at__isnull=True).update(revoked_at=timezone.now())
+        flash.success(request, "The invitation no longer works.")
+        return redirect("design3d:people")
+    email = (request.POST.get("email") or "").strip().lower()
+    try:
+        validate_email(email)
+    except ValidationError:
+        flash.error(request, "That is not an email address.")
+        return redirect("design3d:people")
+    inv = Invite.objects.create(email=email, name=(request.POST.get("name") or "").strip()[:80], created_by=request.user)
+    if mail.invite(inv, request):
+        flash.success(request, f"Invitation sent to {email}.")
+    else:
+        flash.error(request, "The invitation was made but the email did not go. Send this link yourself: "
+                             + request.build_absolute_uri("/design3d/i/" + inv.token + "/"))
+    return redirect("design3d:people")
+
+
 @ensure_csrf_cookie
 @access.admin_only
 def people(request):
     """REQ-D3.3"""
+    if request.method == "POST" and request.POST.get("action") in ("invite", "revoke"):
+        return _invites(request)
     if request.method == "POST":
         m = get_object_or_404(Maker, pk=request.POST.get("maker"))
         action = request.POST.get("action")
         if action == "approve":
-            m.status = Maker.APPROVED
+            sent = access.let_in(m, request.user, request)
+            flash.success(request, f"{m.display_name} is in." + (" The welcome email was sent." if sent else ""))
+            return redirect("design3d:people")
         elif action in ("decline", "withdraw"):
             m.status = Maker.DECLINED
         elif action == "limit":
@@ -421,9 +478,6 @@ def people(request):
             return redirect("design3d:people")
         m.decided_at, m.decided_by = timezone.now(), request.user
         m.save(update_fields=["status", "decided_at", "decided_by"])
-        if m.status == Maker.APPROVED:
-            sent = mail.welcome(m, request)
-            flash.success(request, f"{m.display_name} is in." + (" The welcome email was sent." if sent else ""))
         return redirect("design3d:people")
     start = timezone.localtime().replace(hour=0, minute=0, second=0, microsecond=0)
     makers = Maker.objects.select_related("user").annotate(
@@ -443,7 +497,8 @@ def people(request):
     engine = {"version": builder.engine() or "not installed", "manifold": builder.manifold(),
               "avg": times["avg"], "max": times["max"], "n": len(recent),
               "failed": sum(1 for v in recent if v.status == Version.FAILED)}
-    return render(request, "design3d/people.html", {"groups": groups, "section": "people", "engine": engine,
+    invites = Invite.objects.select_related("used_by")[:30]
+    return render(request, "design3d/people.html", {"groups": groups, "section": "people", "engine": engine, "invites": invites,
                                                     "default_limit": settings.DESIGN3D_DAILY_LIMIT_USD})
 
 

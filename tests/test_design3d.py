@@ -102,7 +102,8 @@ def test_the_door_sign_in_ask_wait_approve_and_ask_again(client, db):
     client.force_login(avi)
     client.post("/design3d/people/", {"maker": m.pk, "action": "approve"})
     client.post("/design3d/people/", {"maker": m.pk, "action": "approve"})
-    assert len(mail.outbox) == 1 and "/design3d/" in mail.outbox[0].body, "the welcome goes once"
+    welcome = [x for x in mail.outbox if x.subject == "You are in design3d"]
+    assert len(welcome) == 1 and "/design3d/" in welcome[0].body, "the welcome goes once"
     client.force_login(noa)
     assert client.get("/design3d/").status_code == 302
     assert client.get("/design3d/designs/").status_code == 200
@@ -766,3 +767,91 @@ def test_the_done_page_downloads_sends_shares_and_promises_a_print(client, world
     client.force_login(world["eli"])
     assert client.get(f"/design3d/d/{d.pk}/done/").status_code == 404, "another person's part"
     assert client.post(f"/design3d/d/{d.pk}/send-files/").status_code == 404
+
+
+# ---------- asking tells Avi; invitations (Avi, 2026-10-29) ----------
+
+def test_asking_to_join_emails_avi_once_per_request(client, world):
+    mail.outbox.clear()
+    bob = _user("bob@example.com", first="Bob")
+    client.force_login(bob)
+    client.post("/design3d/ask/", {"reason": "I print parts for my class"})
+    notice = [m for m in mail.outbox if "asks to join" in m.subject]
+    assert len(notice) == 1 and notice[0].to == ["avi@example.com"]
+    assert "I print parts for my class" in notice[0].body and "/design3d/people/" in notice[0].body
+    client.post("/design3d/ask/", {"reason": "again"})
+    assert len([m for m in mail.outbox if "asks to join" in m.subject]) == 1, "still waiting: no second mail"
+    Maker.objects.filter(user=bob).update(status=Maker.DECLINED)
+    client.post("/design3d/ask/", {"reason": "please"})
+    assert len([m for m in mail.outbox if "asks to join" in m.subject]) == 2, "asking again after a decline mails again"
+
+
+def _invite(client, world, email="new@example.com", name="Noa"):
+    from design3d.models import Invite
+
+    client.force_login(world["avi"])
+    mail.outbox.clear()
+    client.post("/design3d/people/", {"action": "invite", "email": email, "name": name})
+    return Invite.objects.get(email=email)
+
+
+def test_an_invitation_lets_one_person_in_once(client, world):
+    from design3d.models import Invite
+
+    inv = _invite(client, world)
+    sent = [m for m in mail.outbox if m.subject == "You are invited to design3d"]
+    assert len(sent) == 1 and sent[0].to == ["new@example.com"] and f"/design3d/i/{inv.token}/" in sent[0].body
+    assert "Hi Noa" in sent[0].body
+    people = client.get("/design3d/people/").content.decode()
+    assert "new@example.com" in people and "open until" in people
+    link = f"/design3d/i/{inv.token}/"
+
+    client.logout()
+    page = client.get(link)
+    assert page.status_code == 200 and "Sign in to accept" in page.content.decode()
+    assert Invite.objects.get(pk=inv.pk).status == "open", "looking signed out burns nothing"
+
+    noa = _user("noa@example.com", first="Noa")
+    client.force_login(noa)
+    mail.outbox.clear()
+    r = client.get(link)
+    assert r.status_code == 302 and r["Location"] == "/design3d/designs/"
+    inv.refresh_from_db()
+    assert inv.status == "used" and inv.used_by == noa
+    assert Maker.objects.get(user=noa).status == Maker.APPROVED
+    assert [m.subject for m in mail.outbox] == ["You are in design3d"], "let in through the one function that mails"
+    assert client.get(link)["Location"] == "/design3d/designs/", "the same person may open it again"
+
+    eli = _user("eli2@example.com", first="Eli")
+    client.force_login(eli)
+    refused = client.get(link)
+    assert refused.status_code == 410 and "already used" in refused.content.decode()
+    assert not Maker.objects.filter(user=eli, status=Maker.APPROVED).exists()
+    assert client.get("/design3d/i/not-a-token/").status_code == 404
+
+
+def test_a_withdrawn_or_old_invitation_lets_nobody_in(client, world):
+    from design3d.models import Invite
+
+    inv = _invite(client, world)
+    client.post("/design3d/people/", {"action": "revoke", "invite": inv.pk})
+    assert Invite.objects.get(pk=inv.pk).status == "revoked"
+    sam = _user("sam@example.com", first="Sam")
+    client.force_login(sam)
+    page = client.get(f"/design3d/i/{inv.token}/")
+    assert page.status_code == 410 and "withdrew it" in page.content.decode()
+
+    old = _invite(client, world, email="old@example.com")
+    Invite.objects.filter(pk=old.pk).update(expires_at=timezone.now() - timedelta(minutes=1))
+    client.force_login(sam)
+    page = client.get(f"/design3d/i/{old.token}/")
+    assert page.status_code == 410 and "14 days" in page.content.decode()
+    assert not Maker.objects.filter(user=sam, status=Maker.APPROVED).exists()
+
+
+def test_only_avi_invites(client, world):
+    client.force_login(world["dana"])
+    assert client.post("/design3d/people/", {"action": "invite", "email": "x@example.com"}).status_code == 404
+    assert client.get("/design3d/api/invites/").status_code in (401, 403)
+    client.force_login(world["avi"])
+    assert client.get("/design3d/api/invites/").status_code == 200

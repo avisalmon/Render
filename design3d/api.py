@@ -9,7 +9,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
 from . import access
-from .models import Design, Maker, Message, Parameter, Picture, Version
+from .models import Design, Invite, Maker, Message, Parameter, Picture, Version
 
 
 class Inside(permissions.BasePermission):
@@ -179,6 +179,35 @@ class ParameterViewSet(_OwnedReadOnly):
     design_path = "version__design"
 
 
+class Admin(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return access.is_admin(request.user)
+
+
+class InviteSerializer(serializers.ModelSerializer):
+    status = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = Invite
+        fields = ["id", "email", "name", "status", "created_at", "expires_at", "used_at", "used_by", "revoked_at"]
+        read_only_fields = ["id", "status", "created_at", "expires_at", "used_at", "used_by"]
+
+
+class InviteViewSet(viewsets.ModelViewSet):
+    """Avi's invitations (2026-10-29). Admin only. Creating one sends the
+    email; the token itself never leaves the server except in that email."""
+
+    serializer_class = InviteSerializer
+    permission_classes = [Admin]
+    queryset = Invite.objects.all()
+
+    def perform_create(self, serializer):
+        from . import mail
+
+        inv = serializer.save(created_by=self.request.user)
+        mail.invite(inv, self.request)
+
+
 ROUTES = [
     ("makers", MakerViewSet, Maker),
     ("designs", DesignViewSet, Design),
@@ -186,4 +215,5 @@ ROUTES = [
     ("pictures", PictureViewSet, Picture),
     ("versions", VersionViewSet, Version),
     ("parameters", ParameterViewSet, Parameter),
+    ("invites", InviteViewSet, Invite),
 ]

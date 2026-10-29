@@ -165,9 +165,25 @@ def test_on_a_computer_three_columns_and_no_page_slides_sideways(browser, live_s
             if over > 1 or wide:
                 broken.append(f"{p} at {width}: {over}px {wide}")
         ctx.close()
+    # Avi's People screen with an invitation, and the invitation page signed out (2026-10-29).
+    from django.contrib.auth.models import User
+
+    from design3d.models import Invite
+
+    avi = User.objects.create_superuser("avi@example.com", "avi@example.com", "d3-pass-55822")
+    inv = Invite.objects.create(email="noa@example.com", name="Noa", created_by=avi)
+    for width in (320, 390):
+        ctx = browser.new_context(viewport={"width": width, "height": 800})
+        _session(ctx, avi)
+        page = ctx.new_page()
+        page.goto(live_server.url + "/design3d/people/")
+        if page.evaluate(OVERFLOW, width) > 1:
+            broken.append(f"/design3d/people/ at {width}")
+        _shot(page, f"people-{width}")
+        ctx.close()
     ctx = browser.new_context(viewport={"width": 360, "height": 800})
     page = ctx.new_page()
-    for p in ("/design3d/", "/design3d/login/"):
+    for p in ("/design3d/", "/design3d/login/", f"/design3d/i/{inv.token}/"):
         page.goto(live_server.url + p)
         if page.evaluate(OVERFLOW, 360) > 1:
             broken.append(f"{p} at 360 (signed out)")
