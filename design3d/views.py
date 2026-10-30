@@ -3,6 +3,7 @@
 import io
 import mimetypes
 import re
+from datetime import timedelta
 from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages as flash
@@ -13,9 +14,9 @@ from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 
-from . import access, jobs, llm, mail, params
+from . import access, jobs, llm, mail, params, seats
 from .forms import AskForm
-from .models import PRIVATE, Design, Invite, Maker, Message, Part, Picture, Version
+from .models import PRIVATE, Design, Invite, Maker, Message, Part, Picture, Settings, Version
 
 MAX_PICTURES = 4
 
@@ -24,16 +25,52 @@ MAX_PICTURES = 4
 
 
 def door(request):
-    """REQ-D3.1, D3.2: what it is, sign in, ask, wait, or come in."""
+    """REQ-D3.1, D3.2: what it is, sign in, ask, wait, or come in. Someone
+    who came by a friend's link is let in here once signed in (Chapter 8)."""
     if access.can_enter(request.user):
         return redirect("design3d:designs")
     maker = access.maker_of(request.user)
     friend = Maker.objects.filter(pk=request.session.get(REF_KEY)).first() if request.session.get(REF_KEY) else None
+    if (friend is not None and request.user.is_authenticated and (maker is None or maker.pk != friend.pk)
+            and (maker is None or maker.status in (Maker.PENDING, Maker.DECLINED))):
+        maker = seats.admit(request.user, friend, request)
+        if maker.status == Maker.APPROVED:
+            return redirect("design3d:designs")
     return render(request, "design3d/door.html", {"maker": maker, "friend": friend,
                                                   "form": AskForm(initial={"reason": maker.reason if maker else ""})})
 
 
 REF_KEY = "design3d_ref"
+TOUR_KEY = "design3d_tour_seen"
+TOUR_STEPS = 7
+
+
+def welcome(request):
+    """The tour (Chapter 8, REQ-D3.74): seven screens, in order, before the
+    first design. No skip: every page sends a person here until they finish,
+    and "Start designing" counts only after the last screen was seen."""
+    if not request.user.is_authenticated:
+        return redirect("/design3d/login/?next=/design3d/welcome/")
+    if not access.can_enter(request.user):
+        return redirect("design3d:door")
+    maker = access.maker_of(request.user)
+    seen = int(request.session.get(TOUR_KEY) or 0)
+    if request.method == "POST":
+        if seen < TOUR_STEPS:
+            return redirect(f"/design3d/welcome/?step={seen + 1}")
+        if maker.tour_done_at is None:
+            maker.tour_done_at = timezone.now()
+            maker.save(update_fields=["tour_done_at"])
+        return redirect("design3d:designs")
+    try:
+        step = int(request.GET.get("step") or 1)
+    except ValueError:
+        step = 1
+    step = max(1, min(TOUR_STEPS, step, seen + 1))  # one screen at a time, never ahead
+    if step > seen:
+        request.session[TOUR_KEY] = step
+    return render(request, "design3d/welcome.html", {"step": step, "steps": list(range(1, TOUR_STEPS + 1)),
+                                                     "turns": maker.turns_left, "section": "welcome"})
 
 
 def friend_link(request, code):
@@ -43,7 +80,7 @@ def friend_link(request, code):
     friend = Maker.objects.filter(ref_code=code, status=Maker.APPROVED).first()
     if friend is not None:
         request.session[REF_KEY] = friend.pk
-    return redirect("design3d:door")
+    return redirect("design3d:door")  # the door lets them in once they are signed in
 
 
 def _referrer(request, maker=None):
@@ -95,11 +132,11 @@ def invited(request, token):
                                   expires_at__gt=now).update(used_at=now, used_by=request.user)
     if not taken:  # someone else took it a moment ago
         return render(request, "design3d/invited.html", {"inv": inv, "state": "used"}, status=410)
-    maker = access.maker_of(request.user) or Maker.objects.create(
-        user=request.user, display_name=access.display_name_for(request.user), reason="Invited by a link",
-        referred_by=access.maker_of(inv.created_by) if inv.created_by else None)
+    # Chapter 8: a one-time link is an invitation like a friend's link: 30
+    # turns, a seat, or the waiting list.
+    maker = seats.admit(request.user, access.maker_of(inv.created_by) if inv.created_by else None, request)
     if maker.status != Maker.APPROVED:
-        access.let_in(maker, inv.created_by, request)
+        return redirect("design3d:door")
     flash.success(request, "Welcome to design3d.")
     return redirect("design3d:designs")
 
@@ -146,7 +183,7 @@ def design(request, pk):
         "d": d, "shown": shown, "chat": d.messages.prefetch_related("pictures").select_related("version"),
         "versions": d.versions.order_by("-number"),
         "parameters": shown.parameters.all() if shown else [],
-        "section": "mine", "stub": llm.stub_mode(),
+        "section": "mine", "stub": llm.stub_mode(), "turns_left": request.maker.turns_left,
         "admin": access.is_admin(request.user) and d.owner_id == request.maker.pk,
         "over": jobs.over_limit(request.maker), "limit": request.maker.limit,
     })
@@ -201,12 +238,18 @@ def send(request, pk):
         return fail("The last answer is still on its way.", 409)
     if jobs.over_limit(request.maker):
         return fail("You reached today's limit. It resets at midnight.", 429)
+    if request.maker.turns_left is not None and request.maker.turns_left <= 0:
+        return fail("You have no turns left. Invite a friend: when they join and build their first part, "
+                    "you get 30 more.", 402)
     cleaned = []
     for f in files:
         try:
             cleaned.append(_clean_picture(f, request.user))
         except ValueError as exc:
             return fail(str(exc))
+    if not seats.take_turn(request.maker):
+        return fail("You have no turns left. Invite a friend: when they join and build their first part, "
+                    "you get 30 more.", 402)
     person = Message.objects.create(design=d, role=Message.PERSON, text=text, pin=_pin(request.POST.get("pin")))
     from PIL import Image
 
@@ -281,8 +324,9 @@ def poll(request, pk):
     after = int(request.GET.get("after") or 0)
     msgs = d.messages.filter(Q(pk__gt=after) | Q(state__in=[Message.THINKING, Message.BUILDING])).prefetch_related("pictures").select_related("version")
     pending = d.versions.filter(status=Version.BUILDING).order_by("-number").first()
+    request.maker.refresh_from_db(fields=["turns_left"])
     return JsonResponse({"messages": [_message_json(m) for m in msgs], "current": _version_json(jobs.checks_for(d.current)),
-                         "title": d.title, "building": pending.number if pending else None,
+                         "title": d.title, "turns_left": request.maker.turns_left, "building": pending.number if pending else None,
                          "versions": [{"number": v.number, "status": v.status, "made_by": v.made_by}
                                       for v in d.versions.order_by("-number")]})
 
@@ -393,6 +437,20 @@ def email_chat(request, pk):
     else:
         flash.error(request, "The email could not be sent. Try again in a minute.")
     return redirect("design3d:design", pk=d.pk)
+
+
+def analysis_zip(request, token):
+    """The zip of chats for analysis, behind a signed link for a day (REQ-D3.75)."""
+    from . import analysis
+
+    exp = analysis.from_token(token)
+    if exp is None or not exp.file:
+        raise Http404
+    resp = FileResponse(exp.file.open("rb"), as_attachment=True, filename=f"design3d-analysis-{exp.pk}.zip",
+                        content_type="application/zip")
+    resp["X-Robots-Tag"] = "noindex"
+    resp["Cache-Control"] = "private, no-store"
+    return resp
 
 
 def export(request, token):
@@ -538,6 +596,25 @@ def people(request):
     """REQ-D3.3"""
     if request.method == "POST" and request.POST.get("action") in ("invite", "revoke"):
         return _invites(request)
+    if request.method == "POST" and request.POST.get("action") == "export":
+        from . import analysis
+
+        export = analysis.send(request)
+        flash.success(request, f"Sent: {export.designs} designs, {export.messages} messages, {export.pictures} pictures."
+                      if export.sent else "The zip is ready but the mail did not go. Try again in a minute.")
+        return redirect("design3d:people")
+    if request.method == "POST" and request.POST.get("action") == "seats":
+        try:
+            limit = max(0, min(10000, int(request.POST.get("seat_limit") or 0)))
+        except ValueError:
+            flash.error(request, "The seat limit is a whole number.")
+            return redirect("design3d:people")
+        cfg = Settings.get()
+        cfg.seat_limit = limit
+        cfg.save(update_fields=["seat_limit"])
+        n = seats.fill(request)
+        flash.success(request, f"Seat limit {limit}." + (f" {n} waiting {'person is' if n == 1 else 'people are'} in now." if n else ""))
+        return redirect("design3d:people")
     if request.method == "POST":
         m = get_object_or_404(Maker, pk=request.POST.get("maker"))
         action = request.POST.get("action")
@@ -565,7 +642,12 @@ def people(request):
         total=Sum("designs__messages__cost_usd"),
         today=Sum("designs__messages__cost_usd", filter=Q(designs__messages__created_at__gte=start)),
         n_designs=Count("designs", distinct=True))
-    groups = {s: [m for m in makers if m.status == s] for s in (Maker.PENDING, Maker.APPROVED, Maker.DECLINED)}
+    groups = {s: [m for m in makers if m.status == s] for s in (Maker.PENDING, Maker.APPROVED, Maker.DECLINED, Maker.WAITING_SEAT)}
+    groups["waiting_seat"] = sorted(groups[Maker.WAITING_SEAT], key=lambda m: (m.requested_at, m.pk))
+    week = timezone.now() - timedelta(days=7)
+    spent = Message.objects.aggregate(all=Sum("cost_usd"), today=Sum("cost_usd", filter=Q(created_at__gte=start)),
+                                      week=Sum("cost_usd", filter=Q(created_at__gte=week)))
+    seat_info = {"limit": Settings.get().seat_limit, "used": seats.seats_used(), "waiting": len(groups[Maker.WAITING_SEAT])}
     from django.conf import settings
     from django.db.models import Avg, Max
 
@@ -582,6 +664,7 @@ def people(request):
     fresh = Invite.objects.filter(pk=request.GET.get("new") or 0).first() if (request.GET.get("new") or "").isdigit() else None
     share = _invite_share(request, fresh) if fresh is not None and fresh.status == "open" else None
     return render(request, "design3d/people.html", {"groups": groups, "section": "people", "engine": engine, "invites": invites,
+                                                    "seats": seat_info, "spent": spent, "last_export": Settings.get().last_export_at,
                                                     "share": share,
                                                     "default_limit": settings.DESIGN3D_DAILY_LIMIT_USD})
 

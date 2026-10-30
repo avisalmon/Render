@@ -112,7 +112,7 @@
         <button type="submit" class="d3-iconbtn" id="d3-send" aria-label="Send" {% if over %}disabled{% endif %}>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l16-8-6 16-2-7z"/></svg></button>
       </div>
-      <div class="d3-compose-foot"><a class="d3-btn d3-btn-small d3-done" id="d3-done" href="{% url 'design3d:done' d.pk %}" {% if not d.current %}hidden{% endif %}>Done: download, share, print</a></div>
+      <div class="d3-compose-foot">{% if turns_left is not None %}<span class="d3-turns d3-mono{% if turns_left <= 5 %} low{% endif %}" id="d3-turns">{{ turns_left }} turn{{ turns_left|pluralize }} left</span>{% endif %}<a class="d3-btn d3-btn-small d3-done" id="d3-done" href="{% url 'design3d:done' d.pk %}" {% if not d.current %}hidden{% endif %}>Done: download, share, print</a></div>
     </form>
   </section>
 </div>

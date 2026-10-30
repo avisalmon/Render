@@ -337,6 +337,11 @@
           drawVersion(cur);
         }
         drawVersions(data.versions);
+        var turns = document.getElementById("d3-turns");
+        if (turns && data.turns_left !== null && data.turns_left !== undefined) {
+          turns.textContent = data.turns_left + " turn" + (data.turns_left === 1 ? "" : "s") + " left";
+          turns.classList.toggle("low", data.turns_left <= 5);
+        }
         var title = document.getElementById("d3-title");
         if (title && data.title && title.textContent !== data.title) {
           title.textContent = data.title;

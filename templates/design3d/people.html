@@ -4,6 +4,19 @@
 {# REQ-D3.3: requests, who is in, what each person spends, their limit. #}
 <div class="d3-head"><div><h1 class="d3-h1">People</h1><p class="d3-small d3-muted">Default limit ${{ default_limit|floatformat:2 }} a day. Admins have none.</p><p class="d3-small d3-muted d3-mono" id="d3-engine">Engine: OpenSCAD {{ engine.version }}{% if engine.manifold %} (Manifold){% endif %}{% if engine.n %} · last {{ engine.n }} builds: {{ engine.failed }} failed{% if engine.avg is not None %}, {{ engine.avg|floatformat:1 }} s average, {{ engine.max|floatformat:1 }} s slowest{% endif %}{% endif %}</p></div></div>
 <div class="d3-people">
+  {# Chapter 8 (Avi, 2026-10-30): seats for invited newcomers, and what design3d costs. #}
+  <section id="d3-seats">
+    <h2>Seats</h2>
+    <p class="d3-mono" id="d3-seat-count">{{ seats.used }} of {{ seats.limit }} seats used · {{ seats.waiting }} waiting</p>
+    <form method="post" class="d3-row d3-seat-form">{% csrf_token %}<input type="hidden" name="action" value="seats">
+      <label class="d3-small">Seat limit <input name="seat_limit" type="number" min="0" max="10000" value="{{ seats.limit }}" id="d3-seat-limit"></label>
+      <button class="d3-btn d3-btn-small">Save</button></form>
+    <p class="d3-small d3-muted">Invited newcomers take a seat and get 30 turns. Raising the limit lets the waiting in, oldest first, with an email. People you approve from a request have no turn limit and take no seat.</p>
+    <form method="post" style="margin-top: 10px">{% csrf_token %}<input type="hidden" name="action" value="export">
+      <button class="d3-btn d3-btn-small" id="d3-export">Send me the chats for analysis</button></form>
+    <p class="d3-small d3-muted">Everything new since the last send{% if last_export %} ({{ last_export|date:"j M H:i" }}){% endif %}, as one zip with the code and the pictures, to your Gmail and Intel mail.</p>
+    <p class="d3-small d3-mono" id="d3-spent">Model cost, estimated: today ${{ spent.today|default:0|floatformat:2 }} · 7 days ${{ spent.week|default:0|floatformat:2 }} · all ${{ spent.all|default:0|floatformat:2 }}</p>
+  </section>
   {# Invitations (Avi, 2026-10-30): one tap makes a one-time link, sent however Avi likes. #}
   <section id="d3-invites">
     <h2>Invite a friend</h2>
@@ -32,6 +45,12 @@
       </ul>
     {% endif %}
   </section>
+  <section id="d3-waiting-seat">
+    <h2>Waiting for a seat</h2>
+    {% for m in groups.waiting_seat %}
+      <div class="d3-person"><div class="d3-person-who"><b>{{ m.display_name }}</b><span class="d3-small d3-muted">{{ m.user.email }} · since {{ m.requested_at|date:"j M H:i" }}{% if m.referred_by %} · invited by {{ m.referred_by.display_name }}{% endif %}</span></div></div>
+    {% empty %}<p class="d3-small d3-muted">Nobody.</p>{% endfor %}
+  </section>
   <section id="d3-pending">
     <h2>Waiting for you</h2>
     {% for m in groups.pending %}
@@ -49,7 +68,7 @@
     {% for m in groups.approved %}
       <div class="d3-person">
         <div class="d3-person-who"><b>{{ m.display_name }}{% if m.admin %} (admin){% endif %}</b>
-          <span class="d3-small d3-muted d3-mono">{{ m.user.email }} · {{ m.n_designs }} design{{ m.n_designs|pluralize }} · today ${{ m.today|default:0|floatformat:2 }} · total ${{ m.total|default:0|floatformat:2 }}{% if m.brought %} · brought {{ m.brought }}{% endif %}{% if m.referred_by %} · invited by {{ m.referred_by.display_name }}{% endif %}</span></div>
+          <span class="d3-small d3-muted d3-mono">{{ m.user.email }} · {{ m.n_designs }} design{{ m.n_designs|pluralize }} · today ${{ m.today|default:0|floatformat:2 }} · total ${{ m.total|default:0|floatformat:2 }}{% if m.brought %} · brought {{ m.brought }}{% endif %} · {% if m.turns_left is None %}no turn limit{% else %}{{ m.turns_left }} turns left{% endif %}{% if m.referred_by %} · invited by {{ m.referred_by.display_name }}{% endif %}</span></div>
         <div class="d3-row">
           {% if not m.admin %}
             <form method="post" class="d3-limit-form">{% csrf_token %}<input type="hidden" name="maker" value="{{ m.pk }}"><input type="hidden" name="action" value="limit">

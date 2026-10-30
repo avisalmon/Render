@@ -17,6 +17,24 @@ Newest first.
 
 ---
 
+## PM-80 · 2026-10-30 · Chapter 8: a photo I prepared on its side
+
+**What happened.** For the tour I shrank Avi's cup photo with Pillow and
+did not apply the phone's rotation marker, so the tablet screenshot showed
+the cup lying down; the same sideways photo had gone to the model for the
+example (it still built a sensible holder). The app itself turns uploads
+upright (`ImageOps.exif_transpose` in `_clean_picture`); only my preparation
+script did not. The screenshots at four widths found it, and also that the
+computer layout left the pictures small and the screen half empty.
+
+**Rule.** Anything that prepares a phone photo outside the app applies the
+rotation marker first (`ImageOps.exif_transpose`). Screens are checked as
+pictures at a phone, a tablet and a computer width, not only for sideways
+scroll.
+
+Here: `static/design3d/tour/`, `tests/test_design3d_browser.py` (the tour at four widths), `docs/building_an_app.md` mistake 68
+BKM: 8ee8b0a
+
 ## PM-79 · 2026-10-30 · Sprint D3.14 end: a test that let the view settle first
 
 **What happened.** The Home test waited for the view to stop moving before
