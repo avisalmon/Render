@@ -16,7 +16,7 @@ from django.views.decorators.http import require_POST
 
 from . import access, jobs, llm, mail, params, seats
 from .forms import AskForm
-from .models import PRIVATE, Design, FriendLink, Invite, Maker, Message, Part, Picture, Settings, Version
+from .models import PRIVATE, Design, FriendLink, Invite, Maker, Message, Part, Picture, Reference, Settings, Version
 
 MAX_PICTURES = 4
 
@@ -208,6 +208,25 @@ def design(request, pk):
     })
 
 
+def _clean_reference(upload):
+    """An attached STL (Avi, 2026-10-30): read, sized and drawn from three
+    sides, or refused with a reason."""
+    from . import render
+
+    if upload.size > 25 * 1024 * 1024:
+        raise ValueError("The STL is larger than 25 MB.")
+    data = upload.read()
+    tris = render.read_stl(data)
+    if not tris:
+        raise ValueError("That STL could not be read. Export it again as an STL (binary or ASCII).")
+    if len(tris) > 300_000:
+        raise ValueError("The STL is too detailed (more than 300,000 triangles). Simplify it in your slicer or CAD tool.")
+    lo, hi = render.bounds(tris)
+    name = (upload.name or "reference.stl")[-120:]
+    return {"name": name, "data": data, "triangles": len(tris), "size": render.size_mm(tris),
+            "bounds": [[round(c, 3) for c in lo], [round(c, 3) for c in hi]], "sheet": render.sheet(data)}
+
+
 def _clean_picture(upload, user):
     """REQ-D3.14: small, no location, checked like every upload."""
     from PIL import Image, ImageOps, UnidentifiedImageError
@@ -242,7 +261,9 @@ def send(request, pk):
 
     d = _mine(request, pk)
     text = (request.POST.get("text") or "").strip()[:4000]
-    files = request.FILES.getlist("pictures")[:MAX_PICTURES]
+    uploads = request.FILES.getlist("pictures")
+    stls = [f for f in uploads if f.name.lower().endswith(".stl")][:1]
+    files = [f for f in uploads if not f.name.lower().endswith(".stl")][:MAX_PICTURES]
     wants_json = request.headers.get("Accept", "").startswith("application/json")
 
     def fail(msg, status=400):
@@ -251,7 +272,7 @@ def send(request, pk):
         flash.error(request, msg)
         return redirect("design3d:design", pk=d.pk)
 
-    if not text and not files:
+    if not text and not files and not stls:
         return fail("Write something, or add a picture.")
     if d.messages.filter(state__in=[Message.THINKING, Message.BUILDING]).exists():
         return fail("The last answer is still on its way.", 409)
@@ -260,6 +281,12 @@ def send(request, pk):
     if request.maker.turns_left is not None and request.maker.turns_left <= 0:
         return fail("You have no turns left. Invite a friend: when they join and build their first part, "
                     "you get 30 more.", 402)
+    reference = None
+    if stls:
+        try:
+            reference = _clean_reference(stls[0])
+        except ValueError as exc:
+            return fail(str(exc))
     cleaned = []
     for f in files:
         try:
@@ -277,6 +304,12 @@ def send(request, pk):
             w, h = img.size
         pic = Picture(message=person, width=w, height=h)
         pic.image.save(f"p{i}.jpg", ContentFile(data), save=True)
+    if reference is not None:
+        ref = Reference(message=person, name=reference["name"], size_mm=reference["size"], triangles=reference["triangles"],
+                        bounds=reference["bounds"])
+        ref.file.save("reference.stl", ContentFile(reference["data"]), save=False)
+        ref.sheet.save("reference.png", ContentFile(reference["sheet"]), save=False)
+        ref.save()
     assistant = Message.objects.create(design=d, role=Message.ASSISTANT, state=Message.THINKING)
     d.save(update_fields=["updated_at"])
     jobs.start(assistant)
@@ -316,6 +349,7 @@ def _message_json(m):
         "print": m.version.print_summary if m.version else "",
         "pin": bool(m.pin),
         "pictures": [f"/design3d/files/{p.image.name}" for p in m.pictures.all()],
+        "references": [{"name": r.name, "size": r.size_mm} for r in m.references.all()],
     }
 
 
@@ -331,7 +365,8 @@ def _version_json(v):
                    "size": p.size_mm, "checks": p.checks, "stl": f"/design3d/files/{p.stl.name}" if p.stl else None,
                    "download": f"/design3d/d/{v.design_id}/v/{v.number}/part/{p.name}/"} for p in v.parts.all()],
         "parameters": [{"name": p.name, "label": p.label, "value": float(p.value), "min": float(p.minimum),
-                        "max": float(p.maximum), "step": float(p.step), "unit": p.unit} for p in v.parameters.all()],
+                        "max": float(p.maximum), "step": float(p.step), "unit": p.unit, "tag": p.tag,
+                        "measure": p.needs_measuring, "dim": p.dim} for p in v.parameters.all()],
     }
 
 
@@ -359,6 +394,7 @@ def sliders(request, pk):
     if base is None:
         raise Http404
     values = {}
+    measured = set(request.POST.getlist("measured"))
     for p in base.parameters.all():
         raw = request.POST.get(p.name)
         if raw is None:
@@ -367,10 +403,15 @@ def sliders(request, pk):
             v = Decimal(raw)
         except InvalidOperation:
             continue
-        values[p.name] = min(max(v, p.minimum), p.maximum)
+        if not v.is_finite() or v <= 0 and p.minimum > 0:
+            continue
+        # A size typed in (measured, or edited on the part) may leave the
+        # slider's range; one moved on the slider stays inside it.
+        typed = p.name in measured or request.POST.get("typed") == p.name
+        values[p.name] = v if typed else min(max(v, p.minimum), p.maximum)
     if d.versions.filter(status=Version.BUILDING).exists():
         return JsonResponse({"error": "A build is already running."}, status=409)
-    jobs.start_sliders(d, base, params.apply(base.code, values), values)
+    jobs.start_sliders(d, base, params.apply(base.code, values), values, measured)
     if request.headers.get("Accept", "").startswith("application/json"):
         return JsonResponse({"started": True})
     return redirect("design3d:design", pk=d.pk)
@@ -430,13 +471,26 @@ def send_files(request, pk):
     d = _mine(request, pk)
     if d.current is None:
         raise Http404
+    ok, said = _mail_result(request, lambda: mail.send_files(d, request.user.email))
+    return _said(request, ok, said, redirect("design3d:done", pk=d.pk))
+
+
+def _mail_result(request, send):
+    """(sent, what to tell the person) for an email to their own address."""
     if not request.user.email:
-        flash.error(request, "Your account has no email address.")
-    elif mail.send_files(d, request.user.email):
-        flash.success(request, f"Sent to {request.user.email}.")
-    else:
-        flash.error(request, "The email could not be sent. Try again in a minute.")
-    return redirect("design3d:done", pk=d.pk)
+        return False, "Your account has no email address."
+    if send():
+        return True, f"Sent to {request.user.email}."
+    return False, "The email could not be sent. Try again in a minute."
+
+
+def _said(request, ok, said, page):
+    """Answer in place for the page's button (Avi, 2026-10-30: "I have no
+    indication that something has been done"), or as a flash after a reload."""
+    if request.headers.get("Accept", "").startswith("application/json"):
+        return JsonResponse({"ok": ok, "message": said}, status=200 if ok else 502)
+    (flash.success if ok else flash.error)(request, said)
+    return page
 
 
 @require_POST
@@ -449,13 +503,8 @@ def email_chat(request, pk):
     if not access.is_admin(request.user):
         raise Http404
     d = _mine(request, pk)
-    if not request.user.email:
-        flash.error(request, "Your account has no email address.")
-    elif mail.email_chat(d, request.user.email, request.build_absolute_uri("/").rstrip("/")):
-        flash.success(request, f"Sent to {request.user.email}.")
-    else:
-        flash.error(request, "The email could not be sent. Try again in a minute.")
-    return redirect("design3d:design", pk=d.pk)
+    ok, said = _mail_result(request, lambda: mail.email_chat(d, request.user.email, request.build_absolute_uri("/").rstrip("/")))
+    return _said(request, ok, said, redirect("design3d:design", pk=d.pk))
 
 
 def analysis_zip(request, token):

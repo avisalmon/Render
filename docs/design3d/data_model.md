@@ -214,6 +214,22 @@ the parts, the plate and the 3MF; never the chat or the pictures.
 | created_at | datetime | made when shown or after a send |
 | used_by, used_at | FK User, datetime, null | the one person it let in |
 
+### Reference (new, Avi 2026-10-30: an STL attached to a message)
+
+| Field | Type | Meaning |
+|---|---|---|
+| message | FK Message | the message it came with |
+| file, sheet | file, private | the STL, and its three views for the model |
+| name, size_mm, triangles, bounds | | what it is and where it lies in its own mm |
+
+### Parameter gets (Avi 2026-10-30: sizes on the part)
+
+| Field | Type | Meaning |
+|---|---|---|
+| tag | char 8 | M1, M2 (to measure) or D1, D2 |
+| needs_measuring | bool | the chat estimated it; the person should measure |
+| dim | JSON, null | {from, to, at}: where it runs on the part, in the code's mm, for the value `at` |
+
 ### Settings (new, one row)
 
 | Field | Type | Meaning |

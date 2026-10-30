@@ -332,3 +332,24 @@ img { max-width: 100%; height: auto; display: block; }
   .d3-tour-pics.one img { max-height: 62vh; }
 }
 .d3-tour-hero { align-items: center; }
+
+/* An attached STL; taking something out before sending (Avi, 2026-10-30) */
+.d3-ref-tag { display: inline-block; margin-top: 6px; font-size: .74rem; padding: 2px 8px; border-radius: 8px; border: 1px solid var(--soft); color: var(--ink); overflow-wrap: anywhere; }
+.d3-chosen-item { position: relative; display: inline-flex; align-items: center; }
+.d3-chosen-x { position: absolute; top: -6px; right: -6px; width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--line);
+  background: var(--panel-2); color: var(--ink); font-size: 16px; line-height: 1; padding: 0; cursor: pointer; display: grid; place-items: center; }
+.d3-said { margin: 6px 0 0; }
+
+/* Sizes on the part (Avi, 2026-10-30) */
+.d3-dims { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.d3-dim { position: absolute; left: 0; top: 0; pointer-events: auto; font-family: var(--f-mono); font-size: .74rem; line-height: 1;
+  padding: 5px 7px; min-height: 26px; border-radius: 7px; border: 1px solid #e2d6bd; background: rgba(23,20,15,.86); color: #f3ead8; cursor: pointer; white-space: nowrap; }
+.d3-dim.unknown { border-color: #f7d046; color: #f7d046; }
+.d3-to-measure { margin-top: 8px; padding: 10px 12px; border: 1px solid #f7d046; border-radius: 12px; display: grid; gap: 8px; }
+.d3-to-measure p { margin: 0; }
+.d3-measure-row { display: grid; grid-template-columns: auto minmax(0, 1fr) 6.5em auto; align-items: center; gap: 8px; font-size: .9rem; }
+.d3-measure-row b { color: #f7d046; font-weight: 500; }
+.d3-measure-row span { min-width: 0; overflow-wrap: anywhere; }
+.d3-measure-row input { width: 100%; min-width: 0; box-sizing: border-box; }
+.d3-dim-edit { width: min(92vw, 360px); }
+.d3-dim-edit form { margin: 0; }

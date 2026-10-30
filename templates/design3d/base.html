@@ -42,5 +42,33 @@
     {% block content %}{% endblock %}
   </main>
   {% block scripts %}{% endblock %}
+  <script>
+    // A form marked data-async (an email) answers on its own button, in
+    // place, instead of a reload that leaves the answer out of sight
+    // (Avi, 2026-10-30).
+    document.addEventListener("submit", function (e) {
+      var f = e.target.closest("form[data-async]");
+      if (!f || e.defaultPrevented) return;
+      e.preventDefault();
+      var b = f.querySelector("button");
+      var label = b.dataset.label || b.textContent;
+      b.dataset.label = label;
+      b.disabled = true;
+      b.textContent = "Sending\u2026";
+      var said = f.querySelector(".d3-said") || f.appendChild(Object.assign(document.createElement("p"), { className: "d3-said d3-small" }));
+      said.setAttribute("role", "status");
+      said.textContent = "";
+      fetch(f.action, { method: "POST", body: new FormData(f), credentials: "same-origin", headers: { "Accept": "application/json" } })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          said.textContent = d.message;
+          said.classList.toggle("d3-ok", !!d.ok);
+          said.classList.toggle("d3-warn", !d.ok);
+          b.textContent = d.ok ? "Sent \u2713" : label;
+          setTimeout(function () { b.textContent = label; b.disabled = false; }, d.ok ? 4000 : 0);
+        })
+        .catch(function () { said.textContent = "No connection. Try again."; said.classList.add("d3-warn"); b.textContent = label; b.disabled = false; });
+    });
+  </script>
 </body>
 </html>{% endlanguage %}

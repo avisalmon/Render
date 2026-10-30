@@ -43,7 +43,7 @@
       </section>
       <section>
         <h2 class="d3-h2">Send</h2>
-        <form method="post" action="{% url 'design3d:send_files' d.pk %}">{% csrf_token %}
+        <form method="post" action="{% url 'design3d:send_files' d.pk %}" data-async>{% csrf_token %}
           <button class="d3-btn d3-btn-quiet" id="d3-done-send">Email me the files</button></form>
         <p class="d3-small d3-muted">The STL and the OpenSCAD file, to {{ request.user.email }}.</p>
       </section>

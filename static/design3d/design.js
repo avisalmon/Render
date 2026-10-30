@@ -82,6 +82,7 @@
       a.appendChild(el("span", "d3-msg-text", m.text || ""));
     }
     if (m.pin) a.appendChild(el("span", "d3-pin-tag", "Point marked on the part"));
+    (m.references || []).forEach(function (r) { a.appendChild(el("span", "d3-ref-tag d3-mono", r.name + " · " + r.size + " mm")); });
     if (m.assumptions && m.assumptions.length) {
       var ul = el("ul", "d3-assume");
       m.assumptions.forEach(function (t) { ul.appendChild(el("li", "", t)); });
@@ -205,6 +206,7 @@
       document.querySelector(".d3-part-chips").hidden = !assembled;
       document.querySelector(".d3-explode").hidden = !assembled;
       if (assembled) window.d3View.loadParts(shownParts.parts); else window.d3View.load(shownParts.stl);
+      window.d3View.plate(!assembled);
       return;
     }
     var c = e.target.closest("#d3-parts-bar [data-part]");
@@ -218,8 +220,92 @@
     if (e.target.id === "d3-explode" && window.d3View) window.d3View.explode(Number(e.target.value));
   });
 
+  /* ---------- sizes on the part, and sizes to measure (Avi, 2026-10-30) ---------- */
+
+  var shownVersion = null;
+  function drawMeasureForm(v) {
+    var form = document.getElementById("d3-to-measure");
+    form.textContent = "";
+    var todo = (v && v.parameters || []).filter(function (p) { return p.measure; });
+    form.hidden = !todo.length;
+    if (!todo.length) return;
+    form.appendChild(el("p", "d3-small", "Please measure. My estimates are filled in; type the real sizes:"));
+    todo.forEach(function (p) {
+      var label = el("label", "d3-measure-row");
+      label.appendChild(el("b", "d3-mono", p.tag));
+      label.appendChild(el("span", "", p.label));
+      var input = el("input");
+      input.type = "number"; input.step = "any"; input.min = "0"; input.name = p.name; input.value = fmt(p.value);
+      input.inputMode = "decimal";
+      label.appendChild(input);
+      label.appendChild(el("span", "d3-small d3-muted", p.unit || "mm"));
+      form.appendChild(label);
+    });
+    var go = el("button", "d3-btn d3-btn-small", "Apply the sizes");
+    go.type = "submit";
+    form.appendChild(go);
+  }
+
+  // A new value for one or more sizes: set them on the sliders form and build.
+  function applySizes(values, measured) {
+    var sl = document.getElementById("d3-sliders");
+    // The typed values go as typed: a range input would clamp them to its
+    // own minimum and maximum, and a real measurement may lie outside.
+    var extra = new FormData(sl);
+    Object.keys(values).forEach(function (name) { extra.set(name, values[name]); });
+    (measured || []).forEach(function (n) { extra.append("measured", n); });
+    if (Object.keys(values).length === 1) extra.append("typed", Object.keys(values)[0]);
+    busy.hidden = false;
+    fetch(sl.action, { method: "POST", body: extra, credentials: "same-origin",
+                       headers: { "X-CSRFToken": csrf(), "Accept": "application/json" } })
+      .then(function () { setTimeout(poll, 600); })
+      .catch(function () { busy.hidden = true; });
+  }
+
+  document.getElementById("d3-to-measure").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var values = {}, measured = [];
+    Array.prototype.forEach.call(e.target.querySelectorAll("input"), function (i) {
+      if (i.value !== "") { values[i.name] = i.value; measured.push(i.name); }
+    });
+    applySizes(values, measured);
+  });
+
+  // A tap on a size on the part opens a small form for its new value.
+  var dimEdit = document.getElementById("d3-dim-edit");
+  var dimNow = null;
+  document.addEventListener("d3:dim", function (e) {
+    dimNow = e.detail;
+    document.getElementById("d3-dim-what").textContent = dimNow.measure
+      ? dimNow.tag + ": my estimate. Measure the real thing and type it."
+      : dimNow.tag + " on the part.";
+    document.getElementById("d3-dim-label").textContent = dimNow.label + " (" + (dimNow.unit || "mm") + ")";
+    var input = document.getElementById("d3-dim-value");
+    input.value = fmt(dimNow.value);
+    if (dimEdit.showModal) dimEdit.showModal(); else dimEdit.setAttribute("open", "");
+    input.focus();
+    input.select();
+  });
+  dimEdit.addEventListener("close", function () {
+    var v = document.getElementById("d3-dim-value").value.trim();
+    if (dimEdit.returnValue !== "apply" || !dimNow || v === "" || isNaN(Number(v))) return;
+    var o = {};
+    o[dimNow.name] = v;
+    applySizes(o, dimNow.measure ? [dimNow.name] : []);
+  });
+
+  var sizesBtn = document.getElementById("d3-sizes");
+  sizesBtn.addEventListener("click", function () {
+    var on = sizesBtn.getAttribute("aria-pressed") !== "true";
+    sizesBtn.setAttribute("aria-pressed", String(on));
+    if (window.d3View) window.d3View.showSizes(on);
+  });
+
   function drawVersion(v) {
     if (!v || v.status !== "ready") return;
+    shownVersion = v;
+    if (window.d3View) window.d3View.setDims(v.parameters);
+    drawMeasureForm(v);
     if (window.d3View) {
       if (v.parts && v.parts.length) window.d3View.loadParts(v.parts);
       else if (v.stl) window.d3View.load(v.stl);
@@ -359,18 +445,36 @@
   /* ---------- pictures chosen ---------- */
 
   var picked = [];
+  // What is about to be sent: pictures, and at most one STL, each with a
+  // button to take it out again (Avi, 2026-10-30).
+  function isStl(f) { return /\.stl$/i.test(f.name); }
   function showChosen() {
     chosen.textContent = "";
-    picked.forEach(function (f) {
-      var img = el("img");
-      img.src = URL.createObjectURL(f);
-      img.alt = f.name;
-      chosen.appendChild(img);
+    picked.forEach(function (f, i) {
+      var item = el("span", "d3-chosen-item");
+      if (isStl(f)) item.appendChild(el("span", "d3-ref-tag d3-mono", f.name));
+      else {
+        var img = el("img");
+        img.src = URL.createObjectURL(f);
+        img.alt = f.name;
+        item.appendChild(img);
+      }
+      var x = el("button", "d3-chosen-x", "\u00d7");
+      x.type = "button";
+      x.setAttribute("aria-label", "Remove " + f.name);
+      x.addEventListener("click", function () { picked.splice(i, 1); showChosen(); });
+      item.appendChild(x);
+      chosen.appendChild(item);
     });
   }
   [files, camera].forEach(function (input) {
     input.addEventListener("change", function () {
-      Array.prototype.forEach.call(input.files, function (f) { if (picked.length < 4) picked.push(f); });
+      Array.prototype.forEach.call(input.files, function (f) {
+        if (isStl(f)) {
+          picked = picked.filter(function (p) { return !isStl(p); });
+          picked.push(f);
+        } else if (picked.filter(function (p) { return !isStl(p); }).length < 4) picked.push(f);
+      });
       input.value = "";
       showChosen();
     });
@@ -457,7 +561,7 @@
 
   try {
     var firstShown = JSON.parse((document.getElementById("design3d-shown") || {}).textContent || "null");
-    if (firstShown) drawParts(firstShown);
+    if (firstShown) { drawParts(firstShown); drawMeasureForm(firstShown); shownVersion = firstShown; }
   } catch (err) { /* no version yet */ }
 
   /* ---------- a picture, full size: save or share (Avi, 2026-10-29) ---------- */

@@ -40,7 +40,7 @@ def world(transactional_db, settings, tmp_path, monkeypatch):
     settings.OPENAI_API_KEY = ""
     monkeypatch.setattr("app.safety.image_is_safe", lambda *a, **k: (True, ""), raising=False)
     if not builder.available():
-        monkeypatch.setattr(builder, "build", lambda code, part=None: (CUBE, 0.2))
+        monkeypatch.setattr(builder, "build", lambda code, part=None, reference=None: (CUBE, 0.2))
     dana = User.objects.create_user("dana@example.com", "dana@example.com", "d3-pass-55821", first_name="Dana")
     Maker.objects.create(user=dana, display_name="Dana", status=Maker.APPROVED)
     return {"dana": dana}
@@ -203,7 +203,7 @@ def test_on_a_phone_a_print_warning_is_fixed_with_one_tap(browser, live_server, 
     from tests.test_design3d import _box, _stl
 
     floating = _stl(_box(0, 0, 0, 10, 10, 10), _box(30, 0, 4, 35, 5, 9))
-    monkeypatch.setattr(builder, "build", lambda code, part=None: (floating, 0.2))
+    monkeypatch.setattr(builder, "build", lambda code, part=None, reference=None: (floating, 0.2))
     ctx = browser.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2, has_touch=True, is_mobile=True)
     _session(ctx, world["dana"])
     page = ctx.new_page()
@@ -306,7 +306,7 @@ def test_on_a_phone_a_box_and_its_lid(browser, live_server, world, monkeypatch):
     if not builder.available():
         pytest.skip("no OpenSCAD on this PC")
     monkeypatch.setattr(builder, "build", REAL_BUILD)
-    monkeypatch.setattr(llm, "ask", lambda items: ({"title": "Box with lid", "message": "Here it is.", "assumptions": [],
+    monkeypatch.setattr(llm, "ask", lambda items, **kw: ({"title": "Box with lid", "message": "Here it is.", "assumptions": [],
                                                     "code": BOX_AND_LID, "parameters": [], "parts": TWO_PARTS},
                                                    {"in": 1, "cached": 0, "out": 1}, "stub"))
     ctx = browser.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2, has_touch=True, is_mobile=True)
@@ -441,3 +441,72 @@ def test_the_tour_on_a_phone_a_tablet_and_a_computer(browser, live_server, world
         Maker.objects.filter(user=world["dana"]).update(tour_done_at=None)
         ctx.close()
     assert not broken, broken
+
+
+@pytest.mark.django_db(transaction=True)
+def test_on_a_phone_sizes_on_the_part_a_stl_and_taking_a_photo_out(browser, live_server, world, monkeypatch, tmp_path):
+    """Avi, 2026-10-30: sizes drawn on the part, the unknown ones (M1) tapped
+    and typed, a form for them, the Sizes button; an STL attached; a photo
+    taken out before sending."""
+    from PIL import Image
+
+    from design3d import llm
+    from design3d.models import Design, Message, Reference
+
+    from tests.test_design3d import _box, _stl
+
+    code = "width = 86;\nheight = 33;\ncube([width, 40, height]);"
+    sizes = [{"name": "width", "label": "Board width", "min": 40, "max": 120, "from": [0, 0, 0], "to": [86, 0, 0], "measure": True},
+             {"name": "height", "label": "Height", "min": 10, "max": 60, "from": [0, 0, 0], "to": [0, 0, 33]}]
+    monkeypatch.setattr(llm, "ask", lambda items, **kw: ({"title": "Case", "message": "Here.", "assumptions": [], "code": code,
+                                                          "parameters": sizes}, {"in": 1, "cached": 0, "out": 1}, "stub"))
+    a, b = tmp_path / "a.jpg", tmp_path / "b.jpg"
+    Image.new("RGB", (300, 200), (200, 180, 150)).save(a)
+    Image.new("RGB", (300, 200), (150, 180, 200)).save(b)
+    ref = tmp_path / "board.stl"
+    ref.write_bytes(_stl(_box(0, 0, 0, 40, 20, 10)))
+
+    ctx = browser.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2, has_touch=True, is_mobile=True)
+    _session(ctx, world["dana"])
+    page = ctx.new_page()
+    errors = []
+    page.on("pageerror", lambda exc: errors.append(str(exc)))
+    page.goto(live_server.url + "/design3d/designs/")
+    page.click("#d3-new")
+    page.wait_for_url("**/design3d/d/*/")
+
+    # Two photos and an STL chosen; one photo taken out again.
+    page.set_input_files("#d3-files", [str(a), str(b), str(ref)])
+    assert page.locator("#d3-chosen .d3-chosen-item").count() == 3
+    page.locator("#d3-chosen .d3-chosen-x").first.click()
+    assert page.locator("#d3-chosen .d3-chosen-item").count() == 2
+    page.fill("#d3-text", "A case for my board")
+    page.click("#d3-send")
+    page.wait_for_selector(".d3-msg.assistant.done", timeout=60000)
+    said = Message.objects.filter(design=Design.objects.get(), role=Message.PERSON).get()
+    assert said.pictures.count() == 1 and Reference.objects.get(message=said).name == "board.stl"
+    assert "board.stl · 40 x 20 x 10 mm" in page.inner_text(".d3-msg.person")
+
+    # M1 is on the part, and in the form.
+    page.wait_for_selector(".d3-dim.unknown", timeout=30000)
+    assert page.inner_text(".d3-dim.unknown").startswith("M1 86")
+    assert page.locator(".d3-dim:not(.unknown)").count() == 0, "known sizes wait for the Sizes button"
+    assert page.is_visible("#d3-to-measure") and "Board width" in page.inner_text("#d3-to-measure")
+    _shot(page, "sizes-m1-390")
+    page.click("#d3-sizes")
+    page.wait_for_selector(".d3-dim:not(.unknown)", timeout=5000)
+    _shot(page, "sizes-all-390")
+
+    # Tap M1 on the part and type the real size.
+    page.click(".d3-dim.unknown")
+    page.wait_for_selector("#d3-dim-edit[open]")
+    page.fill("#d3-dim-value", "130")
+    page.click("#d3-dim-apply")
+    page.wait_for_function("document.querySelector('#d3-versions a.on') && document.querySelector('#d3-versions a.on').textContent === 'v2'", timeout=60000)
+    v2 = Design.objects.get().versions.get(number=2)
+    assert "width = 130;" in v2.code and v2.parameters.get(name="width").needs_measuring is False
+    page.wait_for_function("!document.querySelector('.d3-dim.unknown')", timeout=10000)
+    assert page.is_hidden("#d3-to-measure"), "measured: nothing left to measure"
+    assert page.evaluate(OVERFLOW, 390) <= 1
+    assert errors == []
+    ctx.close()

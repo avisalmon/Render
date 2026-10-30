@@ -56,7 +56,41 @@ def clean(proposed, code, limit=12):
             step = Decimal("1")
         out.append({"name": name, "label": str(p.get("label") or name.replace("_", " ").capitalize())[:60],
                     "value": current, "minimum": lo, "maximum": hi, "step": step,
-                    "unit": str(p.get("unit") or "")[:8], "position": i})
+                    "unit": str(p.get("unit") or "")[:8], "position": i,
+                    "needs_measuring": p.get("measure") is True, "dim": _dim(p, current)})
         if len(out) >= limit:
             break
-    return out
+    return tag(out)
+
+
+def _point(v):
+    import math
+
+    if not (isinstance(v, (list, tuple)) and len(v) == 3):
+        return None
+    try:
+        pt = [round(float(c), 3) for c in v]
+    except (TypeError, ValueError):
+        return None
+    return pt if all(math.isfinite(c) and abs(c) < 1e5 for c in pt) else None
+
+
+def _dim(p, value):
+    """Where a size runs on the part, from the chat: two points, or None."""
+    a, b = _point(p.get("from")), _point(p.get("to"))
+    if a is None or b is None or a == b:
+        return None
+    return {"from": a, "to": b, "at": float(value)}
+
+
+def tag(params):
+    """M1, M2 for sizes to measure, D1, D2 for the others, in order."""
+    m = d = 0
+    for p in params:
+        if p.get("needs_measuring"):
+            m += 1
+            p["tag"] = f"M{m}"
+        else:
+            d += 1
+            p["tag"] = f"D{d}"
+    return params

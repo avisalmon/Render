@@ -8,6 +8,7 @@ the real OpenSCAD when it is on this machine.
 """
 
 import io
+import json
 import os
 import re
 from datetime import timedelta
@@ -43,7 +44,7 @@ def quiet(settings, tmp_path, monkeypatch):
     settings.OPENAI_API_KEY = ""
     settings.EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
     monkeypatch.setattr("app.safety.image_is_safe", lambda *a, **k: (True, ""), raising=False)
-    monkeypatch.setattr(builder, "build", lambda code, part=None: (builder.check(code), (CUBE, 0.4))[1])
+    monkeypatch.setattr(builder, "build", lambda code, part=None, reference=None: (builder.check(code), (CUBE, 0.4))[1])
 
 
 def _user(email, superuser=False, first="", status=None):
@@ -153,7 +154,7 @@ def test_a_turn_builds_a_version_with_sliders_and_a_title(client, world):
 
 def test_the_chat_can_ask_first_without_building(client, world, monkeypatch):
     """REQ-D3.13: a photo with no scale gets a question, not a guess."""
-    monkeypatch.setattr(llm, "ask", lambda items: ({"title": "", "message": "How thick is the pencil? A coin next to it helps.",
+    monkeypatch.setattr(llm, "ask", lambda items, **kw: ({"title": "", "message": "How thick is the pencil? A coin next to it helps.",
                                                     "assumptions": [], "code": None, "parameters": []}, {"in": 900, "cached": 0, "out": 80}, "gpt-6.1-terra"))
     d = _design(client, world["dana"])
     _say(client, d, "A holder for this")
@@ -170,7 +171,7 @@ def test_a_failed_build_is_repaired_and_the_first_part_is_checked(client, world,
     calls, steps = [], []
     good = "size = 10;\ncube(size);"
 
-    def ask(items):
+    def ask(items, **kw):
         calls.append(items[-1]["content"])
         m = Message.objects.filter(role=Message.ASSISTANT).latest("id")
         d_now = Design.objects.get(pk=m.design_id)
@@ -180,7 +181,7 @@ def test_a_failed_build_is_repaired_and_the_first_part_is_checked(client, world,
         return ({"title": "Cube", "message": f"turn {n}", "assumptions": [], "code": code if n < 3 else None,
                  "parameters": [{"name": "size", "label": "Size", "min": 5, "max": 50}]}, {"in": 10, "cached": 0, "out": 5}, "gpt-6.1-terra")
 
-    def build(code):
+    def build(code, **kw):
         builder.check(code)
         if code == "cube(":
             raise builder.BuildError("ERROR: Parser error in line 1")
@@ -207,7 +208,7 @@ def test_a_failed_build_is_repaired_and_the_first_part_is_checked(client, world,
     assert [t[1] for t in done.trail] == [
         "Reading your message", "Building version 1", "Version 1 did not build: ERROR: Parser error in line 1",
         "Fixing a build error, try 1 of 3", "Building version 2", "Version 2 built in 0.2 s",
-        "Checking the part against what you asked"]
+        "Checking the part against what you asked", "Checked: turn 3"]
     poll = client.get(f"/design3d/d/{d.pk}/poll/?after=0").json()
     assert [x for x in poll["messages"] if x["id"] == done.pk][0]["trail"] == done.trail
     page = client.get(f"/design3d/d/{d.pk}/").content.decode()
@@ -331,7 +332,7 @@ def test_pictures_are_made_small_stripped_and_private(client, world):
 
 def test_the_model_sees_the_pictures(client, world, monkeypatch):
     seen = []
-    monkeypatch.setattr(llm, "ask", lambda items: (seen.append(items), ({"title": "", "message": "ok", "assumptions": [], "code": None, "parameters": []}, {"in": 1, "cached": 0, "out": 1}, "gpt-6.1-terra"))[1])
+    monkeypatch.setattr(llm, "ask", lambda items, **kw: (seen.append(items), ({"title": "", "message": "ok", "assumptions": [], "code": None, "parameters": []}, {"in": 1, "cached": 0, "out": 1}, "gpt-6.1-terra"))[1])
     d = _design(client, world["dana"])
     _say(client, d, "This one", pictures=[_jpeg((400, 300))])
     parts = seen[0][-1]["content"]
@@ -346,7 +347,7 @@ def test_sliders_build_a_new_version_without_the_model(client, world, monkeypatc
     """REQ-D3.23"""
     d = _design(client, world["dana"])
     _say(client, d)
-    monkeypatch.setattr(llm, "ask", lambda items: pytest.fail("the sliders must not call the model"))
+    monkeypatch.setattr(llm, "ask", lambda items, **kw: pytest.fail("the sliders must not call the model"))
     client.post(f"/design3d/d/{d.pk}/sliders/", {"from": 1, "diameter": "80", "height": "999", "wall": "3"}, HTTP_ACCEPT="application/json")
     d.refresh_from_db()
     v2 = d.current
@@ -627,7 +628,7 @@ def test_the_checks_are_stored_shown_and_told_to_the_model(client, world, monkey
     """A built version keeps its findings; the chat line and the Files panel
     show them with Fix it; the self-check tells the model the warnings."""
     floating = _stl(_box(0, 0, 0, 10, 10, 10), _box(30, 0, 4, 35, 5, 9))
-    monkeypatch.setattr(builder, "build", lambda code, part=None: (builder.check(code), (floating, 0.3))[1])
+    monkeypatch.setattr(builder, "build", lambda code, part=None, reference=None: (builder.check(code), (floating, 0.3))[1])
     d = _design(client, world["dana"])
     _say(client, d, "Two cubes")
     v = d.versions.get()
@@ -906,7 +907,7 @@ TWO_PARTS = [{"name": "box", "label": "Box", "count": 1, "printed": True, "print
 
 
 def _parts_reply(monkeypatch, code, declared=TWO_PARTS):
-    monkeypatch.setattr(llm, "ask", lambda items: ({"title": "Box with lid", "message": "Here it is.", "assumptions": [],
+    monkeypatch.setattr(llm, "ask", lambda items, **kw: ({"title": "Box with lid", "message": "Here it is.", "assumptions": [],
                                                     "code": code, "parameters": [{"name": "clear", "label": "Fit", "min": 0, "max": 1}],
                                                     "parts": declared}, {"in": 1, "cached": 0, "out": 1}, "stub"))
     monkeypatch.setattr(builder, "build", REAL_BUILD)
@@ -1274,3 +1275,169 @@ def test_every_send_of_a_friend_link_is_unique_and_lets_one_person_in(client, wo
     client.get(f"/design3d/r/{two}/")
     assert client.get("/design3d/")["Location"] == "/design3d/designs/", "a fresh link works"
     assert client.get("/design3d/api/friend-links/").status_code == 200
+
+
+# ---------- an attached STL, web search, an email answered in place (Avi, 2026-10-30) ----------
+
+def _stl_upload(name="bracket.stl"):
+    return SimpleUploadedFile(name, _stl(_box(0, 0, 0, 40, 20, 10)), content_type="model/stl")
+
+
+def test_an_attached_stl_is_kept_measured_and_shown_to_the_model(client, world):
+    from design3d.models import Reference
+
+    d = _design(client, world["dana"])
+    r = client.post(f"/design3d/d/{d.pk}/send/", {"text": "A holder for this", "pictures": [_stl_upload()]},
+                    HTTP_ACCEPT="application/json")
+    assert r.status_code == 200
+    ref = Reference.objects.get(message__design=d)
+    assert ref.name == "bracket.stl" and ref.size_mm == "40 x 20 x 10" and ref.triangles == 12 and ref.sheet
+    assert ref.bounds == [[0, 0, 0], [40, 20, 10]]
+    said = [i for i in llm.history(d) if i["role"] == "user"][0]["content"]
+    assert 'attached an STL, "bracket.stl": 40 x 20 x 10 mm' in said[0]["text"] and 'import("reference.stl")' in said[0]["text"]
+    assert said[1]["type"] == "input_image", "its three views go along"
+    page = client.get(f"/design3d/d/{d.pk}/").content.decode()
+    assert "bracket.stl · 40 x 20 x 10 mm" in page
+
+
+def test_a_bad_stl_is_refused_with_a_reason(client, world):
+    d = _design(client, world["dana"])
+    bad = SimpleUploadedFile("broken.stl", b"not an stl at all", content_type="model/stl")
+    r = client.post(f"/design3d/d/{d.pk}/send/", {"text": "this", "pictures": [bad]}, HTTP_ACCEPT="application/json")
+    assert r.status_code == 400 and "could not be read" in r.json()["error"]
+
+
+def test_only_reference_stl_may_be_imported_and_only_when_attached():
+    builder.check('difference(){ import("reference.stl"); cube(5); }', allow_reference=True)
+    with pytest.raises(builder.BuildError):
+        builder.check('import("reference.stl");')
+    for bad in ('import("/etc/passwd");', 'import("reference.stl"); import("other.stl");', 'include <reference.stl>'):
+        with pytest.raises(builder.BuildError):
+            builder.check(bad, allow_reference=True)
+    with pytest.raises(builder.BuildError, match="no STL is attached"):
+        REAL_BUILD('import("reference.stl");')
+
+
+@pytest.mark.skipif(not builder.available(), reason="no OpenSCAD on this PC")
+def test_the_code_builds_on_the_attached_stl():
+    stl, _ = REAL_BUILD('difference(){ import("reference.stl"); translate([5, 5, 5]) cube([30, 10, 10]); }',
+                        reference=_stl(_box(0, 0, 0, 40, 20, 10)))
+    assert render.size_mm(render.read_stl(stl)) == "40 x 20 x 10"
+
+
+def test_web_search_is_offered_once_a_turn_noted_and_counted(client, world, monkeypatch, settings):
+    from types import SimpleNamespace as NS
+
+    settings.OPENAI_API_KEY = "sk-test"
+    calls = []
+
+    class Fake:
+        class responses:
+            @staticmethod
+            def create(**kw):
+                calls.append(kw)
+                out = [NS(type="web_search_call", action=NS(query="DE10-Lite dimensions")), NS(type="message")]
+                text = json.dumps({"title": "Plate", "message": "Terasic lists 97.5 x 80 mm.?utm_source=openai",
+                                   "assumptions": [], "code": None, "parameters": []})
+                return NS(output=out, output_text=text,
+                          usage=NS(input_tokens=1000, output_tokens=100, input_tokens_details=NS(cached_tokens=0)))
+
+    monkeypatch.setattr(llm, "_openai", lambda: Fake)
+    d = _design(client, world["dana"])
+    _say(client, d, "Find the DE10-Lite dimensions")
+    assert calls[0].get("tools") == [{"type": "web_search"}]
+    done = d.messages.get(role=Message.ASSISTANT)
+    assert "Searched the web: DE10-Lite dimensions" in [t[1] for t in done.trail]
+    assert done.text == "Terasic lists 97.5 x 80 mm." and done.cost_usd >= llm.SEARCH_COST
+
+
+def test_email_me_this_chat_answers_in_place(client, world):
+    Maker.objects.create(user=world["avi"], display_name="Avi", status=Maker.APPROVED, is_admin=True)
+    d = _design(client, world["avi"])
+    _say(client, d, "A box")
+    page = client.get(f"/design3d/d/{d.pk}/").content.decode()
+    assert re.search(r'action="/design3d/d/\d+/email/"[^>]*data-async', page)
+    r = client.post(f"/design3d/d/{d.pk}/email/", HTTP_ACCEPT="application/json")
+    assert r.status_code == 200 and r.json() == {"ok": True, "message": "Sent to avi@example.com."}
+
+
+# ---------- the first analysis's fixes; sizes on the part (Avi, 2026-10-30) ----------
+
+def test_a_server_error_is_not_sent_back_to_the_model(client, world, monkeypatch, settings):
+    settings.OPENAI_API_KEY = "sk-test"
+    calls = []
+
+    def ask(items, **kw):
+        calls.append(1)
+        return ({"title": "Box", "message": "Here it is.", "assumptions": [], "code": "cube(10);", "parameters": []},
+                {"in": 1, "cached": 0, "out": 1}, "stub")
+
+    def build(code, **kw):
+        raise builder.ServerError("AppRun: error while loading shared libraries: libOpenGL.so.0")
+
+    monkeypatch.setattr(llm, "ask", ask)
+    monkeypatch.setattr(builder, "build", build)
+    d = _design(client, world["dana"])
+    _say(client, d, "A box")
+    done = d.messages.get(role=Message.ASSISTANT)
+    assert len(calls) == 1, "no repair calls on our own problem"
+    assert "Something on our side stopped the build" in done.text
+    assert any("not sent back to the model" in t[1] for t in done.trail)
+
+
+def test_a_corrected_part_comes_with_one_answer(client, world, monkeypatch, settings):
+    settings.OPENAI_API_KEY = "sk-test"
+    answers = iter([("First answer: a box. How wide?", "cube(10);"), ("The whole answer, corrected: a box 20 wide.", "cube(20);")])
+
+    def ask(items, **kw):
+        text, code = next(answers)
+        return ({"title": "Box", "message": text, "assumptions": [], "code": code, "parameters": []},
+                {"in": 1, "cached": 0, "out": 1}, "stub")
+
+    monkeypatch.setattr(llm, "ask", ask)
+    monkeypatch.setattr(llm, "stub_mode", lambda: False)
+    d = _design(client, world["dana"])
+    _say(client, d, "A box")
+    done = d.messages.get(role=Message.ASSISTANT)
+    assert done.text == "The whole answer, corrected: a box 20 wide.", "not two answers glued together"
+
+
+def test_older_pictures_go_at_low_detail_and_the_newest_in_full(client, world):
+    d = _design(client, world["dana"])
+    _say(client, d, "This", pictures=_jpeg((400, 300)))
+    _say(client, d, "And this", pictures=_jpeg((400, 300)))
+    _say(client, d, "And now this", pictures=_jpeg((400, 300)))
+    pics = [p for i in llm.history(d) if i["role"] == "user" for p in i["content"] if p["type"] == "input_image"]
+    assert [p["detail"] for p in pics] == ["low", "low", "auto"]
+
+
+def test_the_chat_answers_in_the_language_of_the_latest_message():
+    assert "language of the person's latest message" in llm.SYSTEM
+
+
+def test_sizes_on_the_part_are_kept_tagged_and_measured_without_the_model(client, world, monkeypatch):
+    code = "width = 86;\nheight = 33;\ncube([width, 40, height]);"
+    sizes = [{"name": "width", "label": "Board width", "min": 40, "max": 120, "from": [0, 0, 0], "to": [86, 0, 0], "measure": True},
+             {"name": "height", "label": "Height", "min": 10, "max": 60, "from": [0, 0, 0], "to": [0, 0, 33]}]
+    monkeypatch.setattr(llm, "ask", lambda items, **kw: ({"title": "Case", "message": "Here.", "assumptions": [], "code": code,
+                                                          "parameters": sizes}, {"in": 1, "cached": 0, "out": 1}, "stub"))
+    d = _design(client, world["dana"])
+    _say(client, d, "A case for my board")
+    v = d.versions.get()
+    w, h = v.parameters.order_by("position")
+    assert (w.tag, w.needs_measuring, w.dim) == ("M1", True, {"from": [0, 0, 0], "to": [86, 0, 0], "at": 86.0})
+    assert (h.tag, h.needs_measuring) == ("D1", False)
+    poll = client.get(f"/design3d/d/{d.pk}/poll/").json()["current"]["parameters"]
+    assert poll[0]["tag"] == "M1" and poll[0]["measure"] and poll[0]["dim"]["to"] == [86, 0, 0]
+    page = client.get(f"/design3d/d/{d.pk}/").content.decode()
+    assert 'id="d3-sizes"' in page and 'id="d3-to-measure"' in page and 'id="d3-dim-edit"' in page
+
+    # The person measures 130, outside the slider's range: it is kept, with no call to the model.
+    monkeypatch.setattr(llm, "ask", lambda items, **kw: pytest.fail("measuring must not call the model"))
+    client.post(f"/design3d/d/{d.pk}/sliders/", {"from": 1, "width": "130", "height": "33", "measured": "width"})
+    v2 = d.versions.get(number=2)
+    w2 = v2.parameters.get(name="width")
+    assert "width = 130;" in v2.code and w2.value == 130 and w2.maximum >= 130
+    assert w2.needs_measuring is False and w2.tag == "M1" and w2.dim["at"] == 86.0
+    said = [i for i in llm.history(d) if i["role"] == "assistant"][-1]["content"]
+    assert "M1 width = 86 (to measure)" in said
