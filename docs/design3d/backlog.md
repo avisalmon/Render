@@ -165,3 +165,23 @@ questions for the arcade case.
 - [x] Take a picture or STL out before sending; the email buttons answer in place
 - [x] Sizes on the part: Parameter tag / needs_measuring / dim; M1 always shown, Sizes button for the rest, a tap edits, "Please measure" form, typed values keep out-of-range measurements, no model call and no turn
 - [x] Real turn (Raspberry Pi 4 case): it searched the Raspberry Pi site, cited the 85 x 56 mm drawing, two parts, sizes placed on the part; 63 s, $0.044
+
+## D3.17 · The second analysis: the object first, the fit loop, honest limits (2026-10-30)
+
+Second "Send me the chats for analysis": the DE10-Lite console (7 turns,
+$0.28) and the arcade case (1 more turn). The chat built a shell with
+openings placed by eye, no supports or fastening, and asked the same
+questions every turn. Avi: "he needs to be better", then "it might be too
+complex for this system; this kind of work should be done in Solid or
+Fusion". Claude designed the case by hand from the same chat (scratchpad
+analysis2/fable_console.scad): frame first, electronics as unprinted parts,
+openings derived, split/lip/screws decided, 12 estimates marked M; the fit
+check caught four of Claude's own faults before anyone saw them.
+
+- [x] Prompt: what the chat does well and what it does not (say so first, build the simple version, point to Fusion/SolidWorks); enclosures electronics-first in one frame; decide the split, lip and screws; ask once
+- [x] `jobs`: the fit-fix loop (`FIT_REPAIRS = 2`), "Fixing the fit, try N of 2" in the trail
+- [x] `_self_check` compact: system + latest message + reply + picture
+- [x] `parts._inside` nudges the ray off exact faces (two posts with the same outline read as an overlap)
+- [x] Export: each version's sizes (tag, value, measure) in design.json and chat.txt
+- [x] Tour screen 6 and the spec's "What it is not" say the limit
+- [x] A/B on Avi's console request: A (old) a shell with holes, 5 M sizes; B (new) 6 unprinted parts, 8 M sizes, the honesty line; 74 s, $0.053

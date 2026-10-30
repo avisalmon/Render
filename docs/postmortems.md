@@ -17,6 +17,31 @@ Newest first.
 
 ---
 
+## PM-83 · 2026-10-30 · The chat built cases around electronics it never modelled
+
+**What happened.** Two real chats (a DE10-Lite console, an arcade case)
+produced shells with openings placed by eye, no supports or fastening, and
+the same questions every turn, for $0.51 and 12 turns. Avi asked whether the
+model needs to be better. Designing the same case by hand showed the gap was
+mostly process: fix a frame, model the object first as unprinted parts,
+derive the openings, decide the split and screws, mark estimates, run the
+fit check and fix. The fit check also had a flaw: a vertex exactly on the
+other part's vertical face read as inside (two posts with the same outline).
+
+**Why.** The prompt said "build first" but nothing about modelling the thing
+the case is for, and nothing about saying when a request is beyond the chat.
+The fit findings only reached the model inside the one self-check.
+
+**Rule.** A tool that builds around a real object models the object first,
+in one fixed frame, and derives everything from it. Findings that mean "this
+cannot be right" (overlaps) go back to the model to fix before the answer,
+like a build error. A geometric ray test starts a hair off the point. And the
+product says early, in its own words, what it does not do well, and where to
+finish the job instead.
+
+Here: `design3d/llm.py` (SYSTEM), `design3d/jobs.py` (`FIT_REPAIRS`), `design3d/parts.py` (`NUDGE`), `docs/building_an_app.md` mistake 70
+BKM: b19e5a7
+
 ## PM-82 · 2026-10-30 · Sprint D3.16: stand-ins with a fixed shape, and a slider that clamps
 
 **What happened.** Adding a `search` option to the model call and a

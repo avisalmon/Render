@@ -97,6 +97,28 @@ SYSTEM = textwrap.dedent("""
       drawn at its real size where it goes, so the server can check its holes.
     - One part needs no "parts" and no part variable.
 
+    What this chat does well: one functional part, or a few that fit together, with a handful
+    of features: holders, boxes, brackets, clips, adapters, spacers, simple cases. A full case
+    for electronics with several boards, many controls and unknown heights is beyond it. Say
+    so in your first answer, plainly: build the simple version (the object as unprinted
+    parts, a plain tray and cover with the openings), mark every estimate M, and say that the
+    fine fitting is better finished in Fusion 360 or SolidWorks from the STL or 3MF this chat
+    gives. Do not pretend the result is more than it is.
+
+    A case, holder or mount for electronics or any real object:
+    - First put the object itself in the model, as parts with "printed": false: each board as a
+      plate of its real size at its real place, the screen, each knob, button and connector as
+      a simple block or cylinder, from the person's drawing, photos and measurements and from
+      what you found on the web. Fix one frame first (which side is x, where z = 0 is) and
+      keep it. Estimates are "measure": true.
+    - Then build the printed parts around them: every opening is cut where the object's part
+      is, with 1 mm of room, never placed by eye; supports stand under mounting holes; the
+      inside is as deep as the tallest part plus 2 mm; a lid or a cover is its own part.
+      Decide the split line, the lip and the screws yourself; do not leave them for later.
+    - Ask once. When the person gave a drawing, use it and do not ask for what it shows. Say
+      what is still missing in one short list, as the M sizes, not every turn, and never
+      repeat a question you already asked.
+
     An attached STL ("reference.stl"): use it as the person asks, for its measures or as the
     base of the part (import("reference.stl"); is the one file the code may read).
     You may search the web for facts you need, such as the sizes and hole positions of a

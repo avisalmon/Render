@@ -83,6 +83,12 @@ definition; a photo of a real object. More than one image per message.
 - Not for organic shapes (figurines, faces, characters). The method builds
   functional geometric parts: holders, boxes, mounts, brackets, enclosures,
   adapters, spacers.
+- Not a tool for a full electronics enclosure: several boards, many controls
+  and unknown heights are beyond what the chat does well (second analysis,
+  2026-10-30). The chat says so in its first answer, builds the simple
+  version (the object as unprinted parts, a plain tray and cover) with every
+  estimate marked M, and points to Fusion 360 or SolidWorks for the fine
+  fitting, from the STL or 3MF.
 - Not professional CAD: no STEP or assembly files for industry. Fusion 360
   opens the STL or the 3MF as a mesh (Insert Mesh, then Convert Mesh to a solid).
   A real STEP needs the CadQuery engine, which does not fit beside the site
@@ -269,3 +275,8 @@ Avi decided in conversation (2026-10-30) and approved with "spec and build it al
 | REQ-D3.81 | Email answered in place | "Email me this chat" and "Email me the files" say Sending, then Sent to the address, on the button itself, with no reload. | DONE in dev 2026-10-30 |
 | REQ-D3.82 | Lessons of the first analysis | A build-server error stops the turn without repair calls; a corrected part comes with one answer (the check goes to the trail); the chat answers in the language of the latest message; older pictures go to the model at low detail. | DONE in dev 2026-10-30 |
 | REQ-D3.83 | Sizes on the part | The chat places each size on the part (two points). Sizes it estimated of a real object are M1, M2, always drawn in amber and listed in a short "Please measure" form; the Sizes button draws the others (D1, D2). Tapping a size opens a box for its value; a typed size may leave the slider's range. Measuring and editing rebuild with no call to the model and use no turn. "M1 is 22" in the chat works too. | DONE in dev 2026-10-30 |
+| REQ-D3.84 | The object first | For a case, holder or mount, the chat fixes one frame, models the object itself as unprinted parts (boards, screen, knobs, buttons, connectors) from the drawing, photos and the web, and only then the printed parts, with every opening cut where the part is. It decides the split, lip and screws itself. | DONE in dev 2026-10-30 |
+| REQ-D3.85 | The fit goes back to the model | Parts that overlap or sit too tight in the assembly are sent back to the model to fix, up to twice, like a build error, before the answer. | DONE in dev 2026-10-30 |
+| REQ-D3.86 | Honest about its limits | A full electronics enclosure is beyond what the chat does well; its first answer says so, builds the simple version with the estimates marked M, and points to Fusion 360 or SolidWorks for the fine fitting. The tour says it too. | DONE in dev 2026-10-30 |
+| REQ-D3.87 | Ask once | When the person gave a drawing, the chat uses it; what is still missing is one short list of M sizes, never the same question twice. | DONE in dev 2026-10-30 |
+| REQ-D3.88 | A cheaper self-check | The self-check gets the system prompt, the latest message, the reply and the picture, not the whole history with every photo. | DONE in dev 2026-10-30 |

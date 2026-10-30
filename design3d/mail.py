@@ -48,6 +48,9 @@ def _version_line(v):
         bits.append(f"built in {v.build_seconds} s")
     if v.print_summary:
         bits.append(v.print_summary)
+    sizes = [f"{q.tag} {q.name}={q.value.normalize():f}{'?' if q.needs_measuring else ''}" for q in v.parameters.all() if q.tag]
+    if sizes:
+        bits.append("sizes " + ", ".join(sizes))
     line = " · ".join(bits)
     if v.error:
         line += "\n      error: " + v.error.splitlines()[0][:300]

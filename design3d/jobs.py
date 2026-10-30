@@ -27,6 +27,7 @@ from .models import Design, Message, Parameter, Part, Version
 log = logging.getLogger(__name__)
 
 REPAIRS = 3
+FIT_REPAIRS = 2
 STUCK_AFTER = timedelta(minutes=10)
 
 
@@ -351,6 +352,30 @@ def _turn(msg, design):
             _built(msg, version)
             _show(design, version)
 
+        # Parts that overlap in the assembly go back to the model to fix,
+        # like a build error (second analysis, 2026-10-30: a case was built
+        # around boards that were never modelled; now they are, and the fit
+        # check catches the openings that miss them).
+        fits = 0
+        while version.status == Version.READY and _overlaps(version) and fits < FIT_REPAIRS and not llm.stub_mode():
+            fits += 1
+            _step(msg, f"Fixing the fit, try {fits} of {FIT_REPAIRS}")
+            items = items + [{"role": "assistant", "content": _as_json(reply)},
+                             {"role": "user", "content": [{"type": "input_text", "text":
+                                 "The fit check found parts that overlap in the assembly: "
+                                 + " ".join(f["fix"] for f in _overlaps(version))
+                                 + " Fix it and answer in the same JSON."}]}]
+            fixed, usage, model = llm.ask(items)
+            _add_usage(msg, usage, model)
+            if not fixed["code"]:
+                break
+            reply = {**reply, **{k: v for k, v in fixed.items() if v}}
+            _note(msg, f"Building version {design.versions.aggregate(m=Max('number'))['m'] + 1}")
+            version = make_version(design, fixed["code"], design.current, Version.CHAT, fixed["parameters"] or reply["parameters"],
+                                   declared=fixed.get("parts") or reply.get("parts"))
+            _built(msg, version)
+            _show(design, version)
+
         # Every part the chat builds is shown back to the model once (Avi,
         # 2026-10-29: after "wall mount" and "it may fall" the chat changed the
         # part without looking at it). About half a cent a turn.
@@ -389,6 +414,10 @@ def _as_json(reply):
     return json.dumps({k: reply.get(k) for k in ("title", "message", "assumptions", "code")})
 
 
+def _overlaps(version):
+    return [f for f in version.fit or [] if f.get("level") == "warn"]
+
+
 def _findings(version):
     warns = version.warnings
     if not warns:
@@ -402,7 +431,11 @@ def _self_check(msg, design, items, reply, version):
     import base64
 
     sheet = render.sheet(view_stl(version))
-    items = items + [
+    # Only what the check needs: the system prompt, the person's latest
+    # message, the reply and the picture. Not the whole history with every
+    # photo again (second analysis, 2026-10-30: the check doubled the cost
+    # of photo-heavy turns).
+    items = [items[0]] + [i for i in items[1:] if i["role"] == "user"][-1:] + [
         {"role": "assistant", "content": _as_json(reply)},
         {"role": "user", "content": [
             {"type": "input_text", "text": f"This is what your code built (size {version.size_mm} mm). Compare it with "

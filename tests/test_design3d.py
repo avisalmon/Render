@@ -1441,3 +1441,94 @@ def test_sizes_on_the_part_are_kept_tagged_and_measured_without_the_model(client
     assert w2.needs_measuring is False and w2.tag == "M1" and w2.dim["at"] == 86.0
     said = [i for i in llm.history(d) if i["role"] == "assistant"][-1]["content"]
     assert "M1 width = 86 (to measure)" in said
+
+
+# ---------- the second analysis's learnings (Avi, 2026-10-30) ----------
+
+def test_the_chat_knows_what_it_does_well_and_models_the_object_first():
+    s = llm.SYSTEM
+    assert "beyond it" in s and "Fusion 360 or SolidWorks" in s and '"printed": false' in s
+    assert "Ask once" in s and "never repeat a question" in " ".join(s.split())
+
+
+@pytest.mark.skipif(not builder.available(), reason="no OpenSCAD on this PC")
+def test_parts_that_overlap_go_back_to_the_model_to_fix(client, world, monkeypatch, settings):
+    """Like a build error: the fit findings are sent back, up to twice."""
+    settings.OPENAI_API_KEY = "sk-test"
+    bad = BOX_AND_LID.replace("clear = 0.3;", "clear = -0.5;")
+    good = BOX_AND_LID
+    answers = iter([bad, good, None])
+    calls = []
+
+    def ask(items, **kw):
+        calls.append(items[-1]["content"][0]["text"] if isinstance(items[-1]["content"], list) else items[-1]["content"])
+        code = next(answers)
+        return ({"title": "Box", "message": "Here.", "assumptions": [], "code": code, "parameters": [], "parts": TWO_PARTS},
+                {"in": 1, "cached": 0, "out": 1}, "stub")
+
+    monkeypatch.setattr(llm, "ask", ask)
+    monkeypatch.setattr(builder, "build", REAL_BUILD)
+    monkeypatch.setattr(llm, "stub_mode", lambda: False)
+    d = _design(client, world["dana"])
+    _say(client, d, "A box with a lid")
+    assert "parts that overlap in the assembly" in calls[1] and "Box and Lid overlap" in calls[1]
+    done = d.messages.get(role=Message.ASSISTANT)
+    assert "Fixing the fit, try 1 of 2" in [t[1] for t in done.trail]
+    assert done.version.fit == [] and done.version.number == 2
+    assert len(calls) == 3, "the bad one, the fix, the self-check"
+
+
+def test_the_self_check_sends_only_what_it_needs(client, world, monkeypatch, settings):
+    settings.OPENAI_API_KEY = "sk-test"
+    seen = []
+
+    def ask(items, **kw):
+        seen.append(items)
+        return ({"title": "Box", "message": "Here.", "assumptions": [], "code": "cube(10);" if len(seen) == 1 else None,
+                 "parameters": []}, {"in": 1, "cached": 0, "out": 1}, "stub")
+
+    monkeypatch.setattr(llm, "ask", ask)
+    monkeypatch.setattr(llm, "stub_mode", lambda: False)
+    d = _design(client, world["dana"])
+    for text in ("One", "Two", "Three"):
+        seen.clear()
+        _say(client, d, text, pictures=_jpeg((300, 200)))
+    first, check = seen
+    assert len(first) == 1 + 2 * 2 + 1, "the whole history goes to the design call: two done turns and this message"
+    assert [i["role"] for i in check] == ["system", "user", "assistant", "user"], "the check gets the latest message only"
+    assert check[1]["content"][0]["text"].startswith("Three")
+
+
+def test_two_posts_with_the_same_outline_are_not_an_overlap():
+    """Found on 2026-10-30: a vertex exactly on the other part's vertical
+    face made the ray graze it and read as inside."""
+    from design3d import parts
+
+    code = ('part = "all"; $fn = 48;\n'
+            'module a() { translate([0,0,0]) cylinder(d=7, h=10); }\n'
+            'module b() { translate([0,0,10.3]) cylinder(d=7, h=10); }\n'
+            'if (part == "all" || part == "a") a();\nif (part == "all" || part == "b") b();')
+    if not builder.available():
+        pytest.skip("no OpenSCAD on this PC")
+    ta = render.read_stl(REAL_BUILD(code, part="a")[0])
+    tb = render.read_stl(REAL_BUILD(code, part="b")[0])
+    assert parts.fit([("a", "A", True, ta), ("b", "B", True, tb)]) == []
+
+
+def test_the_analysis_export_carries_the_sizes(client, world, monkeypatch):
+    import io
+    import zipfile
+
+    code = "width = 86;\ncube([width, 40, 20]);"
+    sizes = [{"name": "width", "label": "Board width", "min": 40, "max": 120, "from": [0, 0, 0], "to": [86, 0, 0], "measure": True}]
+    monkeypatch.setattr(llm, "ask", lambda items, **kw: ({"title": "Case", "message": "Here.", "assumptions": [], "code": code,
+                                                          "parameters": sizes}, {"in": 1, "cached": 0, "out": 1}, "stub"))
+    d = _design(client, world["dana"])
+    _say(client, d, "A case")
+    client.force_login(world["avi"])
+    mail.outbox.clear()
+    client.post("/design3d/people/", {"action": "export"})
+    z = zipfile.ZipFile(io.BytesIO(mail.outbox[-1].attachments[0][1]))
+    meta = json.loads(z.read(f"design-{d.pk}/design.json"))
+    assert meta["versions"][0]["sizes"] == [{"tag": "M1", "name": "width", "value": "86.000", "measure": True, "placed": True}]
+    assert "sizes M1 width=86?" in z.read(f"design-{d.pk}/chat.txt").decode()
