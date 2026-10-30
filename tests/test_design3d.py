@@ -1036,8 +1036,8 @@ def test_a_member_link_brings_a_friend_who_is_in_at_once_and_counted(client, wor
     client.force_login(world["dana"])
     page = client.get("/design3d/designs/").content.decode()
     dana = M.objects.get(user=world["dana"])
-    link = f"/design3d/r/{dana.ref_code}/"
-    assert dana.ref_code and link in page and "Invite friends" in page and 'data-share="whatsapp"' in page
+    link = re.search(r"/design3d/r/[\w-]+/", page).group(0)
+    assert "Invite friends" in page and 'data-share="whatsapp"' in page and "Each send gets its own link" in page
     assert "Dana invites you to try design3d" in page
 
     client.logout()
@@ -1241,3 +1241,36 @@ def test_avi_sends_the_new_chats_for_analysis(client, world):
     assert "1 designs, 2 new messages" in mail.outbox[-1].body
     client.force_login(world["dana"])
     assert client.post("/design3d/people/", {"action": "export"}).status_code == 404
+
+
+def test_every_send_of_a_friend_link_is_unique_and_lets_one_person_in(client, world):
+    """Avi, 2026-10-30: "rotate the key every time I access the page or copy
+    it or share it, so I won't send the same one twice"."""
+    from design3d.models import FriendLink, Maker as M
+
+    client.force_login(world["dana"])
+    one = re.search(r"/design3d/r/([\w-]+)/", client.get("/design3d/designs/").content.decode()).group(1)
+    two = re.search(r"/design3d/r/([\w-]+)/", client.get("/design3d/designs/").content.decode()).group(1)
+    three = client.post("/design3d/r/new/").json()
+    assert len({one, two, three["link"].rstrip("/").rsplit("/", 1)[1]}) == 3, "a new link every time"
+    assert "Dana invites you" in three["text"] and three["whatsapp"].startswith("https://wa.me/?text=")
+
+    client.logout()
+    client.get(f"/design3d/r/{one}/")
+    kim = _user("kim@example.com", first="Kim")
+    client.force_login(kim)
+    assert client.get("/design3d/")["Location"] == "/design3d/designs/"
+    fl = FriendLink.objects.get(code=one)
+    assert fl.used_by == kim and M.objects.get(user=kim).referred_by.user == world["dana"]
+    client.get(f"/design3d/r/{one}/")
+    assert client.get("/design3d/")["Location"] == "/design3d/designs/", "the same person may open it again"
+
+    client.logout()
+    client.get(f"/design3d/r/{one}/")
+    lee = _user("lee@example.com", first="Lee")
+    client.force_login(lee)
+    door = client.get("/design3d/").content.decode()
+    assert "already used" in door and not M.objects.filter(user=lee, status=M.APPROVED).exists()
+    client.get(f"/design3d/r/{two}/")
+    assert client.get("/design3d/")["Location"] == "/design3d/designs/", "a fresh link works"
+    assert client.get("/design3d/api/friend-links/").status_code == 200

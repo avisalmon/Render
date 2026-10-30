@@ -16,7 +16,7 @@ from django.views.decorators.http import require_POST
 
 from . import access, jobs, llm, mail, params, seats
 from .forms import AskForm
-from .models import PRIVATE, Design, Invite, Maker, Message, Part, Picture, Settings, Version
+from .models import PRIVATE, Design, FriendLink, Invite, Maker, Message, Part, Picture, Settings, Version
 
 MAX_PICTURES = 4
 
@@ -33,6 +33,14 @@ def door(request):
     friend = Maker.objects.filter(pk=request.session.get(REF_KEY)).first() if request.session.get(REF_KEY) else None
     if (friend is not None and request.user.is_authenticated and (maker is None or maker.pk != friend.pk)
             and (maker is None or maker.status in (Maker.PENDING, Maker.DECLINED))):
+        link_pk = request.session.get(REF_LINK)
+        if link_pk and not FriendLink.objects.filter(pk=link_pk).filter(
+                Q(used_by__isnull=True) | Q(used_by=request.user)).update(used_by=request.user, used_at=timezone.now()):
+            # Someone else used this unique link a moment ago.
+            request.session.pop(REF_KEY, None)
+            request.session.pop(REF_LINK, None)
+            flash.error(request, "This invitation link was already used. Ask your friend for a new one.")
+            return redirect("design3d:door")
         maker = seats.admit(request.user, friend, request)
         if maker.status == Maker.APPROVED:
             return redirect("design3d:designs")
@@ -41,6 +49,7 @@ def door(request):
 
 
 REF_KEY = "design3d_ref"
+REF_LINK = "design3d_ref_link"
 TOUR_KEY = "design3d_tour_seen"
 TOUR_STEPS = 7
 
@@ -77,9 +86,19 @@ def friend_link(request, code):
     """A member's own link (Avi, 2026-10-30): it never runs out; whoever
     comes through it sees who invited them and asks to join as usual (Avi
     approves). The friend is remembered for the points later."""
-    friend = Maker.objects.filter(ref_code=code, status=Maker.APPROVED).first()
+    fl = FriendLink.objects.filter(code=code).select_related("maker").first()
+    if fl is not None:
+        if fl.used_by_id is not None and fl.used_by_id != request.user.pk:
+            flash.error(request, "This invitation link was already used. Ask your friend for a new one.")
+            return redirect("design3d:door")
+        if fl.maker.status == Maker.APPROVED:
+            request.session[REF_KEY] = fl.maker_id
+            request.session[REF_LINK] = fl.pk
+        return redirect("design3d:door")
+    friend = Maker.objects.filter(ref_code=code, status=Maker.APPROVED).first()  # a link from before 30 Oct
     if friend is not None:
         request.session[REF_KEY] = friend.pk
+        request.session.pop(REF_LINK, None)
     return redirect("design3d:door")  # the door lets them in once they are signed in
 
 
@@ -570,13 +589,22 @@ def _friend_share(request, maker):
     """A member's own link and its ready message, and how many joined through it."""
     from urllib.parse import quote
 
-    link = request.build_absolute_uri(f"/design3d/r/{maker.code()}/")
+    fresh = FriendLink.objects.create(maker=maker)  # a new link for every send
+    link = request.build_absolute_uri(f"/design3d/r/{fresh.code}/")
     text = FRIEND_TEXT.format(name=maker.display_name, link=link)
     joined = maker.referrals.filter(status=Maker.APPROVED).count()
     asked = maker.referrals.count()
-    return {"link": link, "text": text, "joined": joined, "asked": asked,
+    return {"link": link, "text": text, "joined": joined, "asked": asked, "refresh": True,
             "whatsapp": "https://wa.me/?text=" + quote(text),
             "mailto": "mailto:?subject=" + quote("Try design3d") + "&body=" + quote(text)}
+
+
+@require_POST
+@access.inside
+def friend_new(request):
+    """The next unique link, after one was copied or shared."""
+    share = _friend_share(request, request.maker)
+    return JsonResponse({k: share[k] for k in ("link", "text", "whatsapp", "mailto")})
 
 
 def _invite_share(request, inv):

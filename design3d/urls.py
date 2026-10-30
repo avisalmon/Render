@@ -20,6 +20,7 @@ urlpatterns = [
     path("ask/", views.ask, name="ask"),
     path("welcome/", views.welcome, name="welcome"),
     path("i/<str:token>/", views.invited, name="invited"),
+    path("r/new/", views.friend_new, name="friend_new"),
     path("r/<str:code>/", views.friend_link, name="friend_link"),
     path("designs/", views.designs, name="designs"),
     path("designs/new/", views.new_design, name="new"),
