@@ -17,6 +17,22 @@ Newest first.
 
 ---
 
+## PM-79 · 2026-10-30 · Sprint D3.14 end: a test that let the view settle first
+
+**What happened.** The Home test waited for the view to stop moving before
+tapping Home, so it never saw that Home did not stop the glide left from a
+drag; in the full run it failed by 1 mm once. Home now stops the glide, and
+the test taps it while the view is still moving. Avi also replaced the
+email form for invitations a day after it shipped: he wanted one tap and his
+own WhatsApp, which the first design did not ask him about.
+
+**Rule.** Test a control in the state people use it in (here: right after a
+drag, while the view still moves), not only after everything has settled.
+When the person who sends something is the owner, ask how he sends it.
+
+Here: `static/design3d/viewer.js` (`goHome`), `tests/test_design3d_browser.py`, `docs/building_an_app.md` mistake 67
+BKM: 333d4b2
+
 ## PM-78 · 2026-10-29 · A commit went in while a test failed
 
 **What happened.** For D3.13 I ran the design3d tests and committed in one

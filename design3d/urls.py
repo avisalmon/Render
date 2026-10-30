@@ -19,6 +19,7 @@ urlpatterns = [
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("ask/", views.ask, name="ask"),
     path("i/<str:token>/", views.invited, name="invited"),
+    path("r/<str:code>/", views.friend_link, name="friend_link"),
     path("designs/", views.designs, name="designs"),
     path("designs/new/", views.new_design, name="new"),
     path("d/<int:pk>/", views.design, name="design"),

@@ -93,9 +93,13 @@ if (box) {
   // Home (Avi, 2026-10-29): the view as it was when the part loaded.
   function goHome() {
     if (!home.set) return;
+    // Stop the glide left from the last drag first, or it carries on after Home.
+    controls.enableDamping = false;
+    controls.update();
     camera.position.copy(home.position);
     controls.target.copy(home.target);
     controls.update();
+    controls.enableDamping = true;
   }
 
   function marker(at) {

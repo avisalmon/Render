@@ -122,3 +122,14 @@ About $0.011 to $0.015 a turn.
 - [x] Tests: the copy without the chat or pictures, the original untouched, only shared designs; Save is a download, still owner only; a phone test of the picture
 
 - [x] 2026-10-29: Home button in the 3D view (REQ-D3.56), on the design, Done and shared pages; a phone test turns the view and comes back
+
+## D3.14 · One-tap links for Avi, a link for everyone, who brought whom (2026-10-30)
+
+- [x] Avi's "Invite a friend": one tap, a one-time link with WhatsApp, Email, Share and Copy and a ready message; no email typed, nothing mailed; signing up through the link lets the new person in at once
+- [x] The invitation page explains design3d with three examples, Google first
+- [x] Everyone's own link on My designs (`Maker.ref_code`, `/design3d/r/<code>/`), the door says who invited you, the request remembers it (`Maker.referred_by`); Avi sees "invited by" and "brought N"; each person sees how many joined through them; Avi's one-time links credit Avi
+- [x] `_sharebox.html`: one share box for both
+- [x] Home stops the glide left from a drag before it jumps back (the test taps it mid-glide)
+- [x] Tests: the coupon by signup and by an existing member, the friend link through ask and approve with the counts, never yourself, an unknown code
+- [ ] Next: the gamification plan (Avi, 2026-10-30), with these counts as one input
+- [ ] Flaky under load (PM-78 rule, written down): in the full design3d run of 2026-10-30, `test_on_a_phone_mark_a_point_measure_keep_the_part_on_top_and_finish` timed out once (30 s) waiting for #d3-stick after `page.reload()`; it passed twice alone. Watch the nightly run; if it repeats, wait for the page's load event after the reload.

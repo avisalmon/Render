@@ -401,8 +401,7 @@ def test_home_puts_the_view_back(browser, live_server, world):
     page.mouse.down()
     page.mouse.move(box["x"] + box["width"] * 0.8, box["y"] + box["height"] * 0.3, steps=8)
     page.mouse.up()
-    page.wait_for_timeout(800)
-    turned = page.evaluate("window.d3View.camera()")
+    turned = page.evaluate("window.d3View.camera()")  # still gliding: Home must stop that too
     assert max(abs(a - b) for a, b in zip(first, turned)) > 5, "the drag turned the view"
     assert page.is_visible("#d3-home")
     page.click("#d3-home")

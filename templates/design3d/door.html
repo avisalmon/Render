@@ -7,6 +7,7 @@
     <h1 class="d3-h1">Describe it. Sketch it. Print it.</h1>
     <p class="d3-muted">design3d turns a few words, a hand sketch or a photo of a real thing into a 3D part you can print, through a chat that asks what it needs to know.</p>
 
+    {% if friend %}<p class="d3-friend" id="d3-friend"><b>{{ friend.display_name }} invited you.</b> Describe a part in a few words, send a photo of a hand sketch, or photograph the thing it should fit, and get a file ready for a 3D printer.</p>{% endif %}
     {% if not user.is_authenticated %}
       <p>It is open by invitation. Sign in, then ask to come in.</p>
       <a class="d3-btn" href="{% url 'design3d:login' %}" id="d3-signin">Sign in</a>

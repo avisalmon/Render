@@ -786,36 +786,55 @@ def test_asking_to_join_emails_avi_once_per_request(client, world):
     assert len([m for m in mail.outbox if "asks to join" in m.subject]) == 2, "asking again after a decline mails again"
 
 
-def _invite(client, world, email="new@example.com", name="Noa"):
+def _invite(client, world):
+    """Avi taps Invite a friend: one link, nothing typed (2026-10-30)."""
     from design3d.models import Invite
 
     client.force_login(world["avi"])
     mail.outbox.clear()
-    client.post("/design3d/people/", {"action": "invite", "email": email, "name": name})
-    return Invite.objects.get(email=email)
+    r = client.post("/design3d/people/", {"action": "invite"})
+    inv = Invite.objects.order_by("-pk").first()
+    assert r["Location"] == f"/design3d/people/?new={inv.pk}#d3-invites"
+    return inv
 
 
-def test_an_invitation_lets_one_person_in_once(client, world):
+def test_an_invitation_link_lets_one_person_in_once(client, world):
+    """Avi, 2026-10-30: like a coupon. One tap makes it, he sends it by
+    WhatsApp, mail or any share sheet; whoever uses it first is in, and it is
+    used up."""
+    from urllib.parse import unquote
+
     from design3d.models import Invite
 
     inv = _invite(client, world)
-    sent = [m for m in mail.outbox if m.subject == "You are invited to design3d"]
-    assert len(sent) == 1 and sent[0].to == ["new@example.com"] and f"/design3d/i/{inv.token}/" in sent[0].body
-    assert "Hi Noa" in sent[0].body
-    people = client.get("/design3d/people/").content.decode()
-    assert "new@example.com" in people and "open until" in people
+    assert mail.outbox == [], "design3d mails nothing: Avi sends the link himself"
+    people = client.get(f"/design3d/people/?new={inv.pk}").content.decode()
     link = f"/design3d/i/{inv.token}/"
+    assert 'class="d3-share"' in people and link in people
+    whatsapp = re.search(r'data-share="whatsapp" href="([^"]+)"', people).group(1)
+    assert whatsapp.startswith("https://wa.me/?text=") and link in unquote(whatsapp.replace("&amp;", "&"))
+    assert "chat that turns a few words, a hand sketch or a photo" in unquote(whatsapp)
+    assert 'data-share="mail" href="mailto:?subject=' in people and 'data-share="copy"' in people
+    assert "Open link" in people and "open until" in people
 
     client.logout()
     page = client.get(link)
-    assert page.status_code == 200 and "Sign in to accept" in page.content.decode()
+    html = page.content.decode()
+    assert page.status_code == 200 and "invited to design3d" in html and "Continue with Google" in html
+    assert f"next={link}" in html, "signing in or up comes back to the link"
     assert Invite.objects.get(pk=inv.pk).status == "open", "looking signed out burns nothing"
 
-    noa = _user("noa@example.com", first="Noa")
-    client.force_login(noa)
+    # A new person signs up through the link and is in at once.
+    r = client.post(f"/design3d/signup/?next={link}", {"email": "noa@example.com", "name": "Noa",
+                                                       "password1": "d3-noa-pass-8812", "password2": "d3-noa-pass-8812",
+                                                       "next": link})
+    assert r.status_code == 302 and r["Location"] == link, r.content.decode()[:300]
     mail.outbox.clear()
     r = client.get(link)
     assert r.status_code == 302 and r["Location"] == "/design3d/designs/"
+    from django.contrib.auth.models import User
+
+    noa = User.objects.get(email="noa@example.com")
     inv.refresh_from_db()
     assert inv.status == "used" and inv.used_by == noa
     assert Maker.objects.get(user=noa).status == Maker.APPROVED
@@ -830,6 +849,16 @@ def test_an_invitation_lets_one_person_in_once(client, world):
     assert client.get("/design3d/i/not-a-token/").status_code == 404
 
 
+def test_an_existing_member_who_opens_a_link_is_let_in(client, world):
+    """Someone who already has a babook account (and even asked and was
+    declined) is let in by the link at once."""
+    inv = _invite(client, world)
+    bob = _user("bob@example.com", first="Bob", status=Maker.DECLINED)
+    client.force_login(bob)
+    assert client.get(f"/design3d/i/{inv.token}/")["Location"] == "/design3d/designs/"
+    assert Maker.objects.get(user=bob).status == Maker.APPROVED
+
+
 def test_a_withdrawn_or_old_invitation_lets_nobody_in(client, world):
     from design3d.models import Invite
 
@@ -841,7 +870,7 @@ def test_a_withdrawn_or_old_invitation_lets_nobody_in(client, world):
     page = client.get(f"/design3d/i/{inv.token}/")
     assert page.status_code == 410 and "withdrew it" in page.content.decode()
 
-    old = _invite(client, world, email="old@example.com")
+    old = _invite(client, world)
     Invite.objects.filter(pk=old.pk).update(expires_at=timezone.now() - timedelta(minutes=1))
     client.force_login(sam)
     page = client.get(f"/design3d/i/{old.token}/")
@@ -851,7 +880,7 @@ def test_a_withdrawn_or_old_invitation_lets_nobody_in(client, world):
 
 def test_only_avi_invites(client, world):
     client.force_login(world["dana"])
-    assert client.post("/design3d/people/", {"action": "invite", "email": "x@example.com"}).status_code == 404
+    assert client.post("/design3d/people/", {"action": "invite"}).status_code == 404
     assert client.get("/design3d/api/invites/").status_code in (401, 403)
     client.force_login(world["avi"])
     assert client.get("/design3d/api/invites/").status_code == 200
@@ -995,3 +1024,69 @@ def test_a_picture_in_the_chat_opens_full_size_and_saves(client, world):
     assert "attachment" not in client.get(src).get("Content-Disposition", "")
     client.force_login(world["eli"])
     assert client.get(src + "?download=1").status_code == 404, "still the owner's only"
+
+
+
+# ---------- friends: everyone's own link, and who brought whom (Avi, 2026-10-30) ----------
+
+def test_a_member_link_brings_a_friend_who_asks_and_is_counted(client, world):
+    from design3d.models import Maker as M
+
+    client.force_login(world["dana"])
+    page = client.get("/design3d/designs/").content.decode()
+    dana = M.objects.get(user=world["dana"])
+    link = f"/design3d/r/{dana.ref_code}/"
+    assert dana.ref_code and link in page and "Invite friends" in page and 'data-share="whatsapp"' in page
+    assert "Dana invites you to try design3d" in page
+
+    client.logout()
+    assert client.get(link)["Location"] == "/design3d/"
+    door = client.get("/design3d/").content.decode()
+    assert "Dana invited you." in door
+    bob = _user("bob@example.com", first="Bob")
+    client.force_login(bob)
+    client.post("/design3d/ask/", {"reason": "Dana told me"})
+    asked = M.objects.get(user=bob)
+    assert asked.status == M.PENDING and asked.referred_by == dana, "asks as usual, and Dana is remembered"
+    assert not access_can_enter(bob), "only Avi lets people in"
+
+    client.force_login(world["avi"])
+    people = client.get("/design3d/people/").content.decode()
+    assert "invited by Dana" in people
+    client.post("/design3d/people/", {"maker": asked.pk, "action": "approve"})
+    assert "brought 1" in client.get("/design3d/people/").content.decode()
+    client.force_login(world["dana"])
+    assert "So far 1 joined through you" in client.get("/design3d/designs/").content.decode()
+
+
+def access_can_enter(user):
+    from design3d import access
+
+    return access.can_enter(user)
+
+
+def test_a_friend_link_never_credits_yourself_or_an_unknown_code(client, world):
+    from design3d.models import Maker as M
+
+    client.get("/design3d/r/nothing-here/")
+    assert "invited you" not in client.get("/design3d/").content.decode()
+    carl = _user("carl@example.com", first="Carl")
+    client.force_login(carl)
+    client.post("/design3d/ask/", {"reason": "me"})
+    me = M.objects.get(user=carl)
+    assert me.referred_by is None
+    M.objects.filter(pk=me.pk).update(status=M.APPROVED)
+    client.get(f"/design3d/r/{me.code()}/")
+    M.objects.filter(pk=me.pk).update(status=M.DECLINED)
+    client.post("/design3d/ask/", {"reason": "again"})
+    assert M.objects.get(pk=me.pk).referred_by is None, "never your own friend"
+
+
+def test_a_coupon_credits_avi(client, world):
+    from design3d.models import Maker as M
+
+    inv = _invite(client, world)
+    zoe = _user("zoe@example.com", first="Zoe")
+    client.force_login(zoe)
+    client.get(f"/design3d/i/{inv.token}/")
+    assert M.objects.get(user=zoe).referred_by == M.objects.get(user=world["avi"])

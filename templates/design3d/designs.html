@@ -25,4 +25,12 @@
     <form method="post" action="{% url 'design3d:new' %}">{% csrf_token %}<button type="submit" class="d3-btn">Start your first design</button></form>
   </div>
 {% endif %}
+
+{# Friends (Avi, 2026-10-30): a link of your own to send; whoever joins through it is counted for you. #}
+<section class="d3-friends" id="d3-friends">
+  <h2>Invite friends</h2>
+  <p class="d3-small d3-muted">Send your link to anyone. They ask to join, and Avi lets them in.
+    {% if friends.asked %}So far {{ friends.joined }} joined through you{% if friends.asked > friends.joined %}, {{ friends.asked|add:"0" }} asked{% endif %}.{% endif %}</p>
+  {% include "design3d/_sharebox.html" with share=friends %}
+</section>
 {% endblock %}

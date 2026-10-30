@@ -4,24 +4,28 @@
 {# REQ-D3.3: requests, who is in, what each person spends, their limit. #}
 <div class="d3-head"><div><h1 class="d3-h1">People</h1><p class="d3-small d3-muted">Default limit ${{ default_limit|floatformat:2 }} a day. Admins have none.</p><p class="d3-small d3-muted d3-mono" id="d3-engine">Engine: OpenSCAD {{ engine.version }}{% if engine.manifold %} (Manifold){% endif %}{% if engine.n %} · last {{ engine.n }} builds: {{ engine.failed }} failed{% if engine.avg is not None %}, {{ engine.avg|floatformat:1 }} s average, {{ engine.max|floatformat:1 }} s slowest{% endif %}{% endif %}</p></div></div>
 <div class="d3-people">
-  {# Invitations (Avi, 2026-10-29): one link, one person, burned when used. #}
+  {# Invitations (Avi, 2026-10-30): one tap makes a one-time link, sent however Avi likes. #}
   <section id="d3-invites">
-    <h2>Invite someone</h2>
-    <form method="post" class="d3-form d3-invite-form">{% csrf_token %}<input type="hidden" name="action" value="invite">
-      <label class="d3-field"><span class="d3-small">Email</span><input type="email" name="email" required autocomplete="off" id="d3-invite-email"></label>
-      <label class="d3-field"><span class="d3-small">Name (for the email, optional)</span><input name="name" maxlength="80" id="d3-invite-name"></label>
-      <button class="d3-btn d3-btn-small" id="d3-invite-send">Send the invitation</button>
-    </form>
-    <p class="d3-small d3-muted">They get a link that lets one person in, once, within 14 days.</p>
+    <h2>Invite a friend</h2>
+    <form method="post">{% csrf_token %}<input type="hidden" name="action" value="invite">
+      <button class="d3-btn" id="d3-invite-new">Invite a friend</button></form>
+    <p class="d3-small d3-muted">You get a link that works once: the first person who opens it gets in, signing up if they are new. Unused, it ends after 14 days.</p>
+    {% if share %}
+      <p class="d3-small"><b>Your link is ready.</b> Send it to one person:</p>
+      {% include "design3d/_sharebox.html" %}
+    {% endif %}
     {% if invites %}
       <ul class="d3-invite-list">
         {% for i in invites %}
           <li class="d3-person">
-            <div class="d3-person-who"><b>{{ i.name|default:i.email }}</b>
-              <span class="d3-small d3-muted d3-mono">{{ i.email }} · sent {{ i.created_at|date:"j M" }} ·
-                {% if i.status == "used" %}used by {{ i.used_by.email|default:"someone" }} {{ i.used_at|date:"j M" }}{% elif i.status == "open" %}open until {{ i.expires_at|date:"j M" }}{% else %}{{ i.status }}{% endif %}</span></div>
+            <div class="d3-person-who"><b>{% if i.status == "used" %}Used by {{ i.used_by.email|default:"someone" }}{% elif i.status == "open" %}Open link{% else %}{{ i.status|capfirst }} link{% endif %}</b>
+              <span class="d3-small d3-muted d3-mono">made {{ i.created_at|date:"j M" }} ·
+                {% if i.status == "used" %}used {{ i.used_at|date:"j M H:i" }}{% elif i.status == "open" %}open until {{ i.expires_at|date:"j M" }}{% else %}{{ i.status }}{% endif %}</span></div>
             {% if i.status == "open" %}
-              <form method="post">{% csrf_token %}<input type="hidden" name="invite" value="{{ i.pk }}"><button class="d3-btn d3-btn-small d3-btn-quiet" name="action" value="revoke">Withdraw</button></form>
+              <div class="d3-row">
+                <a class="d3-btn d3-btn-small d3-btn-quiet" href="?new={{ i.pk }}#d3-invites">Share again</a>
+                <form method="post">{% csrf_token %}<input type="hidden" name="invite" value="{{ i.pk }}"><button class="d3-btn d3-btn-small d3-btn-quiet" name="action" value="revoke">Withdraw</button></form>
+              </div>
             {% endif %}
           </li>
         {% endfor %}
@@ -32,7 +36,7 @@
     <h2>Waiting for you</h2>
     {% for m in groups.pending %}
       <div class="d3-person">
-        <div class="d3-person-who"><b>{{ m.display_name }}</b><span class="d3-small d3-muted">{{ m.user.email }} · asked {{ m.requested_at|date:"j M Y H:i" }}</span>{% if m.reason %}<span class="d3-small">“{{ m.reason }}”</span>{% endif %}</div>
+        <div class="d3-person-who"><b>{{ m.display_name }}</b><span class="d3-small d3-muted">{{ m.user.email }} · asked {{ m.requested_at|date:"j M Y H:i" }}{% if m.referred_by %} · invited by {{ m.referred_by.display_name }}{% endif %}</span>{% if m.reason %}<span class="d3-small">“{{ m.reason }}”</span>{% endif %}</div>
         <div class="d3-row">
           <form method="post">{% csrf_token %}<input type="hidden" name="maker" value="{{ m.pk }}"><button class="d3-btn d3-btn-small" name="action" value="approve">Approve</button></form>
           <form method="post">{% csrf_token %}<input type="hidden" name="maker" value="{{ m.pk }}"><button class="d3-btn d3-btn-small d3-btn-quiet" name="action" value="decline">Decline</button></form>
@@ -45,7 +49,7 @@
     {% for m in groups.approved %}
       <div class="d3-person">
         <div class="d3-person-who"><b>{{ m.display_name }}{% if m.admin %} (admin){% endif %}</b>
-          <span class="d3-small d3-muted d3-mono">{{ m.user.email }} · {{ m.n_designs }} design{{ m.n_designs|pluralize }} · today ${{ m.today|default:0|floatformat:2 }} · total ${{ m.total|default:0|floatformat:2 }}</span></div>
+          <span class="d3-small d3-muted d3-mono">{{ m.user.email }} · {{ m.n_designs }} design{{ m.n_designs|pluralize }} · today ${{ m.today|default:0|floatformat:2 }} · total ${{ m.total|default:0|floatformat:2 }}{% if m.brought %} · brought {{ m.brought }}{% endif %}{% if m.referred_by %} · invited by {{ m.referred_by.display_name }}{% endif %}</span></div>
         <div class="d3-row">
           {% if not m.admin %}
             <form method="post" class="d3-limit-form">{% csrf_token %}<input type="hidden" name="maker" value="{{ m.pk }}"><input type="hidden" name="action" value="limit">
@@ -68,3 +72,4 @@
   </section>
 </div>
 {% endblock %}
+
