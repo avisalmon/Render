@@ -1,5 +1,5 @@
 {# A link and its ready message, with WhatsApp, Email, the phone's own Share, and Copy (Avi, 2026-10-30). #}
-<div class="d3-share" data-text="{{ share.text }}">
+<div class="d3-share" data-text="{{ share.text }}"{% if share.refresh %} data-refresh="{% url 'design3d:friend_new' %}"{% endif %}>
   <input class="d3-share-link d3-mono" value="{{ share.link }}" readonly aria-label="The link">
   <div class="d3-row">
     <a class="d3-btn d3-btn-small" data-share="whatsapp" href="{{ share.whatsapp }}" target="_blank" rel="noopener">WhatsApp</a>
@@ -7,24 +7,43 @@
     <button type="button" class="d3-btn d3-btn-small d3-btn-quiet" data-share="native" hidden>Share</button>
     <button type="button" class="d3-btn d3-btn-small d3-btn-quiet" data-share="copy">Copy</button>
   </div>
-  <p class="d3-small d3-muted">The message: {{ share.text }}</p>
+  <p class="d3-small d3-muted">The message: <span data-share="text">{{ share.text }}</span></p>
+  {% if share.refresh %}<p class="d3-small d3-muted">Each send gets its own link, for one person. A new one is ready after every send.</p>{% endif %}
 </div>
 <script>
   (function () {
     var box = document.currentScript.previousElementSibling;
+    // A friend's link is unique per send (Avi, 2026-10-30): after each
+    // WhatsApp, Email, Share or Copy the box gets the next link.
+    function next() {
+      if (!box.dataset.refresh) return;
+      var m = document.cookie.match(/(?:^|; )csrftoken=([^;]*)/);
+      fetch(box.dataset.refresh, { method: "POST", credentials: "same-origin",
+                                   headers: { "X-CSRFToken": m ? decodeURIComponent(m[1]) : "" } })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          box.dataset.text = d.text;
+          box.querySelector("input").value = d.link;
+          box.querySelector('[data-share="whatsapp"]').href = d.whatsapp;
+          box.querySelector('[data-share="mail"]').href = d.mailto;
+          box.querySelector('[data-share="text"]').textContent = d.text;
+        }).catch(function () {});
+    }
+    box.querySelector('[data-share="whatsapp"]').addEventListener("click", function () { setTimeout(next, 300); });
+    box.querySelector('[data-share="mail"]').addEventListener("click", function () { setTimeout(next, 300); });
     var native = box.querySelector('[data-share="native"]');
     if (navigator.share) {
       native.hidden = false;
       native.addEventListener("click", function () {
-        navigator.share({ title: "design3d", text: box.dataset.text }).catch(function () {});
+        navigator.share({ title: "design3d", text: box.dataset.text }).then(next, function () {});
       });
     }
     var copy = box.querySelector('[data-share="copy"]');
     copy.addEventListener("click", function () {
       var input = box.querySelector("input");
-      var done = function () { copy.textContent = "Copied"; };
-      if (navigator.clipboard) navigator.clipboard.writeText(box.dataset.text).then(done, function () { input.select(); });
-      else input.select();
+      var done = function () { copy.textContent = "Copied, a new link is ready"; next(); };
+      if (navigator.clipboard) navigator.clipboard.writeText(box.dataset.text).then(done, function () { input.select(); next(); });
+      else { input.select(); next(); }
     });
     if (location.hash === "#d3-invites" && box.closest("#d3-invites")) box.scrollIntoView({ block: "center" });
   })();

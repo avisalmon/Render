@@ -9,7 +9,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
 from . import access
-from .models import Design, Export, Invite, Maker, Message, Parameter, Part, Picture, Settings, Version
+from .models import Design, Export, FriendLink, Invite, Maker, Message, Parameter, Part, Picture, Settings, Version
 
 
 class Inside(permissions.BasePermission):
@@ -262,6 +262,23 @@ class ExportViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Export.objects.all()
 
 
+class FriendLinkSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FriendLink
+        fields = ["id", "code", "created_at", "used_by", "used_at"]
+
+
+class FriendLinkViewSet(viewsets.ReadOnlyModelViewSet):
+    """Your own unique friend links (2026-10-30), read only: a new one is made
+    on My designs or at /design3d/r/new/."""
+
+    serializer_class = FriendLinkSerializer
+    permission_classes = [Inside]
+
+    def get_queryset(self):
+        return FriendLink.objects.filter(maker=me(self.request))
+
+
 ROUTES = [
     ("makers", MakerViewSet, Maker),
     ("designs", DesignViewSet, Design),
@@ -273,4 +290,5 @@ ROUTES = [
     ("parts", PartViewSet, Part),
     ("settings", SettingsViewSet, Settings),
     ("exports", ExportViewSet, Export),
+    ("friend-links", FriendLinkViewSet, FriendLink),
 ]

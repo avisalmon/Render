@@ -148,3 +148,4 @@ Avi's decisions in conversation, then "Looks good. Spec and build it all."
 - [x] Data migration: people already in (not admins) get 30 turns
 - [ ] Real cost from OpenAI: needs a design3d project key from Avi (the admin key already reads costs per project); until then the People screen shows the estimates
 - [ ] Flaky, written down (PM-78): watch the nightly run for the mark-a-point phone test
+- [x] 2026-10-30: friend links unique per send (`FriendLink`, `/design3d/r/new/`), one person each, credited to the sender; links from before keep working (REQ-D3.77)

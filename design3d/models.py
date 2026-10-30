@@ -114,6 +114,28 @@ def preview_path(instance, filename):
     return f"previews/{instance.design_id}/v{instance.number}-{timezone.now():%Y%m%d%H%M%S}.png"
 
 
+def _friend_code():
+    import secrets
+
+    return secrets.token_urlsafe(6).replace("-", "x").replace("_", "y")
+
+
+class FriendLink(models.Model):
+    """One friend's link, made fresh for every send (Avi, 2026-10-30: "rotate
+    the key every time I access the page or copy it or share it, so I won't
+    send the same one twice"). It lets one person in, like a one-time link,
+    and credits the person who sent it. That same person may open it again."""
+
+    maker = models.ForeignKey(Maker, on_delete=models.CASCADE, related_name="friend_links")
+    code = models.CharField(max_length=16, unique=True, default=_friend_code)
+    created_at = models.DateTimeField(default=timezone.now)
+    used_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    used_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+
 class Settings(models.Model):
     """design3d's own settings, one row (Chapter 8)."""
 

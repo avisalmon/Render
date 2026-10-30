@@ -17,6 +17,22 @@ Newest first.
 
 ---
 
+## PM-81 · 2026-10-30 · One friend link for everyone, where Avi wanted one per send
+
+**What happened.** I built each person's friend link as one fixed link that
+never runs out. Avi, sharing it, saw the same link every time and asked for
+a new one on every view, copy or share, one person each, like his one-time
+links. Built the same day (REQ-D3.77); links already sent keep working.
+
+**Why.** I took "anyone can invite" to mean one permanent link, and did not
+ask whether a link should be reusable.
+
+**Rule.** For anything that grants access or credit, ask whether one link
+serves many people or one, before building it.
+
+Here: `design3d/models.py` (`FriendLink`), `templates/design3d/_sharebox.html`
+BKM: deferred - covered by lesson 78 (ask how the owner sends things)
+
 ## PM-80 · 2026-10-30 · Chapter 8: a photo I prepared on its side
 
 **What happened.** For the tour I shrank Avi's cup photo with Pillow and

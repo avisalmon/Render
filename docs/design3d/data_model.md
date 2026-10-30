@@ -205,6 +205,15 @@ the parts, the plate and the 3MF; never the chat or the pictures.
 | rewarded_at | datetime, null | when this person's first part gave their friend 30 turns (once) |
 | tour_done_at | datetime, null | when they finished the tour |
 
+### FriendLink (new, Avi 2026-10-30: a unique link per send)
+
+| Field | Type | Meaning |
+|---|---|---|
+| maker | FK Maker | who sends it (credited) |
+| code | char 16, unique | the key in /design3d/r/<code>/ |
+| created_at | datetime | made when shown or after a send |
+| used_by, used_at | FK User, datetime, null | the one person it let in |
+
 ### Settings (new, one row)
 
 | Field | Type | Meaning |
