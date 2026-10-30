@@ -1366,3 +1366,14 @@ clamped to the slider's maximum (PM-82).
 
 **The rule.** Test stand-ins accept `**kwargs`. A value a person typed is
 sent as typed, never through a range input.
+
+### 70. Model the object first; send "cannot be right" findings back; say the limits
+
+design3d built cases around boards it never modelled, deferred every
+decision and re-asked every question; a ray test grazed a vertical face
+(PM-83).
+
+**The rule.** A builder models the thing it builds around first, in one
+frame, and derives the rest. Findings that mean "cannot be right" go back
+to the model before the answer. A ray test starts a hair off the point. The
+product says early what it does not do well and where to finish instead.

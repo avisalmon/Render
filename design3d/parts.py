@@ -193,11 +193,18 @@ def to_3mf(objects):
 
 # ---------- the fit between parts ----------
 
+NUDGE = (0.0137, 0.0071)  # mm: the ray is moved off exact edges and faces
+
+
 def _inside(point, grid, i, j, cell, tris):
-    """Ray parity along +z: is the point inside the closed mesh?"""
+    """Ray parity along +z: is the point inside the closed mesh? The ray
+    starts a hair beside the point, so a vertex that lies exactly on a
+    vertical face of the other part (two posts with the same outline) does
+    not graze that face and read as inside (found on 2026-10-30)."""
     crossings = set()
-    for m in grid.get((int(math.floor(point[i] / cell)), int(math.floor(point[j] / cell))), ()):
-        h = printcheck._hit(tris[m], 2, i, j, point[i], point[j])
+    pi, pj = point[i] + NUDGE[0], point[j] + NUDGE[1]
+    for m in grid.get((int(math.floor(pi / cell)), int(math.floor(pj / cell))), ()):
+        h = printcheck._hit(tris[m], 2, i, j, pi, pj)
         if h is not None and h > point[2] + 1e-6:
             crossings.add(round(h, 5))  # a ray through a shared edge counts once
     return len(crossings) % 2 == 1

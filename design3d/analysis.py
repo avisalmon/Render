@@ -48,12 +48,14 @@ def build(since):
             root = f"design-{d.pk}"
             z.writestr(f"{root}/chat.txt", mail.chat_text(d))
             versions = []
-            for v in d.versions.order_by("number").prefetch_related("parts"):
+            for v in d.versions.order_by("number").prefetch_related("parts", "parameters"):
                 z.writestr(f"{root}/v{v.number}.scad", v.code)
                 versions.append({"number": v.number, "made_by": v.made_by, "status": v.status, "error": v.error[:2000],
                                  "size_mm": v.size_mm, "build_seconds": str(v.build_seconds or ""),
                                  "checks": v.checks, "fit": v.fit,
-                                 "parts": [p.declaration() for p in v.parts.all()]})
+                                 "parts": [p.declaration() for p in v.parts.all()],
+                                 "sizes": [{"tag": q.tag, "name": q.name, "value": str(q.value), "measure": q.needs_measuring,
+                                            "placed": bool(q.dim)} for q in v.parameters.all()]})
             turns = []
             for m in d.messages.prefetch_related("pictures").select_related("version"):
                 pics = []
