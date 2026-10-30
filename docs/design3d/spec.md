@@ -218,3 +218,47 @@ and all of them in one 3MF. Multi-colour and print-in-place come later.
 | REQ-D3.64 | Assembled and plate views | The 3D view switches between assembled (a colour per part, hide and show, explode) and plate. | DONE in dev 2026-10-29 |
 | REQ-D3.65 | Per-part downloads | Each part's STL, the plate STL, the 3MF, and the OpenSCAD file. | DONE in dev 2026-10-29 |
 | REQ-D3.66 | Per-part chat | A marked point names its part; the model is told which part it is. | DONE in dev 2026-10-29 |
+
+
+## Chapter 8: Open by invitation, with turns, a tour and analysis (Avi, 2026-10-30)
+
+Avi decided in conversation (2026-10-30) and approved with "spec and build it all":
+
+- **Who comes in.** Anyone who opens an invitation, a friend's own link or a
+  one-time link (Avi's included), comes in at once, signing up if new, with
+  **30 turns**. Someone who asks with no invitation waits for Avi; whom Avi
+  approves gets **no turn limit** (the $2 a day ceiling stays).
+- **Seats.** Invited newcomers are capped at **20** (Avi raises it on the
+  People screen). Past the cap a newcomer is registered and waits: "you are
+  on the waiting list; we will email you when a seat opens". Raising the cap
+  lets the waiting in, first come first in, each with an email.
+- **Turns.** A turn is one message to the chat; sliders, downloads, measuring
+  and sharing are free; no limit on designs. A counter by the text box shows
+  what is left; at 0 the chat stops and offers the person's own link. **+30
+  turns** to the friend whose link (or one-time link) brought someone, when
+  that person's chat builds its first part. People already in on
+  2026-10-30 (test accounts) get 30.
+- **The tour.** Everyone new passes 7 screens before the first design, on a
+  phone and a computer, with real examples (words, Avi's sketch, Avi's cup
+  photo, Point and Measure, the print check and Done, the 30 turns). No skip;
+  Back and Next. Designed on the canvas
+  https://claude.ai/artifact/MY5H9eT1aKcbxxs5Yby2hx.
+- **Analysis.** On the People screen, "Send me the chats for analysis" sends
+  everything new since the last send: every chat with its model, cost and
+  steps, every version's code and findings, and the pictures people sent, as
+  one zip. It goes to Avi's Gmail and Intel mail, attached when it fits (about
+  20 MB) and always behind a signed link for a day, which is how Claude reads
+  it.
+- **Real cost.** design3d's own spend is shown from what OpenAI reports, once
+  design3d has its own OpenAI project key (Avi creates it); until then the
+  People screen shows the sum of the per-message estimates.
+
+| REQ | Name | Requirement | Status |
+|---|---|---|---|
+| REQ-D3.70 | In by invitation | A friend's link or a one-time link lets a newcomer in at once with 30 turns (signing up if new); asking without one waits for Avi; Avi's approval means no turn limit. | DONE in dev 2026-10-30 |
+| REQ-D3.71 | Seats | Invited newcomers count against a seat limit (20 at first) Avi changes on the People screen, which shows seats used, the waiting list and the limit. Past it a newcomer waits; raising it lets the waiting in, oldest first, with an email. | DONE in dev 2026-10-30 |
+| REQ-D3.72 | Turns | One message to the chat is one turn; the rest is free. A counter shows what is left; at 0 sending stops with the person's link. | DONE in dev 2026-10-30 |
+| REQ-D3.73 | +30 for a friend | When someone brought by a person's link builds a first part in the chat, that person gets 30 turns, once per friend. | DONE in dev 2026-10-30 |
+| REQ-D3.74 | The tour | 7 screens with real examples before the first design, no skip, phone and computer. | DONE in dev 2026-10-30 |
+| REQ-D3.75 | Chats for analysis | Avi's button sends everything new since the last send as one zip (chats, code, findings, pictures) to his two addresses, with a signed link for a day. | DONE in dev 2026-10-30 |
+| REQ-D3.76 | Real cost | The People screen shows the sum of the estimates now, and OpenAI's own figures once design3d has its own project key. | DONE in dev 2026-10-30 (estimates; OpenAI's figures wait for the key) |

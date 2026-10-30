@@ -43,12 +43,12 @@ class Maker(models.Model):
     """A person who asked to come in. Their status decides everything they
     see (REQ-D3.2, D3.3); `access.can_enter` is the one place that reads it."""
 
-    PENDING, APPROVED, DECLINED = "pending", "approved", "declined"
-    STATUSES = [(PENDING, "Waiting"), (APPROVED, "In"), (DECLINED, "Not approved")]
+    PENDING, APPROVED, DECLINED, WAITING_SEAT = "pending", "approved", "declined", "waiting_seat"
+    STATUSES = [(PENDING, "Waiting"), (APPROVED, "In"), (DECLINED, "Not approved"), (WAITING_SEAT, "Waiting for a seat")]
 
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="design3d_maker")
     display_name = models.CharField(max_length=80)
-    status = models.CharField(max_length=10, choices=STATUSES, default=PENDING, db_index=True)
+    status = models.CharField(max_length=16, choices=STATUSES, default=PENDING, db_index=True)
     reason = models.CharField(max_length=300, blank=True)
     is_admin = models.BooleanField(default=False)
     daily_limit_usd = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
@@ -61,6 +61,11 @@ class Maker(models.Model):
     # points of the gamification plan.
     ref_code = models.CharField(max_length=16, unique=True, null=True, blank=True)
     referred_by = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL, related_name="referrals")
+    # Chapter 8 (Avi, 2026-10-30): turns, seats and the tour.
+    turns_left = models.IntegerField(null=True, blank=True, help_text="Turns left; null is no limit")
+    invited = models.BooleanField(default=False, help_text="Came in by an invitation: counts against the seats")
+    rewarded_at = models.DateTimeField(null=True, blank=True, help_text="When their first part gave their friend 30 turns")
+    tour_done_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ["-requested_at"]
@@ -107,6 +112,36 @@ def mf_path(instance, filename):
 
 def preview_path(instance, filename):
     return f"previews/{instance.design_id}/v{instance.number}-{timezone.now():%Y%m%d%H%M%S}.png"
+
+
+class Settings(models.Model):
+    """design3d's own settings, one row (Chapter 8)."""
+
+    seat_limit = models.PositiveIntegerField(default=20, help_text="Invited newcomers who may be in")
+    last_export_at = models.DateTimeField(null=True, blank=True, help_text="When the chats were last sent for analysis")
+
+    @classmethod
+    def get(cls):
+        return cls.objects.get_or_create(pk=1)[0]
+
+
+def export_path(instance, filename):
+    return f"exports/{timezone.now():%Y%m%d-%H%M%S}-design3d.zip"
+
+
+class Export(models.Model):
+    """One send of the chats for analysis (REQ-D3.75)."""
+
+    created_at = models.DateTimeField(default=timezone.now)
+    since = models.DateTimeField(null=True, blank=True)
+    file = models.FileField(upload_to=export_path, storage=private_storage, blank=True)
+    designs = models.PositiveIntegerField(default=0)
+    messages = models.PositiveIntegerField(default=0)
+    pictures = models.PositiveIntegerField(default=0)
+    sent = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["-created_at"]
 
 
 def _invite_token():

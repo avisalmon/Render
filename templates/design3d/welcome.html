@@ -1,0 +1,129 @@
+{% extends "design3d/base.html" %}
+{% load static %}
+{% block title %}Welcome · design3d{% endblock %}
+{% block content %}
+{# Chapter 8 (Avi, 2026-10-30): seven screens with real examples before the first design. No skip. Designed on https://claude.ai/artifact/MY5H9eT1aKcbxxs5Yby2hx #}
+<section class="d3-tour" id="d3-tour" data-step="{{ step }}">
+  <div class="d3-tour-top">
+    <div class="d3-tour-bar" aria-hidden="true">{% for n in steps %}<span class="{% if n <= step %}on{% endif %}"></span>{% endfor %}</div>
+    <span class="d3-mono d3-small d3-muted" id="d3-tour-count">{{ step }} of {{ steps|length }}</span>
+  </div>
+
+  {% if step == 1 %}
+    <div class="d3-tour-body d3-tour-hero">
+      <div class="d3-tour-text">
+        <h1 class="d3-tour-h1">Describe it.<br>Sketch it.<br><span class="d3-hi">Print it.</span></h1>
+        <p class="d3-tour-lead">design3d is a chat that designs 3D parts with you. You say what you need, or show a drawing or a photo, and you get a part you can print.</p>
+        <p class="d3-muted">Six short screens show you how, with real examples. It takes a minute.</p>
+      </div>
+      <div class="d3-tour-ways">
+        <div><b class="d3-mono">WORDS</b><span>"A desk organizer for pens"</span></div>
+        <div><b class="d3-mono">A SKETCH</b><span>Drawn on paper, sizes on it</span></div>
+        <div><b class="d3-mono">A PHOTO</b><span>Of the thing it should fit</span></div>
+      </div>
+    </div>
+
+  {% elif step == 2 %}
+    <div class="d3-tour-body">
+      <div class="d3-tour-text">
+        <h1 class="d3-tour-h2">Say it in words</h1>
+        <p class="d3-tour-lead">Write what you need, with the sizes you know. The chat fills in the rest and tells you what it assumed.</p>
+        <p class="d3-tour-you">A desk organizer with three round slots for pens and one slot for my phone. About 120 mm wide. Rounded edges.</p>
+        <div class="d3-tour-reply">Here is a first version with three pen slots and an upright phone slot. What are your phone's sizes with its case?
+          <span class="d3-mono d3-ok">Version 1 · ready to print</span></div>
+        <p class="d3-small d3-muted">A real answer from design3d, in about 30 seconds.</p>
+      </div>
+      <div class="d3-tour-pics one">
+        <figure><img src="{% static 'design3d/tour/words-3d.jpg' %}" alt="The desk organizer the chat built: three round pen slots and a long phone slot, rounded edges" width="1200" height="907"><figcaption class="d3-mono">120 x 80 x 38 mm</figcaption></figure>
+      </div>
+    </div>
+
+  {% elif step == 3 %}
+    <div class="d3-tour-body">
+      <div class="d3-tour-text">
+        <h1 class="d3-tour-h2">Or draw it</h1>
+        <p class="d3-tour-lead">Draw it on paper and write the sizes on it, in millimetres. Take a photo with the camera button next to the text box.</p>
+        <p class="d3-tour-you">A box like this.</p>
+        <p class="d3-small d3-muted">Ten seconds later: it read every size on the drawing, and asked where exactly the holes should go.</p>
+      </div>
+      <div class="d3-tour-pics">
+        <figure class="paper"><img src="{% static 'design3d/tour/sketch.jpg' %}" alt="A hand sketch of an open box: 100 by 80 mm, 27 mm high, 2 mm thick walls, four 6 mm holes" width="1068" height="601"></figure>
+        <figure><img src="{% static 'design3d/tour/sketch-3d.jpg' %}" alt="The box the chat built from the sketch, open on top" width="1200" height="907"><figcaption class="d3-mono">100 x 80 x 27 mm</figcaption></figure>
+      </div>
+    </div>
+
+  {% elif step == 4 %}
+    <div class="d3-tour-body">
+      <div class="d3-tour-text">
+        <h1 class="d3-tour-h2">Or photograph the real thing</h1>
+        <p class="d3-tour-lead">Need a holder, a stand or a cover for something? Photograph it. Put a bank card or a coin next to it, so the chat can tell its size.</p>
+        <p class="d3-tour-you">Build a cup holder</p>
+        <div class="d3-tour-reply">Here's a freestanding holder with a wide base for stability. Could you measure the cup's height, bottom diameter and widest diameter?
+          <span class="d3-mono d3-ok">Version 1 · ready to print</span></div>
+        <p class="d3-small d3-muted">It built a first holder at once from its best estimate, then asked for the real sizes.</p>
+      </div>
+      <div class="d3-tour-pics">
+        <figure class="photo"><img src="{% static 'design3d/tour/cup.jpg' %}" alt="A clear plastic cup on a counter with a coin next to it" width="750" height="1000"></figure>
+        <figure><img src="{% static 'design3d/tour/cup-3d.jpg' %}" alt="The cup holder the chat built: a tapered sleeve on a wide round base" width="1200" height="907"><figcaption class="d3-mono">110 x 110 x 65 mm</figcaption></figure>
+      </div>
+    </div>
+
+  {% elif step == 5 %}
+    <div class="d3-tour-body">
+      <div class="d3-tour-text">
+        <h1 class="d3-tour-h2">Change it by talking. Point at it.</h1>
+        <p class="d3-tour-lead">Ask for changes in plain words. To say where, tap <b>Point</b> and tap the part: a blue dot marks the spot.</p>
+        <p class="d3-tour-you">Make the wall thicker here<span class="d3-mono d3-tour-tag">point marked on the part</span></p>
+        <p class="d3-tour-lead">Tap <b>Measure</b> and tap two points to see the distance.</p>
+      </div>
+      <div class="d3-tour-pics">
+        <figure><img src="{% static 'design3d/tour/pin-3d.jpg' %}" alt="The box in the 3D view with a blue dot on its front wall" width="1200" height="907"><figcaption class="d3-mono">Point</figcaption></figure>
+        <figure><img src="{% static 'design3d/tour/measure-3d.jpg' %}" alt="The box with a measuring line between two points, 73.9 mm" width="1200" height="907"><figcaption class="d3-mono">Measure · 73.9 mm</figcaption></figure>
+      </div>
+    </div>
+
+  {% elif step == 6 %}
+    <div class="d3-tour-body">
+      <div class="d3-tour-text">
+        <h1 class="d3-tour-h2">It checks the print. You download.</h1>
+        <p class="d3-tour-lead">Every version is checked for a 3D printer: it lies flat, nothing floats, no wall is too thin, it fits the bed. If something is wrong, <b>Fix it</b> asks the chat to correct it.</p>
+        <p class="d3-tour-lead">When you like it, tap <b>Done</b> under the chat. The STL opens in any slicer, and you can keep changing it after you download.</p>
+      </div>
+      <div class="d3-tour-card">
+        <p>Version 3 · 100 x 80 x 27 mm · <span class="d3-ok">ready to print</span></p>
+        <ul class="d3-check-list"><li class="d3-check d3-warn"><span>A wall is only 0.5 mm thick. Most printers need at least 0.8 mm.</span> <span class="d3-btn d3-btn-small d3-btn-quiet">Fix it</span></li></ul>
+        <div class="d3-tour-done">
+          <span class="d3-btn d3-btn-small">Download STL</span><span class="d3-btn d3-btn-small d3-btn-quiet">All parts (3MF)</span>
+          <span class="d3-btn d3-btn-small d3-btn-quiet">Email me the files</span><span class="d3-btn d3-btn-small d3-btn-quiet">Share the part</span>
+        </div>
+      </div>
+    </div>
+
+  {% else %}
+    <div class="d3-tour-body">
+      <div class="d3-tour-text">
+        <h1 class="d3-tour-h2">{% if turns is None %}No turn limit for you{% else %}You have {{ turns }} turns{% endif %}</h1>
+        <p class="d3-tour-lead">A turn is one message to the chat. Moving the sizes, measuring, downloading and sharing are free.</p>
+      </div>
+      <div class="d3-tour-card">
+        {% if turns is not None %}
+          <p class="d3-tour-meter"><span>Turns left</span><b class="d3-mono">{{ turns }}</b></p>
+          <p class="d3-small d3-muted">You will see this counter next to the text box.</p>
+        {% endif %}
+        <p class="d3-mono d3-hi d3-small">+30 FOR EVERY FRIEND</p>
+        <p>Send your link to a friend. When they join and build their first part, you get 30 more turns. No limit on friends.</p>
+        <p class="d3-small d3-muted">Your link is under My designs, with WhatsApp, Email and Copy.</p>
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="d3-tour-nav">
+    {% if step > 1 %}<a class="d3-btn d3-btn-quiet" id="d3-tour-back" href="?step={{ step|add:'-1' }}">Back</a>{% endif %}
+    {% if step < steps|length %}
+      <a class="d3-btn" id="d3-tour-next" href="?step={{ step|add:'1' }}">{% if step == 1 %}Show me{% else %}Next{% endif %}</a>
+    {% else %}
+      <form method="post">{% csrf_token %}<button class="d3-btn" id="d3-tour-start">Start designing</button></form>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

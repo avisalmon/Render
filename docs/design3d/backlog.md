@@ -133,3 +133,18 @@ About $0.011 to $0.015 a turn.
 - [x] Tests: the coupon by signup and by an existing member, the friend link through ask and approve with the counts, never yourself, an unknown code
 - [ ] Next: the gamification plan (Avi, 2026-10-30), with these counts as one input
 - [ ] Flaky under load (PM-78 rule, written down): in the full design3d run of 2026-10-30, `test_on_a_phone_mark_a_point_measure_keep_the_part_on_top_and_finish` timed out once (30 s) waiting for #d3-stick after `page.reload()`; it passed twice alone. Watch the nightly run; if it repeats, wait for the page's load event after the reload.
+
+## D3.15 · Chapter 8: in by invitation, seats, turns, the tour, analysis (2026-10-30)
+
+Avi's decisions in conversation, then "Looks good. Spec and build it all."
+
+- [x] `design3d/seats.py`: `admit` (an invitation lets a newcomer in with 30 turns, or onto the waiting list past the seat limit), `fill` (raising the limit lets the waiting in, oldest first, with the welcome email), `take_turn`, `reward_friend` (+30 once, on the friend's first built part)
+- [x] A friend's link lets a signed-in newcomer in at the door; a one-time link does the same; asking with no invitation still waits for Avi, and his approval means no turn limit
+- [x] Turns: one message is one turn (sliders free); counter by the text box, live from the poll; at 0 the chat refuses with the invite line (402)
+- [x] The tour: `/design3d/welcome/`, 7 server-side screens (no JavaScript needed), never ahead, "Start designing" only after the last; every page sends a newcomer there first; phone, tablet and computer layouts; real pictures in static/design3d/tour/ (the desk organizer, Avi's sketch and box, Avi's cup and its holder, Point, Measure)
+- [x] People screen: seats used / limit / waiting, the limit form, "Waiting for a seat", turns per person, the estimated model cost today, 7 days and in all
+- [x] `design3d/analysis.py`: "Send me the chats for analysis": what is new since the last send, as a zip (chat.txt, design.json, vN.scad, pictures) to Avi's Gmail and Intel mail, attached when under 18 MB, and behind a signed link for a day
+- [x] Models: Maker turns_left, invited, rewarded_at, tour_done_at, status waiting_seat; Settings (seat_limit, last_export_at); Export. API: /settings/ and /exports/ (admin)
+- [x] Data migration: people already in (not admins) get 30 turns
+- [ ] Real cost from OpenAI: needs a design3d project key from Avi (the admin key already reads costs per project); until then the People screen shows the estimates
+- [ ] Flaky, written down (PM-78): watch the nightly run for the mark-a-point phone test

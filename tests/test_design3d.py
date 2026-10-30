@@ -39,6 +39,7 @@ CUBE = (b"solid cube\n" + b"".join(
 def quiet(settings, tmp_path, monkeypatch):
     settings.DESIGN3D_PRIVATE_DIR = tmp_path
     settings.DESIGN3D_SYNC = True
+    settings.DESIGN3D_TOUR = False  # the tour's own tests turn it on
     settings.OPENAI_API_KEY = ""
     settings.EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
     monkeypatch.setattr("app.safety.image_is_safe", lambda *a, **k: (True, ""), raising=False)
@@ -1029,7 +1030,7 @@ def test_a_picture_in_the_chat_opens_full_size_and_saves(client, world):
 
 # ---------- friends: everyone's own link, and who brought whom (Avi, 2026-10-30) ----------
 
-def test_a_member_link_brings_a_friend_who_asks_and_is_counted(client, world):
+def test_a_member_link_brings_a_friend_who_is_in_at_once_and_counted(client, world):
     from design3d.models import Maker as M
 
     client.force_login(world["dana"])
@@ -1043,18 +1044,17 @@ def test_a_member_link_brings_a_friend_who_asks_and_is_counted(client, world):
     assert client.get(link)["Location"] == "/design3d/"
     door = client.get("/design3d/").content.decode()
     assert "Dana invited you." in door
+    assert "Continue with Google" in door, "signing in from here lets them in"
     bob = _user("bob@example.com", first="Bob")
     client.force_login(bob)
-    client.post("/design3d/ask/", {"reason": "Dana told me"})
-    asked = M.objects.get(user=bob)
-    assert asked.status == M.PENDING and asked.referred_by == dana, "asks as usual, and Dana is remembered"
-    assert not access_can_enter(bob), "only Avi lets people in"
+    assert client.get("/design3d/")["Location"] == "/design3d/designs/", "Chapter 8: in at once, no waiting for Avi"
+    joined = M.objects.get(user=bob)
+    assert joined.status == M.APPROVED and joined.referred_by == dana and joined.invited and joined.turns_left == 30
+    assert access_can_enter(bob)
 
     client.force_login(world["avi"])
     people = client.get("/design3d/people/").content.decode()
-    assert "invited by Dana" in people
-    client.post("/design3d/people/", {"maker": asked.pk, "action": "approve"})
-    assert "brought 1" in client.get("/design3d/people/").content.decode()
+    assert "invited by Dana" in people and "brought 1" in people
     client.force_login(world["dana"])
     assert "So far 1 joined through you" in client.get("/design3d/designs/").content.decode()
 
@@ -1090,3 +1090,154 @@ def test_a_coupon_credits_avi(client, world):
     client.force_login(zoe)
     client.get(f"/design3d/i/{inv.token}/")
     assert M.objects.get(user=zoe).referred_by == M.objects.get(user=world["avi"])
+
+
+# ---------- Chapter 8: seats, turns, the tour, analysis (Avi, 2026-10-30) ----------
+
+def _by_friend(client, friend_user, email, first):
+    """A newcomer who opens a friend's link and signs in."""
+    from design3d.models import Maker as M
+
+    code = M.objects.get(user=friend_user).code()
+    client.logout()
+    client.get(f"/design3d/r/{code}/")
+    u = _user(email, first=first)
+    client.force_login(u)
+    client.get("/design3d/")
+    return M.objects.get(user=u)
+
+
+def test_past_the_seat_limit_newcomers_wait_and_come_in_when_it_rises(client, world):
+    from design3d.models import Maker as M, Settings
+
+    cfg = Settings.get()
+    cfg.seat_limit = 1
+    cfg.save()
+    first = _by_friend(client, world["dana"], "f1@example.com", "First")
+    assert first.status == M.APPROVED and first.turns_left == 30
+    mail.outbox.clear()
+    second = _by_friend(client, world["dana"], "f2@example.com", "Second")
+    assert second.status == M.WAITING_SEAT and not access_can_enter(second.user)
+    door = client.get("/design3d/").content.decode()
+    assert "You are on the waiting list." in door and mail.outbox == []
+
+    client.force_login(world["avi"])
+    people = client.get("/design3d/people/").content.decode()
+    assert "1 of 1 seats used · 1 waiting" in people and "Waiting for a seat" in people and "f2@example.com" in people
+    client.post("/design3d/people/", {"action": "seats", "seat_limit": "2"})
+    second.refresh_from_db()
+    assert second.status == M.APPROVED and second.turns_left == 30
+    assert [m.to for m in mail.outbox if m.subject == "You are in design3d"] == [["f2@example.com"]]
+    client.force_login(world["dana"])
+    assert client.post("/design3d/people/", {"action": "seats", "seat_limit": "99"}).status_code == 404, "Avi's alone"
+
+
+def test_a_one_time_link_is_an_invitation_with_30_turns(client, world):
+    from design3d.models import Maker as M
+
+    inv = _invite(client, world)
+    zoe = _user("zoe2@example.com", first="Zoe")
+    client.force_login(zoe)
+    client.get(f"/design3d/i/{inv.token}/")
+    m = M.objects.get(user=zoe)
+    assert m.status == M.APPROVED and m.invited and m.turns_left == 30
+
+
+def test_whom_avi_approves_has_no_turn_limit(client, world):
+    from design3d.models import Maker as M
+
+    bob = _user("bob3@example.com", first="Bob")
+    client.force_login(bob)
+    client.post("/design3d/ask/", {"reason": "please"})
+    m = M.objects.get(user=bob)
+    client.force_login(world["avi"])
+    client.post("/design3d/people/", {"maker": m.pk, "action": "approve"})
+    m.refresh_from_db()
+    assert m.status == M.APPROVED and m.turns_left is None and not m.invited
+
+
+def test_a_message_is_a_turn_and_at_zero_the_chat_stops(client, world):
+    from design3d.models import Maker as M
+
+    M.objects.filter(user=world["dana"]).update(turns_left=2)
+    d = _design(client, world["dana"])
+    assert 'id="d3-turns"' in client.get(f"/design3d/d/{d.pk}/").content.decode()
+    _say(client, d, "A box")
+    assert M.objects.get(user=world["dana"]).turns_left == 1
+    client.post(f"/design3d/d/{d.pk}/sliders/", {"from": 1, "height": "60"})
+    assert M.objects.get(user=world["dana"]).turns_left == 1, "sliders are free"
+    _say(client, d, "Taller")
+    assert client.get(f"/design3d/d/{d.pk}/poll/").json()["turns_left"] == 0
+    r = _say(client, d, "Wider")
+    assert r.status_code == 402 and "Invite a friend" in r.json()["error"]
+    assert M.objects.get(user=world["dana"]).turns_left == 0 and d.messages.filter(text="Wider").count() == 0
+
+
+def test_a_friends_first_part_gives_30_turns_once(client, world):
+    from design3d.models import Maker as M
+
+    M.objects.filter(user=world["dana"]).update(turns_left=5)
+    newcomer = _by_friend(client, world["dana"], "n1@example.com", "Nell")
+    d = _design(client, newcomer.user)
+    _say(client, d, "A box")
+    assert M.objects.get(user=world["dana"]).turns_left == 35
+    _say(client, d, "Taller")
+    assert M.objects.get(user=world["dana"]).turns_left == 35, "once per friend"
+    assert M.objects.get(pk=newcomer.pk).rewarded_at is not None
+
+
+def test_the_tour_comes_first_and_cannot_be_skipped(client, world, settings):
+    from design3d.models import Maker as M
+
+    settings.DESIGN3D_TOUR = True
+    newcomer = _by_friend(client, world["dana"], "t1@example.com", "Tal")
+    assert client.get("/design3d/designs/")["Location"] == "/design3d/welcome/"
+    page = client.get("/design3d/welcome/?step=7").content.decode()
+    assert 'data-step="1"' in page, "no jumping ahead"
+    assert client.post("/design3d/welcome/")["Location"] == "/design3d/welcome/?step=2", "no finishing early"
+    for n in range(2, 8):
+        html = client.get(f"/design3d/welcome/?step={n}").content.decode()
+        assert f'data-step="{n}"' in html
+    assert "You have 30 turns" in html and "+30 FOR EVERY FRIEND" in html and 'id="d3-tour-start"' in html
+    assert client.post("/design3d/welcome/")["Location"] == "/design3d/designs/"
+    assert M.objects.get(pk=newcomer.pk).tour_done_at is not None
+    assert client.get("/design3d/designs/").status_code == 200
+    for n, pic in ((2, "words-3d"), (3, "sketch-3d"), (4, "cup-3d"), (5, "pin-3d")):
+        assert pic in client.get(f"/design3d/welcome/?step={n}").content.decode()
+
+
+def test_avi_sends_the_new_chats_for_analysis(client, world):
+    import io
+    import zipfile
+
+    d = _design(client, world["dana"])
+    _say(client, d, "A holder like this", pictures=_jpeg((600, 400)))
+    client.force_login(world["avi"])
+    mail.outbox.clear()
+    client.post("/design3d/people/", {"action": "export"})
+    sent = mail.outbox[-1]
+    assert sent.to == ["avi.salmon@gmail.com", "avisalmon@intel.com"] and sent.subject.startswith("design3d chats for analysis")
+    link = re.search(r"https?://\S+(/design3d/x/a/\S+/)", sent.body).group(1)
+    z = zipfile.ZipFile(io.BytesIO(sent.attachments[0][1]))
+    names = z.namelist()
+    root = f"design-{d.pk}"
+    assert {f"{root}/chat.txt", f"{root}/design.json", f"{root}/v1.scad", "README.txt"} <= set(names)
+    assert any(n.startswith(f"{root}/pictures/") for n in names)
+    assert "A holder like this" in z.read(f"{root}/chat.txt").decode()
+    client.logout()
+    got = client.get(link)
+    assert got.status_code == 200 and got["Content-Type"] == "application/zip"
+    assert client.get(link.replace("/a/", "/a/x")).status_code == 404
+
+    # The next send carries only what is new.
+    client.force_login(world["avi"])
+    mail.outbox.clear()
+    client.post("/design3d/people/", {"action": "export"})
+    assert "0 designs, 0 new messages" in mail.outbox[-1].body
+    _say_as = _design(client, world["dana"])
+    _say(client, _say_as, "Another")
+    client.force_login(world["avi"])
+    client.post("/design3d/people/", {"action": "export"})
+    assert "1 designs, 2 new messages" in mail.outbox[-1].body
+    client.force_login(world["dana"])
+    assert client.post("/design3d/people/", {"action": "export"}).status_code == 404

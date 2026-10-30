@@ -36,6 +36,7 @@ def world(transactional_db, settings, tmp_path, monkeypatch):
 
     settings.DESIGN3D_PRIVATE_DIR = tmp_path
     settings.DESIGN3D_SYNC = True
+    settings.DESIGN3D_TOUR = False  # the tour's own browser test turns it on
     settings.OPENAI_API_KEY = ""
     monkeypatch.setattr("app.safety.image_is_safe", lambda *a, **k: (True, ""), raising=False)
     if not builder.available():
@@ -409,3 +410,34 @@ def test_home_puts_the_view_back(browser, live_server, world):
     back = page.evaluate("window.d3View.camera()")
     assert max(abs(a - b) for a, b in zip(first, back)) < 0.5
     ctx.close()
+
+
+@pytest.mark.django_db(transaction=True)
+def test_the_tour_on_a_phone_a_tablet_and_a_computer(browser, live_server, world, settings):
+    """Chapter 8 (Avi, 2026-10-30): seven screens before the first design,
+    on every size, with nothing sliding sideways; no skip."""
+    settings.DESIGN3D_TOUR = True
+    broken = []
+    for width, height, mobile in ((390, 844, True), (768, 1024, True), (1024, 768, False), (1366, 860, False)):
+        ctx = browser.new_context(viewport={"width": width, "height": height}, is_mobile=mobile, has_touch=mobile)
+        _session(ctx, world["dana"])
+        page = ctx.new_page()
+        page.goto(live_server.url + "/design3d/designs/")
+        page.wait_for_url("**/design3d/welcome/")
+        for n in range(1, 8):
+            assert page.get_attribute("#d3-tour", "data-step") == str(n)
+            page.wait_for_load_state("load")
+            if page.evaluate(OVERFLOW, width) > 1:
+                broken.append(f"step {n} at {width}")
+            if n in (1, 3, 4, 7):
+                _shot(page, f"tour-{n}-{width}")
+            if n < 7:
+                page.click("#d3-tour-next")
+        assert page.locator("text=Skip").count() == 0
+        page.click("#d3-tour-start")
+        page.wait_for_url("**/design3d/designs/")
+        from design3d.models import Maker
+
+        Maker.objects.filter(user=world["dana"]).update(tour_done_at=None)
+        ctx.close()
+    assert not broken, broken

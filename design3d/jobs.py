@@ -337,6 +337,10 @@ def _turn(msg, design):
         if version.status == Version.READY and not llm.stub_mode():
             version, reply = _self_check(msg, design, items, reply, version)
 
+    if version is not None and version.status == Version.READY:
+        from . import seats
+
+        seats.reward_friend(design.owner)  # Chapter 8: a friend's first part gives 30 turns
     msg.text = reply["message"] or ("Here it is." if version else "")
     if version is not None and version.status == Version.FAILED:
         msg.text += "\n\nI could not build it this time. Tell me what to change, or ask me to try again."

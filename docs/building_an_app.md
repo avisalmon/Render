@@ -1347,3 +1347,13 @@ sends links himself, by WhatsApp.
 **The rule.** Test a control right after the action people do before it,
 not only once everything has settled. When the owner is the one who sends
 something, ask how he sends it before building the sending.
+
+### 68. A phone photo is turned upright before anything else
+
+The tour's example photo was prepared outside the app without the phone's
+rotation marker and showed on its side (PM-80); the app's own uploads were
+right because they apply it.
+
+**The rule.** Every script that reads a phone photo applies the rotation
+marker first (`ImageOps.exif_transpose`). Look at screens as pictures at a
+phone, a tablet and a computer width.

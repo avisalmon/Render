@@ -9,7 +9,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
 from . import access
-from .models import Design, Invite, Maker, Message, Parameter, Part, Picture, Version
+from .models import Design, Export, Invite, Maker, Message, Parameter, Part, Picture, Settings, Version
 
 
 class Inside(permissions.BasePermission):
@@ -222,6 +222,46 @@ class InviteViewSet(viewsets.ModelViewSet):
         mail.invite(inv, self.request)
 
 
+class SettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Settings
+        fields = ["id", "seat_limit", "last_export_at"]
+        read_only_fields = ["id", "last_export_at"]
+
+
+class SettingsViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet):
+    """design3d's one settings row (Chapter 8). Admin only; raising the seat
+    limit lets the waiting in, as on the People screen."""
+
+    serializer_class = SettingsSerializer
+    permission_classes = [Admin]
+
+    def get_queryset(self):
+        Settings.get()
+        return Settings.objects.all()
+
+    def perform_update(self, serializer):
+        from . import seats
+
+        serializer.save()
+        seats.fill(self.request)
+
+
+class ExportSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Export
+        fields = ["id", "created_at", "since", "designs", "messages", "pictures", "sent"]
+
+
+class ExportViewSet(viewsets.ReadOnlyModelViewSet):
+    """The chats sent for analysis (REQ-D3.75). Admin only, read only: a send
+    starts on the People screen."""
+
+    serializer_class = ExportSerializer
+    permission_classes = [Admin]
+    queryset = Export.objects.all()
+
+
 ROUTES = [
     ("makers", MakerViewSet, Maker),
     ("designs", DesignViewSet, Design),
@@ -231,4 +271,6 @@ ROUTES = [
     ("parameters", ParameterViewSet, Parameter),
     ("invites", InviteViewSet, Invite),
     ("parts", PartViewSet, Part),
+    ("settings", SettingsViewSet, Settings),
+    ("exports", ExportViewSet, Export),
 ]

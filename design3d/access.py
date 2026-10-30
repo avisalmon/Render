@@ -9,6 +9,7 @@ from functools import wraps
 from urllib.parse import quote
 
 from django.http import Http404
+from django.conf import settings
 from django.shortcuts import redirect
 from django.utils import timezone
 
@@ -69,6 +70,9 @@ def inside(view):
         if not can_enter(request.user):
             return redirect("design3d:door")
         request.maker = maker_of(request.user)
+        if (request.maker is not None and request.maker.tour_done_at is None and request.method == "GET"
+                and getattr(settings, "DESIGN3D_TOUR", True)):
+            return redirect("design3d:welcome")  # Chapter 8: the tour comes first, no skip
         return view(request, *args, **kwargs)
 
     return wrapped

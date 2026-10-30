@@ -193,6 +193,35 @@ several-part version. No schema change: `pin` is JSON.
 Unchanged: a shared design shows the model only. For several parts that is
 the parts, the plate and the 3MF; never the chat or the pictures.
 
+## Chapter 8 (approved by Avi 2026-10-30)
+
+### Maker gets
+
+| Field | Type | Meaning |
+|---|---|---|
+| status | choice, gains `waiting_seat` | invited, but the seats are full |
+| turns_left | int, null | turns left; null = no limit (Avi's approval, admins) |
+| invited | bool | came in through an invitation (counts against the seats) |
+| rewarded_at | datetime, null | when this person's first part gave their friend 30 turns (once) |
+| tour_done_at | datetime, null | when they finished the tour |
+
+### Settings (new, one row)
+
+| Field | Type | Meaning |
+|---|---|---|
+| seat_limit | int, default 20 | how many invited newcomers may be in |
+| last_export_at | datetime, null | when the chats were last sent for analysis |
+
+### Export (new)
+
+| Field | Type | Meaning |
+|---|---|---|
+| created_at | datetime | when it was sent |
+| since | datetime, null | from when it covers |
+| file | file, private | the zip |
+| designs, messages, pictures | int | what is in it |
+| sent | bool | whether the mail went |
+
 ## Maker gets (added 2026-10-30, Avi: "credit them and track that someone joined through them")
 
 | Field | Type | Meaning |
