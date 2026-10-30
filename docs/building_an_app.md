@@ -1357,3 +1357,12 @@ right because they apply it.
 **The rule.** Every script that reads a phone photo applies the rotation
 marker first (`ImageOps.exif_transpose`). Look at screens as pictures at a
 phone, a tablet and a computer width.
+
+### 69. Stand-ins take **kwargs; typed values skip range inputs
+
+Adding one keyword to a function broke every test that replaced it with a
+fixed-shape lambda; and a measured size sent through a range input was
+clamped to the slider's maximum (PM-82).
+
+**The rule.** Test stand-ins accept `**kwargs`. A value a person typed is
+sent as typed, never through a range input.

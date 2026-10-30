@@ -40,7 +40,8 @@ def build(since):
     new = Message.objects.all() if since is None else Message.objects.filter(created_at__gt=since)
     design_ids = sorted(set(new.values_list("design_id", flat=True)))
     out = io.BytesIO()
-    counts = {"designs": 0, "messages": new.count(), "pictures": 0, "cost_usd": str(new.aggregate(s=Sum("cost_usd"))["s"] or 0)}
+    total = new.aggregate(s=Sum("cost_usd"))["s"] or 0
+    counts = {"designs": 0, "messages": new.count(), "pictures": 0, "cost_usd": f"{total:.2f}"}
     with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
         for d in Design.objects.filter(pk__in=design_ids).select_related("owner", "current"):
             counts["designs"] += 1

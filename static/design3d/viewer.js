@@ -137,6 +137,71 @@ if (box) {
     if (mode !== "measure") clearMeasure();
   }
 
+  // ---- sizes on the part (Avi, 2026-10-30) ----
+  // Each size the chat placed on the part is a line with a label. Sizes to
+  // measure (M1, M2) always show, in amber; the others (D1, D2) show with the
+  // Sizes button. A tap on a label asks for a new value; the page rebuilds.
+  // A line drawn for one value is stretched along its own direction when the
+  // value changes, so it stays right for lengths along an edge.
+  let dims = [];
+  let dimObjs = [];
+  let showAll = false;
+  let onPlate = false;
+  const dimLayer = document.createElement("div");
+  dimLayer.className = "d3-dims";
+  box.appendChild(dimLayer);
+  const knownMat = new THREE.LineBasicMaterial({ color: 0xe2d6bd, depthTest: false });
+  const unknownMat = new THREE.LineBasicMaterial({ color: 0xf7d046, depthTest: false });
+
+  function dimPoints(d) {
+    const a = new THREE.Vector3(...d.dim.from), b = new THREE.Vector3(...d.dim.to);
+    const len = a.distanceTo(b);
+    const at = Number(d.dim.at) || len;
+    if (at > 0 && Math.abs(len - at) / at < 0.12 && Math.abs(Number(d.value) - at) > 1e-6) {
+      b.copy(a).add(new THREE.Vector3().subVectors(b, a).normalize().multiplyScalar(Number(d.value)));
+    }
+    return [a.sub(offset), b.sub(offset)];
+  }
+
+  function drawDims() {
+    dimObjs.forEach((o) => drop(o.line));
+    dimObjs = [];
+    dimLayer.textContent = "";
+    if (!model || onPlate) return;
+    dims.filter((d) => d.dim && (d.measure || showAll)).forEach((d) => {
+      const [a, b] = dimPoints(d);
+      const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([a, b]), d.measure ? unknownMat : knownMat);
+      line.renderOrder = 9;
+      scene.add(line);
+      const tag = document.createElement("button");
+      tag.type = "button";
+      tag.className = "d3-dim" + (d.measure ? " unknown" : "");
+      tag.dataset.name = d.name;
+      tag.textContent = `${d.tag} ${Number(d.value).toFixed(1).replace(/\.0$/, "")}${d.measure ? "?" : ""}`;
+      tag.title = d.label + (d.measure ? " (please measure)" : "");
+      tag.addEventListener("click", (e) => {
+        e.stopPropagation();
+        box.dispatchEvent(new CustomEvent("d3:dim", { bubbles: true, detail: d }));
+      });
+      dimLayer.appendChild(tag);
+      dimObjs.push({ line, tag, mid: a.clone().add(b).multiplyScalar(0.5) });
+    });
+  }
+
+  function placeDims() {
+    if (!dimObjs.length) return;
+    const r = renderer.domElement.getBoundingClientRect();
+    dimObjs.forEach((o) => {
+      const p = o.mid.clone().project(camera);  // the lines are drawn in the scene's own space
+      const x = (p.x + 1) / 2 * r.width, y = (1 - p.y) / 2 * r.height;
+      o.tag.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
+      o.tag.hidden = p.z > 1;
+    });
+  }
+
+  function setDims(list) { dims = (list || []).filter((d) => d.dim); drawDims(); }
+  function showSizes(on) { showAll = on; drawDims(); }
+
   function swap(group, key) {
     if (model) {
       scene.remove(model);
@@ -147,6 +212,7 @@ if (box) {
     frame(model);
     clearPin();
     clearMeasure();
+    drawDims();
     const empty = document.getElementById("d3-view-empty");
     if (empty) empty.hidden = true;
     box.dataset.loaded = key;
@@ -275,14 +341,17 @@ if (box) {
   (function tick() {
     controls.update();
     renderer.render(scene, camera);
+    placeDims();
     requestAnimationFrame(tick);
   })();
 
   document.querySelectorAll("[data-d3-mode]").forEach((b) => b.addEventListener("click", () => setMode(b.dataset.d3Mode)));
 
   window.d3View = { load, loadParts, explode, setVisible, snapshot, clearPin, getPin: () => pin, tap: tapped, setMode, offset, home: goHome,
-                    camera: () => camera.position.toArray() };
+                    camera: () => camera.position.toArray(), setDims, showSizes,
+                    plate: (on) => { onPlate = on; drawDims(); } };
   let first = null;
   try { first = JSON.parse(document.getElementById("design3d-shown")?.textContent || "null"); } catch (err) { first = null; }
+  if (first && first.parameters) dims = first.parameters.filter((d) => d.dim);
   if (first && first.parts && first.parts.length) loadParts(first.parts); else load(box.dataset.stl);
 }

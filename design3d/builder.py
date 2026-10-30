@@ -31,6 +31,16 @@ class BuildError(Exception):
     pass
 
 
+class ServerError(BuildError):
+    """The build server itself could not run (a missing library, no OpenSCAD):
+    not something the model's code can fix (analysis of 2026-10-30: four
+    repair calls were spent on a missing libOpenGL)."""
+
+
+SERVER_SIGNS = ("error while loading shared libraries", "cannot open shared object file", "No such file or directory: '",
+                "Permission denied")
+
+
 def binary():
     return settings.DESIGN3D_OPENSCAD
 
@@ -75,9 +85,14 @@ def signed_volume(tris):
     return total / 6.0
 
 
-def check(code):
+REFERENCE_IMPORT = re.compile(r"""\bimport\s*\(\s*(?:file\s*=\s*)?"reference\.stl"\s*(?:,[^()]*)?\)""")
+
+
+def check(code, allow_reference=False):
     if not (code or "").strip():
         raise BuildError("The code is empty.")
+    if allow_reference:
+        code = REFERENCE_IMPORT.sub("reference_stl()", code)  # the one file a design may read
     if FORBIDDEN.search(code):
         raise BuildError("The code reads a file (import, include or use), which is not allowed. Write the whole part in this one file.")
     if len(code) > 60000:
@@ -127,17 +142,23 @@ def _run(cmd, env, cwd):
     return stdout, stderr, p.returncode
 
 
-def build(code, part=None):
+def build(code, part=None, reference=None):
     """STL bytes and seconds taken, or BuildError with OpenSCAD's message.
-    `part` (a checked identifier) builds one part of a several-part design."""
-    check(code)
+    `part` (a checked identifier) builds one part of a several-part design;
+    `reference` (STL bytes) is the person's attached STL, readable by the
+    code as import("reference.stl") and nothing else."""
+    if reference is None and REFERENCE_IMPORT.search(code or ""):
+        raise BuildError('The code imports "reference.stl", but no STL is attached to this design. Attach one first.')
+    check(code, allow_reference=reference is not None)
     if not available():
-        raise BuildError("OpenSCAD is not installed on this server.")
+        raise ServerError("OpenSCAD is not installed on this server.")
     env = dict(os.environ, QT_QPA_PLATFORM="offscreen", HOME=tempfile.gettempdir())
     env.pop("DISPLAY", None)
     with _ONE_AT_A_TIME, tempfile.TemporaryDirectory() as tmp:
         src, out = Path(tmp) / "part.scad", Path(tmp) / "part.stl"
         src.write_text(code, encoding="utf-8")
+        if reference is not None:
+            (Path(tmp) / "reference.stl").write_bytes(reference)
         t = time.time()
         cmd = [binary(), "-o", str(out), str(src)] + (["--backend=Manifold"] if manifold() else [])
         if part is not None:
@@ -152,6 +173,8 @@ def build(code, part=None):
                 f"The build took longer than {settings.DESIGN3D_BUILD_TIMEOUT} seconds or ran out of memory. "
                 "Make it simpler: round only the plain outer block and cut holes afterwards, never minkowski "
                 "or hull a shape with holes, and use a lower $fn.")
+        if any(sign in log for sign in SERVER_SIGNS):
+            raise ServerError(log[-500:])
         p = subprocess.CompletedProcess([], code_, stdout, stderr)
         errors = [line for line in log.splitlines() if line.startswith(("ERROR", "WARNING: Ignoring unknown"))]
         if p.returncode != 0 or not out.exists() or out.stat().st_size == 0:

@@ -9,7 +9,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
 from . import access
-from .models import Design, Export, FriendLink, Invite, Maker, Message, Parameter, Part, Picture, Settings, Version
+from .models import Design, Export, FriendLink, Invite, Maker, Message, Parameter, Part, Picture, Reference, Settings, Version
 
 
 class Inside(permissions.BasePermission):
@@ -279,6 +279,21 @@ class FriendLinkViewSet(viewsets.ReadOnlyModelViewSet):
         return FriendLink.objects.filter(maker=me(self.request))
 
 
+class ReferenceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Reference
+        fields = ["id", "message", "name", "size_mm", "triangles", "bounds", "created_at"]
+
+
+class ReferenceViewSet(_OwnedReadOnly):
+    """STLs attached to a design's chat (2026-10-30). Read only: attach one
+    with the chat's paperclip."""
+
+    serializer_class = ReferenceSerializer
+    model = Reference
+    design_path = "message__design"
+
+
 ROUTES = [
     ("makers", MakerViewSet, Maker),
     ("designs", DesignViewSet, Design),
@@ -291,4 +306,5 @@ ROUTES = [
     ("settings", SettingsViewSet, Settings),
     ("exports", ExportViewSet, Export),
     ("friend-links", FriendLinkViewSet, FriendLink),
+    ("references", ReferenceViewSet, Reference),
 ]

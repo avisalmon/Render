@@ -57,11 +57,12 @@ def start(assistant):
     threading.Thread(target=_thread, args=(assistant.pk,), daemon=True, name=f"design3d-turn-{assistant.pk}").start()
 
 
-def start_sliders(design, base, code, values):
-    """A slider build in the background; the page polls the version."""
+def start_sliders(design, base, code, values, measured=()):
+    """A slider build in the background; the page polls the version.
+    `measured` are sizes the person has now measured (M1 and so on)."""
     def work():
         try:
-            v = make_version(design, code, base, Version.SLIDERS, from_values=values)
+            v = make_version(design, code, base, Version.SLIDERS, from_values=values, measured=measured)
             if v.status == Version.READY:
                 Design.objects.filter(pk=design.pk).update(current=v, updated_at=timezone.now())
         except Exception:
@@ -92,6 +93,7 @@ def _add_usage(msg, usage, model):
     msg.tokens_out += usage["out"]
     msg.cost_usd += llm.cost(model if model in llm.PRICES else settings.DESIGN3D_MODEL,
                              usage["in"], usage["cached"], usage["out"]) if model != "stub" else Decimal("0")
+    msg.cost_usd += llm.SEARCH_COST * sum(1 for s in usage.get("searches") or [] if s.startswith("Searched"))
 
 
 def run_checks(stl):
@@ -112,6 +114,17 @@ def checks_for(version):
         if version.checks is not None:
             Version.objects.filter(pk=version.pk).update(checks=version.checks)
     return version
+
+
+def reference_for(design):
+    """The design's attached STL (the latest), as bytes, or None."""
+    from .models import Reference
+
+    ref = Reference.objects.filter(message__design=design).order_by("-message_id", "-pk").first()
+    if ref is None:
+        return None
+    with ref.file.open("rb") as fh:
+        return fh.read()
 
 
 def view_stl(version):
@@ -135,7 +148,7 @@ def _build_parts(v, code, declared):
         empty = builder.BuildError(f'The part "{d["name"]}" came out empty. Draw it when part == "{d["name"]}": '
                                    f'end the file with if (part == "all" || part == "{d["name"]}") {d["name"]}();')
         try:
-            stl, seconds = builder.build(code, part=d["name"])
+            stl, seconds = builder.build(code, part=d["name"], reference=reference_for(v.design))
         except builder.BuildError as exc:
             if "empty" in str(exc).lower():
                 raise empty from exc
@@ -198,7 +211,8 @@ def copy_design(source, maker):
         v.save()
         for p in src.parameters.all():
             Parameter.objects.create(version=v, name=p.name, label=p.label, value=p.value, minimum=p.minimum,
-                                     maximum=p.maximum, step=p.step, unit=p.unit, position=p.position)
+                                     maximum=p.maximum, step=p.step, unit=p.unit, position=p.position,
+                                     tag=p.tag, dim=p.dim, needs_measuring=p.needs_measuring)
         for p in src.parts.all():
             q = Part(version=v, name=p.name, label=p.label, position=p.position, count=p.count, printed=p.printed,
                      orientation=p.orientation, size_mm=p.size_mm, checks=p.checks, color=p.color)
@@ -214,7 +228,7 @@ def copy_design(source, maker):
     return d
 
 
-def make_version(design, code, parent, made_by, proposed=None, from_values=None, declared=None):
+def make_version(design, code, parent, made_by, proposed=None, from_values=None, declared=None, measured=()):
     """Build `code` into the next version of the design. Returns the
     version, ready or failed; parameters come from the chat's proposal, or
     are carried over from the parent with the slider values. `declared` is
@@ -229,11 +243,12 @@ def make_version(design, code, parent, made_by, proposed=None, from_values=None,
         if declared:
             took = _build_parts(v, code, declared)
         else:
-            stl, took = builder.build(code)
+            stl, took = builder.build(code, reference=reference_for(design))
     except builder.BuildError as exc:
         v.parts.all().delete()
         v.status, v.error = Version.FAILED, str(exc)[:4000]
         v.save(update_fields=["status", "error"])
+        v.server_fault = isinstance(exc, builder.ServerError)
         return v
     if not declared:
         tris = render.read_stl(stl)
@@ -246,8 +261,11 @@ def make_version(design, code, parent, made_by, proposed=None, from_values=None,
     v.save()
     if from_values is not None and parent is not None:
         for p in parent.parameters.all():
-            Parameter.objects.create(version=v, name=p.name, label=p.label, value=params.value_in(code, p.name) or p.value,
-                                     minimum=p.minimum, maximum=p.maximum, step=p.step, unit=p.unit, position=p.position)
+            value = params.value_in(code, p.name) or p.value
+            Parameter.objects.create(version=v, name=p.name, label=p.label, value=value,
+                                     minimum=min(p.minimum, value), maximum=max(p.maximum, value), step=p.step, unit=p.unit,
+                                     position=p.position, tag=p.tag, dim=p.dim,
+                                     needs_measuring=p.needs_measuring and p.name not in measured)
     else:
         for p in params.clean(proposed, code):
             Parameter.objects.create(version=v, **p)
@@ -301,7 +319,9 @@ def _show(design, version):
 def _turn(msg, design):
     items = llm.history(design, upto=msg)
     _step(msg, "Reading your message")
-    reply, usage, model = llm.ask(items)
+    reply, usage, model = llm.ask(items, search=True)
+    for s in usage.get("searches") or []:
+        _note(msg, s)
     _add_usage(msg, usage, model)
     version = None
 
@@ -314,7 +334,7 @@ def _turn(msg, design):
         _built(msg, version)
         _show(design, version)
         tries = 0
-        while version.status == Version.FAILED and tries < REPAIRS:
+        while version.status == Version.FAILED and tries < REPAIRS and not getattr(version, "server_fault", False):
             tries += 1
             _step(msg, f"Fixing a build error, try {tries} of {REPAIRS}")
             items = items + [{"role": "assistant", "content": _as_json(reply)},
@@ -342,7 +362,11 @@ def _turn(msg, design):
 
         seats.reward_friend(design.owner)  # Chapter 8: a friend's first part gives 30 turns
     msg.text = reply["message"] or ("Here it is." if version else "")
-    if version is not None and version.status == Version.FAILED:
+    if version is not None and getattr(version, "server_fault", False):
+        msg.text = ("Something on our side stopped the build (the build server, not your design). "
+                    "Please send it again in a few minutes.")
+        _note(msg, "The build server could not run; not sent back to the model")
+    elif version is not None and version.status == Version.FAILED:
         msg.text += "\n\nI could not build it this time. Tell me what to change, or ask me to try again."
     msg.assumptions = reply["assumptions"]
     msg.version = version
@@ -383,12 +407,16 @@ def _self_check(msg, design, items, reply, version):
         {"role": "user", "content": [
             {"type": "input_text", "text": f"This is what your code built (size {version.size_mm} mm). Compare it with "
                                            "what I asked and my pictures. If it is right, answer with code null and a short "
-                                           "message for me; if not, give the corrected full code." + _findings(version)},
+                                           "note. If not, give the corrected full code and, in message, the complete answer "
+                                           "for me: it replaces your previous message, so do not repeat or refer to a first "
+                                           "version." + _findings(version)},
             {"type": "input_image", "image_url": "data:image/png;base64," + base64.b64encode(sheet).decode()}]}]
     _step(msg, "Checking the part against what you asked")
     checked, usage, model = llm.ask(items)
     _add_usage(msg, usage, model)
     if not checked["code"]:
+        if checked["message"]:
+            _note(msg, "Checked: " + checked["message"][:180])
         return version, reply
     _step(msg, "Correcting the part")
     better = make_version(design, checked["code"], version, Version.CHAT, checked["parameters"] or reply["parameters"],
@@ -398,4 +426,4 @@ def _self_check(msg, design, items, reply, version):
     if better.status != Version.READY:
         return version, reply
     return better, {**reply, **{k: v for k, v in checked.items() if v and k != "message"},
-                    "message": reply["message"] + "\n\n" + (checked["message"] or "I checked it and corrected it.")}
+                    "message": checked["message"] or reply["message"]}

@@ -17,6 +17,22 @@ Newest first.
 
 ---
 
+## PM-82 · 2026-10-30 · Sprint D3.16: stand-ins with a fixed shape, and a slider that clamps
+
+**What happened.** Adding a `search` option to the model call and a
+`reference` option to the build broke 19 tests at once: the tests' stand-ins
+were written as `lambda items:` and `lambda code, part=None:`, so a new
+keyword made them fail. Then the phone test caught a real bug: a measured
+size of 130 went through the width slider's form field, and a range input
+quietly clamps its value to its own maximum (120), so 120 was sent.
+
+**Rule.** A test stand-in for a function takes `**kwargs`, so adding an
+option does not break every test that replaces it. A value a person typed
+goes to the server as typed, never through a range input, which clamps.
+
+Here: `tests/test_design3d.py`, `static/design3d/design.js` (`applySizes`), `docs/building_an_app.md` mistake 69
+BKM: b30d92f
+
 ## PM-81 · 2026-10-30 · One friend link for everyone, where Avi wanted one per send
 
 **What happened.** I built each person's friend link as one fixed link that

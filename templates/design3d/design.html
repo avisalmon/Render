@@ -17,6 +17,7 @@
       <div class="d3-view-tools" {% if not shown or not shown.stl %}hidden{% endif %} id="d3-view-tools">
         <button type="button" class="d3-chip" data-d3-mode="pin" aria-pressed="false" title="Tap the part to mark a point for the chat">Point</button>
         <button type="button" class="d3-chip" data-d3-mode="measure" aria-pressed="false" title="Tap two points on the part">Measure</button>
+        <button type="button" class="d3-chip" id="d3-sizes" aria-pressed="false" title="Show the sizes on the part; tap one to change it">Sizes</button>
         <button type="button" class="d3-chip d3-stick" id="d3-stick" aria-pressed="true" title="Keep the part at the top while you scroll">Pinned</button>
       </div>
       <span class="d3-measure-label d3-mono" id="d3-measure-label" hidden></span>
@@ -24,6 +25,8 @@
     </div>
     {# Several parts (Chapter 7): assembled or plate, each part shown or hidden, pulled apart. Drawn by design.js. #}
     <div class="d3-parts-bar" id="d3-parts-bar" hidden></div>
+    {# Sizes to measure (Avi, 2026-10-30): the chat's estimates, M1, M2; type the real ones. Drawn by design.js. #}
+    <form class="d3-to-measure" id="d3-to-measure" hidden></form>
   </div>
 
   <details class="d3-tools" id="d3-tools">
@@ -79,7 +82,7 @@
           <label class="d3-field"><span class="d3-small">Name</span><input name="title" value="{{ d.title }}" maxlength="100"></label>
           <button class="d3-btn d3-btn-small d3-btn-quiet">Rename</button>
         </form>
-        {% if admin %}<form method="post" action="{% url 'design3d:email_chat' d.pk %}" style="margin-top:10px">{% csrf_token %}
+        {% if admin %}<form method="post" action="{% url 'design3d:email_chat' d.pk %}" style="margin-top:10px" data-async>{% csrf_token %}
           <button class="d3-btn d3-btn-small d3-btn-quiet" id="d3-email">Email me this chat</button></form>{% endif %}
         <form method="post" action="{% url 'design3d:edit' d.pk %}" style="margin-top:10px" data-confirm="Delete this design, its chat and all its versions?">{% csrf_token %}
           <input type="hidden" name="action" value="delete"><button class="d3-link">Delete this design</button></form>
@@ -104,7 +107,7 @@
       <div class="d3-compose-row">
         <label class="d3-iconbtn" title="Add pictures" aria-label="Add pictures">
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 9"/></svg>
-          <input type="file" name="pictures" accept="image/*" multiple id="d3-files"></label>
+          <input type="file" name="pictures" accept="image/*,.stl,model/stl" multiple id="d3-files"></label>
         <label class="d3-iconbtn cam" title="Take a photo" aria-label="Take a photo">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
           <input type="file" name="pictures" accept="image/*" capture="environment" id="d3-camera"></label>
@@ -116,6 +119,17 @@
     </form>
   </section>
 </div>
+<dialog class="d3-lightbox d3-dim-edit" id="d3-dim-edit" aria-label="Change a size">
+  <form method="dialog" id="d3-dim-form" class="d3-form">
+    <p class="d3-small d3-muted" id="d3-dim-what"></p>
+    <label class="d3-field"><span id="d3-dim-label">Size</span>
+      <input type="number" step="any" min="0" inputmode="decimal" id="d3-dim-value" required></label>
+    <div class="d3-row">
+      <button class="d3-btn d3-btn-small" id="d3-dim-apply" value="apply">Apply</button>
+      <button class="d3-btn d3-btn-small d3-btn-quiet" value="cancel" formnovalidate>Cancel</button>
+    </div>
+  </form>
+</dialog>
 <dialog class="d3-lightbox" id="d3-lightbox" aria-label="Picture">
   <img alt="A picture from the chat">
   <div class="d3-row">

@@ -149,3 +149,19 @@ Avi's decisions in conversation, then "Looks good. Spec and build it all."
 - [ ] Real cost from OpenAI: needs a design3d project key from Avi (the admin key already reads costs per project); until then the People screen shows the estimates
 - [ ] Flaky, written down (PM-78): watch the nightly run for the mark-a-point phone test
 - [x] 2026-10-30: friend links unique per send (`FriendLink`, `/design3d/r/new/`), one person each, credited to the sender; links from before keep working (REQ-D3.77)
+
+## D3.16 · The first analysis, an attached STL, web search, sizes on the part (2026-10-30)
+
+First "Send me the chats for analysis": 4 designs, 28 messages, $0.30. Found:
+four repair calls spent on a server error; corrected answers glued to the
+first ones; the reply language stuck on Hebrew; picture-heavy turns at 3 to 5
+cents and 70 to 90 s; "I can't access the web"; four rounds of photos and
+questions for the arcade case.
+
+- [x] `builder.ServerError`: a server fault stops the turn, no repair calls
+- [x] One answer after a correction (the check note goes to the trail); the language of the latest message; older pictures at low detail; the cost in the analysis mail to the cent
+- [x] `Reference`: an STL in the chat, sized and drawn for the model, `import("reference.stl")` allowed for that one file
+- [x] Web search (OpenAI's `web_search` tool) on a turn's first call; searches in the trail; a cent each
+- [x] Take a picture or STL out before sending; the email buttons answer in place
+- [x] Sizes on the part: Parameter tag / needs_measuring / dim; M1 always shown, Sizes button for the rest, a tap edits, "Please measure" form, typed values keep out-of-range measurements, no model call and no turn
+- [x] Real turn (Raspberry Pi 4 case): it searched the Raspberry Pi site, cited the 85 x 56 mm drawing, two parts, sizes placed on the part; 63 s, $0.044

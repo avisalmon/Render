@@ -264,6 +264,26 @@ class Message(models.Model):
         ordering = ["created_at", "id"]
 
 
+def reference_path(instance, filename):
+    ext = ".png" if filename.endswith(".png") else ".stl"
+    return f"stl/{instance.message.design_id}/ref-{timezone.now():%Y%m%d%H%M%S%f}{ext}"
+
+
+class Reference(models.Model):
+    """An STL a person attached to a message (Avi, 2026-10-30): its sizes and
+    three views go to the chat as reference measures, and the code may build
+    on it with import("reference.stl"), the one file it may read."""
+
+    message = models.ForeignKey("Message", on_delete=models.CASCADE, related_name="references")
+    file = models.FileField(upload_to=reference_path, storage=private_storage)
+    sheet = models.FileField(upload_to=reference_path, storage=private_storage, blank=True)
+    name = models.CharField(max_length=120)
+    size_mm = models.CharField(max_length=40, blank=True)
+    triangles = models.PositiveIntegerField(default=0)
+    bounds = models.JSONField(default=list, blank=True, help_text="[[min x, y, z], [max x, y, z]] in the file's own mm")
+    created_at = models.DateTimeField(default=timezone.now)
+
+
 class Picture(models.Model):
     """An image sent with a message (REQ-D3.14). Its owner's only, never
     shown with a shared design."""
@@ -384,6 +404,12 @@ class Parameter(models.Model):
     step = models.DecimalField(max_digits=9, decimal_places=3, default=Decimal("1"))
     unit = models.CharField(max_length=8, blank=True)
     position = models.PositiveIntegerField(default=0)
+    # Sizes on the part (Avi, 2026-10-30): D1, D2 for what the chat knows, M1,
+    # M2 for what the person must measure; `dim` is where the size runs on the
+    # part, {"from": [x, y, z], "to": [x, y, z], "at": value}, in the code's mm.
+    tag = models.CharField(max_length=8, blank=True)
+    needs_measuring = models.BooleanField(default=False)
+    dim = models.JSONField(null=True, blank=True)
 
     class Meta:
         ordering = ["version", "position", "id"]
