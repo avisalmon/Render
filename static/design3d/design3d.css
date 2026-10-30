@@ -265,3 +265,14 @@ img { max-width: 100%; height: auto; display: block; }
   border: 1px solid var(--line); border-radius: 10px; background: rgba(23,20,15,.78); color: var(--ink); cursor: pointer; }
 .d3-home svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .d3-home:hover { border-color: var(--hi); }
+
+/* The invitation link, ready to share (Avi, 2026-10-30) */
+.d3-share { margin-top: 12px; padding: 12px; border: 1px solid var(--hi); border-radius: 12px; display: grid; gap: 10px; max-width: 560px; }
+.d3-share p { margin: 0; overflow-wrap: anywhere; }
+.d3-share-link { width: 100%; min-width: 0; box-sizing: border-box; font-size: .8rem; }
+.d3-invite-ideas { margin: 0 0 12px; padding-left: 18px; color: var(--soft); display: grid; gap: 4px; }
+
+/* Friends: a link of your own (Avi, 2026-10-30) */
+.d3-friends { margin-top: 28px; max-width: 560px; }
+.d3-friends h2 { margin: 0 0 6px; font-size: 1.1rem; }
+.d3-friend { border-left: 3px solid var(--hi); padding-left: 10px; }

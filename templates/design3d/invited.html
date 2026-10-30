@@ -5,12 +5,20 @@
 <section class="d3-door">
   <div class="d3-card" id="d3-invited" data-state="{{ state }}">
     {% if state == "sign_in" %}
-      <h1 class="d3-h1">You are invited.</h1>
-      <p class="d3-muted">Avi invited you to design3d: describe a part, send a sketch or a photo, and get a 3D part you can print.</p>
-      <p>Sign in or create an account to accept. The invitation works once, for one person.</p>
+      <h1 class="d3-h1">You're invited to design3d.</h1>
+      <p>A chat that designs 3D parts with you. Describe what you need in a few words, send a photo of a hand sketch,
+        or photograph the thing it should fit (a coin or a card next to it gives the size). The chat asks what it needs,
+        shows the part in 3D on your phone, changes it as you talk, and gives you a file ready for a 3D printer.</p>
+      <ul class="d3-invite-ideas">
+        <li>"A wall holder for my TV remote, 50 mm wide and 30 mm thick"</li>
+        <li>A photo of a bracket you drew on paper, with the sizes written on it</li>
+        <li>"A box with a sliding lid for SD cards"</li>
+      </ul>
+      <p><b>To accept, sign in or create an account.</b> You are in at once. This link works once, just for you.</p>
       <div class="d3-row">
-        <a class="d3-btn" id="d3-invite-signin" href="{% url 'design3d:login' %}?next={{ next|urlencode }}">Sign in to accept</a>
-        <a class="d3-btn d3-btn-quiet" href="{% url 'design3d:signup' %}?next={{ next|urlencode }}">Create an account</a>
+        <a class="d3-btn" id="d3-invite-google" href="/accounts/google/login/?process=login&amp;next={{ next|urlencode }}">Continue with Google</a>
+        <a class="d3-btn d3-btn-quiet" id="d3-invite-signin" href="{% url 'design3d:login' %}?next={{ next|urlencode }}">Sign in</a>
+        <a class="d3-btn d3-btn-quiet" id="d3-invite-signup" href="{% url 'design3d:signup' %}?next={{ next|urlencode }}">Create an account</a>
       </div>
     {% elif state == "used" %}
       <h1 class="d3-h1">This invitation was already used.</h1>

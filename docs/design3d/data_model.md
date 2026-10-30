@@ -193,7 +193,14 @@ several-part version. No schema change: `pin` is JSON.
 Unchanged: a shared design shows the model only. For several parts that is
 the parts, the plate and the 3MF; never the chat or the pictures.
 
-## Invite (added 2026-10-29, at Avi's request)
+## Maker gets (added 2026-10-30, Avi: "credit them and track that someone joined through them")
+
+| Field | Type | Meaning |
+|---|---|---|
+| ref_code | char 16, unique, null | this person's own link code (/design3d/r/<code>/), made on first use |
+| referred_by | FK Maker, null | whose link (or one-time link) this person came in through; never themselves |
+
+## Invite (added 2026-10-29, at Avi's request; email and name optional since 2026-10-30, nothing is mailed)
 
 One invitation to one person. Its token is the key in the link; the first
 person who opens it signed in is let in and the token is burned

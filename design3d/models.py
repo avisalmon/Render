@@ -56,9 +56,27 @@ class Maker(models.Model):
     decided_at = models.DateTimeField(null=True, blank=True)
     decided_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
     welcomed_at = models.DateTimeField(null=True, blank=True)
+    # Friends (Avi, 2026-10-30): every person has a link of their own to send
+    # friends; whoever asks to join through it is remembered here, for the
+    # points of the gamification plan.
+    ref_code = models.CharField(max_length=16, unique=True, null=True, blank=True)
+    referred_by = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL, related_name="referrals")
 
     class Meta:
         ordering = ["-requested_at"]
+
+    def code(self):
+        """This person's link code, made on first use."""
+        if not self.ref_code:
+            import secrets
+
+            while True:
+                code = secrets.token_urlsafe(6).replace("-", "x").replace("_", "y")
+                if not Maker.objects.filter(ref_code=code).exists():
+                    break
+            Maker.objects.filter(pk=self.pk, ref_code__isnull=True).update(ref_code=code)
+            self.refresh_from_db(fields=["ref_code"])
+        return self.ref_code
 
     def __str__(self):
         return f"{self.display_name} ({self.status})"
@@ -104,12 +122,14 @@ def _invite_expiry():
 
 
 class Invite(models.Model):
-    """Avi invites one person by email (2026-10-29). The link carries a
-    one-time token: whoever opens it first, signed in, is let in and the
-    token is burned. That same person may open it again; nobody else can
-    (methodology 55). Unused, it ends after 14 days or when Avi revokes it."""
+    """A one-time invitation link, like a coupon (Avi, 2026-10-30): Avi makes
+    one with a tap and sends it however he likes (WhatsApp, mail, any share
+    sheet). Whoever opens it first, signed in or after signing up, is let in
+    and the token is burned. That same person may open it again; nobody else
+    can (methodology 55). Unused, it ends after 14 days or when Avi revokes it.
+    `email` and `name` are optional notes; nothing is mailed by design3d."""
 
-    email = models.EmailField()
+    email = models.EmailField(blank=True)
     name = models.CharField(max_length=80, blank=True)
     token = models.CharField(max_length=64, unique=True, default=_invite_token)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL, related_name="+")

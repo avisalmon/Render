@@ -1336,3 +1336,14 @@ was `pytest | grep && git commit` and grep succeeded (PM-78).
 **The rule.** Gate a commit on the tests' exit code or on "failed" in the
 summary, never on a pipe that prints the result. A test that failed once
 and then passed is written down.
+
+### 67. Test a control in the state people use it in
+
+design3d's Home test waited for the view to settle before tapping Home, so
+the glide after a drag, which Home did not stop, never showed (PM-79). And
+an invitation form asked for an email the owner never wanted to type: he
+sends links himself, by WhatsApp.
+
+**The rule.** Test a control right after the action people do before it,
+not only once everything has settled. When the owner is the one who sends
+something, ask how he sends it before building the sending.

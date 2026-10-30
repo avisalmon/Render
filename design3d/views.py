@@ -28,7 +28,32 @@ def door(request):
     if access.can_enter(request.user):
         return redirect("design3d:designs")
     maker = access.maker_of(request.user)
-    return render(request, "design3d/door.html", {"maker": maker, "form": AskForm(initial={"reason": maker.reason if maker else ""})})
+    friend = Maker.objects.filter(pk=request.session.get(REF_KEY)).first() if request.session.get(REF_KEY) else None
+    return render(request, "design3d/door.html", {"maker": maker, "friend": friend,
+                                                  "form": AskForm(initial={"reason": maker.reason if maker else ""})})
+
+
+REF_KEY = "design3d_ref"
+
+
+def friend_link(request, code):
+    """A member's own link (Avi, 2026-10-30): it never runs out; whoever
+    comes through it sees who invited them and asks to join as usual (Avi
+    approves). The friend is remembered for the points later."""
+    friend = Maker.objects.filter(ref_code=code, status=Maker.APPROVED).first()
+    if friend is not None:
+        request.session[REF_KEY] = friend.pk
+    return redirect("design3d:door")
+
+
+def _referrer(request, maker=None):
+    """Who brought this person, from the link they came through: never
+    themselves."""
+    pk = request.session.get(REF_KEY)
+    friend = Maker.objects.filter(pk=pk).first() if pk else None
+    if friend is not None and maker is not None and friend.pk == maker.pk:
+        return None
+    return friend
 
 
 @require_POST
@@ -40,7 +65,8 @@ def ask(request):
     reason = form.cleaned_data["reason"] if form.is_valid() else ""
     maker = access.maker_of(request.user)
     if maker is None:
-        maker = Maker.objects.create(user=request.user, display_name=access.display_name_for(request.user), reason=reason)
+        maker = Maker.objects.create(user=request.user, display_name=access.display_name_for(request.user), reason=reason,
+                                     referred_by=_referrer(request))
         mail.request_notice(maker, request)
     elif maker.status == Maker.DECLINED:
         maker.status, maker.reason, maker.requested_at = Maker.PENDING, reason or maker.reason, timezone.now()
@@ -70,7 +96,8 @@ def invited(request, token):
     if not taken:  # someone else took it a moment ago
         return render(request, "design3d/invited.html", {"inv": inv, "state": "used"}, status=410)
     maker = access.maker_of(request.user) or Maker.objects.create(
-        user=request.user, display_name=access.display_name_for(request.user), reason=f"Invited ({inv.email})")
+        user=request.user, display_name=access.display_name_for(request.user), reason="Invited by a link",
+        referred_by=access.maker_of(inv.created_by) if inv.created_by else None)
     if maker.status != Maker.APPROVED:
         access.let_in(maker, inv.created_by, request)
     flash.success(request, "Welcome to design3d.")
@@ -85,7 +112,8 @@ def designs(request):
     """REQ-D3.10"""
     mine = request.maker.designs.select_related("current").annotate(n=Count("versions"))
     return render(request, "design3d/designs.html", {"designs": mine, "section": "mine",
-                                                     "spent": jobs.spent_today(request.maker), "limit": request.maker.limit})
+                                                     "spent": jobs.spent_today(request.maker), "limit": request.maker.limit,
+                                                     "friends": _friend_share(request, request.maker)})
 
 
 @require_POST
@@ -461,28 +489,47 @@ def copy_design(request, pk):
 # ---------------------------------------------------------------- Avi's people screen
 
 
-def _invites(request):
-    """Avi's invitations: send one, or revoke one not used yet."""
-    from django.core.exceptions import ValidationError
-    from django.core.validators import validate_email
+INVITE_TEXT = ("You're invited to try design3d: a chat that turns a few words, a hand sketch or a photo "
+               "into a 3D part you can print. This link works once, just for you: {link}")
 
+
+def _invites(request):
+    """Avi's invitations (2026-10-30): one tap makes a one-time link to send
+    however he likes; or withdraw one not used yet."""
     if request.POST["action"] == "revoke":
         Invite.objects.filter(pk=request.POST.get("invite"), used_at__isnull=True).update(revoked_at=timezone.now())
         flash.success(request, "The invitation no longer works.")
         return redirect("design3d:people")
-    email = (request.POST.get("email") or "").strip().lower()
-    try:
-        validate_email(email)
-    except ValidationError:
-        flash.error(request, "That is not an email address.")
-        return redirect("design3d:people")
-    inv = Invite.objects.create(email=email, name=(request.POST.get("name") or "").strip()[:80], created_by=request.user)
-    if mail.invite(inv, request):
-        flash.success(request, f"Invitation sent to {email}.")
-    else:
-        flash.error(request, "The invitation was made but the email did not go. Send this link yourself: "
-                             + request.build_absolute_uri("/design3d/i/" + inv.token + "/"))
-    return redirect("design3d:people")
+    inv = Invite.objects.create(created_by=request.user, name=(request.POST.get("name") or "").strip()[:80])
+    return redirect(f"/design3d/people/?new={inv.pk}#d3-invites")
+
+
+FRIEND_TEXT = ("{name} invites you to try design3d: a chat that turns a few words, a hand sketch or a photo "
+               "into a 3D part you can print. Ask to join here: {link}")
+
+
+def _friend_share(request, maker):
+    """A member's own link and its ready message, and how many joined through it."""
+    from urllib.parse import quote
+
+    link = request.build_absolute_uri(f"/design3d/r/{maker.code()}/")
+    text = FRIEND_TEXT.format(name=maker.display_name, link=link)
+    joined = maker.referrals.filter(status=Maker.APPROVED).count()
+    asked = maker.referrals.count()
+    return {"link": link, "text": text, "joined": joined, "asked": asked,
+            "whatsapp": "https://wa.me/?text=" + quote(text),
+            "mailto": "mailto:?subject=" + quote("Try design3d") + "&body=" + quote(text)}
+
+
+def _invite_share(request, inv):
+    """The link and the ready message, for the share buttons."""
+    from urllib.parse import quote
+
+    link = request.build_absolute_uri(f"/design3d/i/{inv.token}/")
+    text = INVITE_TEXT.format(link=link)
+    return {"inv": inv, "link": link, "text": text,
+            "whatsapp": "https://wa.me/?text=" + quote(text),
+            "mailto": "mailto:?subject=" + quote("You're invited to design3d") + "&body=" + quote(text)}
 
 
 @ensure_csrf_cookie
@@ -513,7 +560,8 @@ def people(request):
         m.save(update_fields=["status", "decided_at", "decided_by"])
         return redirect("design3d:people")
     start = timezone.localtime().replace(hour=0, minute=0, second=0, microsecond=0)
-    makers = Maker.objects.select_related("user").annotate(
+    makers = Maker.objects.select_related("user", "referred_by").annotate(
+        brought=Count("referrals", filter=Q(referrals__status=Maker.APPROVED), distinct=True),
         total=Sum("designs__messages__cost_usd"),
         today=Sum("designs__messages__cost_usd", filter=Q(designs__messages__created_at__gte=start)),
         n_designs=Count("designs", distinct=True))
@@ -531,7 +579,10 @@ def people(request):
               "avg": times["avg"], "max": times["max"], "n": len(recent),
               "failed": sum(1 for v in recent if v.status == Version.FAILED)}
     invites = Invite.objects.select_related("used_by")[:30]
+    fresh = Invite.objects.filter(pk=request.GET.get("new") or 0).first() if (request.GET.get("new") or "").isdigit() else None
+    share = _invite_share(request, fresh) if fresh is not None and fresh.status == "open" else None
     return render(request, "design3d/people.html", {"groups": groups, "section": "people", "engine": engine, "invites": invites,
+                                                    "share": share,
                                                     "default_limit": settings.DESIGN3D_DAILY_LIMIT_USD})
 
 

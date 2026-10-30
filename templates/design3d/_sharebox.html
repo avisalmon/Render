@@ -1,0 +1,31 @@
+{# A link and its ready message, with WhatsApp, Email, the phone's own Share, and Copy (Avi, 2026-10-30). #}
+<div class="d3-share" data-text="{{ share.text }}">
+  <input class="d3-share-link d3-mono" value="{{ share.link }}" readonly aria-label="The link">
+  <div class="d3-row">
+    <a class="d3-btn d3-btn-small" data-share="whatsapp" href="{{ share.whatsapp }}" target="_blank" rel="noopener">WhatsApp</a>
+    <a class="d3-btn d3-btn-small d3-btn-quiet" data-share="mail" href="{{ share.mailto }}">Email</a>
+    <button type="button" class="d3-btn d3-btn-small d3-btn-quiet" data-share="native" hidden>Share</button>
+    <button type="button" class="d3-btn d3-btn-small d3-btn-quiet" data-share="copy">Copy</button>
+  </div>
+  <p class="d3-small d3-muted">The message: {{ share.text }}</p>
+</div>
+<script>
+  (function () {
+    var box = document.currentScript.previousElementSibling;
+    var native = box.querySelector('[data-share="native"]');
+    if (navigator.share) {
+      native.hidden = false;
+      native.addEventListener("click", function () {
+        navigator.share({ title: "design3d", text: box.dataset.text }).catch(function () {});
+      });
+    }
+    var copy = box.querySelector('[data-share="copy"]');
+    copy.addEventListener("click", function () {
+      var input = box.querySelector("input");
+      var done = function () { copy.textContent = "Copied"; };
+      if (navigator.clipboard) navigator.clipboard.writeText(box.dataset.text).then(done, function () { input.select(); });
+      else input.select();
+    });
+    if (location.hash === "#d3-invites" && box.closest("#d3-invites")) box.scrollIntoView({ block: "center" });
+  })();
+</script>
