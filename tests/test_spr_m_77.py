@@ -114,7 +114,8 @@ def test_the_list_is_the_leaders_school_with_the_file(client, world):
     assert f"{file_url}?view=1" in html and "<img" in html
     assert "פתיחת הקובץ" in html
     assert reverse("matazim:leader_decide", args=[noa_try.pk]) in html
-    assert "אישור הצטרפות לאתר" in html and "לא לאשר" in html
+    # SPR-M.78 renamed the button: approving is entering the patrol (Lital, 2026-10-31).
+    assert "אישור והכנסה לסיירת" in html and "לא לאשר" in html
 
 
 def test_the_leader_opens_the_file(client, world):
@@ -145,7 +146,9 @@ def test_approving_lets_the_student_in_and_tells_them(client, world):
     client.force_login(world["liron"].user)
     mail.outbox.clear()
 
-    resp = client.post(reverse("matazim:leader_decide", args=[attempt.pk]), {"action": "approve"})
+    # SPR-M.78: telling is the leader's option, ticked by default on the form.
+    resp = client.post(reverse("matazim:leader_decide", args=[attempt.pk]),
+                       {"action": "approve", "tell": "1"})
     assert resp.status_code == 302
 
     attempt.refresh_from_db()
@@ -154,7 +157,7 @@ def test_approving_lets_the_student_in_and_tells_them(client, world):
     assert attempt.member.has_passed_entrance_test()
     assert Notification.objects.filter(user=world["noa"], kind=Notification.ENTRANCE_APPROVED).exists()
     assert [m.to for m in mail.outbox] == [["noa@example.com"]]
-    assert "מבחן הכניסה אושר" in mail.outbox[0].body
+    assert "עברת את מבחני המיון לתכנית מטצים ונכנסת לסיירת" in mail.outbox[0].body
 
 
 def test_not_approving_needs_words_and_tells_them(client, world):

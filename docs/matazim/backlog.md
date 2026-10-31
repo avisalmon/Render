@@ -5108,3 +5108,32 @@ school: they stay on the programme team's screen. Attach an approved student to 
 approved them: the student still chooses a leader after approval, as C14 says.
 
 **Tests.** `tests/test_spr_m_77.py`.
+
+## SPR-M.78: A leader takes an approved student into the patrol and their own group  `DONE 2026-10-31`
+
+Lital's mail of 31.10, 07:49 (spec C36): once a student has uploaded the entrance test, the
+leader approves and takes them into the patrol, the student is told they passed the screening
+and entered the patrol (and sending it is the leader's option), and the leader can put the
+student in their own group. Run under Avi's standing rule of 2026-10-16.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.78.1 | `entrance_review.tell_patrol` and `take_into_group`; `approve(..., tell=False)` for the leader's path | REQ-M.209 | DONE |
+| F-M.78.2 | `leader_decide`: `approve` with the `group` and `tell` boxes, and `group` and `tell` alone once approved | REQ-M.209 | DONE |
+| F-M.78.3 | `leader_tests.html`: `אישור והכנסה לסיירת`, the two ticked boxes, the two buttons on an approved row, and what happened, in words | REQ-M.209 | DONE |
+
+**How it was read.** The patrol is the school's students who have a leader (REQ-M.187), so
+"into the patrol" and "into the leader's group" are one act: the student becomes this
+leader's. The group is the leader, not one of their classes. SPR-M.77 left joining to the
+student (C14); that door stays, and the leader's is beside it.
+
+**What the bot did not do.** Take in a minor without a parent's consent (the leader approves
+now, and takes them in after it), bring back a student who was taken out, or move another
+leader's student. A message is not sent on approving unless the box is ticked.
+
+**Asked back.** Whether "the group" should be one of the leader's classes rather than the
+leader. The mail's picture was a Render 502 page: the site was down for a moment when she
+wrote, and was up when the bot looked.
+
+**Tests.** `tests/test_spr_m_78.py`; `tests/test_spr_m_77.py` follows the new button and the
+optional message.
