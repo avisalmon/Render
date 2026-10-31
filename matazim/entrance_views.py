@@ -725,6 +725,7 @@ def leader_entrance_rows(leader):
             "name": _display_name_of(attempt.member.user),
             "school": attempt.member.school.name if attempt.member.school_id else "",
             "state": entrance_review.attempt_state(attempt),
+            "not_passed": attempt.decision == EntranceAttempt.RETURNED and attempt.not_passed,
             "picture": bool(attempt.model_file) and is_picture(attempt.model_file.name),
             # REQ-M.209 - already in this leader's group, or waiting on a parent.
             "in_group": attempt.member.user_id in own,
@@ -806,11 +807,15 @@ def leader_decide(request, attempt_id):
         if luck:
             return redirect(f"{back}?{urlencode({'done': attempt.pk, 'luck': 1})}#attempt-{attempt.pk}")
         return redirect(back)
+    if action == "not_passed" or (action == "luck" and attempt.decision == EntranceAttempt.RETURNED):
+        # REQ-M.214 (Lital, 2026-10-31 11:29): beside each name, passed or did
+        # not pass, and either way the student is told. `luck` is SPR-M.80's
+        # name for the same message on a hand-in already not approved.
+        if attempt.decision == EntranceAttempt.APPROVED:
+            return redirect(back)
+        entrance_review.not_passed(attempt, request.user)
+        return redirect(f"{back}?{urlencode({'done': attempt.pk, 'luck': 1})}#attempt-{attempt.pk}")
     if action == "luck":
-        # The same message on its own, for a student not approved before.
-        if attempt.decision == EntranceAttempt.RETURNED:
-            entrance_review.tell_good_luck(attempt.member, request.user)
-            return redirect(f"{back}?{urlencode({'done': attempt.pk, 'luck': 1})}#attempt-{attempt.pk}")
         return redirect(back)
 
     # REQ-M.209 (Lital, 2026-10-31): approving lets the student into the

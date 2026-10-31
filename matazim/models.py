@@ -261,6 +261,9 @@ class EntranceAttempt(models.Model):
     # A return carries words (the same rule as REQ-M.123): "returned" alone tells
     # a fourteen-year-old they failed and not what to change.
     decision_note = models.TextField(blank=True, default="", verbose_name="מה לתקן")
+    # REQ-M.214 - a return that means "did not pass", told with a wish of good
+    # luck, as against "back for fixing". Still RETURNED: the student may try again.
+    not_passed = models.BooleanField(default=False, verbose_name="לא עבר/ה את המיון")
 
     class Meta:
         ordering = ["number"]

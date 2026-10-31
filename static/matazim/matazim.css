@@ -3026,6 +3026,13 @@ a.mz-path-title:hover { color: var(--mz-link); }
 .mz-entrance-row[data-state="waiting"] { border-inline-start: 4px solid var(--mz-action); padding-inline-start: 12px; }
 .mz-entrance-decide { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; margin-top: 10px; }
 .mz-entrance-decide .mz-field { flex: 1 1 260px; }
+/* REQ-M.214 - passed or did not pass, side by side; fixing folds under them. */
+.mz-entrance-choice { display: flex; flex-wrap: wrap; gap: 10px; flex-basis: 100%; margin: 0; }
+.mz-entrance-preview button[disabled] { opacity: .6; cursor: not-allowed; }
+.mz-entrance-fix { margin-top: 10px; }
+.mz-entrance-fix summary { cursor: pointer; color: var(--mz-muted); }
+.mz-entrance-fix form { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; margin-top: 8px; }
+.mz-entrance-fix .mz-field { flex: 1 1 260px; }
 
 /* ---------------------------------------- stages and updates (SPR-M.65) */
 .mz-course-stage {
