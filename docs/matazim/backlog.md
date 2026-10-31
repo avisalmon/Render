@@ -5137,3 +5137,25 @@ wrote, and was up when the bot looked.
 
 **Tests.** `tests/test_spr_m_78.py`; `tests/test_spr_m_77.py` follows the new button and the
 optional message.
+
+## SPR-M.79: The Atid network logo comes off the partners section  `DONE 2026-10-31`
+
+Lital's mail of 31.10, 08:21 (spec C37): take off the logo of רשת החינוך עתיד and, for now,
+leave only Intel's. Run under Avi's standing rule of 2026-10-16.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.79.1 | `home.html` and `about.html`: the partners row without `atid.svg` | REQ-M.210 | DONE |
+
+**How it was read.** "The Atid logo" is the network's mark in שותפים מרכזיים לעשייה. The
+site's own logo at the top says עתיד שבילים משותפים, the programme's name, and stays.
+
+**What the bot did not do.** Add an Intel logo. There never was one: it was left out on
+purpose, because a company mark claims company sponsorship and the programme has Intel
+volunteers. That is Avi's decision, and he was asked. The חמ״ד logo was not removed either,
+since she named only Atid's.
+
+**Asked back.** Whether חמ״ד should come off too ("רק לוגו של אינטל"), and whether she meant
+the logo at the top.
+
+**Tests.** `tests/test_spr_m_79.py`; `tests/test_spr_m_1.py` now expects the Atid mark gone.

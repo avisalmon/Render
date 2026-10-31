@@ -206,7 +206,8 @@ def test_partners_section_carries_weight(client, db):
     """
     html = client.get("/matazim/about/").content.decode()
     assert "שותפים מרכזיים לעשייה" in html
-    assert "partners/atid.svg" in html
+    # REQ-M.210 (2026-10-31): the Atid network logo came off at Lital's word.
+    assert "partners/atid.svg" not in html
     assert "partners/hemed_logo.png" in html
     assert "וגופים נוספים נפלאים" in html
     # SPR-M.56 (2026-10-09): Litala's screen 1 reads hero, איך זה עובד, the
