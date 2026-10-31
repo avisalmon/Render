@@ -174,7 +174,8 @@ download and share: for several parts it is the print plate.
 | orientation | char 20 | how it was turned for printing: the model's hint or the side the server chose |
 | size_mm | char 40 | its size |
 | checks | JSON, null | its print check |
-| color | char 7 | its colour in the assembled view (set by the server) |
+| color | char 7 | its colour: the chat's when it gives one (2026-10-31), else the server's; shown in the assembled view and written into the 3MF |
+| together | bool | a colour region of one object, printed in place with the others (2026-10-31) |
 
 ### Version gets
 

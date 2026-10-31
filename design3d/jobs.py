@@ -160,23 +160,40 @@ def _build_parts(v, code, declared):
             raise empty
         built.append((d, stl, tris))
     pieces = []
+    # Colour regions of one object (Avi, 2026-10-31): printed together, in
+    # place, the group dropped onto the bed as one, never laid apart.
+    group = [(d, tris) for d, _, tris in built if d["printed"] and d.get("together")]
+    if group:
+        glo, _ = render.bounds([t for _, tris in group for t in tris])
+        shift = (-glo[0], -glo[1], -glo[2])
+    unit = []
     for i, (d, stl, tris) in enumerate(built):
         p = Part(version=v, name=d["name"], label=d["label"], position=i, count=d["count"], printed=d["printed"],
-                 color=parts.COLORS[i % len(parts.COLORS)], size_mm=render.size_mm(tris))
+                 color=d.get("color") or parts.COLORS[i % len(parts.COLORS)], together=bool(d.get("together")),
+                 size_mm=render.size_mm(tris))
         p.stl.save(f"{d['name']}.stl", ContentFile(stl), save=False)
-        if d["printed"]:
+        if d["printed"] and d.get("together"):
+            flat = parts._move(tris, *shift)
+            p.orientation = "in place"
+            flat_stl = parts.to_stl(flat)
+            p.print_stl.save(f"{d['name']}-print.stl", ContentFile(flat_stl), save=False)
+            p.checks = run_checks(flat_stl)
+            unit.append((d["label"], flat, p.color))
+        elif d["printed"]:
             flat, how = parts.orient(tris, d["print"])
             p.orientation = how
             flat_stl = parts.to_stl(flat)
             p.print_stl.save(f"{d['name']}-print.stl", ContentFile(flat_stl), save=False)
             p.checks = run_checks(flat_stl)
             for c in range(d["count"]):
-                pieces.append((d["label"] + (f" {c + 1}" if d["count"] > 1 else ""), flat))
+                pieces.append((d["label"] + (f" {c + 1}" if d["count"] > 1 else ""), flat, p.color))
         p.save()
+    if unit:
+        pieces.append(unit)
     if not pieces:
         raise builder.BuildError("No part is printed. At least one part needs \"printed\": true.")
     laid = parts.plate(pieces)
-    plate_stl = parts.to_stl([t for _, tris in laid for t in tris])
+    plate_stl = parts.to_stl([t for _, tris, _ in laid for t in tris])
     v.stl.save(f"v{v.number}.stl", ContentFile(plate_stl), save=False)
     v.file_3mf.save(f"v{v.number}.3mf", ContentFile(parts.to_3mf(laid)), save=False)
     v.checks = run_checks(plate_stl)
@@ -216,7 +233,7 @@ def copy_design(source, maker):
                                      tag=p.tag, dim=p.dim, needs_measuring=p.needs_measuring)
         for p in src.parts.all():
             q = Part(version=v, name=p.name, label=p.label, position=p.position, count=p.count, printed=p.printed,
-                     orientation=p.orientation, size_mm=p.size_mm, checks=p.checks, color=p.color)
+                     orientation=p.orientation, size_mm=p.size_mm, checks=p.checks, color=p.color, together=p.together)
             _copy_file(p.stl, q.stl, f"{p.name}.stl")
             _copy_file(p.print_stl, q.print_stl, f"{p.name}-print.stl")
             q.save()

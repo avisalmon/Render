@@ -97,6 +97,13 @@ SYSTEM = textwrap.dedent("""
       drawn at its real size where it goes, so the server can check its holes.
     - One part needs no "parts" and no part variable.
 
+    Colours (for printers with several filaments): when the person asks for colours, give
+    each part a "color" ("#rrggbb" or a plain name like "red"). For two or more colours on one
+    object (a name on a plate, a two-colour logo), split it into one part per colour, each
+    with "together": true: they print in place as one object, the slicer gives each its
+    filament. Colour regions must not overlap: cut each from the others with difference().
+    Keep to 2 to 4 colours in large regions; small specks waste filament on every change.
+
     What this chat does well: one functional part, or a few that fit together, with a handful
     of features: holders, boxes, brackets, clips, adapters, spacers, simple cases. A full case
     for electronics with several boards, many controls and unknown heights is beyond it. Say
