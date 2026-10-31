@@ -146,6 +146,9 @@ DESIGN3D_OPENSCAD = os.environ.get("DESIGN3D_OPENSCAD") or str(
 DESIGN3D_MODEL = os.environ.get("DESIGN3D_MODEL", "gpt-6.1-terra")
 DESIGN3D_DAILY_LIMIT_USD = float(os.environ.get("DESIGN3D_DAILY_LIMIT_USD", "2"))
 DESIGN3D_BUILD_TIMEOUT = int(os.environ.get("DESIGN3D_BUILD_TIMEOUT", "90"))
+# Saying a message: the phone's own recognition, free. Paid transcription on
+# the server only if switched on (Avi, 2026-10-31: "not openAI, waste of tokens").
+DESIGN3D_VOICE_PAID = os.environ.get("DESIGN3D_VOICE_PAID", "0") == "1"
 
 # REQ-M.84 — the guardian-consent gate, switched off while the site is being
 # built. Avi, 2026-09-14: "when sign up, don't force the parents agreement for

@@ -1390,3 +1390,14 @@ system and which message sets the language. A checker gets the history in
 short form and a view where what it checks is visible. Run a new kind of
 thing through every existing check. Test with a follow-up turn in another
 language.
+
+### 72. The device first, and a sibling app's decision stands
+
+design3d paid OpenAI to transcribe speech while Books, in the same repo,
+had already decided the phone's own recognition does it for free and the
+paid model stays off (PM-87).
+
+**The rule.** Before paying a service for a capability, check what the
+device does for free and what a sibling app already decided on the same
+question; that decision stands unless the owner says otherwise. A paid
+path, if kept, is a fallback behind a switch that is off.

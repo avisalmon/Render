@@ -1,6 +1,9 @@
 """Saying the message instead of typing it (Avi, 2026-10-31).
 
-The browser records a short clip and sends it once; the transcription model
+The phone's own speech recognition does the work, in the browser, for
+nothing (Avi: "the system should transcribe, not OpenAI; waste of tokens").
+What is here is the paid fallback, off unless DESIGN3D_VOICE_PAID is set:
+the browser records a short clip and sends it once; the transcription model
 turns it into text, which goes into the message box to be read and fixed
 before it is sent. Nothing is kept: not the audio, not the text until the
 person sends it. Saying it is not a turn; its cost rides on the message it
@@ -34,6 +37,10 @@ class VoiceError(Exception):
     """A refusal, with the sentence the person sees."""
 
 
+def paid_enabled():
+    return bool(getattr(settings, "DESIGN3D_VOICE_PAID", False))
+
+
 def _count_key(maker):
     return f"design3d:voice:{maker.pk}:{timezone.localdate().isoformat()}"
 
@@ -45,6 +52,8 @@ def cost(seconds):
 def transcribe(maker, upload, seconds=None, client=None):
     """(text, token) for a short recording. The token carries the cost to
     the message the text becomes."""
+    if not paid_enabled():
+        raise VoiceError("Transcription on the server is switched off. Your phone's keyboard microphone works instead.")
     if upload is None or not upload.size:
         raise VoiceError("Nothing was recorded. Try again.")
     if upload.size > MAX_BYTES:

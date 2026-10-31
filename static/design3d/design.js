@@ -482,15 +482,64 @@
 
   /* ---------- saying it (Avi, 2026-10-31) ---------- */
   // Tap the mic, talk, tap again: the words land in the box to read and
-  // fix, nothing is sent to the design chat until Send. Each clip's token
-  // goes with the message so its cost counts toward the day's limit.
+  // fix, nothing is sent to the design chat until Send. The phone's own
+  // speech recognition does it, for nothing (Avi: "not OpenAI, waste of
+  // tokens"), in the phone's language. Only where a phone has none, and only
+  // if the server switched paid transcription on (data-url), a clip is
+  // recorded and sent once; its token goes with the message so the cost
+  // counts toward the day's limit.
   var mic = document.getElementById("d3-mic");
   var recLine = document.getElementById("d3-recording");
   var recTime = document.getElementById("d3-rec-time");
+  var recHeard = document.getElementById("d3-rec-heard");
+  var Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var canRecord = !!(window.MediaRecorder && navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  var engine = Speech ? "device" : (mic && mic.dataset.url && canRecord ? "paid" : "");
   var voiceTokens = [];
-  var rec = null, recChunks = [], recStart = 0, recTimer = null, recStream = null;
+  var rec = null, recChunks = [], recStart = 0, recTimer = null, recStream = null, listener = null;
   var MAX_REC = 120;
-  if (mic && window.MediaRecorder && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) mic.hidden = false;
+  if (mic && engine) { mic.hidden = false; mic.dataset.engine = engine; }
+
+  // What the phone heard so far, read whole each time: Android resends
+  // results it already finalized and its finals grow ("a box", "a box with
+  // a lid"), so a phrase that repeats or extends the one before replaces it
+  // (found in Books, 2026-10-23).
+  function joinHeard(results) {
+    var parts = [];
+    for (var i = 0; i < results.length; i++) {
+      var t = ((results[i][0] || {}).transcript || "").replace(/\s+/g, " ").trim();
+      if (!t) continue;
+      var last = parts.length ? parts[parts.length - 1] : "";
+      if (last && t.indexOf(last) === 0) parts[parts.length - 1] = t;
+      else if (last && last.indexOf(t) >= 0) continue;
+      else parts.push(t);
+    }
+    return parts.join(" ");
+  }
+  function startDevice() {
+    var heard = "";
+    listener = new Speech();
+    listener.lang = navigator.language || "he-IL";
+    listener.continuous = true;
+    listener.interimResults = true;
+    listener.onresult = function (e) {
+      heard = joinHeard(e.results);
+      recHeard.textContent = heard;
+    };
+    listener.onerror = function (e) {
+      if (e.error === "not-allowed" || e.error === "service-not-allowed") alertLine("The microphone is blocked. Allow it for this site in the browser, or type instead.");
+      else if (e.error !== "no-speech" && e.error !== "aborted") alertLine("The phone could not listen (" + e.error + "). Type instead.");
+    };
+    listener.onend = function () {
+      // A phone ends on a long silence too: either way, what was heard lands.
+      listener = null;
+      showRec(false);
+      if (heard.trim()) addWords(heard.trim());
+      else if (recHeard.dataset.stopped) alertLine("I did not hear any words. Try again, closer to the microphone.");
+    };
+    try { listener.start(); recStart = Date.now(); showRec(true); }
+    catch (err) { listener = null; alertLine("The phone could not listen. Type instead."); }
+  }
 
   function recType() {
     var kinds = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg"];
@@ -508,12 +557,19 @@
     clearInterval(recTimer);
     if (on) {
       recTime.textContent = "0:00";
+      recHeard.textContent = "";
+      delete recHeard.dataset.stopped;
       recTimer = setInterval(function () {
         var s = Math.round((Date.now() - recStart) / 1000);
         recTime.textContent = Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
-        if (s >= MAX_REC && rec && rec.state === "recording") rec.stop();
+        if (s >= MAX_REC) stopListening();
       }, 250);
     }
+  }
+  function stopListening() {
+    recHeard.dataset.stopped = "1";
+    if (listener) { try { listener.stop(); } catch (err) { listener = null; showRec(false); } }
+    else if (rec && rec.state === "recording") rec.stop();
   }
   function addWords(words) {
     var cur = text.value.replace(/\s+$/, "");
@@ -540,7 +596,8 @@
       .then(function () { mic.classList.remove("d3-busy"); mic.disabled = false; });
   }
   if (mic) mic.addEventListener("click", function () {
-    if (rec && rec.state === "recording") { rec.stop(); return; }
+    if (listener || (rec && rec.state === "recording")) { stopListening(); return; }
+    if (engine === "device") { startDevice(); return; }
     navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
       recStream = stream;
       var type = recType();
