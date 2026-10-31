@@ -69,6 +69,7 @@
             {% elif group == "out" %}<p>{{ row.name }} הוצאו מהתוכנית, ולכן לא נכנסו לקבוצה. להחזרה פונים לצוות התוכנית.</p>
             {% elif group == "other" %}<p>{{ row.name }} כבר בקבוצה של מוביל/ה אחר/ת.</p>{% endif %}
             {% if told %}<p>נשלחה ל{{ row.name }} הודעה שעבר/ה את מבחני המיון ונכנס/ה לסיירת.</p>{% endif %}
+            {% if luck %}<p>נשלחה ל{{ row.name }} הודעה שלא עבר/ה את מבחן המיון, עם איחולי הצלחה.</p>{% endif %}
           </div>
         {% endif %}
         {% if row.state == "approved" and not looking %}
@@ -99,7 +100,12 @@
             <button type="submit" name="action" value="approve" class="mz-btn mz-btn-primary">אישור והכנסה לסיירת</button>
             <label class="mz-field"><span>אם לא מאשרים: מה לתקן</span>
               <textarea name="note" rows="2"></textarea></label>
+            {% comment %}REQ-M.211 - Lital: a student who did not pass hears it with a wish of good luck.{% endcomment %}
+            <label><input type="checkbox" name="luck" value="1"> לשלוח לתלמיד/ה הודעה שלא עבר/ה את מבחן המיון, עם איחולי הצלחה (אז לא חייבים לכתוב מה לתקן)</label>
             <button type="submit" name="action" value="return" class="mz-btn mz-btn-ghost">לא לאשר</button>
+            {% if row.state == "returned" %}
+              <button type="submit" name="action" value="luck" class="mz-btn mz-btn-ghost">שליחת הודעה: לא עבר/ה, עם איחולי הצלחה</button>
+            {% endif %}
           </form>
         {% endif %}
       </article>
