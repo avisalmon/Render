@@ -16,7 +16,8 @@ from django.urls import reverse
 
 from tests.test_spr_m_78 import _attempt, _decide, world  # noqa: F401
 
-LUCK = "הפעם לא עברת את מבחן המיון לתכנית מטצים. אנחנו מאחלים לך המון הצלחה."
+# SPR-M.82 took Lital's words of 11:29: "לסיירת התלמידים של מטצים".
+LUCK = "הפעם לא עברת את מבחן המיון לסיירת התלמידים של מטצים. אנחנו מאחלים לך המון הצלחה."
 
 
 def _row(html, attempt):
@@ -25,14 +26,13 @@ def _row(html, attempt):
     return found.group(0)
 
 
-def test_the_form_offers_the_good_luck_message_unticked(client, world):  # noqa: F811
+def test_the_form_offers_the_good_luck_message(client, world):  # noqa: F811
+    # SPR-M.82: the unticked box became its own button, `לא עבר/ה` (REQ-M.214).
     attempt = _attempt(world["noa"])
     client.force_login(world["liron"].user)
     row = _row(client.get(reverse("matazim:leader_tests")).content.decode(), attempt)
-    assert '<input type="checkbox" name="luck" value="1">' in row
-    assert "הודעה שלא עבר/ה את מבחן המיון, עם איחולי הצלחה" in row
-    # Only a row already not approved has the button on its own.
-    assert 'value="luck"' not in row
+    assert 'value="not_passed"' in row
+    assert "הודעה שלא עבר/ה את מבחן המיון לסיירת, עם איחולי הצלחה" in row
 
 
 def test_not_approving_with_good_luck_tells_the_student_and_needs_no_note(client, world):  # noqa: F811
@@ -89,7 +89,8 @@ def test_a_returned_row_sends_the_wish_on_its_own(client, world):  # noqa: F811
     _decide(client, attempt, action="return", note="המידות לא נכונות")
 
     row = _row(client.get(reverse("matazim:leader_tests")).content.decode(), attempt)
-    assert 'value="luck"' in row and "שליחת הודעה: לא עבר/ה, עם איחולי הצלחה" in row
+    # SPR-M.82: a row sent back for fixing still has `לא עבר/ה`, which sends the wish.
+    assert 'value="not_passed"' in row
 
     resp = _decide(client, attempt, action="luck")
     assert "luck=1" in resp["Location"]

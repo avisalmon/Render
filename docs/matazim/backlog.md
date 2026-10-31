@@ -5216,3 +5216,32 @@ whether the partners card should come back with words only.
 
 **Tests.** `tests/test_spr_m_81.py`; `tests/test_spr_m_79.py` and `tests/test_spr_m_1.py` no
 longer expect the partners card or the old logo.
+
+## SPR-M.82: Beside each name, passed or did not pass, and the student is told  `DONE 2026-10-31`
+
+Two mails from Lital of 31.10 (spec C41). 11:06: "לא תיקנת כלום ... מה בקשר לכל העדכונים שביקשתי
+בנוגע למבחן המיון ואישור של המוביל את התלמיד או אי אישור", with a picture of a Render "502 Bad
+Gateway" page. 11:29: "ליד כל שם של תלמיד יכול המוביל לאשר לנבחרת או להחליט שלא אישר (מי שלא
+אישר תשלח הודעה לתלמיד שלא עבר לסיירת התלמידים של מטצים) שמי שכן עבר יישלח הודעה שכן עבר".
+Run under Avi's standing rule of 2026-10-16.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.82.1 | `EntranceAttempt.not_passed` (migration 0047); set by a good-luck return, cleared by approving or a fix return | REQ-M.214 | DONE |
+| F-M.82.2 | `entrance_review.not_passed`, and `leader_decide` action `not_passed`; `GOOD_LUCK_TEXT` in her words, "לסיירת התלמידים של מטצים" | REQ-M.214 | DONE |
+| F-M.82.3 | `leader_tests.html`: `עבר/ה` and `לא עבר/ה` side by side, the fix note folded, the row tag `לא עבר/ה, נשלחה הודעה` | REQ-M.214 | DONE |
+| F-M.82.4 | `leader_tests.html`: looking as a leader shows the two buttons disabled, and says only the leader can press them | REQ-M.214 | DONE |
+
+**How it was read.** Everything she asked for was on the site after SPR-M.78 and SPR-M.80, but
+she could not find it. Her picture shows the site down at 11:06, while the 10:56 deploy was
+restarting it. And "did not pass" was an unticked box under a "what to fix" field, beside a button
+called `לא לאשר`, which reads as "send back for fixing". By rule 48 (the control follows the shape
+of the decision), the decision is one of two, passed or not, so it is two buttons, each with its
+message. "Back for fixing" is a third, less common case and folds under them. A program manager
+looking as a leader used to see no buttons at all, so a check by the programme team showed nothing
+to approve with. Now they see the leader's buttons, greyed.
+
+**What the bot did not do.** Change the programme team's own screen (`/matazim/staff/entrance/`),
+where approving and returning work as before.
+
+**Tests.** `tests/test_spr_m_82.py`; `tests/test_spr_m_80.py` now looks for the button, not the box.

@@ -71,7 +71,8 @@ def approve(attempt, by, *, tell=True):
     attempt.decided_by = by
     attempt.decided_at = timezone.now()
     attempt.decision_note = ""
-    attempt.save(update_fields=["decision", "decided_by", "decided_at", "decision_note"])
+    attempt.not_passed = False
+    attempt.save(update_fields=["decision", "decided_by", "decided_at", "decision_note", "not_passed"])
 
     member = attempt.member
     if member.entrance_test_passed_at is None:
@@ -90,7 +91,8 @@ def approve(attempt, by, *, tell=True):
     return attempt
 
 
-GOOD_LUCK_TEXT = "הפעם לא עברת את מבחן המיון לתכנית מטצים. אנחנו מאחלים לך המון הצלחה."
+# REQ-M.214 (Lital, 2026-10-31 11:29): "שלא עבר לסיירת התלמידים של מטצים".
+GOOD_LUCK_TEXT = "הפעם לא עברת את מבחן המיון לסיירת התלמידים של מטצים. אנחנו מאחלים לך המון הצלחה."
 
 
 def return_attempt(attempt, by, note, *, good_luck=False):
@@ -110,7 +112,8 @@ def return_attempt(attempt, by, note, *, good_luck=False):
     attempt.decided_by = by
     attempt.decided_at = timezone.now()
     attempt.decision_note = note
-    attempt.save(update_fields=["decision", "decided_by", "decided_at", "decision_note"])
+    attempt.not_passed = good_luck
+    attempt.save(update_fields=["decision", "decided_by", "decided_at", "decision_note", "not_passed"])
 
     # A returned attempt is not a pass, whatever an earlier approval did: if this
     # member had been approved on a previous attempt, that approval stands, so the
@@ -146,6 +149,22 @@ def tell_good_luck(member, by):
     to the test page, where the leader's note is and another go is open.
     """
     return notify(member.user, Notification.ENTRANCE_RETURNED, GOOD_LUCK_TEXT, url="/matazim/test/task/", actor=by)
+
+
+def not_passed(attempt, by):
+    """REQ-M.214 - the leader's `לא עבר/ה`: the student did not pass, and hears it.
+
+    Lital, 2026-10-31 11:29: "ליד כל שם של תלמיד יכול המוביל לאשר לנבחרת או
+    להחליט שלא אישר (מי שלא אישר תשלח הודעה לתלמיד שלא עבר לסיירת התלמידים של
+    מטצים)". One press, no note needed. A hand-in already sent back for fixing
+    keeps the note it was given, and is now marked as not passed too.
+    """
+    if attempt.decision == EntranceAttempt.RETURNED:
+        attempt.not_passed = True
+        attempt.save(update_fields=["not_passed"])
+        tell_good_luck(attempt.member, by)
+        return attempt
+    return return_attempt(attempt, by, "", good_luck=True)
 
 
 def take_into_group(member, leader, by):
