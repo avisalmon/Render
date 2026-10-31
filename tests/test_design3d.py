@@ -1680,3 +1680,76 @@ def test_separate_parts_keep_their_own_colours_and_are_laid_apart(client, world,
 
 def test_the_chat_knows_about_colours():
     assert '"together": true' in llm.SYSTEM and "2 to 4 colours" in llm.SYSTEM
+
+
+# ---------- saying it instead of typing it (Avi, 2026-10-31) ----------
+
+def _clip(kind="audio/webm", size=2000):
+    from django.core.files.uploadedfile import SimpleUploadedFile
+
+    return SimpleUploadedFile("clip.webm", b"\x1a\x45\xdf\xa3" + b"0" * size, content_type=kind)
+
+
+def test_a_clip_becomes_words_in_the_box_and_its_cost_rides_on_the_message(client, world, monkeypatch, settings):
+    from django.core.cache import cache
+
+    from design3d import voice
+
+    cache.clear()
+    seen = {}
+
+    class Fake:
+        class audio:
+            class transcriptions:
+                @staticmethod
+                def create(**kw):
+                    seen.update(kw)
+                    return type("R", (), {"text": " קופסה עם מכסה, 80 על 50 "})()
+
+    monkeypatch.setattr(llm, "_openai", lambda: Fake)
+    monkeypatch.setattr(llm, "stub_mode", lambda: False)
+    d = _design(client, world["dana"])
+    turns = Maker.objects.get(user=world["dana"]).turns_left
+    r = client.post(f"/design3d/d/{d.pk}/say/", {"audio": _clip(), "seconds": "30"}, HTTP_ACCEPT="application/json")
+    assert r.status_code == 200, r.content
+    body = r.json()
+    assert body["text"] == "קופסה עם מכסה, 80 על 50"
+    assert "language" not in seen, "no language given: Hebrew, English and the two mixed"
+    assert seen["model"] == voice.DEFAULT_MODEL and seen["file"][2] == "audio/webm"
+    assert Maker.objects.get(user=world["dana"]).turns_left == turns, "saying it is not a turn"
+    assert not d.messages.exists(), "nothing goes to the chat until Send"
+
+    monkeypatch.setattr(llm, "stub_mode", lambda: True)
+    eli = Maker.objects.get(user=world["eli"])
+    stranger = voice.cost_of(eli, [body["token"]])
+    assert stranger == 0, "a token is only good for its own person"
+    client.post(f"/design3d/d/{d.pk}/send/", {"text": body["text"], "voice": [body["token"], "forged"]},
+                HTTP_ACCEPT="application/json")
+    person = d.messages.get(role=Message.PERSON)
+    assert person.cost_usd == Decimal("0.00300"), "30 s at $0.006 a minute"
+
+
+def test_a_clip_is_refused_politely(client, world, monkeypatch, settings):
+    from django.core.cache import cache
+
+    from design3d import voice
+
+    cache.clear()
+    d = _design(client, world["dana"])
+    say = lambda **f: client.post(f"/design3d/d/{d.pk}/say/", f, HTTP_ACCEPT="application/json")  # noqa: E731
+    assert say().status_code == 400
+    assert "format" in say(audio=_clip("video/quicktime")).json()["error"]
+    r = say(audio=_clip(), seconds="5")
+    assert r.status_code == 200 and r.json()["text"] == voice.STUB_TEXT, "stub mode answers without a bill"
+    monkeypatch.setattr(voice, "CLIPS_PER_DAY", 1)
+    assert "enough talking" in say(audio=_clip()).json()["error"]
+    monkeypatch.setattr(jobs, "over_limit", lambda m: True)
+    assert say(audio=_clip()).status_code == 429
+    client.force_login(world["eli"])
+    assert say(audio=_clip()).status_code == 404, "only on your own design"
+
+
+def test_the_mic_is_next_to_the_text_box(client, world):
+    d = _design(client, world["dana"])
+    page = client.get(f"/design3d/d/{d.pk}/").content.decode()
+    assert 'id="d3-mic"' in page and f'data-url="/design3d/d/{d.pk}/say/"' in page and 'id="d3-recording"' in page

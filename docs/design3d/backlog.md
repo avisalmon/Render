@@ -213,3 +213,17 @@ pictures" every time. A real rerun found one more: the fit check asked for
 - [x] `render.sheet(pieces=...)`: the check picture draws each part in its colour
 - [x] `parts.fit`: no "too tight" between two together parts; overlap still reported
 - [x] Real rerun of the keychain (3 turns, $0.06): Hebrew answers, white and red kept every turn, letters from the font, no fit rounds
+
+## D3.20 · Say it: a mic next to the text box (2026-10-31)
+
+Avi: "an option to talk the prompt in voice". The same way as Books' spoken
+notes (gpt-4o-transcribe), written again inside design3d (apps do not share
+code). No data model change.
+
+- [x] `design3d/voice.py`: transcribe (no language, so mixed Hebrew and English works), a signed token with the cost, `cost_of` for `send`, 60 clips a day per person, stub text without a key
+- [x] `say` view (`/d/<pk>/say/`): own design only, refused over the day's limit
+- [x] Mic button and "Listening" line with a timer; the words are added to the box; tokens go with Send
+- [x] Phones down to 360 px: icons 40 px under 420 px, no sideways scroll
+- [x] Tour screen 2 mentions the mic
+- [x] Tests: unit (words, not a turn, cost on the message, someone else's token ignored, refusals) and a browser test with a fake microphone
+- [x] Real check: Hebrew speech with "SD" and "AVI" in it came back word for word

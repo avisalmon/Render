@@ -14,7 +14,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 
-from . import access, jobs, llm, mail, params, seats
+from . import access, jobs, llm, mail, params, seats, voice
 from .forms import AskForm
 from .models import PRIVATE, Design, FriendLink, Invite, Maker, Message, Part, Picture, Reference, Settings, Version
 
@@ -296,7 +296,8 @@ def send(request, pk):
     if not seats.take_turn(request.maker):
         return fail("You have no turns left. Invite a friend: when they join and build their first part, "
                     "you get 30 more.", 402)
-    person = Message.objects.create(design=d, role=Message.PERSON, text=text, pin=_pin(request.POST.get("pin")))
+    person = Message.objects.create(design=d, role=Message.PERSON, text=text, pin=_pin(request.POST.get("pin")),
+                                    cost_usd=voice.cost_of(request.maker, request.POST.getlist("voice")))
     from PIL import Image
 
     for i, data in enumerate(cleaned):
@@ -316,6 +317,22 @@ def send(request, pk):
     if wants_json:
         return JsonResponse({"person": person.pk, "assistant": assistant.pk})
     return redirect("design3d:design", pk=d.pk)
+
+
+@require_POST
+@access.inside
+def say(request, pk):
+    """The message said out loud: the clip in, the words out, into the
+    message box to read and fix before sending (Avi, 2026-10-31)."""
+    d = _mine(request, pk)
+    if jobs.over_limit(request.maker):
+        return JsonResponse({"error": "You reached today's limit. It resets at midnight."}, status=429)
+    try:
+        text, token = voice.transcribe(request.maker, request.FILES.get("audio"), request.POST.get("seconds"))
+    except voice.VoiceError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    d.save(update_fields=["updated_at"])
+    return JsonResponse({"text": text, "token": token})
 
 
 def _pin(raw):

@@ -156,6 +156,17 @@ img { max-width: 100%; height: auto; display: block; }
 .d3-iconbtn.cam { background: var(--hi); color: var(--hi-ink); }
 .d3-iconbtn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .d3-iconbtn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+/* Say it (Avi, 2026-10-31): the mic turns red while it listens. */
+.d3-iconbtn.d3-mic[aria-pressed="true"] { background: var(--bad); color: var(--hi-ink); }
+.d3-iconbtn.d3-mic.d3-busy { opacity: .6; cursor: progress; }
+.d3-recording { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-size: 13px; color: var(--soft); }
+.d3-rec-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--bad); animation: d3-rec 1s ease-in-out infinite; }
+@keyframes d3-rec { 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .d3-rec-dot { animation: none; } }
+@media (max-width: 420px) {
+  .d3-compose-row { gap: 6px; }
+  .d3-compose-row .d3-iconbtn { width: 40px; height: 40px; }
+}
 .d3-chosen { display: flex; gap: 6px; flex-wrap: wrap; }
 .d3-chosen img { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); }
 .d3-limit { font-size: .86rem; color: var(--bad); }

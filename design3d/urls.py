@@ -26,6 +26,7 @@ urlpatterns = [
     path("designs/new/", views.new_design, name="new"),
     path("d/<int:pk>/", views.design, name="design"),
     path("d/<int:pk>/send/", views.send, name="send"),
+    path("d/<int:pk>/say/", views.say, name="say"),
     path("d/<int:pk>/poll/", views.poll, name="poll"),
     path("d/<int:pk>/sliders/", views.sliders, name="sliders"),
     path("d/<int:pk>/edit/", views.edit, name="edit"),

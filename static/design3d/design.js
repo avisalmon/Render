@@ -480,6 +480,88 @@
     });
   });
 
+  /* ---------- saying it (Avi, 2026-10-31) ---------- */
+  // Tap the mic, talk, tap again: the words land in the box to read and
+  // fix, nothing is sent to the design chat until Send. Each clip's token
+  // goes with the message so its cost counts toward the day's limit.
+  var mic = document.getElementById("d3-mic");
+  var recLine = document.getElementById("d3-recording");
+  var recTime = document.getElementById("d3-rec-time");
+  var voiceTokens = [];
+  var rec = null, recChunks = [], recStart = 0, recTimer = null, recStream = null;
+  var MAX_REC = 120;
+  if (mic && window.MediaRecorder && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) mic.hidden = false;
+
+  function recType() {
+    var kinds = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg"];
+    for (var i = 0; i < kinds.length; i++) if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(kinds[i])) return kinds[i];
+    return "";
+  }
+  function stopTracks() {
+    if (recStream) recStream.getTracks().forEach(function (t) { t.stop(); });
+    recStream = null;
+  }
+  function showRec(on) {
+    mic.setAttribute("aria-pressed", String(on));
+    mic.setAttribute("aria-label", on ? "Stop and write it" : "Say it");
+    recLine.hidden = !on;
+    clearInterval(recTimer);
+    if (on) {
+      recTime.textContent = "0:00";
+      recTimer = setInterval(function () {
+        var s = Math.round((Date.now() - recStart) / 1000);
+        recTime.textContent = Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+        if (s >= MAX_REC && rec && rec.state === "recording") rec.stop();
+      }, 250);
+    }
+  }
+  function addWords(words) {
+    var cur = text.value.replace(/\s+$/, "");
+    text.value = cur ? cur + " " + words : words;
+    text.dispatchEvent(new Event("input"));
+    text.focus();
+  }
+  function upload(blob, seconds) {
+    var body = new FormData();
+    var ext = /mp4/.test(blob.type) ? "mp4" : /ogg/.test(blob.type) ? "ogg" : "webm";
+    body.append("audio", blob, "clip." + ext);
+    body.append("seconds", String(seconds));
+    mic.classList.add("d3-busy");
+    mic.disabled = true;
+    return fetch(mic.dataset.url, { method: "POST", body: body, credentials: "same-origin",
+                                    headers: { "X-CSRFToken": csrf(), "Accept": "application/json" } })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (res) {
+        if (!res.ok) { alertLine(res.d.error || "Could not turn it into text. Try again."); return; }
+        voiceTokens.push(res.d.token);
+        addWords(res.d.text);
+      })
+      .catch(function () { alertLine("Could not send the recording. Check the connection and try again."); })
+      .then(function () { mic.classList.remove("d3-busy"); mic.disabled = false; });
+  }
+  if (mic) mic.addEventListener("click", function () {
+    if (rec && rec.state === "recording") { rec.stop(); return; }
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+      recStream = stream;
+      var type = recType();
+      rec = type ? new MediaRecorder(stream, { mimeType: type }) : new MediaRecorder(stream);
+      recChunks = [];
+      rec.addEventListener("dataavailable", function (e) { if (e.data && e.data.size) recChunks.push(e.data); });
+      rec.addEventListener("stop", function () {
+        var seconds = Math.max(1, Math.round((Date.now() - recStart) / 1000));
+        showRec(false);
+        stopTracks();
+        var blob = new Blob(recChunks, { type: (rec.mimeType || type || "audio/webm").split(";")[0] });
+        if (blob.size) upload(blob, seconds);
+      });
+      recStart = Date.now();
+      rec.start();
+      showRec(true);
+    }).catch(function () {
+      alertLine("The microphone is blocked. Allow it for this site in the browser, or type instead.");
+    });
+  });
+
   /* ---------- sending ---------- */
 
   text.addEventListener("input", function () {
@@ -511,6 +593,7 @@
     if (!text.value.trim() && !picked.length) return;
     var body = new FormData();
     body.append("text", text.value);
+    voiceTokens.forEach(function (t) { body.append("voice", t); });
     picked.forEach(function (f) { body.append("pictures", f, f.name); });
     send.disabled = true;
     withPin(body).then(function (body) {
@@ -520,7 +603,7 @@
       .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
       .then(function (res) {
         if (!res.ok) { alertLine(res.d.error || "Could not send. Try again."); send.disabled = false; return; }
-        text.value = ""; text.style.height = ""; picked = []; showChosen();
+        text.value = ""; text.style.height = ""; picked = []; voiceTokens = []; showChosen();
         if (window.d3View) { window.d3View.clearPin(); window.d3View.setMode(""); }
         poll();
       })
