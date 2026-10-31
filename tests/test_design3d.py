@@ -1691,10 +1691,12 @@ def _clip(kind="audio/webm", size=2000):
 
 
 def test_a_clip_becomes_words_in_the_box_and_its_cost_rides_on_the_message(client, world, monkeypatch, settings):
+    """The paid fallback, switched on."""
     from django.core.cache import cache
 
     from design3d import voice
 
+    settings.DESIGN3D_VOICE_PAID = True
     cache.clear()
     seen = {}
 
@@ -1734,6 +1736,7 @@ def test_a_clip_is_refused_politely(client, world, monkeypatch, settings):
 
     from design3d import voice
 
+    settings.DESIGN3D_VOICE_PAID = True
     cache.clear()
     d = _design(client, world["dana"])
     say = lambda **f: client.post(f"/design3d/d/{d.pk}/say/", f, HTTP_ACCEPT="application/json")  # noqa: E731
@@ -1749,7 +1752,16 @@ def test_a_clip_is_refused_politely(client, world, monkeypatch, settings):
     assert say(audio=_clip()).status_code == 404, "only on your own design"
 
 
-def test_the_mic_is_next_to_the_text_box(client, world):
+def test_the_mic_is_next_to_the_text_box_and_the_phone_does_the_listening(client, world, settings):
+    """Avi, 2026-10-31: "the system should transcribe, not OpenAI". The page
+    offers the server only when paid transcription is switched on; by
+    default it is off and the server refuses a clip."""
     d = _design(client, world["dana"])
     page = client.get(f"/design3d/d/{d.pk}/").content.decode()
-    assert 'id="d3-mic"' in page and f'data-url="/design3d/d/{d.pk}/say/"' in page and 'id="d3-recording"' in page
+    assert 'id="d3-mic"' in page and 'id="d3-recording"' in page and 'id="d3-rec-heard"' in page
+    assert "data-url=" not in page.split('id="d3-mic"')[1].split(">")[0], "no server address: the phone listens"
+    r = client.post(f"/design3d/d/{d.pk}/say/", {"audio": _clip(), "seconds": "5"}, HTTP_ACCEPT="application/json")
+    assert r.status_code == 400 and "switched off" in r.json()["error"]
+    settings.DESIGN3D_VOICE_PAID = True
+    page = client.get(f"/design3d/d/{d.pk}/").content.decode()
+    assert f'data-url="/design3d/d/{d.pk}/say/"' in page

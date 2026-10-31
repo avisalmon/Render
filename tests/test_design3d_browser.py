@@ -513,36 +513,57 @@ def test_on_a_phone_sizes_on_the_part_a_stl_and_taking_a_photo_out(browser, live
     ctx.close()
 
 
+FAKE_PHONE_EARS = """
+window.SpeechRecognition = function () {
+  var self = this;
+  this.start = function () {
+    window.__heard = (window.__heard || 0) + 1;
+    // Android's way: the same phrase again, then grown, then a new one.
+    var say = function (list) { self.onresult && self.onresult({ results: list.map(function (t) { return [{ transcript: t }]; }) }); };
+    setTimeout(function () { say(["קופסה"]); }, 200);
+    setTimeout(function () { say(["קופסה", "קופסה עם מכסה"]); }, 500);
+    setTimeout(function () { say(["קופסה עם מכסה", "80 על 50"]); }, 800);
+  };
+  this.stop = function () { setTimeout(function () { self.onend && self.onend(); }, 100); };
+};
+window.MediaRecorder = undefined;
+"""
+
+
 @pytest.mark.django_db(transaction=True)
-def test_on_a_phone_say_it_and_the_words_land_in_the_box(browser, live_server, world):
-    """Avi, 2026-10-31: talk the prompt. A fake microphone; the stub hears a
-    fixed sentence. The words are read before Send, and the cost goes with it."""
-    from design3d import voice
+def test_on_a_phone_say_it_and_the_phone_writes_the_words(browser, live_server, world):
+    """Avi, 2026-10-31: talk the prompt, and the phone's own recognition does
+    it, not a paid model. A fake phone ear, in the phone's language; the
+    repeated and grown phrases Android sends are taken once; the words are
+    read before Send, and nothing goes to the server until then."""
     from design3d.models import Design, Message
 
-    ctx = browser.new_context(viewport={"width": 360, "height": 800}, has_touch=True, is_mobile=True,
-                          permissions=["microphone"])
+    ctx = browser.new_context(viewport={"width": 360, "height": 800}, has_touch=True, is_mobile=True, locale="he-IL")
+    ctx.add_init_script(FAKE_PHONE_EARS)
     _session(ctx, world["dana"])
     page = ctx.new_page()
     errors = []
     page.on("pageerror", lambda exc: errors.append(str(exc)))
+    said = []
+    page.on("request", lambda r: said.append(r.url) if "/say/" in r.url else None)
     page.goto(live_server.url + "/design3d/designs/")
     page.click("#d3-new")
     page.wait_for_url("**/design3d/d/*/")
     assert page.locator("#d3-mic").is_visible()
+    assert page.get_attribute("#d3-mic", "data-engine") == "device" and page.get_attribute("#d3-mic", "data-url") is None
     assert page.evaluate(OVERFLOW, 360) <= 0, "the mic fits on a small phone"
     page.click("#d3-mic")
     page.wait_for_selector("#d3-recording:not([hidden])")
     assert page.get_attribute("#d3-mic", "aria-pressed") == "true"
-    page.wait_for_timeout(1500)
+    page.wait_for_function("document.getElementById('d3-rec-heard').textContent === 'קופסה עם מכסה 80 על 50'", timeout=5000)
     page.click("#d3-mic")
-    page.wait_for_function(f"document.getElementById('d3-text').value === {voice.STUB_TEXT!r}", timeout=20000)
+    page.wait_for_function("document.getElementById('d3-text').value === 'קופסה עם מכסה 80 על 50'", timeout=5000)
     assert page.locator("#d3-recording").is_hidden()
-    assert not Message.objects.exists(), "nothing sent before Send"
+    assert said == [] and not Message.objects.exists(), "nothing went to the server"
     page.click("#d3-send")
     page.wait_for_selector(".d3-msg.assistant.done", timeout=60000)
     person = Design.objects.get().messages.get(role=Message.PERSON)
-    assert person.text == voice.STUB_TEXT and person.cost_usd > 0
+    assert person.text == "קופסה עם מכסה 80 על 50" and person.cost_usd == 0
     _shot(page, "voice-360")
     assert errors == []
     ctx.close()

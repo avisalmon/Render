@@ -160,6 +160,7 @@ img { max-width: 100%; height: auto; display: block; }
 .d3-iconbtn.d3-mic[aria-pressed="true"] { background: var(--bad); color: var(--hi-ink); }
 .d3-iconbtn.d3-mic.d3-busy { opacity: .6; cursor: progress; }
 .d3-recording { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-size: 13px; color: var(--soft); }
+.d3-rec-heard { color: var(--ink); }
 .d3-rec-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--bad); animation: d3-rec 1s ease-in-out infinite; }
 @keyframes d3-rec { 50% { opacity: .25; } }
 @media (prefers-reduced-motion: reduce) { .d3-rec-dot { animation: none; } }

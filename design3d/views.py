@@ -204,7 +204,7 @@ def design(request, pk):
         "parameters": shown.parameters.all() if shown else [],
         "section": "mine", "stub": llm.stub_mode(), "turns_left": request.maker.turns_left,
         "admin": access.is_admin(request.user) and d.owner_id == request.maker.pk,
-        "over": jobs.over_limit(request.maker), "limit": request.maker.limit,
+        "over": jobs.over_limit(request.maker), "limit": request.maker.limit, "voice_paid": voice.paid_enabled(),
     })
 
 

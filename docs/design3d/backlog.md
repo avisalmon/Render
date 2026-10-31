@@ -227,3 +227,14 @@ code). No data model change.
 - [x] Tour screen 2 mentions the mic
 - [x] Tests: unit (words, not a turn, cost on the message, someone else's token ignored, refusals) and a browser test with a fake microphone
 - [x] Real check: Hebrew speech with "SD" and "AVI" in it came back word for word
+
+## D3.21 · Say it, by the phone, not by OpenAI (2026-10-31)
+
+Avi, on seeing D3.20 live: "I want the system to transcribe, not openAI.
+Waste of tokens." Books had decided the same ten days earlier
+(books/notes.py: "the phone's own recognition is free and is used first")
+and I did not look before building the paid path. PM-87.
+
+- [x] `design.js`: the phone's SpeechRecognition first, in the phone's language, with Books' repeated-and-grown-phrase join; what it hears so far shown under the timer
+- [x] Paid path kept only as a fallback, behind `DESIGN3D_VOICE_PAID` (off); the page gives the server address only then, the server refuses clips otherwise
+- [x] Tests: the default page has no server address and the server refuses; the paid tests switch it on; the browser test injects a fake phone ear with Android's repeats and checks nothing reaches the server

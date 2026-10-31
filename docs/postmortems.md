@@ -17,6 +17,27 @@ Newest first.
 
 ---
 
+## PM-87 · 2026-10-31 · Paid transcription where the phone does it for free
+
+**What happened.** "Say it" shipped with OpenAI transcription. Avi: "I want
+the system to transcribe, not OpenAI. Waste of tokens." Books had settled
+exactly this ten days earlier (its mic uses the phone's own recognition, the
+paid model is off unless switched on), and I even read that file for the
+price and the audio formats without reading the decision at the top of it.
+
+**Why.** I took the method from a sibling app but not its decision; I
+checked what the device offers only as an aside in the proposal and then
+built the paid path anyway because it was the one with code to copy.
+
+**Rule.** Before paying a service for a capability, check what the device
+already does for free (speech, camera, location, sharing) and what a sibling
+app in the same repo already decided about the same question; its decision
+stands unless the owner says otherwise. The paid path, if kept, is a fallback
+behind a switch that is off.
+
+Here: `static/design3d/design.js`, `design3d/voice.py` (`paid_enabled`), `mysite/settings.py` (`DESIGN3D_VOICE_PAID`), `docs/building_an_app.md` mistake 72
+BKM: ad2ff0d
+
 ## PM-86 · 2026-10-31 · Sprint D3.20 end (say it): nothing new
 
 **What happened.** The voice button went in the way Books already does it,
