@@ -198,7 +198,7 @@ def _build_parts(v, code, declared):
     v.file_3mf.save(f"v{v.number}.3mf", ContentFile(parts.to_3mf(laid)), save=False)
     v.checks = run_checks(plate_stl)
     try:
-        v.fit = parts.fit([(d["name"], d["label"], d["printed"], tris) for d, _, tris in built])
+        v.fit = parts.fit([(d["name"], d["label"], d["printed"], tris, bool(d.get("together"))) for d, _, tris in built])
     except Exception:
         log.exception("design3d: fit check failed for version %s", v.pk)
         v.fit = None
@@ -428,7 +428,17 @@ def _turn(msg, design):
 def _as_json(reply):
     import json
 
-    return json.dumps({k: reply.get(k) for k in ("title", "message", "assumptions", "code")})
+    said = {k: reply.get(k) for k in ("title", "message", "assumptions", "code")}
+    if reply.get("parts"):
+        said["parts"] = reply["parts"]  # the colours live here (third analysis, 2026-10-31)
+    return json.dumps(said)
+
+
+def _texts(item):
+    content = item["content"]
+    if isinstance(content, str):
+        return content
+    return " ".join(c["text"] for c in content if c.get("type") == "input_text")
 
 
 def _overlaps(version):
@@ -443,23 +453,49 @@ def _findings(version):
             + " Fix these too, unless the person asked for it that way.")
 
 
+def _colored(version):
+    """Each part's STL with its colour, for the check picture (None for one part)."""
+    out = []
+    for p in version.parts.all():
+        with p.stl.open("rb") as fh:
+            out.append((fh.read(), p.color))
+    return out or None
+
+
 def _self_check(msg, design, items, reply, version):
     """Show the model what it built, once, and let it correct itself."""
     import base64
 
-    sheet = render.sheet(view_stl(version))
+    sheet = render.sheet(view_stl(version), pieces=_colored(version))
     # Only what the check needs: the system prompt, the person's latest
     # message, the reply and the picture. Not the whole history with every
     # photo again (second analysis, 2026-10-30: the check doubled the cost
     # of photo-heavy turns).
-    items = [items[0]] + [i for i in items[1:] if i["role"] == "user"][-1:] + [
+    # Third analysis (2026-10-31): the check saw only the latest message, so a
+    # follow-up ("rounder letters") lost the red asked for before; and its own
+    # English note counted as the latest message, so Hebrew chats were
+    # answered in English. Earlier requests go in as text only, and the note
+    # says which message sets the language.
+    asked = [i for i in items[1:] if i["role"] == "user"]
+    earlier = [_texts(i) for i in asked[:-1]]
+    if earlier:
+        asked[-1] = {"role": "user", "content": [
+            {"type": "input_text", "text": "What I asked before, oldest first: " + " | ".join(earlier)}]
+            + (asked[-1]["content"] if isinstance(asked[-1]["content"], list)
+               else [{"type": "input_text", "text": asked[-1]["content"]}])}
+    pictures = any(c.get("type") == "input_image" for c in asked[-1:][0]["content"]) if asked else False
+    items = [items[0]] + asked[-1:] + [
         {"role": "assistant", "content": _as_json(reply)},
         {"role": "user", "content": [
-            {"type": "input_text", "text": f"This is what your code built (size {version.size_mm} mm). Compare it with "
-                                           "what I asked and my pictures. If it is right, answer with code null and a short "
-                                           "note. If not, give the corrected full code and, in message, the complete answer "
-                                           "for me: it replaces your previous message, so do not repeat or refer to a first "
-                                           "version." + _findings(version)},
+            {"type": "input_text", "text": f"(A note from the server, not from the person.) This is what your code built "
+                                           f"(size {version.size_mm} mm). Compare it with what the person asked"
+                                           + (" and their pictures" if pictures else "") + ". "
+                                           "Correct only a real fault you can see: something asked for that is missing or "
+                                           "wrong, a wrong size, a piece that floats or does not print. Do not restyle what "
+                                           "works. If it is right, answer with code null and a short note. If not, give the "
+                                           "corrected full code, the parts if any, and, in message, the complete answer for "
+                                           "the person, in the language of their message above: it replaces your previous "
+                                           "message, so do not repeat or refer to a first version." + _findings(version)},
             {"type": "input_image", "image_url": "data:image/png;base64," + base64.b64encode(sheet).decode()}]}]
     _step(msg, "Checking the part against what you asked")
     checked, usage, model = llm.ask(items)

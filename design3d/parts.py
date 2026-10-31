@@ -311,12 +311,15 @@ def _pair(a_tris, b_tris):
 
 def fit(parts):
     """Findings between parts in their assembled places, in the shape of the
-    print checks. `parts` is [(name, label, printed, triangles)]."""
+    print checks. `parts` is [(name, label, printed, triangles[, together])].
+    Two colour regions printed together are one object: they touch with no
+    gap by design, so only an overlap is a finding between them."""
     findings = []
     for x in range(len(parts)):
         for y in range(x + 1, len(parts)):
-            na, la, pa, ta = parts[x]
-            nb, lb, pb, tb = parts[y]
+            na, la, pa, ta, *ga = parts[x]
+            nb, lb, pb, tb, *gb = parts[y]
+            fused = bool(ga and ga[0] and gb and gb[0])
             (alo, ahi), (blo, bhi) = bounds(ta), bounds(tb)
             if any(ahi[k] < blo[k] - TIGHT or bhi[k] < alo[k] - TIGHT for k in range(3)):
                 continue  # far apart
@@ -332,7 +335,7 @@ def fit(parts):
                                         "0.2 mm for a snug one" + (", and size the hole for the hardware." if hardware else ".")})
                 continue
             tight = min([g for g in (tight_ab, tight_ba) if g is not None], default=None)
-            if tight is not None and pa and pb:
+            if tight is not None and pa and pb and not fused:
                 findings.append({"level": "warn", "code": "too_tight", "parts": [na, nb],
                                  "text": f"{la} and {lb} are only {tight:.2f} mm apart where they meet. Printed parts need "
                                          "about 0.2 mm to fit together.",

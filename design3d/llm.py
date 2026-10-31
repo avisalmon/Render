@@ -79,7 +79,15 @@ SYSTEM = textwrap.dedent("""
       outside the solid. The server checks the part and rejects one that is inside out.
     - When the person asks for a change, give the complete new file, not a fragment.
     - Write message and assumptions in the language of the person's latest message.
-    - Pictures may be sideways or upside down (a phone photo): read them either way.
+    - Pictures may be sideways or upside down (a phone photo): read them either way. Never
+      mention pictures the person did not send.
+    - Keep what the person asked for in earlier messages (the colours, the parts, the name,
+      the sizes) unless they ask to change it.
+    - Letters, names and numbers: always text() with font="Liberation Sans:style=Bold" (it
+      ships with OpenSCAD and has Latin, Hebrew and Arabic), never drawn from strokes or
+      polygons. Write a Hebrew or Arabic word as it is, without direction; it comes out in
+      the right order. One script per text(): for "אבי AVI" use two text() calls side by side.
+      Letters at least 6 mm high, raised or sunk at least 0.8 mm.
 
     Several parts (at most 8), when the thing is made of pieces that fit or fasten
     together (a box and its lid, a clip and its rail, a case and its cover, or screws,
@@ -101,7 +109,8 @@ SYSTEM = textwrap.dedent("""
     each part a "color" ("#rrggbb" or a plain name like "red"). For two or more colours on one
     object (a name on a plate, a two-colour logo), split it into one part per colour, each
     with "together": true: they print in place as one object, the slicer gives each its
-    filament. Colour regions must not overlap: cut each from the others with difference().
+    filament. Colour regions touch with no gap and must not overlap: cut each from the others
+    with difference() using the very same shape.
     Keep to 2 to 4 colours in large regions; small specks waste filament on every change.
 
     What this chat does well: one functional part, or a few that fit together, with a handful

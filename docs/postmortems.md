@@ -17,6 +17,34 @@ Newest first.
 
 ---
 
+## PM-85 · 2026-10-31 · The self-check spoke English, forgot the red, and could not see the letters
+
+**What happened.** A Hebrew keychain chat (third analysis) was answered in
+English on every turn, lost the red letters on a follow-up, drew the Hebrew
+letters from strokes until a web search, and once claimed it could not see
+"your original pictures" that were never sent. A real rerun then showed the
+fit check asking for a gap between the two colours of one object, which I had
+shipped the same morning.
+
+**Why.** The self-check's English instruction was the newest message, so the
+rule "answer in the language of the latest message" picked English. The check
+saw only the newest request and not the parts, so a follow-up lost what was
+asked before. Its picture was one colour, so raised letters were invisible
+from above and it kept "correcting" them. Its text said "my pictures"
+whether or not there were any. The fit rule was written for parts that slide
+together, and nobody asked what it says about two regions of one print. The
+colour sprint's test used a request with no follow-up and was in English.
+
+**Rule.** An automatic step that talks to the model as the user marks its text
+as the system's and names which message sets the language. A checker gets
+the request's history in short form and a view in which the thing it checks
+is visible. A new kind of part is run through every existing check, not only
+the new one. Test a conversation feature with a follow-up turn and a
+non-English speaker.
+
+Here: `design3d/jobs.py` (`_self_check`, `_colored`), `design3d/parts.py` (`fit`), `design3d/render.py` (`sheet`), `design3d/llm.py`, `docs/building_an_app.md` mistake 71
+BKM: c3e3550
+
 ## PM-84 · 2026-10-31 · Sprint D3.18 end: nothing new
 
 **What happened.** Colours in the 3MF went in one pass; the real model used

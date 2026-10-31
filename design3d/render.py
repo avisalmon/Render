@@ -79,6 +79,7 @@ def _normal(t):
 
 
 def _draw(tris, view, size, color, background, edge=None):
+    """`color` is one (r, g, b), or a list with one per triangle."""
     w, h = size
     img = Image.new("RGBA", size, background)
     if not tris:
@@ -96,20 +97,31 @@ def _draw(tris, view, size, color, background, edge=None):
     for i in order:
         n = _normal(tris[i])
         shade = 0.38 + 0.62 * abs(n[0] * light[0] + n[1] * light[1] + n[2] * light[2])
-        fill = tuple(min(255, int(c * shade)) for c in color) + (255,)
+        fill = tuple(min(255, int(c * shade)) for c in (color[i] if isinstance(color, list) else color)) + (255,)
         poly = [(w / 2 + (q[0] - cx) * scale, h / 2 - (q[1] - cy) * scale) for q in pts[i]]
         d.polygon(poly, fill=fill, outline=edge)
     return img
 
 
-def sheet(stl_bytes):
-    """Three labelled views on white, as PNG bytes, for the model to see."""
-    tris = read_stl(stl_bytes)
+def sheet(stl_bytes, pieces=None):
+    """Three labelled views on white, as PNG bytes, for the model to see.
+    `pieces` [(stl bytes, "#rrggbb")] draws each part in its own colour, so
+    red letters on a white tag can be told apart from above."""
+    color = (40, 110, 210)
+    if pieces:
+        tris, color = [], []
+        for data, hexa in pieces:
+            t = read_stl(data)
+            rgb = tuple(int(hexa[k:k + 2], 16) for k in (1, 3, 5)) if len(hexa or "") == 7 else (40, 110, 210)
+            tris += t
+            color += [rgb] * len(t)
+    else:
+        tris = read_stl(stl_bytes)
     out = Image.new("RGB", (1200, 420), "white")
     d = ImageDraw.Draw(out)
     font = ImageFont.load_default()
     for i, view in enumerate(("iso", "top", "front")):
-        out.paste(_draw(tris, view, (390, 390), (40, 110, 210), (255, 255, 255, 255)), (i * 400 + 5, 25))
+        out.paste(_draw(tris, view, (390, 390), color, (255, 255, 255, 255)), (i * 400 + 5, 25))
         d.text((i * 400 + 12, 6), view, fill="black", font=font)
     d.text((12, 402), f"size {size_mm(tris)} mm, {len(tris)} triangles", fill="black", font=font)
     buf = io.BytesIO()
