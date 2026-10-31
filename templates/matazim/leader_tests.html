@@ -16,7 +16,7 @@
     <h1>מבחני הכניסה של התלמידים</h1>
     <p>
       כל מי שהגיש את מבחן הכניסה{% if schools %} מ{{ schools|join:", " }}{% endif %}, עם הקובץ שהעלה.
-      אתם מחליטים אם לאשר את ההצטרפות לאתר. התלמיד/ה מקבלים הודעה על ההחלטה.
+      אתם מחליטים אם לאשר. מי שמאשרים עבר/ה את מבחני המיון ונכנס/ה לסיירת, ואתם בוחרים אם להכניס אותו/ה לקבוצה שלכם ואם לשלוח לו/ה הודעה.
     </p>
   </div>
 
@@ -62,10 +62,41 @@
         {% if row.state == "returned" and row.attempt.decision_note %}
           <p class="mz-muted">מה נכתב לתלמיד/ה: {{ row.attempt.decision_note }}</p>
         {% endif %}
+        {% if done == row.attempt.pk|stringformat:"d" %}
+          <div class="mz-alert" role="status">
+            {% if group == "in" %}<p>{{ row.name }} בקבוצה שלכם עכשיו.</p>
+            {% elif group == "consent" %}<p>עוד אין אישור הורים, ולכן {{ row.name }} עוד לא בקבוצה שלכם. אחרי שההורים יאשרו אפשר להכניס מכאן, או שהתלמיד/ה יצטרפו בעצמם.</p>
+            {% elif group == "out" %}<p>{{ row.name }} הוצאו מהתוכנית, ולכן לא נכנסו לקבוצה. להחזרה פונים לצוות התוכנית.</p>
+            {% elif group == "other" %}<p>{{ row.name }} כבר בקבוצה של מוביל/ה אחר/ת.</p>{% endif %}
+            {% if told %}<p>נשלחה ל{{ row.name }} הודעה שעבר/ה את מבחני המיון ונכנס/ה לסיירת.</p>{% endif %}
+          </div>
+        {% endif %}
+        {% if row.state == "approved" and not looking %}
+          {% comment %}REQ-M.209 - after approving: into my group, and the message, each on its own.{% endcomment %}
+          <form method="post" action="{% url 'matazim:leader_decide' row.attempt.pk %}" class="mz-entrance-decide">
+            {% csrf_token %}
+            {% if row.in_group %}
+              <p class="mz-muted">בקבוצה שלכם.</p>
+            {% elif row.consent %}
+              <p class="mz-muted">אפשר יהיה להכניס לקבוצה שלכם אחרי אישור ההורים.</p>
+            {% else %}
+              <button type="submit" name="action" value="group" class="mz-btn mz-btn-secondary">הכנסה לקבוצה שלי</button>
+            {% endif %}
+            <button type="submit" name="action" value="tell" class="mz-btn mz-btn-ghost">שליחת הודעה על מעבר לסיירת</button>
+          </form>
+        {% endif %}
         {% if row.state != "approved" and not looking %}
           <form method="post" action="{% url 'matazim:leader_decide' row.attempt.pk %}" class="mz-entrance-decide">
             {% csrf_token %}
-            <button type="submit" name="action" value="approve" class="mz-btn mz-btn-primary">אישור הצטרפות לאתר</button>
+            {% if not row.in_group %}
+              {% if row.consent %}
+                <p class="mz-muted">עוד אין אישור הורים: אפשר לאשר עכשיו, ולהכניס לקבוצה שלכם אחרי שההורים יאשרו.</p>
+              {% else %}
+                <label><input type="checkbox" name="group" value="1" checked> להכניס לקבוצה שלי</label>
+              {% endif %}
+            {% endif %}
+            <label><input type="checkbox" name="tell" value="1" checked> לשלוח לתלמיד/ה הודעה שעבר/ה את מבחני המיון ונכנס/ה לסיירת</label>
+            <button type="submit" name="action" value="approve" class="mz-btn mz-btn-primary">אישור והכנסה לסיירת</button>
             <label class="mz-field"><span>אם לא מאשרים: מה לתקן</span>
               <textarea name="note" rows="2"></textarea></label>
             <button type="submit" name="action" value="return" class="mz-btn mz-btn-ghost">לא לאשר</button>

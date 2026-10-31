@@ -12,6 +12,8 @@ under test. Reusing both rather than rewriting them is the same call the charter
 makes about the course engine.
 """
 
+from urllib.parse import urlencode
+
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
@@ -712,6 +714,10 @@ def leader_entrance_rows(leader):
     ):
         latest.setdefault(attempt.member_id, attempt)
 
+    from .consent import needs_guardian_consent
+    from .models import Student
+
+    own = set(Student.objects.filter(leader=leader).values_list("user_id", flat=True))
     rows = []
     for attempt in latest.values():
         rows.append({
@@ -720,6 +726,9 @@ def leader_entrance_rows(leader):
             "school": attempt.member.school.name if attempt.member.school_id else "",
             "state": entrance_review.attempt_state(attempt),
             "picture": bool(attempt.model_file) and is_picture(attempt.model_file.name),
+            # REQ-M.209 - already in this leader's group, or waiting on a parent.
+            "in_group": attempt.member.user_id in own,
+            "consent": needs_guardian_consent(attempt.member),
         })
     rows.sort(key=lambda r: (r["state"] != EntranceAttempt.WAITING, r["name"]))
     return rows
@@ -758,6 +767,9 @@ def leader_tests(request):
             schools=leader_schools(leader),
             looking=viewed_leader(request) is not None,
             error=request.GET.get("error", ""),
+            done=request.GET.get("done", ""),
+            group=request.GET.get("group", ""),
+            told=bool(request.GET.get("told")),
         ),
     )
 
@@ -778,15 +790,37 @@ def leader_decide(request, attempt_id):
     attempt = get_object_or_404(
         leader_entrance_attempts(leader).select_related("member__user"), pk=attempt_id
     )
+    back = reverse("matazim:leader_tests")
     action = request.POST.get("action")
-    if action == "approve":
-        entrance_review.approve(attempt, request.user)
-    elif action == "return":
+    if action == "return":
         try:
             entrance_review.return_attempt(attempt, request.user, request.POST.get("note"))
         except ValueError:
-            return redirect(f"{reverse('matazim:leader_tests')}?error=note#attempt-{attempt.pk}")
-    return redirect("matazim:leader_tests")
+            return redirect(f"{back}?error=note#attempt-{attempt.pk}")
+        return redirect(back)
+
+    # REQ-M.209 (Lital, 2026-10-31): approving lets the student into the
+    # patrol, and the leader chooses whether to take them into their own group
+    # and whether to send the message. The last two also stand alone, for a
+    # student approved before.
+    approved = attempt.decision == EntranceAttempt.APPROVED
+    if action == "approve" and not approved:
+        entrance_review.approve(attempt, request.user, tell=False)
+        approved = True
+    if not approved or action not in ("approve", "group", "tell"):
+        return redirect(back)
+
+    said = {"done": attempt.pk}
+    if action == "group" or (action == "approve" and request.POST.get("group")):
+        try:
+            entrance_review.take_into_group(attempt.member, leader, request.user)
+            said["group"] = "in"
+        except ValueError as reason:
+            said["group"] = str(reason)
+    if action == "tell" or (action == "approve" and request.POST.get("tell")):
+        entrance_review.tell_patrol(attempt.member, request.user)
+        said["told"] = 1
+    return redirect(f"{back}?{urlencode(said)}#attempt-{attempt.pk}")
 
 
 @require_POST
