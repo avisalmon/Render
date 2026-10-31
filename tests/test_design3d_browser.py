@@ -429,7 +429,7 @@ def test_the_tour_on_a_phone_a_tablet_and_a_computer(browser, live_server, world
             page.wait_for_load_state("load")
             if page.evaluate(OVERFLOW, width) > 1:
                 broken.append(f"step {n} at {width}")
-            if n in (1, 3, 4, 7):
+            if n in (1, 3, 4, 6, 7):
                 _shot(page, f"tour-{n}-{width}")
             if n < 7:
                 page.click("#d3-tour-next")
