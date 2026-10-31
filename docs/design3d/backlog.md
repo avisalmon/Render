@@ -193,3 +193,4 @@ check caught four of Claude's own faults before anyone saw them.
 - [x] Prompt: colours, colour regions as parts with "together", no overlap, 2 to 4 colours
 - [x] Real turn: "a keychain tag with AVI in red on white" gave a white tag and red letters, together, no fit findings, 25 s, $0.009
 - [ ] Flaky under load (PM-78 rule): `test_on_a_phone_a_box_and_its_lid` timed out once in the full run of 2026-10-31 and passed twice alone
+- [x] 2026-10-31: tour screen 6 says how to ask for colours, with the real two-colour keychain

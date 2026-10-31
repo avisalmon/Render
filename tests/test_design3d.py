@@ -1203,6 +1203,8 @@ def test_the_tour_comes_first_and_cannot_be_skipped(client, world, settings):
     assert client.post("/design3d/welcome/")["Location"] == "/design3d/designs/"
     assert M.objects.get(pk=newcomer.pk).tour_done_at is not None
     assert client.get("/design3d/designs/").status_code == 200
+    six = client.get("/design3d/welcome/?step=6").content.decode()
+    assert "keychain-3d" in six and "Colours:" in six and "red letters on a white tag" in six
     for n, pic in ((2, "words-3d"), (3, "sketch-3d"), (4, "cup-3d"), (5, "pin-3d")):
         assert pic in client.get(f"/design3d/welcome/?step={n}").content.decode()
 

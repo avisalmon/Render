@@ -353,3 +353,5 @@ img { max-width: 100%; height: auto; display: block; }
 .d3-measure-row input { width: 100%; min-width: 0; box-sizing: border-box; }
 .d3-dim-edit { width: min(92vw, 360px); }
 .d3-dim-edit form { margin: 0; }
+.d3-tour-side { display: grid; gap: 12px; min-width: 0; align-content: start; }
+.d3-tour-side .d3-tour-pics img { max-height: 34vh; }
