@@ -15,7 +15,7 @@
   <title>{% block title %}מטצים · מנהיגות טכנולוגית צעירה{% endblock %}</title>
   <meta name="description" content="{% block meta_description %}תוכנית מטצים: תלמידי חטיבת הביניים לומדים טכנולוגיה, יוצרים, מדריכים ומשפיעים על הקהילה, בשיתוף מתנדבי אינטל.{% endblock %}">
 
-  <link rel="icon" href="{% static 'matazim/logo.png' %}">
+  <link rel="icon" href="{% static 'matazim/matazim_logo.png' %}">
   {% comment %}
     No Google Fonts link. It sent every visitor's IP to Google on every page
     load, before they had agreed to anything, on a site whose visitors are
@@ -73,8 +73,14 @@
   <div class="mz-container mz-header-inner">
 
     <a class="mz-brand" href="{% url 'matazim:home' %}">
-      <img src="{% static 'matazim/logo.png' %}" alt="עתיד שבילים משותפים">
-      <span class="mz-brand-tag">מטצים · מנהיגות טכנולוגית צעירה</span>
+      {% comment %}
+        REQ-M.213: Lital, 2026-10-31, asked that the only logo on the site be
+        the matazim programme's own, in burgundy (the burgundy of the old
+        logo's עתיד). The old עתיד שבילים משותפים logo.png stays in static/.
+        The tag drops its own מטצים, which the logo now says.
+      {% endcomment %}
+      <img src="{% static 'matazim/matazim_logo.png' %}" alt="מטצים">
+      <span class="mz-brand-tag">מנהיגות טכנולוגית צעירה</span>
     </a>
 
     {% comment %}

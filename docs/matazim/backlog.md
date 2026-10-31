@@ -5185,3 +5185,34 @@ Intel site (`_welcome.html`) and names Intel volunteers, so it says "שבנו מ
 and Avi was asked.
 
 **Tests.** `tests/test_spr_m_80.py`.
+
+## SPR-M.81: The only logo is the matazim programme's, in burgundy  `DONE 2026-10-31`
+
+Lital's mail of 31.10, 09:41 (spec C40), answering the two questions SPR-M.79 asked: "בשלב זה
+תוריד את הלוגו מה שתכניס זה רק את הלוגו של תכנית מטצים תעשה איתה בצבע בורגונדי". Run under
+Avi's standing rule of 2026-10-16.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.81.1 | `static/matazim/matazim_logo.png`: מטצים in Rubik (our own `rubik-hebrew.woff2`, weight 800), burgundy `#880234`, transparent | REQ-M.213 | DONE |
+| F-M.81.2 | `base.html`: header logo and favicon are the wordmark, alt `מטצים`; the tag reads `מנהיגות טכנולוגית צעירה` | REQ-M.213 | DONE |
+| F-M.81.3 | `home.html`, `about.html`: the חמ״ד logo off, and the partners card with it | REQ-M.213 | DONE |
+
+**How it was read.** Her two sentences answer the bot's two questions: "remove the logo" is
+yes to taking חמ״ד off too, and "what you put in is only the matazim logo, in burgundy" answers
+"what goes in place of the logo at the top". The burgundy is the one already in the old logo
+(the word עתיד), so it matches the site. With no logo left, a card titled שותפים מרכזיים
+לעשייה would hold only "וגופים נוספים נפלאים", so the card is off for now.
+
+**How the logo was made.** There was no matazim logo file, so the bot drew the word with
+Pillow once (no Raqm on this machine, so the letters were laid out right to left by hand) and
+committed the PNG. The old `logo.png`, `partners/` and the CSS stay for the day they come back.
+
+**What the bot did not do.** Add an Intel logo (still Avi's call, see SPR-M.79), or change the
+words that name רשת עתיד and מתנדבי אינטל as partners.
+
+**Asked back.** Whether she has a designed מטצים logo to use instead of the bot's wordmark, and
+whether the partners card should come back with words only.
+
+**Tests.** `tests/test_spr_m_81.py`; `tests/test_spr_m_79.py` and `tests/test_spr_m_1.py` no
+longer expect the partners card or the old logo.

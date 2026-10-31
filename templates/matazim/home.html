@@ -108,14 +108,12 @@
     </section>
   {% endif %}
 
-  <section class="mz-partners" aria-labelledby="mzPartners">
-    <h2 id="mzPartners">שותפים מרכזיים לעשייה</h2>
-    <div class="mz-partner-row">
-      {# REQ-M.210: Lital, 2026-10-31, asked that the Atid network logo come off. #}
-      <img class="mz-logo-tall" src="{% static 'matazim/img/partners/hemed_logo.png' %}" alt="חמ״ד, חינוך בונה עם">
-      <span class="mz-partner-more">וגופים נוספים נפלאים</span>
-    </div>
-  </section>
+  {% comment %}
+    REQ-M.213: Lital, 2026-10-31: "בשלב זה תוריד את הלוגו", the חמ״ד logo too,
+    after the Atid one (REQ-M.210). With no logo left, a "partners" card would
+    say only "וגופים נוספים נפלאים", so the card is off for now. The logo files
+    and the .mz-partners styles stay for the day it comes back.
+  {% endcomment %}
 
   <p class="mz-home-do mz-home-bottom">
     <a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:register' %}?next={% url 'matazim:entrance_test' %}">אני רוצה להצטרף</a>

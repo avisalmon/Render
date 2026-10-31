@@ -106,20 +106,11 @@
     </section>
   {% endif %}
 
-  <section class="mz-partners" aria-labelledby="mzPartners">
-    <h2 id="mzPartners">שותפים מרכזיים לעשייה</h2>
-    <div class="mz-partner-row">
-      {% comment %}
-        No caption under either mark: both logos already carry their own name,
-        and a repeated label only breaks the row's baseline. The name lives in
-        the alt text, where a screen reader needs it.
-        REQ-M.210: Lital, 2026-10-31, asked that the Atid network logo come
-        off. The file stays in static/ for the day it comes back.
-      {% endcomment %}
-      <img class="mz-logo-tall" src="{% static 'matazim/img/partners/hemed_logo.png' %}" alt="חמ״ד, חינוך בונה עם">
-      <span class="mz-partner-more">וגופים נוספים נפלאים</span>
-    </div>
-  </section>
+  {% comment %}
+    REQ-M.213: Lital, 2026-10-31, asked that the חמ״ד logo come off too, after
+    the Atid one (REQ-M.210). With no logo left the partners card is off for
+    now; the logo files and the .mz-partners styles stay in static/.
+  {% endcomment %}
 
   <p class="mz-home-do">
     <a class="mz-btn mz-btn-primary" href="{% url 'matazim:home' %}">להתחיל</a>
