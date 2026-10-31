@@ -20,7 +20,8 @@ SHOTS = os.environ.get("D3_SHOTS")
 def browser():
     playwright = pytest.importorskip("playwright.sync_api")
     with playwright.sync_playwright() as pw:
-        b = pw.chromium.launch()
+        # A fake microphone for "say it"; harmless for the other tests.
+        b = pw.chromium.launch(args=["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"])
         yield b
         b.close()
 
@@ -508,5 +509,40 @@ def test_on_a_phone_sizes_on_the_part_a_stl_and_taking_a_photo_out(browser, live
     page.wait_for_function("!document.querySelector('.d3-dim.unknown')", timeout=10000)
     assert page.is_hidden("#d3-to-measure"), "measured: nothing left to measure"
     assert page.evaluate(OVERFLOW, 390) <= 1
+    assert errors == []
+    ctx.close()
+
+
+@pytest.mark.django_db(transaction=True)
+def test_on_a_phone_say_it_and_the_words_land_in_the_box(browser, live_server, world):
+    """Avi, 2026-10-31: talk the prompt. A fake microphone; the stub hears a
+    fixed sentence. The words are read before Send, and the cost goes with it."""
+    from design3d import voice
+    from design3d.models import Design, Message
+
+    ctx = browser.new_context(viewport={"width": 360, "height": 800}, has_touch=True, is_mobile=True,
+                          permissions=["microphone"])
+    _session(ctx, world["dana"])
+    page = ctx.new_page()
+    errors = []
+    page.on("pageerror", lambda exc: errors.append(str(exc)))
+    page.goto(live_server.url + "/design3d/designs/")
+    page.click("#d3-new")
+    page.wait_for_url("**/design3d/d/*/")
+    assert page.locator("#d3-mic").is_visible()
+    assert page.evaluate(OVERFLOW, 360) <= 0, "the mic fits on a small phone"
+    page.click("#d3-mic")
+    page.wait_for_selector("#d3-recording:not([hidden])")
+    assert page.get_attribute("#d3-mic", "aria-pressed") == "true"
+    page.wait_for_timeout(1500)
+    page.click("#d3-mic")
+    page.wait_for_function(f"document.getElementById('d3-text').value === {voice.STUB_TEXT!r}", timeout=20000)
+    assert page.locator("#d3-recording").is_hidden()
+    assert not Message.objects.exists(), "nothing sent before Send"
+    page.click("#d3-send")
+    page.wait_for_selector(".d3-msg.assistant.done", timeout=60000)
+    person = Design.objects.get().messages.get(role=Message.PERSON)
+    assert person.text == voice.STUB_TEXT and person.cost_usd > 0
+    _shot(page, "voice-360")
     assert errors == []
     ctx.close()

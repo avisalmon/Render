@@ -17,6 +17,18 @@ Newest first.
 
 ---
 
+## PM-86 · 2026-10-31 · Sprint D3.20 end (say it): nothing new
+
+**What happened.** The voice button went in the way Books already does it,
+copied into design3d rather than imported. The browser test first opened a
+second browser of its own; it was moved onto the shared one (launched with a
+fake microphone) before the whole file ran, so nothing failed.
+
+**Rule.** Nothing new.
+
+Here: `docs/design3d/backlog.md` (D3.20)
+BKM: deferred - nothing general
+
 ## PM-85 · 2026-10-31 · The self-check spoke English, forgot the red, and could not see the letters
 
 **What happened.** A Hebrew keychain chat (third analysis) was answered in
