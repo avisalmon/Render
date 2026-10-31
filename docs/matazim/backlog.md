@@ -5159,3 +5159,29 @@ since she named only Atid's.
 the logo at the top.
 
 **Tests.** `tests/test_spr_m_79.py`; `tests/test_spr_m_1.py` now expects the Atid mark gone.
+
+## SPR-M.80: A good-luck message for a student who did not pass, and the parents' note  `DONE 2026-10-31`
+
+Two mails from Lital of 31.10 (spec C38, C39): an option to send a student who did not pass
+the screening a message wishing them lots of luck; and the parents' consent should make clear
+this is a self-learning site where students learn by themselves, and all a parent enters is a
+full name and an email. Run under Avi's standing rule of 2026-10-16.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.80.1 | `entrance_review.tell_good_luck`, and `return_attempt(..., good_luck=True)` with the note optional | REQ-M.211 | DONE |
+| F-M.80.2 | `leader_decide`: `return` with `luck`, and `luck` alone on a returned hand-in | REQ-M.211 | DONE |
+| F-M.80.3 | `leader_tests.html`: the unticked box, the button on a returned row, and what was sent, in words | REQ-M.211 | DONE |
+| F-M.80.4 | `register.html`: the note to parents, and שם מלא on the name field | REQ-M.212 | DONE |
+
+**How it was read.** "Did not pass" is `לא לאשר` with a different message: the hand-in is
+returned as before (the student may still try again), but the student hears a wish, not
+"back for fixing". The box is not ticked by default, since most returns are "fix this".
+"Approving the parents" is the parents' part of the sign-up page, the one place a parent's
+details are asked.
+
+**What the bot did not do.** Write "אתר של חברת אינטל": the site says it is not an official
+Intel site (`_welcome.html`) and names Intel volunteers, so it says "שבנו מתנדבי אינטל",
+and Avi was asked.
+
+**Tests.** `tests/test_spr_m_80.py`.

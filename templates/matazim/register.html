@@ -74,12 +74,23 @@
       </label>
 
       <div id="mzGuardianBlock" hidden>
+        {% comment %}
+          REQ-M.212 (Lital, 2026-10-31): the parent should understand this is a
+          self-learning site, and that all that is asked of them is a full name
+          and an email. "Built by Intel volunteers", not "Intel's site": the site
+          says it is not an official Intel site (_welcome.html), and that wording
+          is Avi's to change.
+        {% endcomment %}
+        <p class="mz-muted">
+          <strong>להורים:</strong> זהו אתר למידה עצמית שבנו מתנדבי אינטל, בשיתוף רשת החינוך עתיד.
+          באתר התלמידים לומדים בעצמם, בקצב שלהם. כל מה שצריך מההורה הוא שם מלא ואימייל.
+        </p>
         <p class="mz-muted">
           מתחת לגיל 18 צריך אישור של הורה או אפוטרופוס. זה הכלל, וזה גם מה
           שמאפשר לנו להראות את ההתקדמות שלכם למוביל/ה.
         </p>
         <label class="mz-field">
-          <span>שם ההורה או האפוטרופוס</span>
+          <span>שם מלא של ההורה או האפוטרופוס</span>
           <input type="text" name="guardian_name" value="{{ posted.guardian_name|default:'' }}">
         </label>
         <label class="mz-field">

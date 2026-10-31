@@ -770,6 +770,7 @@ def leader_tests(request):
             done=request.GET.get("done", ""),
             group=request.GET.get("group", ""),
             told=bool(request.GET.get("told")),
+            luck=bool(request.GET.get("luck")),
         ),
     )
 
@@ -793,10 +794,23 @@ def leader_decide(request, attempt_id):
     back = reverse("matazim:leader_tests")
     action = request.POST.get("action")
     if action == "return":
+        # REQ-M.211 (Lital, 2026-10-31): the leader may tell a student who did
+        # not pass, with a wish of good luck, instead of "back for fixing".
+        luck = bool(request.POST.get("luck"))
         try:
-            entrance_review.return_attempt(attempt, request.user, request.POST.get("note"))
+            entrance_review.return_attempt(
+                attempt, request.user, request.POST.get("note"), good_luck=luck
+            )
         except ValueError:
             return redirect(f"{back}?error=note#attempt-{attempt.pk}")
+        if luck:
+            return redirect(f"{back}?{urlencode({'done': attempt.pk, 'luck': 1})}#attempt-{attempt.pk}")
+        return redirect(back)
+    if action == "luck":
+        # The same message on its own, for a student not approved before.
+        if attempt.decision == EntranceAttempt.RETURNED:
+            entrance_review.tell_good_luck(attempt.member, request.user)
+            return redirect(f"{back}?{urlencode({'done': attempt.pk, 'luck': 1})}#attempt-{attempt.pk}")
         return redirect(back)
 
     # REQ-M.209 (Lital, 2026-10-31): approving lets the student into the

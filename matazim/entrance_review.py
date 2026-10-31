@@ -90,9 +90,19 @@ def approve(attempt, by, *, tell=True):
     return attempt
 
 
-def return_attempt(attempt, by, note):
-    """The team asks for another go, and says what to change. Refuses an empty note."""
+GOOD_LUCK_TEXT = "הפעם לא עברת את מבחן המיון לתכנית מטצים. אנחנו מאחלים לך המון הצלחה."
+
+
+def return_attempt(attempt, by, note, *, good_luck=False):
+    """The team asks for another go, and says what to change. Refuses an empty note.
+
+    `good_luck` is the leader's other message (REQ-M.211): the student did not
+    pass, and hears it with a wish instead of "back for fixing". Then the note
+    may be empty, since the message itself is the words.
+    """
     note = (note or "").strip()
+    if good_luck:
+        note = note or GOOD_LUCK_TEXT
     if not note:
         raise ValueError("a return needs words")
 
@@ -105,6 +115,9 @@ def return_attempt(attempt, by, note):
     # A returned attempt is not a pass, whatever an earlier approval did: if this
     # member had been approved on a previous attempt, that approval stands, so the
     # flag is left alone here. Un-passing someone is a different act.
+    if good_luck:
+        tell_good_luck(attempt.member, by)
+        return attempt
     notify(
         attempt.member.user,
         Notification.ENTRANCE_RETURNED,
@@ -123,6 +136,16 @@ def tell_patrol(member, by):
     entrance decision. No names in it: the mail rule of `notify._mail`.
     """
     return notify(member.user, Notification.ENTRANCE_APPROVED, PATROL_TEXT, url="/matazim/", actor=by)
+
+
+def tell_good_luck(member, by):
+    """REQ-M.211 - the student hears they did not pass, with a wish of good luck.
+
+    Lital, 2026-10-31: "אופציה לשלוח הודעה לתלמיד שלא עבר את מבחן המיון ונאחל לו
+    המון בהצלחה". A bell and a mail, no names in it, like `tell_patrol`. It links
+    to the test page, where the leader's note is and another go is open.
+    """
+    return notify(member.user, Notification.ENTRANCE_RETURNED, GOOD_LUCK_TEXT, url="/matazim/test/task/", actor=by)
 
 
 def take_into_group(member, leader, by):
