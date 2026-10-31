@@ -27,6 +27,10 @@ from .render import bounds, read_stl
 
 MAX_PARTS = 8
 NAME = re.compile(r"^[a-z][a-z0-9_]{0,39}$")
+HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
+NAMED = {"black": "#1a1a1a", "white": "#f2f2f2", "red": "#d62828", "orange": "#ff7a1a", "yellow": "#f7d046",
+         "green": "#3fa34d", "blue": "#2f6fd6", "purple": "#8e5bd6", "pink": "#ff6b9a", "grey": "#8a8a8a",
+         "gray": "#8a8a8a", "brown": "#8b5a2b", "silver": "#c0c0c0", "gold": "#d4a72c"}
 GAP = 10.0  # mm between parts on the plate
 PLATE_WIDTH = 220.0  # mm, a common bed
 TIGHT = 0.15  # mm: closer than this (and not touching) is too tight to print as a fit
@@ -59,8 +63,11 @@ def clean(declared):
             rot = [float(r) for r in rot]
         except (TypeError, ValueError):
             rot = [0.0, 0.0, 0.0]
+        color = str(d.get("color") or "").strip().lower()
+        color = NAMED.get(color, color)
         out.append({"name": name, "label": str(d.get("label") or name.replace("_", " ").title())[:80],
-                    "count": count, "printed": d.get("printed") is not False, "print": rot})
+                    "count": count, "printed": d.get("printed") is not False, "print": rot,
+                    "color": color if HEX.match(color) else "", "together": d.get("together") is True})
     return out if len(out) >= 2 else []
 
 
@@ -124,14 +131,17 @@ def orient(tris, hint):
 
 def plate(pieces):
     """Lay flat pieces out in rows on a 220 mm bed, 10 mm apart.
-    `pieces` is [(label, triangles)], each already on the bed at 0, 0.
-    Returns [(label, placed triangles)]."""
+    `pieces` is [(label, triangles, colour)] or a list of those (a group
+    printed together: colour regions of one object, moved as one), each
+    already on the bed at 0, 0. Returns [(label, placed triangles, colour)]."""
+    units = [u if isinstance(u, list) else [u] for u in pieces]
     placed, x, y, row = [], 0.0, 0.0, 0.0
-    for label, tris in sorted(pieces, key=lambda p: -(bounds(p[1])[1][1])):
-        _, hi = bounds(tris)
+    for unit in sorted(units, key=lambda u: -bounds([t for m in u for t in m[1]])[1][1]):
+        _, hi = bounds([t for m in unit for t in m[1]])
         if x > 0 and x + hi[0] > PLATE_WIDTH:
             x, y, row = 0.0, y + row + GAP, 0.0
-        placed.append((label, _move(tris, x, y, 0)))
+        for label, tris, *rest in unit:
+            placed.append((label, _move(tris, x, y, 0), rest[0] if rest else ""))
         x += hi[0] + GAP
         row = max(row, hi[1])
     return placed
@@ -150,12 +160,25 @@ def to_stl(tris, name=b"design3d"):
 
 
 def to_3mf(objects):
-    """A 3MF (a zip of XML) with each (name, triangles) as its own object,
-    in place. Every modern slicer opens it with the parts kept apart."""
+    """A 3MF (a zip of XML) with each (name, triangles[, colour]) as its own
+    object, in place. Every modern slicer opens it with the parts kept apart;
+    a colour goes in as the object's base material (3MF core), which Bambu
+    Studio, PrusaSlicer and Cura show on load and map to a filament."""
     from xml.sax.saxutils import quoteattr
 
+    colors = []
+    for o in objects:
+        c = o[2] if len(o) > 2 else ""
+        if c and c not in colors:
+            colors.append(c)
     body = []
-    for i, (name, tris) in enumerate(objects, 1):
+    if colors:
+        body.append('<basematerials id="1">')
+        body.extend(f'<base name="{c}" displaycolor="{c.upper()}FF"/>' for c in colors)
+        body.append("</basematerials>")
+    for i, o in enumerate(objects, 2):
+        name, tris = o[0], o[1]
+        c = o[2] if len(o) > 2 else ""
         index, verts, faces = {}, [], []
         for t in tris:
             ids = []
@@ -167,12 +190,13 @@ def to_3mf(objects):
                 ids.append(index[key])
             if len(set(ids)) == 3:
                 faces.append(ids)
-        body.append(f'<object id="{i}" type="model" name={quoteattr(name)}><mesh><vertices>')
+        paint = f' pid="1" pindex="{colors.index(c)}"' if c else ""
+        body.append(f'<object id="{i}" type="model" name={quoteattr(name)}{paint}><mesh><vertices>')
         body.extend(f'<vertex x="{x:g}" y="{y:g}" z="{z:g}"/>' for x, y, z in verts)
         body.append("</vertices><triangles>")
         body.extend(f'<triangle v1="{a}" v2="{b}" v3="{c}"/>' for a, b, c in faces)
         body.append("</triangles></mesh></object>")
-    items = "".join(f'<item objectid="{i}"/>' for i in range(1, len(objects) + 1))
+    items = "".join(f'<item objectid="{i}"/>' for i in range(2, len(objects) + 2))
     model = ('<?xml version="1.0" encoding="UTF-8"?>'
              '<model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02">'
              '<metadata name="Application">design3d</metadata><resources>' + "".join(body)

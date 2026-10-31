@@ -1532,3 +1532,66 @@ def test_the_analysis_export_carries_the_sizes(client, world, monkeypatch):
     meta = json.loads(z.read(f"design-{d.pk}/design.json"))
     assert meta["versions"][0]["sizes"] == [{"tag": "M1", "name": "width", "value": "86.000", "measure": True, "placed": True}]
     assert "sizes M1 width=86?" in z.read(f"design-{d.pk}/chat.txt").decode()
+
+
+# ---------- colours in the 3MF (Avi, 2026-10-31) ----------
+
+NAME_ON_PLATE = """
+part = "all";
+module plate() { difference() { cube([60, 30, 3]); translate([10, 10, 2]) cube([40, 10, 1.1]); } }
+module name() { translate([10, 10, 2]) cube([40, 10, 2]); }
+if (part == "all" || part == "plate") plate();
+if (part == "all" || part == "name") name();
+"""
+
+
+def test_the_part_list_keeps_colours_and_together():
+    from design3d import parts
+
+    got = parts.clean([{"name": "plate", "color": "white", "together": True},
+                       {"name": "name", "color": "#D62828", "together": True},
+                       {"name": "lid", "color": "not a colour"}])
+    assert [(p["color"], p["together"]) for p in got] == [("#f2f2f2", True), ("#d62828", True), ("", False)]
+
+
+@pytest.mark.skipif(not builder.available(), reason="no OpenSCAD on this PC")
+def test_colour_regions_print_in_place_and_the_3mf_carries_their_colours(client, world, monkeypatch):
+    import zipfile
+
+    declared = [{"name": "plate", "label": "Plate", "color": "white", "together": True, "print": [0, 0, 0]},
+                {"name": "name", "label": "Name", "color": "red", "together": True, "print": [0, 0, 0]}]
+    _parts_reply(monkeypatch, NAME_ON_PLATE, declared)
+    d = _design(client, world["dana"])
+    _say(client, d, "A plate with my name in red")
+    v = d.versions.get()
+    assert v.status == Version.READY, v.error
+    plate, name = v.parts.order_by("position")
+    assert (plate.color, name.color, plate.together, name.orientation) == ("#f2f2f2", "#d62828", True, "in place")
+    assert render.size_mm(render.read_stl(v.stl.open("rb").read())) == "60 x 30 x 4", "together, not laid apart"
+    with zipfile.ZipFile(v.file_3mf.open("rb")) as z:
+        model = z.read("3D/3dmodel.model").decode()
+    assert '<basematerials id="1">' in model and 'displaycolor="#F2F2F2FF"' in model and 'displaycolor="#D62828FF"' in model
+    assert 'name="Name" pid="1" pindex="1"' in model and model.count("<item objectid=") == 2
+    assert v.fit == []
+    client.post(f"/design3d/d/{d.pk}/sliders/", {"from": 1})
+    v2 = d.versions.get(number=2)
+    assert [(p.color, p.together) for p in v2.parts.all()] == [("#f2f2f2", True), ("#d62828", True)], "sliders keep them"
+
+
+@pytest.mark.skipif(not builder.available(), reason="no OpenSCAD on this PC")
+def test_separate_parts_keep_their_own_colours_and_are_laid_apart(client, world, monkeypatch):
+    import zipfile
+
+    declared = [dict(TWO_PARTS[0], color="blue"), dict(TWO_PARTS[1], color="#ffffff")]
+    _parts_reply(monkeypatch, BOX_AND_LID, declared)
+    d = _design(client, world["dana"])
+    _say(client, d, "A blue box with a white lid")
+    v = d.versions.get()
+    with zipfile.ZipFile(v.file_3mf.open("rb")) as z:
+        model = z.read("3D/3dmodel.model").decode()
+    assert 'displaycolor="#2F6FD6FF"' in model and 'displaycolor="#FFFFFFFF"' in model
+    assert render.size_mm(render.read_stl(v.stl.open("rb").read())).startswith("130"), "box and lid side by side"
+
+
+def test_the_chat_knows_about_colours():
+    assert '"together": true' in llm.SYSTEM and "2 to 4 colours" in llm.SYSTEM

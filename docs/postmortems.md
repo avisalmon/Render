@@ -17,6 +17,18 @@ Newest first.
 
 ---
 
+## PM-84 · 2026-10-31 · Sprint D3.18 end: nothing new
+
+**What happened.** Colours in the 3MF went in one pass; the real model used
+the new "together" parts correctly on the first try. One browser test timed
+out once in the long full run and passed twice alone, the same slow-machine
+pattern as before; written down in the backlog.
+
+**Rule.** Nothing new.
+
+Here: `docs/design3d/backlog.md` (D3.18)
+BKM: deferred - nothing general
+
 ## PM-83 · 2026-10-30 · The chat built cases around electronics it never modelled
 
 **What happened.** Two real chats (a DE10-Lite console, an arcade case)

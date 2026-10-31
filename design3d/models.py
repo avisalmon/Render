@@ -371,6 +371,7 @@ class Part(models.Model):
     size_mm = models.CharField(max_length=40, blank=True)
     checks = models.JSONField(null=True, blank=True)
     color = models.CharField(max_length=7, default="#ff7a1a")
+    together = models.BooleanField(default=False, help_text="A colour region of one object: printed in place with the others")
 
     class Meta:
         ordering = ["version", "position"]
@@ -388,7 +389,8 @@ class Part(models.Model):
             return [0.0, 0.0, 0.0]
 
     def declaration(self):
-        return {"name": self.name, "label": self.label, "count": self.count, "printed": self.printed, "print": self.rotation}
+        return {"name": self.name, "label": self.label, "count": self.count, "printed": self.printed, "print": self.rotation,
+                "color": self.color, "together": self.together}
 
 
 class Parameter(models.Model):
