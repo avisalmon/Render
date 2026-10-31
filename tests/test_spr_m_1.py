@@ -165,7 +165,8 @@ def test_document_is_hebrew_and_rtl(client, db):
 def test_shell_chrome_renders(client, db):
     """T-F-M.1.4-4: the wordmark and the sign-in action live in the header."""
     html = client.get("/matazim/").content.decode()
-    assert "matazim/logo.png" in html
+    # REQ-M.213 (2026-10-31): the logo is the programme's own wordmark now.
+    assert "matazim/matazim_logo.png" in html
     assert "התחברות" in html
 
 
@@ -205,17 +206,12 @@ def test_partners_section_carries_weight(client, db):
     requirement, so the test checks the order rather than only the presence.
     """
     html = client.get("/matazim/about/").content.decode()
-    assert "שותפים מרכזיים לעשייה" in html
     # REQ-M.210 (2026-10-31): the Atid network logo came off at Lital's word.
+    # REQ-M.213 (same day): the חמ״ד logo too, and with no logo left the
+    # partners card is off for now. tests/test_spr_m_81.py holds the rest.
     assert "partners/atid.svg" not in html
-    assert "partners/hemed_logo.png" in html
-    assert "וגופים נוספים נפלאים" in html
-    # SPR-M.56 (2026-10-09): Litala's screen 1 reads hero, איך זה עובד, the
-    # band, and Avi's rule is that her order is preferred. The partners keep
-    # their own section with their own marks, directly after the band, which
-    # is still the top half of the page. The order assertion moved with it.
-    # REQ-M.191: the partners are on the about page now, not the front door.
-    assert html.index("שותפים מרכזיים לעשייה") < html.index("<footer")
+    assert "partners/hemed_logo.png" not in html
+    assert "שותפים מרכזיים לעשייה" not in html
 
 
 # ---------------------------------------------------------------- F-M.1.6
