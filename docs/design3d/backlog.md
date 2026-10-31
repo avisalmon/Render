@@ -194,3 +194,22 @@ check caught four of Claude's own faults before anyone saw them.
 - [x] Real turn: "a keychain tag with AVI in red on white" gave a white tag and red letters, together, no fit findings, 25 s, $0.009
 - [ ] Flaky under load (PM-78 rule): `test_on_a_phone_a_box_and_its_lid` timed out once in the full run of 2026-10-31 and passed twice alone
 - [x] 2026-10-31: tour screen 6 says how to ask for colours, with the real two-colour keychain
+
+## D3.19 · The third analysis: Hebrew answers, letters from a font, the check keeps the colours (2026-10-31)
+
+Third "Send me the chats for analysis": 4 chats, 20 messages, $0.26. The
+card shoe and the coins went well (search, the cards as an unprinted block,
+honest limits, M sizes). The rocket keychain with אבי in red took 6 turns
+and $0.15: every answer in English to Hebrew messages, the letters drawn
+from strokes (the א came out like an X), the red lost on the second turn,
+and "I can't verify against your original pictures" with no pictures sent.
+Cause: the self-check's own English note was the latest message, it saw
+only the latest request, its picture was all one blue, and it said "my
+pictures" every time. A real rerun found one more: the fit check asked for
+0.2 mm between the red name and the white tag, and spent two repair rounds.
+
+- [x] Prompt: letters from text() with Liberation Sans Bold (tested: Hebrew right without direction; mixed Hebrew and English in one text() reverses the Hebrew); keep what was asked earlier; never mention pictures not sent; colour regions touch with no gap
+- [x] `_self_check`: earlier requests as text, the parts in the reply, a server note that names the language, "their pictures" only when sent, "correct only a real fault"
+- [x] `render.sheet(pieces=...)`: the check picture draws each part in its colour
+- [x] `parts.fit`: no "too tight" between two together parts; overlap still reported
+- [x] Real rerun of the keychain (3 turns, $0.06): Hebrew answers, white and red kept every turn, letters from the font, no fit rounds

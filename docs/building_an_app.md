@@ -1377,3 +1377,16 @@ decision and re-asked every question; a ray test grazed a vertical face
 frame, and derives the rest. Findings that mean "cannot be right" go back
 to the model before the answer. A ray test starts a hair off the point. The
 product says early what it does not do well and where to finish instead.
+
+### 71. A self-check is a speaker too: mark it, give it the history, let it see
+
+design3d's self-check note became the "latest message" and turned Hebrew
+chats into English; it saw only the newest request and a one-colour
+picture, so it lost the red and could not see the letters; a new kind of
+part (a colour region) was not run through the old fit check (PM-85).
+
+**The rule.** An automatic step that speaks as the user says it is the
+system and which message sets the language. A checker gets the history in
+short form and a view where what it checks is visible. Run a new kind of
+thing through every existing check. Test with a follow-up turn in another
+language.

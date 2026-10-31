@@ -1498,7 +1498,90 @@ def test_the_self_check_sends_only_what_it_needs(client, world, monkeypatch, set
     first, check = seen
     assert len(first) == 1 + 2 * 2 + 1, "the whole history goes to the design call: two done turns and this message"
     assert [i["role"] for i in check] == ["system", "user", "assistant", "user"], "the check gets the latest message only"
-    assert check[1]["content"][0]["text"].startswith("Three")
+    asked = check[1]["content"]
+    assert asked[0]["text"] == "What I asked before, oldest first: One | Two", "earlier requests, as text only"
+    assert asked[1]["text"].startswith("Three")
+    assert [c["type"] for c in asked].count("input_image") == 1, "only the latest message's picture"
+    note = check[3]["content"][0]["text"]
+    assert note.startswith("(A note from the server") and "in the language of their message above" in note
+    assert "their pictures" in note and "Do not restyle" in note
+
+
+# ---------- the third analysis's learnings (Avi, 2026-10-31) ----------
+
+def test_the_self_check_keeps_the_colours_and_mentions_no_pictures_never_sent(client, world, monkeypatch, settings):
+    """The rocket keychain: Hebrew answered in English, red lost on a
+    follow-up, and "your original pictures" that were never sent."""
+    settings.OPENAI_API_KEY = "sk-test"
+    seen = []
+    declared = [{"name": "tag", "label": "Tag", "color": "white", "together": True},
+                {"name": "name", "label": "Name", "color": "red", "together": True}]
+
+    def ask(items, **kw):
+        seen.append(items)
+        return ({"title": "Tag", "message": "הנה.", "assumptions": [], "code": "cube(10);" if len(seen) == 1 else None,
+                 "parameters": [], "parts": declared}, {"in": 1, "cached": 0, "out": 1}, "stub")
+
+    monkeypatch.setattr(llm, "ask", ask)
+    monkeypatch.setattr(llm, "stub_mode", lambda: False)
+    d = _design(client, world["dana"])
+    _say(client, d, "מחזיק מפתחות לבן עם השם אבי באדום")
+    check = seen[1]
+    assert '"color": "red"' in check[2]["content"], "the check sees the parts with their colours"
+    assert "pictures" not in check[3]["content"][0]["text"], "no pictures were sent"
+
+
+def test_letters_come_from_a_font_that_ships_with_openscad():
+    s = " ".join(llm.SYSTEM.split())
+    assert 'font="Liberation Sans:style=Bold"' in s and "never drawn from strokes" in s
+    assert "One script per text()" in s and "Never mention pictures the person did not send" in s
+    assert "Keep what the person asked for in earlier messages" in s
+
+
+@pytest.mark.skipif(not builder.available(), reason="no OpenSCAD on this PC")
+def test_colour_regions_may_touch_but_not_overlap():
+    """Found on 2026-10-31: the fit check asked for a 0.2 mm gap between the
+    red name and the white tag, and spent two repair rounds on it."""
+    from design3d import parts
+
+    code = ('part = "all";\n'
+            'module tag() { cube([20, 20, 2]); }\n'
+            'module name() { translate([20.1, 0, 0]) cube([10, 20, 2]); }\n'
+            'module deep() { translate([15, 5, 0.5]) cube([10, 10, 1]); }\n'
+            'if (part == "tag") tag();\nif (part == "name") name();\nif (part == "deep") deep();')
+    tag, name, deep = (render.read_stl(REAL_BUILD(code, part=p)[0]) for p in ("tag", "name", "deep"))
+    assert [f["code"] for f in parts.fit([("tag", "Tag", True, tag), ("name", "Name", True, name)])] == ["too_tight"]
+    assert parts.fit([("tag", "Tag", True, tag, True), ("name", "Name", True, name, True)]) == []
+    assert [f["code"] for f in parts.fit([("tag", "Tag", True, tag, True), ("deep", "Deep", True, deep, True)])] == ["overlap"]
+
+
+def test_the_check_picture_shows_each_part_in_its_colour():
+    """One blue for everything hid raised red letters on a white tag from above."""
+    import io
+
+    from PIL import Image
+
+    from design3d import parts
+
+    def box(x0, z0, z1):
+        tris = []
+        for (a, b, c) in [((0, 0, 0), (1, 0, 0), (1, 1, 0)), ((0, 0, 0), (1, 1, 0), (0, 1, 0))]:
+            tris.append([(x0 + p[0] * 10, p[1] * 10, z1) for p in (a, b, c)])
+            tris.append([(x0 + p[0] * 10, p[1] * 10, z0) for p in (a, c, b)])
+        return parts.to_stl(tris)
+
+    png = render.sheet(None, pieces=[(box(0, 0, 2), "#f2f2f2"), (box(10, 0, 3), "#d62828")])
+    img = Image.open(io.BytesIO(png)).convert("RGB")
+    colors = {px for px in img.getdata()}
+    assert any(r > 150 and g < 60 and b < 60 for r, g, b in colors), "red is drawn red"
+    assert any(r > 180 and abs(r - g) < 8 and abs(g - b) < 8 and r < 250 for r, g, b in colors), "white is drawn light grey-white"
+
+
+@pytest.mark.skipif(not builder.available(), reason="no OpenSCAD on this PC")
+def test_hebrew_builds_with_the_bundled_font():
+    tris = render.read_stl(REAL_BUILD('linear_extrude(2) text("אבי", size=10, font="Liberation Sans:style=Bold");')[0])
+    lo, hi = render.bounds(tris)
+    assert len(tris) > 150 and 15 < hi[0] - lo[0] < 30, "three real Hebrew letters, not empty boxes"
 
 
 def test_two_posts_with_the_same_outline_are_not_an_overlap():
