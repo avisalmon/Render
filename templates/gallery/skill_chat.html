@@ -1,0 +1,74 @@
+{% extends "gallery/base.html" %}{% load gallery_tags %}
+{% block title %}{% t "chat.title" %} · {% t "brand" %}{% endblock %}
+{% block content %}
+<p class="gl-back"><a href="{% url 'gallery:skills' %}">{% t "back.skills" %}</a></p>
+<div class="gl-chat-wrap">
+  <article class="gl-paper gl-chat" id="gl-chat" data-chat="{{ chat.pk }}" data-status="{{ chat.status }}" data-stage="{{ chat.stage }}">
+    <span class="gl-pin" aria-hidden="true"></span>
+    <h1 class="gl-h1">{% t "chat.title" %}{% if bundle %} · <span dir="ltr">{{ bundle.name }}</span>{% endif %}</h1>
+    {% if bundle %}
+      <p class="gl-muted gl-small" dir="auto">{{ bundle.description }}</p>
+      <p class="gl-small gl-muted">{{ bundle.files|length }} {% t "chat.files" %} · {% t "skill.facts_from" %} {% if bundle.origin == 'copilot' %}GitHub Copilot{% else %}Claude Code{% endif %}</p>
+    {% endif %}
+
+    <details class="gl-plain" id="gl-plain" {% if chat.status == 'open' and chat.stage == '' %}open{% endif %}>
+      <summary>{% t "chat.plain_title" %}&rlm; <span dir="ltr">({{ findings|length }})</span></summary>
+      {% if findings %}
+        <ul class="gl-findings" dir="ltr">{% for f in findings %}<li><code>{{ f }}</code></li>{% endfor %}</ul>
+      {% else %}
+        <p class="gl-small" id="gl-plain-none">{% t "chat.plain_none" %}</p>
+      {% endif %}
+    </details>
+
+    <div class="gl-chat-log" id="gl-chat-log" aria-live="polite">
+      {% for m in chat_messages %}{% if m.role != 'system' %}
+        <div class="gl-msg gl-msg-{{ m.role }}" dir="auto">{{ m.body|linebreaksbr }}</div>
+      {% endif %}{% endfor %}
+    </div>
+
+    {% if notice %}<p class="gl-error" role="alert" id="gl-notice">{% t notice %}</p>{% endif %}
+
+    {% if chat.status == 'open' and is_owner %}
+      {% if chat.stage == 'confirm' %}
+        <section class="gl-proposal" id="gl-proposal">
+          <h2 class="gl-h2">{% t "chat.will_publish" %}</h2>
+          <p dir="auto">{{ chat.proposed_blurb }}</p>
+          {% if proposed_topics %}<ul class="gl-topics">{% for tp in proposed_topics %}<li><span>{% tr tp "name" %}</span></li>{% endfor %}</ul>{% endif %}
+          <p class="gl-small gl-muted">{% t "chat.same_files" %}{% if chat.platform_note %} <span dir="auto">{{ chat.platform_note }}</span>{% endif %}</p>
+        </section>
+      {% endif %}
+      <div class="gl-chat-acts">
+        {% if chat.stage == 'similar' %}
+          <form method="post" action="{% url 'gallery:skill_chat_act' chat.pk %}" class="gl-busy">{% csrf_token %}<input type="hidden" name="action" value="go_on"><button class="gl-btn" id="gl-go-on">{% t "chat.btn_go_on" %}</button></form>
+          {% if chat.similar_to %}<a class="gl-btn gl-btn-quiet" href="{% url 'gallery:exhibit' chat.similar_to.exhibit_id %}" target="_blank" rel="noopener">{% t "chat.see_similar" %}</a>{% endif %}
+        {% elif chat.stage == 'confirm' %}
+          <form method="post" action="{% url 'gallery:skill_chat_act' chat.pk %}" class="gl-busy">{% csrf_token %}<input type="hidden" name="action" value="publish"><button class="gl-btn" id="gl-publish">{% t "chat.btn_publish" %}</button></form>
+        {% elif chat.stage == 'fixing' %}
+          <form method="post" action="{% url 'gallery:skill_chat_act' chat.pk %}" enctype="multipart/form-data" class="gl-form gl-busy" id="gl-fix-form">
+            {% csrf_token %}<input type="hidden" name="action" value="fix">
+            <label class="gl-field" for="gl-fix-file"><span>{% t "chat.fix_label" %}</span><input type="file" name="skill" id="gl-fix-file" accept=".md,.zip" required></label>
+            <button class="gl-btn" id="gl-send-fix">{% t "chat.btn_send_fix" %}</button>
+          </form>
+        {% elif chat.stage == 'retry' %}
+          <form method="post" action="{% url 'gallery:skill_chat_act' chat.pk %}" class="gl-busy">{% csrf_token %}<input type="hidden" name="action" value="retry"><button class="gl-btn" id="gl-retry">{% t "chat.btn_retry" %}</button></form>
+        {% endif %}
+        <form method="post" action="{% url 'gallery:skill_chat_act' chat.pk %}" data-confirm="{% t 'chat.confirm_stop' %}">{% csrf_token %}<input type="hidden" name="action" value="stop"><button class="gl-btn gl-btn-quiet" id="gl-stop">{% t "chat.btn_stop" %}</button></form>
+      </div>
+      {% if chat.stage %}
+        <form method="post" action="{% url 'gallery:skill_chat_act' chat.pk %}" class="gl-reply gl-busy" id="gl-reply-form">
+          {% csrf_token %}<input type="hidden" name="action" value="reply">
+          <label class="gl-sr" for="gl-reply">{% t "chat.reply_label" %}</label>
+          <textarea name="reply" id="gl-reply" rows="2" maxlength="1000" placeholder="{% t 'chat.reply_label' %}" required></textarea>
+          <button class="gl-btn gl-btn-quiet" id="gl-send-reply">{% t "chat.btn_reply" %}</button>
+        </form>
+      {% endif %}
+      <p class="gl-small gl-muted gl-wait" id="gl-wait" hidden>{% t "chat.wait" %}</p>
+    {% elif chat.status == 'published' and chat.skill %}
+      <p><a class="gl-btn" href="{% url 'gallery:exhibit' chat.skill.exhibit_id %}">{% t "chat.see_card" %}</a></p>
+    {% elif chat.status != 'open' %}
+      <p class="gl-muted" id="gl-ended">{% t "chat.ended" %}</p>
+    {% endif %}
+    <p class="gl-small gl-muted" id="gl-chat-end">{% if me.admin %}${{ chat.cost_usd }} · {% endif %}{% t "chat.cost_note" %}</p>
+  </article>
+</div>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "gallery/base.html" %}{% load gallery_tags %}
+{% block title %}{% t "training.title" %} · {% t "brand" %}{% endblock %}
+{% block content %}
+<section class="gl-door">
+  <article class="gl-paper gl-door-paper">
+    <span class="gl-pin" aria-hidden="true"></span>
+    <h1 class="gl-h1">{% t "training.question" %}</h1>
+    <p class="gl-muted">{% t "training.why" %}</p>
+    <form method="post" class="gl-form" id="gl-training-form">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <fieldset class="gl-field gl-radios gl-trainings"><legend class="gl-sr">{{ form.training.label }}</legend>
+        {{ form.training }}
+        {% for e in form.training.errors %}<small class="gl-error">{{ e }}</small>{% endfor %}
+      </fieldset>
+      <label class="gl-field" for="{{ form.other.id_for_label }}" id="gl-other-line"><span>{{ form.other.label }}</span>{{ form.other }}</label>
+      <button type="submit" class="gl-btn" id="gl-training-go">{% t "training.go" %}</button>
+    </form>
+  </article>
+</section>
+{% endblock %}

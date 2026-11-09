@@ -1,0 +1,49 @@
+{% extends "gallery/base.html" %}{% load gallery_tags %}
+{% block title %}{% t "manage.title" %} · {% t "brand" %}{% endblock %}
+{% block content %}
+{% include "gallery/_manage_tabs.html" %}
+<div class="gl-stats" id="gl-totals">
+  <div class="gl-stat"><b>{{ totals.people }}</b><span>{% t "manage.n_people" %}</span></div>
+  <div class="gl-stat"><b>{{ totals.pages }}</b><span>{% t "chip.pages" %}</span></div>
+  <div class="gl-stat"><b>{{ totals.skills }}</b><span>{% t "chip.skills" %}</span></div>
+  <div class="gl-stat"><b>{{ totals.bkms }}</b><span>{% t "chip.bkms" %}</span></div>
+  <div class="gl-stat"><b dir="ltr">${{ total_cost|floatformat:4 }}</b><span>{% t "manage.ai_cost" %} ({{ calls }} {% t "manage.calls" %})</span></div>
+</div>
+
+<article class="gl-paper">
+  <h2 class="gl-h2">{% t "manage.by_training" %}</h2>
+  <div class="gl-table-wrap">
+  <table class="gl-table" id="gl-by-training">
+    <thead><tr><th>{% t "manage.training" %}</th><th>{% t "manage.n_people" %}</th><th>{% t "chip.pages" %}</th><th>{% t "chip.skills" %}</th><th>{% t "manage.ai_cost" %}</th></tr></thead>
+    <tbody>
+      {% for t, b in trainings %}
+        <tr{% if not t.is_open %} class="is-closed"{% endif %}><td>{% tr t "name" %}</td><td>{{ b.people }}</td><td>{{ b.pages }}</td><td>{{ b.skills }}</td><td dir="ltr">${{ b.cost|floatformat:4 }}</td></tr>
+      {% endfor %}
+      <tr><td>{% t "training.other" %}</td><td>{{ other.people|default:0 }}</td><td>{{ other.pages|default:0 }}</td><td>{{ other.skills|default:0 }}</td><td dir="ltr">${{ other.cost|default:0|floatformat:4 }}</td></tr>
+      <tr class="is-closed"><td>{% t "manage.not_answered" %}</td><td>{{ unanswered.people|default:0 }}</td><td>{{ unanswered.pages|default:0 }}</td><td>{{ unanswered.skills|default:0 }}</td><td dir="ltr">${{ unanswered.cost|default:0|floatformat:4 }}</td></tr>
+    </tbody>
+  </table>
+  </div>
+</article>
+
+<article class="gl-paper">
+  <h2 class="gl-h2">{% t "manage.top_cost" %}</h2>
+  {% if top_cost %}
+    <ol class="gl-rank" id="gl-top-cost">{% for p in top_cost %}<li><a href="{% url 'gallery:manage_person' p.pk %}" dir="auto">{{ p.display_name }}</a> <span dir="ltr">${{ p.cost|floatformat:4 }}</span></li>{% endfor %}</ol>
+  {% else %}<p class="gl-muted">{% t "manage.no_cost" %}</p>{% endif %}
+</article>
+
+<article class="gl-paper">
+  <h2 class="gl-h2">{% t "manage.ceiling" %}</h2>
+  {% if ceiling_chats %}
+    <ul class="gl-rank">{% for c in ceiling_chats %}<li><a href="{% url 'gallery:skill_chat' c.pk %}" dir="auto">{{ c.person.display_name }}</a> · {{ c.started_at|date:"d.m H:i" }} <span dir="ltr">${{ c.cost_usd }}</span></li>{% endfor %}</ul>
+  {% else %}<p class="gl-muted" id="gl-no-ceiling">{% t "manage.no_ceiling" %}</p>{% endif %}
+</article>
+
+{% if others_said %}
+<article class="gl-paper">
+  <h2 class="gl-h2">{% t "manage.others_said" %}</h2>
+  <ul class="gl-rank">{% for p in others_said %}<li><b dir="auto">{{ p.display_name }}</b>: <span dir="auto">{{ p.training_other }}</span></li>{% endfor %}</ul>
+</article>
+{% endif %}
+{% endblock %}

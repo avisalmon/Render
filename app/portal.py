@@ -152,6 +152,17 @@ APPS = [
         blurb="מדריכי BKM של אבי: איך בונים פרויקט מההתחלה ועד הסוף, ותערוכה של מה שבניתם.",
     ),
     App(
+        slug="gallery",
+        icon="easel",
+        name="גלריה 10x",
+        path="/gallery/",
+        audience=EVERYONE,
+        # Avi, 2026-11-09: "add a card for this app on babook". The gallery is
+        # open to everyone, signed in or not; the card is for signed-in people
+        # like every EVERYONE app.
+        blurb="מה שבוגרי הדרכות 10x engineer בנו: דפים, סקילים ל-Claude Code ול-Copilot, ו-BKM.",
+    ),
+    App(
         slug="ustrip",
         icon="suitcase",
         name="ustrip",

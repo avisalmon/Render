@@ -17,6 +17,75 @@ Newest first.
 
 ---
 
+## PM-91 · 2026-11-09 · Sprints G.8 and G.9 end (gallery): the sweep found what earlier sprints should have
+
+**What happened.** The final security sweep and the screen contract found
+real problems: no daily cap on the paid skill chat (instant signup made the
+per-chat ceiling no ceiling at all), cost records whose `PROTECT` would have
+blocked deleting a babook account, and light text on the cork at 2.55:1,
+inherited from cohort's look. A test written for SPR-G.8 caught an open
+redirect on the people screen before it ever ran.
+
+**Why.** Methodology 51 and the screen contract were both known; I ran them
+once, at the end, instead of in the sprint that created each subject.
+
+**Rule.** Each sweep item runs in the sprint that creates its subject: a paid
+call's caps the day it lands, a copied look's contrast the day it is copied.
+
+Here: `docs/building_an_app.md` (methodology 51), `tests/test_gallery_screens.py`
+BKM: FullStackBKM 4ea547f
+
+## PM-90 · 2026-11-09 · Sprints G.6 and G.7 end (skill chat): old tests reached the real key
+
+**What happened.** The sprint that put the model behind the skill upload made
+the earlier upload tests (written in G.5) reach this PC's real OpenAI key.
+At most one reading ran (about $0.0002). It surfaced as a failing assertion,
+not as a bill. The new chat tests had the guard; the old ones did not.
+
+**Why.** Methodology 26 put the guard in a shared fixture for Books only; for
+a new app I added it to the test file that was about the AI, not to the ones
+that already walked the path the AI was about to sit on.
+
+**Rule.** Every app's test files blank the key from the app's first test,
+before any AI feature exists. Gallery's three test files now do.
+
+Here: `docs/building_an_app.md` (methodology 26), `tests/test_gallery_*.py`
+BKM: FullStackBKM 770c06f
+
+## PM-89 · 2026-11-09 · Sprint G.5 end (gallery skills, no AI): nothing new
+
+**What happened.** The screenshot script signed in by clicking the first
+submit button on the page, which was the header's language switch, so the
+"chat" screenshot showed a sign-in page in English. Caught by reading the
+screenshot and the server log before believing it. A test's own pattern
+matched a file name ("skill.md") as if it were a string key; narrowed.
+
+**Rule.** Nothing new: methodology 14 (scope to the element) already covers
+picking a button by its form, not by the page.
+
+Here: `docs/gallery/backlog.md` (SPR-G.5)
+BKM: deferred - nothing general
+
+## PM-88 · 2026-11-09 · Sprints G.1 to G.4 end (gallery MVP): typed text read backwards
+
+**What happened.** The gallery's tests all passed, and the first screenshot
+still showed the card "BKM: GitHub Pages מאפס" reading backwards on a Hebrew
+page, and a Hebrew blurb with its full stop on the wrong side of the English
+page. Two old rules were also broken on the way and cost time: a
+`--noreload` server served stale templates to the screenshots (PM-2), and
+long shell heredocs failed (PM-1).
+
+**Why.** Methodology 30 covered widgets and signed numbers, not text people
+type, so nothing told me to mark it when the templates were first written.
+PM-1 and PM-2 were known and I worked from memory instead of re-reading them.
+
+**Rule.** Every element showing typed text gets `dir="auto"` from the first
+template, aligned with the page in CSS. A regression test now checks it.
+PM-1 and PM-2 stand as written.
+
+Here: `docs/building_an_app.md` (methodology 30), `tests/test_gallery_mvp.py`
+BKM: FullStackBKM 76a1447
+
 ## PM-87 · 2026-10-31 · Paid transcription where the phone does it for free
 
 **What happened.** "Say it" shipped with OpenAI transcription. Avi: "I want

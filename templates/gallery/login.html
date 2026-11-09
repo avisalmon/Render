@@ -1,0 +1,21 @@
+{% extends "gallery/base.html" %}{% load gallery_tags %}
+{% block title %}{% t "nav.sign_in" %} · {% t "brand" %}{% endblock %}
+{% block content %}
+<section class="gl-door">
+  <article class="gl-paper gl-door-paper">
+    <span class="gl-pin" aria-hidden="true"></span>
+    <h1 class="gl-h1">{% t "nav.sign_in" %}</h1>
+    <p class="gl-muted">{% t "auth.with_babook" %}</p>
+    <form method="post" class="gl-form">
+      {% csrf_token %}
+      {% if form.non_field_errors %}<p class="gl-error">{{ form.non_field_errors.0 }}</p>{% endif %}
+      {% for field in form %}
+        <label class="gl-field" for="{{ field.id_for_label }}"><span>{{ field.label }}</span>{{ field }}</label>
+      {% endfor %}
+      <input type="hidden" name="next" value="{{ request.GET.next }}">
+      <button type="submit" class="gl-btn">{% t "nav.sign_in" %}</button>
+    </form>
+    <p class="gl-small">{% t "auth.no_account" %} <a href="{% url 'gallery:signup' %}{% if request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}">{% t "auth.sign_up" %}</a> · <a href="/accounts/google/login/?next={{ request.GET.next|default:'/gallery/'|urlencode }}">{% t "auth.google" %}</a></p>
+  </article>
+</section>
+{% endblock %}

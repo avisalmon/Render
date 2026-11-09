@@ -780,6 +780,13 @@ logs, which was luck.
 switches off background sweeps for every `test_books_*` test; a test that
 needs a key sets a fake one and replaces the client.
 
+It happened again in gallery (2026-11-09): the upload tests were written
+before the upload called a model, and the sprint that added the call made
+them reach the real key. The guard was added to the new chat tests only.
+**So:** every app's test files blank the key from the app's very first
+test, before any AI feature exists, because a later sprint will put a model
+behind a path an old test already walks.
+
 ### 27. Test the task on a phone, not only the pages
 
 Books' "start reading" passed the screen contract on every page. Avi tried
@@ -836,6 +843,13 @@ a page turn) is laid out from the reader's side: in Hebrew what is ahead
 comes from the left. A label that is a signed number or a range (−1, +10,
 3-5) gets `dir="ltr"`. Both are checked on a right-to-left screenshot
 before shipping, not only by the tests.
+
+Text people type is the same problem (gallery, 2026-11-09): the card
+"BKM: GitHub Pages מאפס" read backwards on a Hebrew page, and a Hebrew
+blurb lost its full stop to the wrong side on the English page. Every
+element that shows typed text (titles, names, descriptions, comments) gets
+`dir="auto"` from the first template, and CSS aligns it with the page so a
+card does not zigzag.
 
 ### 31. A ring drawn with a radial mask needs `closest-side`
 
@@ -1138,6 +1152,13 @@ with insight. Keep the list and run it at every launch:
   `frame-ancestors`), `nosniff`, `X-Frame-Options`.
 - Secrets: grep the tree for key shapes; a local settings file with real
   keys is one `cat` away from a transcript. Keep them in `.env`.
+
+Run each item in the sprint that creates its subject, not only at launch
+(gallery, 2026-11-09): the skill chat shipped in SPR-G.6 with a ceiling per
+chat and no daily cap, and the cohort look was copied in SPR-G.1 with text the
+contrast check fails; both waited for the final sweep, by when they were in
+every screen and every test. The sprint that adds a paid call checks its caps;
+the sprint that copies a look runs the screen contract on the copy.
 
 And when the person says "the search uses AI?", the right answer may be to
 stop using it: a client-side match over the rendered cards costs nothing,

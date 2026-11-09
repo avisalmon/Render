@@ -1,0 +1,27 @@
+{% extends "gallery/base.html" %}{% load gallery_tags %}
+{% block title %}{% if skill %}{% t "skill.update" %}{% else %}{% t "skills.add" %}{% endif %} · {% t "brand" %}{% endblock %}
+{% block content %}
+<p class="gl-back"><a href="{% if skill %}{% url 'gallery:exhibit' skill.exhibit_id %}{% else %}{% url 'gallery:skills' %}{% endif %}">{% t "back" %}</a></p>
+<article class="gl-paper gl-form-paper">
+  <span class="gl-pin" aria-hidden="true"></span>
+  <h1 class="gl-h1">{% if skill %}{% t "skill.update_title" %} <span dir="ltr">{{ skill.name }}</span>{% else %}{% t "skills.new_title" %}{% endif %}</h1>
+  {% if not allowed %}
+    <p class="gl-careful" id="gl-not-allowed">{% t why %}</p>
+  {% else %}
+    <p class="gl-muted">{% t "skills.new_hint" %}</p>
+    <ol class="gl-steps">
+      <li>{% t "skills.step_similar" %}</li>
+      <li>{% t "skills.step_safety" %}</li>
+      <li>{% t "skills.step_publish" %}</li>
+    </ol>
+    {% if not skill and not me.unlimited_skills and not me.admin %}<p class="gl-small gl-muted" id="gl-count">{% t "skills.count" %} {{ count }} / {{ limit }}</p>{% endif %}
+    <form method="post" enctype="multipart/form-data" class="gl-form" id="gl-skill-form">
+      {% csrf_token %}
+      <label class="gl-field" for="gl-skill-file"><span>{% t "skills.file_label" %}</span>
+        <input type="file" name="skill" id="gl-skill-file" accept=".md,.zip,text/markdown,application/zip" required></label>
+      {% if error %}<p class="gl-error" id="gl-skill-error" role="alert">{{ error }}</p>{% endif %}
+      <button type="submit" class="gl-btn" id="gl-skill-send">{% t "skills.send" %}</button>
+    </form>
+  {% endif %}
+</article>
+{% endblock %}

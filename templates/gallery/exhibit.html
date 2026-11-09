@@ -1,0 +1,90 @@
+{% extends "gallery/base.html" %}{% load gallery_tags %}
+{% block title %}{{ card.title }} · {% t "brand" %}{% endblock %}
+{% block content %}
+<p class="gl-back">{% if skill %}<a href="{% url 'gallery:skills' %}">{% t "back.skills" %}</a>{% else %}<a href="{% url 'gallery:home' %}">{% t "back.gallery" %}</a>{% endif %}</p>
+<div class="gl-detail">
+  <div class="gl-detail-main">
+    {% include "gallery/_card.html" %}
+    {% if card.shot_status == "failed" and not card.shot %}
+      <p class="gl-small gl-on-cork">{% t "detail.shot_failed" %}{% if may_change %} {% t "detail.shot_failed_owner" %}{% endif %}</p>
+    {% endif %}
+  </div>
+  <div class="gl-detail-side">
+    <article class="gl-paper">
+      <h1 class="gl-h1" dir="auto">{{ card.title }}</h1>
+      <p class="gl-muted">{% t "detail.by" %} <a href="{% url 'gallery:person' card.owner.slug %}">{{ card.owner.display_name }}</a> · {{ card.created_at|date:"d.m.Y" }}</p>
+      {% if card.blurb %}<p class="gl-blurb" dir="auto">{{ card.blurb|linebreaksbr }}</p>{% endif %}
+      {% with tps=card.topics.all %}{% if tps %}
+        <ul class="gl-topics">{% for tp in tps %}<li><a href="{% url 'gallery:home' %}?topic={{ tp.slug }}">{% tr tp "name" %}</a></li>{% endfor %}</ul>
+      {% endif %}{% endwith %}
+      <div class="gl-actions">
+        {% if card.url %}<a class="gl-btn" href="{{ card.url }}" target="_blank" rel="noopener noreferrer" id="gl-open-site">{% if card.kind == 'bkm' %}{% t "card.open_bkm" %}{% else %}{% t "detail.open" %}{% endif %}</a>{% endif %}
+        {% if skill %}
+          <a class="gl-btn" href="{% url 'gallery:skill_download' card.pk 'claude' %}" id="gl-dl-claude">{% t "skill.download_claude" %}</a>
+          <a class="gl-btn" href="{% url 'gallery:skill_download' card.pk 'copilot' %}" id="gl-dl-copilot">{% t "skill.download_copilot" %}</a>
+        {% endif %}
+        {% if may_change %}<a class="gl-btn gl-btn-quiet" href="{% url 'gallery:exhibit_edit' card.pk %}" id="gl-edit">{% t "detail.edit" %}</a>{% endif %}
+        {% if skill and may_change and card.owner_id == me.pk %}<a class="gl-btn gl-btn-quiet" href="{% url 'gallery:skill_update' card.pk %}" id="gl-update">{% t "skill.update" %} ({{ updates_left }})</a>{% endif %}
+      </div>
+      {% if skill %}
+        <p class="gl-small gl-muted">{% t "skill.facts_version" %} {{ version.number }} · {% t "skill.facts_from" %} {{ skill.get_origin_display }} · {{ skill.downloads }} {% t "skill.facts_downloads" %}</p>
+        <p class="gl-careful" id="gl-careful">{% t "skill.careful" %}</p>
+        {% if version.changes_note %}<p class="gl-small gl-muted">{{ version.changes_note }}</p>{% endif %}
+      {% endif %}
+      {% if card.url %}<p class="gl-small gl-url" dir="ltr">{{ card.url }}</p>{% endif %}
+    </article>
+  </div>
+</div>
+
+{% if skill and shown %}
+<section class="gl-paper gl-files" id="gl-files" aria-label="{% t 'skill.files' %}">
+  <h2 class="gl-h2">{% t "skill.files" %}</h2>
+  <nav class="gl-file-list" dir="ltr">{% for f in files %}<a href="?file={{ f.path|urlencode }}#gl-files" {% if f.pk == shown.pk %}aria-current="true"{% endif %}>{{ f.path }}</a>{% endfor %}</nav>
+  <pre class="gl-code" dir="ltr" id="gl-file-text">{{ shown.text }}</pre>
+</section>
+{% endif %}
+
+<section class="gl-thread" id="thread" aria-label="{% t 'thread.title' %}" data-exhibit="{{ card.pk }}">
+  <h2 class="gl-h2">{% t "thread.title" %}</h2>
+  {% for c in comments %}
+    <article class="gl-note{% if c.deleted %} is-deleted{% endif %}" id="c{{ c.pk }}" data-comment="{{ c.pk }}" data-author="{{ c.author.display_name }}">
+      {% if c.reply_to %}
+        <a class="gl-quote" dir="auto" href="#c{{ c.reply_to.pk }}">
+          <b>{{ c.reply_to.author.display_name }}</b>
+          {% if c.reply_to.deleted %}<i>{% t "thread.deleted" %}</i>{% else %}{{ c.reply_to.body|truncatechars:120 }}{% endif %}
+        </a>
+      {% endif %}
+      <div class="gl-note-head"><b dir="auto">{{ c.author.display_name }}</b> <span class="gl-muted gl-small">{{ c.created_at|date:"d.m H:i" }}{% if c.edited_at and not c.deleted %} · {% t "thread.edited" %}{% endif %}</span></div>
+      {% if c.deleted %}
+        <p class="gl-note-body"><i>{% t "thread.deleted" %}</i></p>
+      {% else %}
+        <p class="gl-note-body" dir="auto">{{ c.body|linebreaksbr }}</p>
+        {% if me %}
+          <div class="gl-note-acts">
+            <button type="button" class="gl-link" data-reply="{{ c.pk }}">{% t "thread.reply" %}</button>
+            {% if c.author_id == me.pk %}<button type="button" class="gl-link" data-edit="{{ c.pk }}">{% t "thread.edit" %}</button>{% endif %}
+            {% if c.author_id == me.pk or me.admin %}<button type="button" class="gl-link" data-delete="{{ c.pk }}">{% t "thread.delete" %}</button>{% endif %}
+          </div>
+        {% endif %}
+      {% endif %}
+    </article>
+  {% empty %}
+    <p class="gl-on-cork" id="gl-no-comments">{% t "thread.none" %}</p>
+  {% endfor %}
+
+  {% if user.is_authenticated %}
+    <form class="gl-note gl-note-new" id="gl-comment-form" data-confirm-delete="{% t 'thread.confirm_delete' %}" data-empty="{% t 'thread.empty' %}" data-save="{% t 'thread.save' %}">
+      <div class="gl-replying" id="gl-replying" hidden>
+        <span>{% t "thread.replying_to" %} <b id="gl-replying-to"></b></span>
+        <button type="button" class="gl-link" id="gl-replying-cancel">{% t "thread.cancel" %}</button>
+      </div>
+      <label class="gl-field" for="gl-comment-body"><span>{% t "thread.label" %}</span>
+        <textarea id="gl-comment-body" rows="3" maxlength="2000" required></textarea></label>
+      <p class="gl-error" id="gl-comment-error" hidden></p>
+      <button type="submit" class="gl-btn">{% t "thread.post" %}</button>
+    </form>
+  {% else %}
+    <p class="gl-note gl-note-new"><a href="{% url 'gallery:login' %}?next={{ request.get_full_path|urlencode }}%23thread" id="gl-sign-in-to-comment">{% t "thread.sign_in" %}</a></p>
+  {% endif %}
+</section>
+{% endblock %}
