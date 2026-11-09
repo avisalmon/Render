@@ -10,11 +10,33 @@ from rest_framework.response import Response
 
 from . import access, shots, skillpack, skills
 from . import skill_chat as chat_engine
-from .models import AICall, Comment, Exhibit, Like, Person, Skill, SkillChat, Star, Strike, Topic, Training
+from .models import (
+    AICall,
+    Comment,
+    Exhibit,
+    Like,
+    Person,
+    Skill,
+    SkillChat,
+    Star,
+    Strike,
+    Topic,
+    Training,
+)
 from .serializers import (
-    CommentSerializer, ExhibitSerializer, LikeSerializer, PersonAdminSerializer, PersonOwnSerializer,
-    PersonPublicSerializer, StarSerializer, TopicSerializer, TrainingSerializer,
-    AICallSerializer, SkillChatSerializer, SkillSerializer, StrikeSerializer,
+    AICallSerializer,
+    CommentSerializer,
+    ExhibitSerializer,
+    LikeSerializer,
+    PersonAdminSerializer,
+    PersonOwnSerializer,
+    PersonPublicSerializer,
+    SkillChatSerializer,
+    SkillSerializer,
+    StarSerializer,
+    StrikeSerializer,
+    TopicSerializer,
+    TrainingSerializer,
 )
 from .views import search
 

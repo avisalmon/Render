@@ -5,8 +5,20 @@ the person's own answer and in Avi's (REQ-G.5)."""
 from rest_framework import serializers
 
 from .models import (
-    AICall, ChatMessage, Comment, Exhibit, Like, Person, Skill, SkillChat, SkillFile, SkillVersion, Star, Strike,
-    Topic, Training,
+    AICall,
+    ChatMessage,
+    Comment,
+    Exhibit,
+    Like,
+    Person,
+    Skill,
+    SkillChat,
+    SkillFile,
+    SkillVersion,
+    Star,
+    Strike,
+    Topic,
+    Training,
 )
 
 

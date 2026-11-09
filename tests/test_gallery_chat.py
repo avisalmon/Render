@@ -375,8 +375,9 @@ def test_a_cap_reached_mid_chat_ends_it_without_a_call(client, people, model, se
 
 
 def test_yesterdays_spending_does_not_count(people, settings):
-    from django.utils import timezone
     from datetime import timedelta
+
+    from django.utils import timezone
 
     settings.GALLERY_PERSON_DAILY_USD = "0.05"
     AICall.objects.create(person=people["dana"], purpose="safety", model="gpt-6-luna", cost_usd=Decimal("0.05"),

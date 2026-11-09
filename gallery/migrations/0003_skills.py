@@ -2,8 +2,9 @@
 
 import django.db.models.deletion
 import django.utils.timezone
-import gallery.models
 from django.db import migrations, models
+
+import gallery.models
 
 
 class Migration(migrations.Migration):
