@@ -1,0 +1,48 @@
+{% extends "gallery/base.html" %}{% load gallery_tags %}
+{% block content %}
+<div class="gl-head">
+  <h1 class="gl-title">{% if skills_tab %}{% t "skills.title" %}{% else %}{% t "home.title" %}{% endif %}</h1>
+  {% if skills_tab %}<a class="gl-btn" href="{% url 'gallery:skill_new' %}" id="gl-add-skill">+ {% t "skills.add" %}</a>{% else %}<a class="gl-btn" href="{% url 'gallery:exhibit_new' %}" id="gl-add">+ {% t "home.add" %}</a>{% endif %}
+</div>
+{% if not searching %}<p class="gl-intro">{% if skills_tab %}{% t "skills.intro" %}{% else %}{% t "home.intro" %}{% endif %}</p>{% endif %}
+
+<form class="gl-search" method="get" role="search" id="gl-search">
+  <label class="gl-sr" for="gl-q">{% t "search.label" %}</label>
+  <input type="search" name="q" id="gl-q" value="{{ q }}" placeholder="{% t 'search.placeholder' %}" maxlength="200">
+  <label class="gl-sr" for="gl-topic">{% t "search.topic" %}</label>
+  <select name="topic" id="gl-topic">
+    <option value="">{% t "search.any_topic" %}</option>
+    {% for tp in topics %}<option value="{{ tp.slug }}" {% if tp.slug == topic %}selected{% endif %}>{% tr tp "name" %}</option>{% endfor %}
+  </select>
+  {% if kind and not skills_tab %}<input type="hidden" name="kind" value="{{ kind }}">{% endif %}
+  {% if show != 'all' %}<input type="hidden" name="show" value="{{ show }}">{% endif %}
+  <button type="submit" class="gl-btn">{% t "search.go" %}</button>
+</form>
+
+<nav class="gl-chips" aria-label="{% t 'search.show' %}">
+{% if not skills_tab %}
+  <a href="?{% if q %}q={{ q|urlencode }}&amp;{% endif %}{% if topic %}topic={{ topic }}{% endif %}" {% if not kind and show == 'all' %}aria-current="true"{% endif %}>{% t "chip.all" %}</a>
+  <a href="?kind=page{% if q %}&amp;q={{ q|urlencode }}{% endif %}{% if topic %}&amp;topic={{ topic }}{% endif %}" {% if kind == 'page' %}aria-current="true"{% endif %}>{% t "chip.pages" %}</a>
+  <a href="?kind=skill{% if q %}&amp;q={{ q|urlencode }}{% endif %}{% if topic %}&amp;topic={{ topic }}{% endif %}" {% if kind == 'skill' %}aria-current="true"{% endif %}>{% t "chip.skills" %}</a>
+  <a href="?kind=bkm{% if q %}&amp;q={{ q|urlencode }}{% endif %}{% if topic %}&amp;topic={{ topic }}{% endif %}" {% if kind == 'bkm' %}aria-current="true"{% endif %}>{% t "chip.bkms" %}</a>
+{% endif %}
+  {% if me %}
+    <a href="?show=stars" {% if show == 'stars' %}aria-current="true"{% endif %}>{% t "chip.stars" %}</a>
+    <a href="?show=mine" {% if show == 'mine' %}aria-current="true"{% endif %}>{% t "chip.mine" %}</a>
+  {% endif %}
+</nav>
+
+{% if cards %}
+  <div class="gl-board">
+    {% for card in cards %}{% include "gallery/_card.html" %}{% endfor %}
+  </div>
+{% else %}
+  <article class="gl-paper gl-empty" id="gl-empty">
+    {% if show == 'stars' %}<p>{% t "empty.stars" %}</p>
+    {% elif show == 'mine' %}<p>{% t "empty.mine" %} <a href="{% url 'gallery:exhibit_new' %}">{% t "empty.add_first" %}</a></p>
+    {% elif searching %}<p>{% t "empty.search" %} <a href="{{ request.path }}">{% t "empty.clear" %}</a></p>
+    {% elif skills_tab %}<p>{% t "skills.empty" %} <a href="{% url 'gallery:skill_new' %}">{% t "skills.add_first" %}</a></p>
+    {% else %}<p>{% t "empty.board" %} <a href="{% url 'gallery:exhibit_new' %}">{% t "empty.add_first" %}</a></p>{% endif %}
+  </article>
+{% endif %}
+{% endblock %}

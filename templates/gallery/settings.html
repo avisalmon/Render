@@ -1,0 +1,22 @@
+{% extends "gallery/base.html" %}{% load gallery_tags %}
+{% block title %}{% t "settings.title" %} · {% t "brand" %}{% endblock %}
+{% block content %}
+<article class="gl-paper gl-form-paper">
+  <span class="gl-pin" aria-hidden="true"></span>
+  <h1 class="gl-h1">{% t "settings.title" %}</h1>
+  <p class="gl-muted">{% t "settings.page" %} <a href="{% url 'gallery:person' me.slug %}" dir="ltr">/gallery/u/{{ me.slug }}/</a></p>
+  <form method="post" class="gl-form">
+    {% csrf_token %}
+    {% for field in form %}
+      {% if field.name == "language" %}
+        <fieldset class="gl-field gl-radios"><legend>{{ field.label }}</legend>{{ field }}</fieldset>
+      {% else %}
+        <label class="gl-field" for="{{ field.id_for_label }}"><span>{{ field.label }}</span>{{ field }}
+          {% if field.name == "training" %}<small class="gl-muted">{% t "settings.training_private" %}</small>{% endif %}
+          {% for e in field.errors %}<small class="gl-error">{{ e }}</small>{% endfor %}</label>
+      {% endif %}
+    {% endfor %}
+    <button type="submit" class="gl-btn" id="gl-save">{% t "form.save" %}</button>
+  </form>
+</article>
+{% endblock %}

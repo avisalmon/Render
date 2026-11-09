@@ -1,0 +1,35 @@
+{% load gallery_tags %}{# One card on the board: a polaroid with a pin (REQ-G.11, G.20, G.21). #}
+<article class="gl-card gl-kind-{{ card.kind }}" data-exhibit="{{ card.pk }}">
+  <span class="gl-pin" aria-hidden="true"></span>
+  <a class="gl-shot" href="{% url 'gallery:exhibit' card.pk %}" aria-label="{{ card.title }}">
+    {% if card.kind == 'skill' %}
+      <span class="gl-skill-face" dir="ltr"><b>{{ card.skill.name }}</b><code>SKILL.md</code><span dir="auto">{{ card.blurb|truncatechars:140 }}</span></span>
+    {% elif card.shot %}
+      <img src="/gallery/files/{{ card.shot.name }}" alt="{% t 'card.shot_of' %} {{ card.title }}" loading="lazy" width="1200" height="750">
+    {% elif card.shot_status == "waiting" and card.url %}
+      <span class="gl-shot-empty">{% t "card.shooting" %}</span>
+    {% else %}
+      <span class="gl-shot-empty">{% t "card.no_picture" %}</span>
+    {% endif %}
+  </a>
+  <div class="gl-card-text">
+    <span class="gl-tag gl-tag-{{ card.kind }}">{% if card.kind == 'bkm' %}{% t "kind.bkm" %}{% elif card.kind == 'skill' %}{% t "kind.skill" %}{% else %}{% t "kind.page" %}{% endif %}</span>
+    <a class="gl-card-title" dir="auto" href="{% url 'gallery:exhibit' card.pk %}">{{ card.title }}</a>
+    <a class="gl-card-by" dir="auto" href="{% url 'gallery:person' card.owner.slug %}">{{ card.owner.display_name }}</a>
+  </div>
+  <div class="gl-card-acts">
+    <button type="button" class="gl-act gl-like" data-like="{{ card.pk }}" aria-pressed="{% if card.liked %}true{% else %}false{% endif %}" aria-label="{% t 'card.like' %}">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 2.9 4.5 6.6 4.5c2.2 0 3.7 1.2 5.4 3.1 1.7-1.9 3.2-3.1 5.4-3.1 3.7 0 5.7 3.9 4.2 7.3C19.5 16.4 12 21 12 21z"/></svg>
+      <span class="gl-count">{{ card.n_likes }}</span>
+    </button>
+    <button type="button" class="gl-act gl-star" data-star="{{ card.pk }}" aria-pressed="{% if card.starred %}true{% else %}false{% endif %}" aria-label="{% t 'card.star' %}">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg>
+    </button>
+    <a class="gl-act" href="{% url 'gallery:exhibit' card.pk %}#thread" aria-label="{{ card.n_comments }} {% t 'card.comments' %}">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H9l-4.5 3.6V17H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/></svg>
+      <span class="gl-count">{{ card.n_comments }}</span>
+    </a>
+    {% if card.kind == 'skill' %}<span class="gl-act gl-downloads" aria-label="{% t 'skill.downloads' %}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M4 19h16"/></svg><span class="gl-count">{{ card.skill.downloads }}</span></span>{% endif %}
+    {% if card.url %}<a class="gl-visit" href="{{ card.url }}" target="_blank" rel="noopener noreferrer">{% if card.kind == 'bkm' %}{% t "card.open_bkm" %}{% else %}{% t "card.visit" %}{% endif %}</a>{% endif %}
+  </div>
+</article>

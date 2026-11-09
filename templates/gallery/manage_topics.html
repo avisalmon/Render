@@ -1,0 +1,28 @@
+{% extends "gallery/base.html" %}{% load gallery_tags %}
+{% block title %}{% t "manage.topics" %} · {% t "brand" %}{% endblock %}
+{% block content %}
+{% include "gallery/_manage_tabs.html" %}
+<article class="gl-paper gl-list-paper">
+  <p class="gl-muted">{% t "manage.topics_hint" %}</p>
+  {% for t in rows %}
+    <form method="post" class="gl-row-form" id="gl-topic-{{ t.slug }}">
+      {% csrf_token %}<input type="hidden" name="pk" value="{{ t.pk }}">
+      <input name="name_he" value="{{ t.name_he }}" aria-label="עברית" dir="rtl" maxlength="60">
+      <input name="name_en" value="{{ t.name_en }}" aria-label="English" dir="ltr" maxlength="60">
+      <span class="gl-small gl-muted"><code dir="ltr">{{ t.slug }}</code> · {{ t.n_cards }} {% t "person.items" %}</span>
+      <span class="gl-row-acts">
+        <button name="action" value="save" class="gl-btn gl-btn-quiet">{% t "form.save" %}</button>
+        <button name="action" value="up" class="gl-icon" aria-label="{% t 'manage.up' %}">▲</button>
+        <button name="action" value="down" class="gl-icon" aria-label="{% t 'manage.down' %}">▼</button>
+      </span>
+    </form>
+  {% endfor %}
+  <form method="post" class="gl-row-form gl-row-new" id="gl-topic-add">
+    {% csrf_token %}<input type="hidden" name="action" value="add">
+    <input name="name_he" placeholder="{% t 'manage.name_he' %}" aria-label="{% t 'manage.name_he' %}" dir="rtl" maxlength="60">
+    <input name="name_en" placeholder="{% t 'manage.name_en' %}" aria-label="{% t 'manage.name_en' %}" dir="ltr" maxlength="60">
+    <button class="gl-btn">{% t "manage.add" %}</button>
+  </form>
+  {% if error %}<p class="gl-error" role="alert">{{ error }}</p>{% endif %}
+</article>
+{% endblock %}

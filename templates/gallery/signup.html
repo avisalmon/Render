@@ -1,0 +1,21 @@
+{% extends "gallery/base.html" %}{% load gallery_tags %}
+{% block title %}{% t "auth.sign_up" %} · {% t "brand" %}{% endblock %}
+{% block content %}
+<section class="gl-door">
+  <article class="gl-paper gl-door-paper">
+    <span class="gl-pin" aria-hidden="true"></span>
+    <h1 class="gl-h1">{% t "auth.sign_up" %}</h1>
+    <p class="gl-muted">{% t "auth.sign_up_hint" %}</p>
+    <form method="post" class="gl-form">
+      {% csrf_token %}
+      {% for field in form %}
+        <label class="gl-field" for="{{ field.id_for_label }}"><span>{{ field.label }}</span>{{ field }}
+          {% for e in field.errors %}<small class="gl-error">{{ e }}</small>{% endfor %}</label>
+      {% endfor %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <button type="submit" class="gl-btn">{% t "auth.sign_up" %}</button>
+    </form>
+    <p class="gl-small">{% t "auth.have_account" %} <a href="{% url 'gallery:login' %}">{% t "nav.sign_in" %}</a></p>
+  </article>
+</section>
+{% endblock %}

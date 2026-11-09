@@ -1,0 +1,16 @@
+{% extends "gallery/base.html" %}{% load gallery_tags %}
+{% block title %}{{ owner.display_name }} · {% t "brand" %}{% endblock %}
+{% block content %}
+<div class="gl-head">
+  <h1 class="gl-title" id="gl-person-name" dir="auto">{{ owner.display_name }}</h1>
+  {% if me and me.pk == owner.pk %}<a class="gl-btn" href="{% url 'gallery:exhibit_new' %}">+ {% t "home.add" %}</a>{% endif %}
+</div>
+<p class="gl-intro">{% t "person.since" %} {{ owner.created_at|date:"m.Y" }} · {{ cards|length }} {% t "person.items" %}</p>
+{% if cards %}
+  <div class="gl-board">
+    {% for card in cards %}{% include "gallery/_card.html" %}{% endfor %}
+  </div>
+{% else %}
+  <article class="gl-paper gl-empty"><p>{% t "person.empty" %}</p></article>
+{% endif %}
+{% endblock %}

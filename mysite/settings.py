@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     "dentist",
     "bkm",
     "design3d",
+    "gallery",
 ]
 
 MIDDLEWARE = [
@@ -73,6 +74,8 @@ MIDDLEWARE = [
     # site's own. Late on purpose, so the refusal has had everything done to it
     # that a real 404 gets. See improv/middleware.py.
     "improv.middleware.GateMiddleware",
+    # /gallery/ runs in the reader's language and only /gallery/ (gallery/middleware.py).
+    "gallery.middleware.GalleryLanguageMiddleware",
     # Observes /ustrip/ exceptions and mails Avi; acts on no other path,
     # changes no response. See ustrip/middleware.py.
     "ustrip.middleware.UstripErrorNotifier",
@@ -137,6 +140,22 @@ COHORT_PRIVATE_DIR = PERSISTENT_ROOT / "cohort_private"
 # Screenshots of participants' sites come from a public screenshot service.
 # The cohort tests replace it with a fake and never reach the network.
 COHORT_SHOTS_ENABLED = os.environ.get("COHORT_SHOTS_ENABLED", "1") == "1"
+# gallery (docs/gallery): card pictures, on the persistent disk in the
+# app's own folder. Public like the gallery itself, served by gallery.views.file.
+GALLERY_FILES_DIR = PERSISTENT_ROOT / "gallery_files"
+# The same public screenshot services as cohort; the gallery tests fake them.
+GALLERY_SHOTS_ENABLED = os.environ.get("GALLERY_SHOTS_ENABLED", "1") == "1"
+# The skill chat's model and its ceiling per chat (docs/gallery, REQ-G.63).
+# gpt-6-luna was measured on 2026-11-09 against 4 good and 9 planted-bad skills
+# (3 the plain patterns miss): all right, about $0.0002 a reading.
+GALLERY_MODEL = os.environ.get("GALLERY_MODEL", "gpt-6-luna")
+GALLERY_CHAT_BUDGET = os.environ.get("GALLERY_CHAT_BUDGET", "0.40")
+# Signing up is instant, so a ceiling per chat is not a ceiling on the bill
+# (methodology 51): one per person and one for the whole gallery, per 24 hours.
+GALLERY_PERSON_DAILY_USD = os.environ.get("GALLERY_PERSON_DAILY_USD", "1.00")
+GALLERY_SITE_DAILY_USD = os.environ.get("GALLERY_SITE_DAILY_USD", "5.00")
+# Who hears about a person blocked from uploading skills (REQ-G.72).
+GALLERY_ADMIN_EMAIL = os.environ.get("GALLERY_ADMIN_EMAIL", "avi.salmon@gmail.com")
 # design3d (docs/design3d): sketches, STLs and previews, private to their owners.
 DESIGN3D_PRIVATE_DIR = PERSISTENT_ROOT / "design3d_private"
 # OpenSCAD: on Render the standalone build that build.sh unpacks; on a Windows

@@ -1,0 +1,7 @@
+{% load gallery_tags %}<div class="gl-head"><h1 class="gl-title">{% t "manage.title" %}</h1></div>
+<nav class="gl-chips" aria-label="{% t 'manage.title' %}">
+  <a href="{% url 'gallery:manage' %}" {% if tab == 'numbers' %}aria-current="true"{% endif %}>{% t "manage.numbers" %}</a>
+  <a href="{% url 'gallery:manage_people' %}" {% if tab == 'people' %}aria-current="true"{% endif %}>{% t "manage.people" %}</a>
+  <a href="{% url 'gallery:manage_trainings' %}" {% if tab == 'trainings' %}aria-current="true"{% endif %}>{% t "manage.trainings" %}</a>
+  <a href="{% url 'gallery:manage_topics' %}" {% if tab == 'topics' %}aria-current="true"{% endif %}>{% t "manage.topics" %}</a>
+</nav>

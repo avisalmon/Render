@@ -20,6 +20,7 @@ from counter import errors as counter_errors
 from crashtech import errors as crashtech_errors
 from dentist import errors as dentist_errors
 from exo import errors as exo_errors
+from gallery import errors as gallery_errors
 from matazim import errors as matazim_errors
 from memz import errors as memz_errors
 from sensorlab import errors as sensorlab_errors
@@ -41,6 +42,8 @@ def page_not_found(request, exception=None):
         return books_errors.page_not_found(request, exception)
     if request.path.startswith(cohort_errors.PREFIX):
         return cohort_errors.page_not_found(request, exception)
+    if request.path.startswith(gallery_errors.PREFIX):
+        return gallery_errors.page_not_found(request, exception)
     if request.path.startswith(bkm_errors.PREFIX):
         return bkm_errors.page_not_found(request, exception)
     if request.path.startswith(design3d_errors.PREFIX):
@@ -69,6 +72,8 @@ def server_error(request):
         return books_errors.server_error(request)
     if request.path.startswith(cohort_errors.PREFIX):
         return cohort_errors.server_error(request)
+    if request.path.startswith(gallery_errors.PREFIX):
+        return gallery_errors.server_error(request)
     if request.path.startswith(bkm_errors.PREFIX):
         return bkm_errors.server_error(request)
     if request.path.startswith(design3d_errors.PREFIX):
@@ -97,6 +102,8 @@ def permission_denied(request, exception=None):
         return books_errors.permission_denied(request, exception)
     if request.path.startswith(cohort_errors.PREFIX):
         return cohort_errors.permission_denied(request, exception)
+    if request.path.startswith(gallery_errors.PREFIX):
+        return gallery_errors.permission_denied(request, exception)
     if request.path.startswith(bkm_errors.PREFIX):
         return bkm_errors.permission_denied(request, exception)
     if request.path.startswith(design3d_errors.PREFIX):

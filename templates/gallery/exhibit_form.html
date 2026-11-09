@@ -1,0 +1,55 @@
+{% extends "gallery/base.html" %}{% load gallery_tags %}
+{% block title %}{% if new %}{% t "form.new_title" %}{% else %}{% t "detail.edit" %}{% endif %} · {% t "brand" %}{% endblock %}
+{% block content %}
+<p class="gl-back"><a href="{% if new %}{% url 'gallery:home' %}{% else %}{% url 'gallery:exhibit' card.pk %}{% endif %}">{% t "back" %}</a></p>
+<article class="gl-paper gl-form-paper">
+  <span class="gl-pin" aria-hidden="true"></span>
+  <h1 class="gl-h1">{% if new %}{% t "form.new_title" %}{% else %}{% t "form.edit_title" %} {{ card.title }}{% endif %}</h1>
+  {% if new %}<p class="gl-muted">{% t "form.new_hint" %}</p>{% endif %}
+  <form method="post" class="gl-form">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="save">
+    {% for field in form %}
+      {% if field.name == "topics" %}
+        <fieldset class="gl-field gl-topic-pick"><legend>{{ field.label }}</legend>{{ field }}
+          {% for e in field.errors %}<small class="gl-error">{{ e }}</small>{% endfor %}</fieldset>
+      {% else %}
+        <label class="gl-field" for="{{ field.id_for_label }}"><span>{{ field.label }}</span>{{ field }}
+          {% for e in field.errors %}<small class="gl-error">{{ e }}</small>{% endfor %}</label>
+      {% endif %}
+    {% endfor %}
+    <button type="submit" class="gl-btn" id="gl-save">{% if new %}{% t "form.hang" %}{% else %}{% t "form.save" %}{% endif %}</button>
+  </form>
+</article>
+
+{% if not new %}
+  {% if card.url %}
+  <article class="gl-paper gl-form-paper">
+    <h2 class="gl-h2">{% t "form.picture_title" %}</h2>
+    <form method="post" class="gl-actions">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="retake">
+      <button type="submit" class="gl-btn gl-btn-quiet" id="gl-retake">{% t "form.retake" %}</button>
+    </form>
+    <form method="post" enctype="multipart/form-data" class="gl-form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="upload">
+      <label class="gl-upload" for="id_picture">
+        <span class="gl-btn gl-btn-quiet">{% t "form.upload_instead" %}</span>
+        <input type="file" name="picture" id="id_picture" accept="image/*" onchange="this.form.submit()">
+      </label>
+      {% for e in upload.picture.errors %}<small class="gl-error">{{ e }}</small>{% endfor %}
+    </form>
+  </article>
+  {% endif %}
+  <article class="gl-paper gl-form-paper gl-danger">
+    <h2 class="gl-h2">{% t "form.remove_title" %}</h2>
+    <p class="gl-muted">{% t "form.remove_hint" %}</p>
+    <form method="post" data-confirm="{% t 'form.remove_confirm' %}">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="delete">
+      <button type="submit" class="gl-btn gl-btn-danger" id="gl-delete">{% t "form.remove" %}</button>
+    </form>
+  </article>
+{% endif %}
+{% endblock %}

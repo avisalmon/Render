@@ -1,0 +1,11 @@
+{% extends "gallery/base.html" %}{% load gallery_tags %}
+{% block title %}{{ status }} · {% t "brand" %}{% endblock %}
+{% block content %}
+<section class="gl-door">
+  <article class="gl-paper gl-door-paper">
+    <span class="gl-pin" aria-hidden="true"></span>
+    <h1 class="gl-h1">{% t key %}</h1>
+    <p><a class="gl-btn" href="/gallery/">{% t "back.gallery" %}</a></p>
+  </article>
+</section>
+{% endblock %}

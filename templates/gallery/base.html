@@ -1,0 +1,52 @@
+{% load static gallery_tags %}<!doctype html>
+<html lang="{{ request.gallery_language|default:'he' }}" dir="{{ request.gallery_dir|default:'rtl' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{% block title %}{% t "brand" %}{% endblock %}</title>
+  {% comment %}
+    Rule 3: the gallery's own frame. Nothing from babook's base or menu. The
+    look is cohort's noticeboard (Avi, 2026-11-09: "exactly the same style"),
+    copied into gallery's own files with its own class prefix.
+  {% endcomment %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&family=Karantina:wght@400;700&display=swap">
+  <link rel="stylesheet" href="{% static 'gallery/gallery.css' %}">
+</head>
+<body class="gl" data-signed-in="{% if user.is_authenticated %}1{% endif %}" data-login="/gallery/login/?next={{ request.get_full_path|urlencode }}">
+  {% gallery_nav as nav %}
+  <div class="gl-top">
+    <header class="gl-bar">
+      <a class="gl-brand" href="{% url 'gallery:home' %}">{% t "brand" %}</a>
+      <nav class="gl-nav" aria-label="{% t 'nav.label' %}">
+        <a href="{% url 'gallery:home' %}" {% if section == 'home' %}aria-current="page"{% endif %}>{% t "nav.gallery" %}</a>
+        <a href="{% url 'gallery:skills' %}" {% if section == 'skills' %}aria-current="page"{% endif %}>{% t "nav.skills" %}</a>
+        {% if nav.me %}<a href="{% url 'gallery:person' nav.me.slug %}" {% if section == 'me' %}aria-current="page"{% endif %}>{% t "nav.mine" %}</a>{% endif %}
+        {% if nav.admin %}<a href="{% url 'gallery:manage' %}" {% if section == 'manage' %}aria-current="page"{% endif %}>{% t "nav.admin" %}</a>{% endif %}
+      </nav>
+      <div class="gl-account">
+        <form method="post" action="{% url 'gallery:set_language' request.gallery_other_language|default:'en' %}">
+          {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button type="submit" class="gl-link" aria-label="{% t 'lang.switch_label' %}" id="gl-lang">{% t "lang.switch_to" %}</button>
+        </form>
+        {% if user.is_authenticated %}
+          <a class="gl-link" href="{% url 'gallery:settings' %}">{% t "nav.settings" %}</a>
+          <form method="post" action="{% url 'gallery:logout' %}">{% csrf_token %}<button type="submit" class="gl-link">{% t "nav.sign_out" %}</button></form>
+        {% else %}
+          <a class="gl-link" href="{% url 'gallery:login' %}?next={{ request.get_full_path|urlencode }}" id="gl-sign-in">{% t "nav.sign_in" %}</a>
+        {% endif %}
+      </div>
+    </header>
+  </div>
+
+  <main class="gl-main">
+    {% if messages %}
+      <div class="gl-flash" role="status">{% for m in messages %}<p>{{ m }}</p>{% endfor %}</div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <script src="{% static 'gallery/gallery.js' %}" defer></script>
+</body>
+</html>

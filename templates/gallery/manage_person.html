@@ -1,0 +1,53 @@
+{% extends "gallery/base.html" %}{% load gallery_tags %}
+{% block title %}{{ p.display_name }} · {% t "manage.title" %}{% endblock %}
+{% block content %}
+{% include "gallery/_manage_tabs.html" %}
+<p class="gl-back"><a href="{% url 'gallery:manage_people' %}">{% t "back" %}</a></p>
+<article class="gl-paper gl-form-paper" id="gl-manage-person">
+  <h2 class="gl-h1" dir="auto">{{ p.display_name }}</h2>
+  <p class="gl-muted"><span dir="ltr">{{ p.user.email }}</span> · <a href="{% url 'gallery:person' p.slug %}">{% t "manage.public_page" %}</a></p>
+  <p>{% t "manage.training" %}: <span dir="auto">{% if p.training %}{% tr p.training "name" %}{% elif p.answered_training %}{% t "training.other" %}{% if p.training_other %}: {{ p.training_other }}{% endif %}{% else %}-{% endif %}</span></p>
+  <p>{{ p.n_pages }} {% t "chip.pages" %} · {{ p.n_skills }} {% t "chip.skills" %} · {{ p.n_strikes }} {% t "manage.strikes" %} · <span dir="ltr">${{ p.cost|floatformat:4 }}</span></p>
+  <div class="gl-actions">
+    <form method="post" action="{% url 'gallery:manage_people' %}">{% csrf_token %}<input type="hidden" name="pk" value="{{ p.pk }}"><input type="hidden" name="back" value="{{ request.path }}">
+      <button name="action" value="unlimited" class="gl-btn{% if p.unlimited_skills %} gl-btn-quiet{% endif %}" id="gl-unlimited">{% if p.unlimited_skills %}{% t "manage.take_unlimited" %}{% else %}{% t "manage.give_unlimited" %}{% endif %}</button></form>
+    {% if p.skills_blocked_at %}
+      <form method="post" action="{% url 'gallery:manage_people' %}">{% csrf_token %}<input type="hidden" name="pk" value="{{ p.pk }}"><input type="hidden" name="back" value="{{ request.path }}">
+        <button name="action" value="unblock" class="gl-btn gl-btn-danger" id="gl-unblock">{% t "manage.unblock" %}</button></form>
+    {% endif %}
+  </div>
+</article>
+
+{% if skills %}
+<article class="gl-paper gl-form-paper">
+  <h2 class="gl-h2">{% t "chip.skills" %}</h2>
+  {% for s in skills %}
+    <form method="post" action="{% url 'gallery:manage_people' %}" class="gl-row-form">{% csrf_token %}
+      <input type="hidden" name="skill" value="{{ s.pk }}"><input type="hidden" name="back" value="{{ request.path }}">
+      <a href="{% url 'gallery:exhibit' s.exhibit_id %}" dir="ltr">{{ s.name }}</a>
+      <span class="gl-small gl-muted">{% t "manage.updates_used" %} {{ s.updates_used }}/4 · {{ s.downloads }} {% t "skill.facts_downloads" %}</span>
+      {% if s.updates_used %}<button name="action" value="reset_updates" class="gl-btn gl-btn-quiet">{% t "manage.reset_updates" %}</button>{% endif %}
+    </form>
+  {% endfor %}
+</article>
+{% endif %}
+
+{% if strikes %}
+<article class="gl-paper gl-form-paper">
+  <h2 class="gl-h2">{% t "manage.strikes" %}</h2>
+  {% for s in strikes %}
+    <div class="gl-strike{% if s.cleared_at %} is-closed{% endif %}">
+      <p class="gl-small">{{ s.created_at|date:"d.m.Y H:i" }}{% if s.chat %} · <a href="{% url 'gallery:skill_chat' s.chat_id %}">{% t "manage.the_chat" %}</a>{% endif %}{% if s.cleared_at %} · {% t "manage.cleared" %}{% endif %}{% if s.emailed_at %} · {% t "manage.emailed" %}{% endif %}</p>
+      <pre class="gl-code" dir="auto">{{ s.findings }}</pre>
+    </div>
+  {% endfor %}
+</article>
+{% endif %}
+
+{% if chats %}
+<article class="gl-paper gl-form-paper">
+  <h2 class="gl-h2">{% t "manage.chats" %}</h2>
+  <ul class="gl-rank">{% for c in chats %}<li><a href="{% url 'gallery:skill_chat' c.pk %}">{{ c.started_at|date:"d.m H:i" }}</a> · {{ c.status }} · <span dir="ltr">${{ c.cost_usd }}</span></li>{% endfor %}</ul>
+</article>
+{% endif %}
+{% endblock %}

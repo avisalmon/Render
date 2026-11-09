@@ -57,6 +57,8 @@ blackjack_model/
 
 # cohort's private files (screenshots, course documents); on Render they live on the disk.
 cohort_private/
+# gallery's card pictures; on Render they live on the disk.
+gallery_files/
 
 # design3d: private files and the OpenSCAD binaries (build.sh downloads the Linux one)
 design3d_private/

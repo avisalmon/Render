@@ -1,0 +1,31 @@
+{% extends "gallery/base.html" %}{% load gallery_tags %}
+{% block title %}{% t "manage.people" %} · {% t "brand" %}{% endblock %}
+{% block content %}
+{% include "gallery/_manage_tabs.html" %}
+<form class="gl-search" method="get" role="search">
+  <label class="gl-sr" for="gl-pq">{% t "search.label" %}</label>
+  <input type="search" name="q" id="gl-pq" value="{{ q }}" placeholder="{% t 'manage.people_search' %}">
+  <label class="gl-check"><input type="checkbox" name="show" value="blocked" {% if show == 'blocked' %}checked{% endif %}> {% t "manage.only_blocked" %}</label>
+  <button class="gl-btn">{% t "search.go" %}</button>
+</form>
+<article class="gl-paper">
+  <div class="gl-table-wrap">
+  <table class="gl-table" id="gl-people">
+    <thead><tr><th>{% t "manage.who" %}</th><th>{% t "manage.training" %}</th><th>{% t "chip.pages" %}</th><th>{% t "chip.skills" %}</th><th>{% t "manage.strikes" %}</th><th>{% t "manage.ai_cost" %}</th></tr></thead>
+    <tbody>
+    {% for p in rows %}
+      <tr{% if p.skills_blocked_at %} class="is-blocked"{% endif %}>
+        <td><a href="{% url 'gallery:manage_person' p.pk %}" dir="auto">{{ p.display_name }}</a><br><span class="gl-small gl-muted" dir="ltr">{{ p.user.email }}</span>
+          {% if p.unlimited_skills %}<span class="gl-tag gl-tag-skill">{% t "manage.unlimited" %}</span>{% endif %}
+          {% if p.skills_blocked_at %}<span class="gl-tag gl-tag-bkm">{% t "manage.blocked" %}</span>{% endif %}</td>
+        <td dir="auto">{% if p.training %}{% tr p.training "name" %}{% elif p.answered_training %}{% t "training.other" %}{% if p.training_other %}: {{ p.training_other }}{% endif %}{% else %}<span class="gl-muted">-</span>{% endif %}</td>
+        <td>{{ p.n_pages }}</td><td>{{ p.n_skills }}</td><td>{{ p.n_strikes }}</td><td dir="ltr">${{ p.cost|floatformat:4 }}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="6" class="gl-muted">{% t "manage.nobody" %}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</article>
+{% endblock %}
