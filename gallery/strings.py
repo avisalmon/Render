@@ -385,6 +385,31 @@ STRINGS = {
     "manage.emailed": {"he": "נשלח מייל", "en": "emailed"},
     "manage.chats": {"he": "שיחות העלאה", "en": "Upload chats"},
 
+    # ---- round 2 (Avi, 2026-11-10)
+    "nav.bkm": {"he": "BKM", "en": "BKM"},
+    "home.intro_short": {
+        "he": "מה שבוגרי הדרכות 10x engineer בנו.",
+        "en": "What people in the 10x engineer trainings built.",
+    },
+    "chip.everything": {"he": "הכל", "en": "Everything"},
+    "search.kind": {"he": "סוג", "en": "Kind"},
+    "scope.my_course": {"he": "הקורס שלי", "en": "My course"},
+    "scope.everyone": {"he": "כל הגלריה", "en": "The whole gallery"},
+    "sort.likes": {"he": "אהובים", "en": "Most liked"},
+    "sort.new": {"he": "חדשים", "en": "Newest"},
+    "board.newest": {"he": "חדש בגלריה", "en": "New in the gallery"},
+    "board.by_likes": {"he": "לפי לייקים", "en": "By likes"},
+    "empty.course": {"he": "עוד אין כאן כלום מהקורס שלך.", "en": "Nothing from your course here yet."},
+    "skills.banner_title": {"he": "יש לכם סקיל?", "en": "Have a skill?"},
+    "skills.banner_text": {
+        "he": "העלו אותו כקובץ SKILL.md, או כ-zip של כל תיקיית הסקיל. בדיקה אוטומטית קוראת אותו לפני שהוא מתפרסם, "
+              "ואז כל אחד יכול להוריד אותו ל-Claude Code או ל-Copilot.",
+        "en": "Upload it as a SKILL.md file, or a zip of the whole skill folder. An automatic check reads it before it is "
+              "published, and then anyone can download it for Claude Code or Copilot.",
+    },
+    "skills.guide_link": {"he": "מה זה סקיל, ואיך כותבים אחד", "en": "What a skill is, and how to write one"},
+    "guide.title": {"he": "מה זה סקיל, ואיך כותבים אחד", "en": "What a skill is, and how to write one"},
+
     # ---- errors
     "error.404": {"he": "הדף הזה לא נמצא.", "en": "This page was not found."},
     "error.403": {"he": "אין לך גישה לדף הזה.", "en": "You do not have access to this page."},

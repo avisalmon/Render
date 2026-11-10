@@ -1,0 +1,105 @@
+{% extends "gallery/base.html" %}{% load gallery_tags %}
+{% block title %}{% t "guide.title" %} · {% t "brand" %}{% endblock %}
+{% block content %}
+<p class="gl-back"><a href="{% url 'gallery:skills' %}">{% t "back.skills" %}</a></p>
+<article class="gl-paper gl-guide" id="gl-guide">
+  <span class="gl-pin" aria-hidden="true"></span>
+  <h1 class="gl-h1">{% t "guide.title" %}</h1>
+{% if request.gallery_language == "en" %}
+  <p>A <b>skill</b> is a small folder of instructions that teaches an AI coding assistant (Claude Code or GitHub Copilot) to do one job well: build an Excel report, write a commit message, set up a Python project. The assistant reads the skill's description, and when your request matches it, it follows the skill's steps.</p>
+
+  <h2>What is inside</h2>
+  <p>One file is required, <code>SKILL.md</code>. It starts with a short header between two <code>---</code> lines, then the instructions in plain words:</p>
+  <pre class="gl-code" dir="ltr"><code>---
+name: excel-report
+description: Builds a monthly Excel report from a CSV file, with totals
+  and a chart. Use when the person asks for an Excel report from data.
+---
+# Excel report
+
+1. Ask which CSV file to use, if it is not clear.
+2. Read it with pandas; group by month.
+3. Write report.xlsx with openpyxl: one sheet, a total row, a bar chart.
+4. Ask before overwriting a file that already exists.</code></pre>
+  <ul>
+    <li><b>name</b>: lowercase English letters, digits and hyphens.</li>
+    <li><b>description</b>: what it does <i>and when to use it</i>. This is what the assistant reads to decide, so write the words people will say.</li>
+    <li>Next to it you may add a <code>scripts/</code> folder, examples or reference notes. All of it is text.</li>
+  </ul>
+
+  <h2>Where it lives</h2>
+  <ul>
+    <li>Claude Code: <code>.claude/skills/excel-report/SKILL.md</code> in your project (or <code>~/.claude/skills/</code> for every project).</li>
+    <li>GitHub Copilot: <code>.github/skills/excel-report/SKILL.md</code> in your repository.</li>
+  </ul>
+  <p>The file is the same for both. The gallery's download buttons give you the folder already in the right place.</p>
+
+  <h2>The easy way: skill-creator</h2>
+  <p>Anthropic publishes a skill that writes skills, <b>skill-creator</b>, in its public repository <a href="https://github.com/anthropics/skills" target="_blank" rel="noopener noreferrer" dir="ltr">github.com/anthropics/skills</a>. Copy its folder into <code>.claude/skills/</code>, open Claude Code and say what you want, for example:</p>
+  <pre class="gl-code" dir="ltr"><code>Use skill-creator to make a skill that turns my meeting notes
+into a short summary with decisions and action items.</code></pre>
+  <p>It asks a few questions, writes the <code>SKILL.md</code>, and can test it. Read what it wrote, try it on a real task, and fix what needs fixing.</p>
+
+  <h2>What makes a good skill</h2>
+  <ol>
+    <li>One job, said clearly in the description.</li>
+    <li>Short numbered steps the assistant can follow.</li>
+    <li>It asks before deleting, overwriting or sending anything.</li>
+    <li>No passwords, keys or personal data inside it.</li>
+    <li>Scripts that a person can read: no encoded or hidden parts.</li>
+  </ol>
+  <p>The gallery's automatic check refuses skills that delete or send things they should not, download and run code, or hide what they do. If yours is refused, it tells you what and where, and you can send a fixed version.</p>
+
+  <h2>Uploading</h2>
+  <p>Send the <code>SKILL.md</code> on its own, or a zip of the whole folder (up to 1MB). Each person can publish two skills, and update each one up to four times.</p>
+{% else %}
+  <p><b>סקיל</b> הוא תיקייה קטנה של הוראות שמלמדת עוזר AI לכתיבת קוד (Claude Code או GitHub Copilot) לעשות עבודה אחת היטב: לבנות דוח באקסל, לכתוב הודעת commit, להקים פרויקט Python. העוזר קורא את התיאור של הסקיל, וכשהבקשה שלכם מתאימה לו, הוא עובד לפי השלבים שבסקיל.</p>
+
+  <h2>מה יש בפנים</h2>
+  <p>קובץ אחד הוא חובה, <code>SKILL.md</code>. בראשו כותרת קצרה בין שתי שורות <code>---</code>, ואחריה ההוראות במילים פשוטות:</p>
+  <pre class="gl-code" dir="ltr"><code>---
+name: excel-report
+description: Builds a monthly Excel report from a CSV file, with totals
+  and a chart. Use when the person asks for an Excel report from data.
+---
+# Excel report
+
+1. Ask which CSV file to use, if it is not clear.
+2. Read it with pandas; group by month.
+3. Write report.xlsx with openpyxl: one sheet, a total row, a bar chart.
+4. Ask before overwriting a file that already exists.</code></pre>
+  <ul>
+    <li><b>name</b>: אותיות קטנות באנגלית, ספרות ומקפים.</li>
+    <li><b>description</b>: מה הסקיל עושה <i>ומתי להשתמש בו</i>. לפי זה העוזר מחליט, אז כתבו את המילים שאנשים באמת יגידו. אפשר לכתוב בעברית או באנגלית.</li>
+    <li>לידו אפשר להוסיף תיקיית <code>scripts/</code>, דוגמאות או הערות. הכל טקסט.</li>
+  </ul>
+
+  <h2>איפה הוא יושב</h2>
+  <ul>
+    <li>Claude Code: <code dir="ltr">.claude/skills/excel-report/SKILL.md</code> בתוך הפרויקט (או <code dir="ltr">~/.claude/skills/</code> לכל הפרויקטים).</li>
+    <li>GitHub Copilot: <code dir="ltr">.github/skills/excel-report/SKILL.md</code> בתוך הריפו.</li>
+  </ul>
+  <p>הקובץ זהה לשניהם. כפתורי ההורדה בגלריה נותנים לכם את התיקייה כבר במקום הנכון.</p>
+
+  <h2>הדרך הקלה: skill-creator</h2>
+  <p>Anthropic מפרסמת סקיל שכותב סקילים, <b>skill-creator</b>, בריפו הציבורי שלה <a href="https://github.com/anthropics/skills" target="_blank" rel="noopener noreferrer" dir="ltr">github.com/anthropics/skills</a>. מעתיקים את התיקייה שלו ל-<code dir="ltr">.claude/skills/</code>, פותחים את Claude Code ואומרים מה רוצים, למשל:</p>
+  <pre class="gl-code" dir="ltr"><code>Use skill-creator to make a skill that turns my meeting notes
+into a short summary with decisions and action items.</code></pre>
+  <p>אפשר לבקש גם בעברית. הוא שואל כמה שאלות, כותב את ה-<code>SKILL.md</code> ויכול גם לבדוק אותו. קראו מה הוא כתב, נסו אותו על משימה אמיתית, ותקנו מה שצריך.</p>
+
+  <h2>מה עושה סקיל טוב</h2>
+  <ol>
+    <li>עבודה אחת, שכתובה בבירור בתיאור.</li>
+    <li>שלבים קצרים וממוספרים שהעוזר יכול לעקוב אחריהם.</li>
+    <li>הוא שואל לפני שהוא מוחק, דורס או שולח משהו.</li>
+    <li>אין בתוכו סיסמאות, מפתחות או מידע אישי.</li>
+    <li>סקריפטים שבן אדם יכול לקרוא: בלי חלקים מוצפנים או מוסתרים.</li>
+  </ol>
+  <p>הבדיקה האוטומטית של הגלריה דוחה סקילים שמוחקים או שולחים דברים שלא צריך, מורידים ומריצים קוד מהאינטרנט, או מסתירים מה הם עושים. אם הסקיל שלכם נדחה, היא אומרת מה ואיפה, ואפשר לשלוח גרסה מתוקנת.</p>
+
+  <h2>העלאה</h2>
+  <p>שולחים את ה-<code>SKILL.md</code> לבד, או zip של כל התיקייה (עד 1MB). כל אחד יכול לפרסם שני סקילים, ולעדכן כל אחד מהם עד ארבע פעמים.</p>
+{% endif %}
+  <p class="gl-actions"><a class="gl-btn" href="{% url 'gallery:skill_new' %}" id="gl-guide-upload">+ {% t "skills.add" %}</a></p>
+</article>
+{% endblock %}

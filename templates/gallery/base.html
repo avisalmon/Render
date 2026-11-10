@@ -22,6 +22,8 @@
       <nav class="gl-nav" aria-label="{% t 'nav.label' %}">
         <a href="{% url 'gallery:home' %}" {% if section == 'home' %}aria-current="page"{% endif %}>{% t "nav.gallery" %}</a>
         <a href="{% url 'gallery:skills' %}" {% if section == 'skills' %}aria-current="page"{% endif %}>{% t "nav.skills" %}</a>
+        {# BKMs live in Avi's bkm app; the gallery only links there (Avi, 2026-11-10; the one link out, REQ-G.81). #}
+        <a href="/bkm/" id="gl-nav-bkm">{% t "nav.bkm" %}</a>
         {% if nav.me %}<a href="{% url 'gallery:person' nav.me.slug %}" {% if section == 'me' %}aria-current="page"{% endif %}>{% t "nav.mine" %}</a>{% endif %}
         {% if nav.admin %}<a href="{% url 'gallery:manage' %}" {% if section == 'manage' %}aria-current="page"{% endif %}>{% t "nav.admin" %}</a>{% endif %}
       </nav>

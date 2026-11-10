@@ -33,6 +33,7 @@ urlpatterns = [
     path("e/<int:pk>/edit/", views.exhibit_edit, name="exhibit_edit"),
     path("skills/", views.skills_home, name="skills"),
     path("skills/new/", views.skill_new, name="skill_new"),
+    path("skills/guide/", views.skill_guide, name="skill_guide"),
     path("skills/chat/<int:pk>/", views.skill_chat, name="skill_chat"),
     path("skills/chat/<int:pk>/act/", views.skill_chat_act, name="skill_chat_act"),
     path("e/<int:pk>/update/", views.skill_new, name="skill_update"),

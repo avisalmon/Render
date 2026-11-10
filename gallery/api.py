@@ -146,8 +146,8 @@ class ExhibitViewSet(viewsets.ModelViewSet):
         kind = serializer.validated_data.get("kind", Exhibit.PAGE)
         if kind == Exhibit.SKILL:
             raise ValidationError({"kind": "skills come in through the skill chat"})
-        if kind == Exhibit.BKM and not person.admin:
-            raise PermissionDenied("BKM cards are Avi's")
+        if kind == Exhibit.BKM:
+            raise PermissionDenied("BKMs live in the bkm app; the gallery links to it")
         card = serializer.save(owner=person)
         shots.take(card)
 
@@ -155,7 +155,7 @@ class ExhibitViewSet(viewsets.ModelViewSet):
         self._check(serializer.instance)
         kind = serializer.validated_data.get("kind")
         if kind and kind != serializer.instance.kind:
-            if Exhibit.SKILL in (kind, serializer.instance.kind) or not me(self.request).admin:
+            if Exhibit.SKILL in (kind, serializer.instance.kind) or kind == Exhibit.BKM or not me(self.request).admin:
                 raise PermissionDenied("the kind of a card does not change")
         serializer.save()
 

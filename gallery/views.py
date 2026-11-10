@@ -18,7 +18,7 @@ from . import access, shots, skillpack, skills
 from . import skill_chat as chat_engine
 from .forms import ExhibitForm, SettingsForm, ShotUploadForm, TrainingForm
 from .middleware import COOKIE
-from .models import Exhibit, Like, Person, Skill, SkillChat, Star, Topic
+from .models import Exhibit, Like, Person, Skill, SkillChat, Star, Topic, Training
 from .strings import LANGUAGES, STRINGS, text
 
 
@@ -67,32 +67,89 @@ def search(qs, q="", kind="", topic=""):
 # ---------------------------------------------------------------- the gallery
 
 
+NEW_STRIP = 4
+
+
+def course_for(request, person):
+    """Whose course gallery this is (REQ-G.110). A person with a training sees
+    theirs by default and the whole gallery by asking (`?scope=all`). Avi sees
+    the whole gallery by default and any course by `?course=<id>`. Nobody else
+    can open a course that is not theirs."""
+    if access.is_admin(request.user):
+        wanted = request.GET.get("course", "")
+        return Training.objects.filter(pk=wanted).first() if wanted.isdigit() else None
+    if person and person.training_id and request.GET.get("scope") != "all":
+        return person.training
+    return None
+
+
+def _link(request, **changes):
+    """The current address with some parameters changed (None drops one)."""
+    params = request.GET.copy()
+    for key, value in changes.items():
+        if value is None:
+            params.pop(key, None)
+        else:
+            params[key] = value
+    query = params.urlencode()
+    return request.path + (f"?{query}" if query else "")
+
+
 @ensure_csrf_cookie
 def home(request, skills_tab=False):
-    """REQ-G.1, G.32: everything, open to everybody, with the search on top.
+    """REQ-G.1, G.32, G.110 to G.113: the board, open to everybody. A course
+    member lands on their course's gallery; the newest cards sit on top, the
+    rest by likes (or by date, on request); the search hides behind a button.
     The skills tab (REQ-G.40) is the same board with the kind fixed."""
     person = access.person_of(request.user)
     shots.heal()
     q = (request.GET.get("q") or "").strip()[:200]
     kind = Exhibit.SKILL if skills_tab else request.GET.get("kind", "")
+    if kind not in (Exhibit.PAGE, Exhibit.SKILL):
+        kind = ""
     topic = request.GET.get("topic", "")
     show = request.GET.get("show", "all")
-    qs = search(Exhibit.objects.all(), q, kind, topic)
+    sort = "new" if request.GET.get("sort") == "new" else "likes"
+    course = course_for(request, person)
+    base = Exhibit.objects.exclude(kind=Exhibit.BKM)
+    if course is not None:
+        base = base.filter(owner__training=course)
+    if kind:
+        base = base.filter(kind=kind)
+    qs = search(base, q, "", topic)
     if show == "stars" and person:
         qs = qs.filter(pk__in=Star.objects.filter(person=person).values("exhibit"))
     elif show == "mine" and person:
         qs = qs.filter(owner=person)
     else:
         show = "all"
+    searching = bool(q or topic or show != "all" or (kind and not skills_tab))
+    cards = _cards(person, qs.select_related("skill"))
+    newest = []
+    if sort == "likes" and not searching:
+        newest = list(_cards(person, base.select_related("skill")).order_by("-created_at", "-id")[:NEW_STRIP])
+        cards = cards.exclude(pk__in=[c.pk for c in newest])
+    cards = cards.order_by("-n_likes", "-created_at", "-id") if sort == "likes" else cards.order_by("-created_at", "-id")
     return render(request, "gallery/home.html", {
-        "cards": _cards(person, qs.select_related("skill")), "q": q, "kind": kind, "topic": topic, "show": show,
+        "cards": cards, "newest": newest, "q": q, "kind": kind, "topic": topic, "show": show, "sort": sort,
         "topics": Topic.objects.all(), "me": person, "section": "skills" if skills_tab else "home",
-        "skills_tab": skills_tab, "searching": bool(q or (kind and not skills_tab) or topic or show != "all"),
+        "skills_tab": skills_tab, "searching": searching, "course": course,
+        "my_course": person.training if person and person.training_id else None,
+        "links": {
+            "likes": _link(request, sort=None), "new": _link(request, sort="new"),
+            "everyone": _link(request, scope="all", course=None), "my_course": _link(request, scope=None, course=None),
+            "clear": _link(request, q=None, topic=None, show=None, kind=None),
+        },
     })
 
 
 def skills_home(request):
     return home(request, skills_tab=True)
+
+
+def skill_guide(request):
+    """REQ-G.115: what a skill is and how to write one, before uploading."""
+    return render(request, "gallery/skill_guide.html", {"section": "skills"})
 
 
 @ensure_csrf_cookie

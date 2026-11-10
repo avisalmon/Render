@@ -161,7 +161,7 @@ def _screens(w):
     p, s = w["page"].pk, w["skill"].exhibit_id
     return [
         ("home", None, "/gallery/"), ("home-search-empty", None, "/gallery/?q=nothing-like-this"),
-        ("skills", None, "/gallery/skills/"), ("page", None, f"/gallery/e/{p}/"), ("skill", None, f"/gallery/e/{s}/"),
+        ("skills", None, "/gallery/skills/"), ("skill-guide", None, "/gallery/skills/guide/"), ("home-all", "dana", "/gallery/?scope=all&sort=new"), ("page", None, f"/gallery/e/{p}/"), ("skill", None, f"/gallery/e/{s}/"),
         ("person", None, f"/gallery/u/{w['dana'].slug}/"), ("login", None, "/gallery/login/"), ("signup", None, "/gallery/signup/"),
         ("home-in", "dana", "/gallery/"), ("page-in", "omer", f"/gallery/e/{p}/"), ("new", "dana", "/gallery/new/"),
         ("edit", "dana", f"/gallery/e/{p}/edit/"), ("settings", "dana", "/gallery/settings/"),

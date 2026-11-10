@@ -276,23 +276,20 @@ def test_avi_deletes_anything(client, people):
     assert not Exhibit.objects.filter(pk=card.pk).exists()
 
 
-def test_bkm_cards_are_avis(client, people):
-    """REQ-G.80"""
-    client.force_login(people["dana"].user)
-    form = client.get("/gallery/new/").content.decode()
-    assert 'name="kind"' not in form
-    client.post("/gallery/new/", {"kind": "bkm", "title": "x", "url": "https://babook.co.il/bkm/x/"})
-    assert Exhibit.objects.get(title="x").kind == Exhibit.PAGE
-    api = client.post("/gallery/api/exhibits/", {"kind": "bkm", "title": "y", "url": "https://babook.co.il/bkm/y/"},
-                      content_type="application/json")
-    assert api.status_code == 403
+def test_bkm_is_only_a_link_to_the_bkm_app(client, people):
+    """REQ-G.80 (Avi, 2026-11-10): nobody makes a BKM card here, Avi included;
+    the menu links to the bkm app."""
+    for who in ("dana", "avi"):
+        client.force_login(people[who].user)
+        assert 'name="kind"' not in client.get("/gallery/new/").content.decode()
+        client.post("/gallery/new/", {"kind": "bkm", "title": f"x-{who}", "url": "https://babook.co.il/bkm/x/"})
+        assert Exhibit.objects.get(title=f"x-{who}").kind == Exhibit.PAGE
+        api = client.post("/gallery/api/exhibits/", {"kind": "bkm", "title": "y", "url": "https://babook.co.il/bkm/y/"},
+                          content_type="application/json")
+        assert api.status_code == 403
     assert client.post("/gallery/api/exhibits/", {"kind": "skill", "title": "z"}, content_type="application/json").status_code == 400
-    client.force_login(people["avi"].user)
-    assert 'name="kind"' in client.get("/gallery/new/").content.decode()
-    client.post("/gallery/new/", {"kind": "bkm", "title": "BKM: GitHub Pages", "url": "https://babook.co.il/bkm/pages/"})
-    bkm = Exhibit.objects.get(title="BKM: GitHub Pages")
-    assert bkm.kind == Exhibit.BKM
-    assert "ל-BKM" in client.get("/gallery/?kind=bkm").content.decode()
+    page = client.get("/gallery/").content.decode()
+    assert 'href="/bkm/"' in page and "?kind=bkm" not in page
 
 
 # ------------------------------------------------------------ likes, stars, comments
@@ -366,18 +363,17 @@ def test_search_without_ai(client, people):
     """REQ-G.32: title, person's name, topic name in either language, kind, topic."""
     _card(people["dana"], title="מחשבון משכנתא", topics=["data"])
     _card(people["omer"], title="Snake", url="https://omer.dev/snake/", topics=["games"])
-    _card(people["avi"], title="BKM: Pages", url="https://babook.co.il/bkm/p/", kind=Exhibit.BKM)
 
     def titles(query):
         body = client.get("/gallery/?" + query).content.decode()
-        return {t for t in ("מחשבון משכנתא", "Snake", "BKM: Pages") if t in body}
+        return {t for t in ("מחשבון משכנתא", "Snake") if t in body}
 
     assert titles("q=משכנתא") == {"מחשבון משכנתא"}
     assert titles("q=katz") == {"Snake"}
     assert titles("q=משחקים") == {"Snake"}
     assert titles("q=games") == {"Snake"}
     assert titles("topic=data") == {"מחשבון משכנתא"}
-    assert titles("kind=bkm") == {"BKM: Pages"}
+    assert titles("kind=page&q=snake") == {"Snake"}
     assert titles("q=nothing-like-this") == set()
     assert len(client.get("/gallery/api/exhibits/?q=snake").json()) == 1
 
@@ -450,7 +446,7 @@ def test_its_own_frame(client, db):
 def test_peoples_text_takes_its_own_direction(client, people):
     """Methodology 30: "BKM: GitHub Pages מאפס" read backwards on a Hebrew page
     until people's text got dir="auto" (found by eye, 2026-11-09)."""
-    card = _card(people["avi"], title="BKM: GitHub Pages מאפס", url="https://babook.co.il/bkm/", kind=Exhibit.BKM)
+    card = _card(people["avi"], title="BKM: GitHub Pages מאפס", url="https://babook.co.il/bkm/")
     card.blurb = "כרטיס הדגמה."
     card.save()
     Comment.objects.create(exhibit=card, author=people["omer"], body="Nice")

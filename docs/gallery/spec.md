@@ -108,7 +108,7 @@ anybody but Avi to post BKMs.
 | REQ-G.2 | Doing needs a sign-in | Adding, liking, starring and commenting need a babook account. A signed-out visitor who presses one of these goes to sign in and comes back to the same place. A signed-in person can do all of it at once: no request, no approval. | DONE |
 | REQ-G.3 | Babook's login, the gallery's look | Sign-in and sign-up use the shared babook account, on pages in the gallery's own look (Rule 3). | DONE |
 | REQ-G.4 | Which training? | The first time a person adds a page or uploads a skill, a question pops up before anything else: which training did you join. Avi's list, then "other" with an optional line "where did you come from". Answered once; changed later in their own settings. Browsing, liking and commenting never ask it. | DONE |
-| REQ-G.5 | The training is private | Seen by the person and Avi only. Never on a public page, a card, a search result or a public API answer. | DONE |
+| REQ-G.5 | The training is private | Never printed about a person: not on a public page, a card, a search result or a public API answer. Changed 2026-11-10 (Avi): a course gallery (REQ-G.110) shows its members' cards to the other members, so course mates can tell who is in their course; "nothing secret about it". | DONE |
 | REQ-G.6 | Hebrew or English | Hebrew by default, right to left. A switch in the menu turns everything to English, left to right. The choice is remembered: on the person's row when signed in (it follows them to any device), in a cookie otherwise. | DONE |
 
 ## Chapter 3: Pages
@@ -185,8 +185,8 @@ The same as cohort's exhibition, for every kind of card (page, skill, BKM).
 
 | REQ | Title | Expectation | Status |
 |---|---|---|---|
-| REQ-G.80 | Avi's cards | Only Avi adds a BKM card: a title, a short line, topics, and a link to that BKM in `/bkm/`. It gets likes and comments like any card. | DONE |
-| REQ-G.81 | The one link out | The link into `/bkm/` is a deliberate exception to Rule 3, asked for by Avi. The gallery never reads the bkm app's data; the cards are Avi's own rows. | DONE |
+| REQ-G.80 | BKM is a link | Changed 2026-11-10 (Avi): BKMs are not cards. Nobody adds one here, Avi included; the menu has "BKM", a link to the bkm app. | DONE |
+| REQ-G.81 | The one link out | The menu's link to `/bkm/` is a deliberate exception to Rule 3, asked for by Avi. The gallery never reads the bkm app's data. | DONE |
 
 ## Chapter 8: Avi's screens
 
@@ -197,6 +197,18 @@ The same as cohort's exhibition, for every kind of card (page, skill, BKM).
 | REQ-G.92 | Topics | Add, edit and reorder topics. | DONE |
 | REQ-G.93 | People | Everyone who ever acted: name, training, pages, skills, strikes, AI cost. Grant or take back unlimited skills, unblock, reset a skill's updates. | DONE |
 | REQ-G.94 | Numbers | People per training, posts per training, AI cost per person and per training, and the chats that hit the ceiling. Real numbers from the rows, nothing estimated. | DONE |
+
+## Chapter 8b: Round 2, from Avi's first look at the live site (2026-11-10)
+
+| REQ | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-G.110 | The course's own gallery | A signed-in person with a training lands on their course's gallery: only the cards of people from the same course, the course's name under the title. "The whole gallery" is one tap away and "my course" brings it back. Visitors and people who chose "other" see the whole gallery. Avi sees the whole gallery and opens any course from his numbers screen (`?course=`); nobody else can open a course that is not theirs. Applies to the skills tab too. | DONE |
+| REQ-G.111 | The search behind a magnifier | The search fields do not show until the magnifier is pressed (pages and skills alike). The kind (pages or skills), the topic, and "my favourites / mine" are inside it. A search in progress keeps it open. | DONE |
+| REQ-G.112 | Newest on top | With no search, the newest four cards sit on top under "new in the gallery". | DONE |
+| REQ-G.113 | Then by likes, or by date | The rest is ordered by likes; a switch orders everything by date instead (then the newest strip is not needed). | DONE |
+| REQ-G.114 | The skills banner | The skills tab says what to upload (a SKILL.md, or a zip of the folder) and links to the guide. | DONE |
+| REQ-G.115 | The skill guide | `/gallery/skills/guide/`, in both languages: what a skill is, SKILL.md with an example, where it lives for Claude Code and Copilot, skill-creator, what makes a good skill, how uploading works. | DONE |
+| REQ-G.116 | One line, not a paragraph | The gallery's intro is one short line; on a phone the cards come first. | DONE |
 
 ## Chapter 9: How it must behave
 
@@ -214,8 +226,9 @@ The same as cohort's exhibition, for every kind of card (page, skill, BKM).
 - **Admin.** Avi's account (a superuser) is the admin; stated so the bypass is
   deliberate. Nobody else is admin.
 - **BKM, stars, update reset.** Avi approved the data model with its three open
-  points unanswered, so the defaults stand: BKM cards are Avi's own rows linking
-  into `/bkm/`; stars stay; Avi can reset a skill's update count.
+  points unanswered, so the defaults were built: stars stay and Avi can reset a
+  skill's updates. The BKM default (Avi's own cards) was wrong: on 2026-11-10 he
+  said BKM is only a link to the bkm app (REQ-G.80, PM-92).
 - **Strikes.** A first risky file is a warning; a second, or insisting on the
   risky one, blocks. Leaving a chat after the first does not block.
 - **The model: gpt-6-luna** (measured 2026-11-09 on Avi's key). Against 4 good
