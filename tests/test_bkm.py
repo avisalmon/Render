@@ -112,13 +112,17 @@ def test_the_wall_and_its_pages_are_english(client, world):
 
 
 def test_the_wall_never_links_to_babook(client, world):
-    """Rule 3: no way from the app to the main site."""
+    """Rule 3: no way from the app to the main site. One deliberate exception,
+    asked for by Avi on 2026-11-10: the menu's way back to the 10x gallery,
+    which links here."""
     client.force_login(world["dana"])
     for path in ("/bkm/", "/bkm/full-stack/"):
         html = client.get(path).content.decode()
         hrefs = re.findall(r'href="([^"]+)"', html)
-        inside = [h for h in hrefs if h.startswith("/") and not h.startswith(("/bkm/", "/static/", "/media/", "/accounts/google/"))]
+        inside = [h for h in hrefs if h.startswith("/") and not h.startswith(("/bkm/", "/static/", "/media/", "/accounts/google/"))
+                  and h != "/gallery/"]
         assert inside == [], (path, inside)
+        assert hrefs.count("/gallery/") == 1, path
         assert "babook.co.il" not in html
 
 

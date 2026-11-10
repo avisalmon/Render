@@ -21,6 +21,8 @@
     <nav class="bm-nav" aria-label="Menu">
       <a href="{% url 'bkm:wall' %}" {% if section == 'wall' %}aria-current="page"{% endif %}>The wall</a>
       <a href="{% url 'bkm:projects' %}" {% if section == 'projects' %}aria-current="page"{% endif %}>Projects</a>
+      {# Avi, 2026-11-10: a way back to the 10x gallery, which links here. #}
+      <a href="/gallery/" id="bm-nav-gallery">10x Gallery</a>
       {% if user.is_authenticated %}
         <a href="{% url 'bkm:wall' %}?starred=1" {% if section == 'stars' %}aria-current="page"{% endif %}>My stars</a>
       {% endif %}

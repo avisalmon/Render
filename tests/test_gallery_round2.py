@@ -185,3 +185,15 @@ def test_bkm_is_a_menu_link_and_never_a_card(client, world):
     Exhibit.objects.create(owner=world["avi"], title="OLD-BKM-PAGE", url="https://babook.co.il/bkm/", kind=Exhibit.BKM)
     page = client.get("/gallery/").content.decode()
     assert 'id="gl-nav-bkm"' in page and 'href="/bkm/"' in page and "OLD-BKM-PAGE" not in page
+
+
+def test_more_on_babook_and_the_way_back_from_bkm(client, world):
+    """Avi, 2026-11-10: the gallery links to his other things on babook, and
+    the bkm app links back to the gallery."""
+    page = client.get("/gallery/").content.decode()
+    menu = page[page.index('id="gl-more"'):page.index("</details>", page.index('id="gl-more"'))]
+    for path in ("/babook/", "/courses/", "/blog/", "/books/", "/design3d/", "/exo/", "/improv/", "/sensorlab/"):
+        assert f'href="{path}"' in menu
+    assert "/ustrip/" not in menu and "/home/" not in menu
+    wall = client.get("/bkm/").content.decode()
+    assert 'id="bm-nav-gallery"' in wall and 'href="/gallery/"' in wall

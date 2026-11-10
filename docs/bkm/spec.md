@@ -60,6 +60,9 @@ audience.
 **What it is not.** Not a place to read the BKMs (their pages do that), not
 a place for other people's BKMs, and not linking back to babook (Rule 3).
 Since 2026-10-29 it has a card on babook's main page, at Avi's request.
+Since 2026-11-10 the menu has "10x Gallery", a way back to /gallery/ (which
+links here), at Avi's request: the one deliberate link out, and the test
+`test_the_wall_never_links_to_babook` allows exactly that one.
 
 ## Chapter 2: The wall
 

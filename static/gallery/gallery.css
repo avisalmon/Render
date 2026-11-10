@@ -425,3 +425,22 @@ body.gl-dragging { -webkit-user-select: none; user-select: none; cursor: grabbin
 .gl-micon { width: 44px; height: 44px; }
 @media (pointer: fine) and (min-width: 561px) { .gl-micon { width: 44px; height: 44px; } }
 .gl-material-title a { display: flex; align-items: center; min-height: 44px; }
+
+/* "more on babook" (Avi, 2026-11-10): a short list that opens from the menu */
+.gl-more { position: relative; }
+.gl-more summary { list-style: none; cursor: pointer; color: #f1dfc3; font-weight: 600; min-height: 44px; display: inline-flex; align-items: center; gap: 4px; }
+.gl-more summary::-webkit-details-marker { display: none; }
+.gl-more summary::after { content: "\25BE"; font-size: .8em; }
+.gl-more[open] summary { color: #fff; }
+.gl-more-list {
+  position: absolute; z-index: 30; inset-inline-start: 0; top: 100%; min-width: 230px; margin: 4px 0 0; padding: 6px 0;
+  list-style: none; background: var(--paper); box-shadow: 0 8px 18px rgba(0, 0, 0, .3);
+}
+.gl-more-list a { display: flex; align-items: center; min-height: 44px; padding: 0 14px; color: var(--ink) !important; text-decoration: none; font-weight: 600; }
+.gl-more-list a:hover { background: #f5efe2; }
+@media (max-width: 480px) { .gl-more-list { inset-inline-start: auto; inset-inline-end: 0; } }
+.gl-more:not([open]) .gl-more-list { display: none; }
+@media (max-width: 760px) {
+  .gl-more { flex-basis: 100%; }
+  .gl-more-list { position: static; min-width: 0; width: 100%; margin: 4px 0 6px; box-shadow: 0 4px 10px rgba(0, 0, 0, .25); }
+}
