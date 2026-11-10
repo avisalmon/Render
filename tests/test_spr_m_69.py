@@ -152,12 +152,14 @@ def test_the_path_is_her_list_by_months_and_the_certificate_comes_after(client, 
     start = html.index('id="mzTrainingPath"')
     panel = html[start:html.index("</section>", start)]
 
-    order = ["הדרכה על סקראץ", "הגעה ליום שיא", "הדרכה על פייתון", "הדרכה טובה",
-             "2 הדרכות לבחירה", "2 פרקטיקומים", "הגעה ליום שיא מסכם", "ובסוף: תעודת מטצ"]
+    # SPR-M.83 (Lital, 2026-11-10): Tinkercad in Python's place, electives before the
+    # good-instruction day.
+    order = ["2 הדרכות סקראץ", "הגעה ליום שיא", "2 הדרכות טינקרקאד", "2 הדרכות לבחירה",
+             "הדרכה טובה", "2 פרקטיקומים", "הגעה ליום שיא מסכם", "ובסוף: תעודת מטצ"]
     positions = [panel.index(item) for item in order]
     assert positions == sorted(positions)
     for month in ("נובמבר–דצמבר 2026", "17.12.2026", "דצמבר–פברואר", "פברואר 2027",
-                  "פברואר–מאי 2027", "24.05.2027"):
+                  "לאורך השנה", "פברואר–מאי 2027", "24.05.2027"):
         assert month in panel
     # none of what she asked to take out
     for gone in ("הצטרפות למוביל", "סקראץ' 1", "סקראץ' 2", "סיום ההדרכה", "מטצ מוסמך"):

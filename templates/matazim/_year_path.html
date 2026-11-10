@@ -1,0 +1,31 @@
+{% comment %}
+  The year's path, one list of steps from `track.path_steps`.
+
+  Shared by the member's own page (`my_path.html`) and the leader's page about one
+  student (`student.html`, SPR-M.83), so both see the same steps in the same order.
+  `for_leader` drops the links, which point at the member's own learning pages, and
+  names the badge for somebody looking at another person.
+{% endcomment %}
+<ol class="mz-path" aria-label="המסלול לפי חודשים">
+  {% for step in path_steps %}
+    <li class="mz-path-node is-{{ step.status }}{% if step.is_current %} is-current{% endif %}">
+      {% if step.is_current %}<span class="mz-path-now">{% if for_leader %}השלב הנוכחי{% else %}המשימה הנוכחית{% endif %}</span>{% endif %}
+      <span class="mz-path-dot" aria-hidden="true">{% if step.status == 'done' %}✓{% else %}{{ forloop.counter }}{% endif %}</span>
+      <span class="mz-path-body">
+        {% if step.where and not for_leader %}
+          <a class="mz-path-title" href="{% if step.where_args %}{% url step.where step.where_args.0 %}{% else %}{% url step.where %}{% endif %}">{{ step.title }}</a>
+        {% else %}
+          <span class="mz-path-title">{{ step.title }}</span>
+        {% endif %}
+        <span class="mz-path-word">{{ step.word }}{% if step.pct and step.status == 'doing' %} {{ step.pct }}%{% endif %}</span>
+        <span class="mz-path-when">{{ step.month }}</span>
+      </span>
+    </li>
+  {% endfor %}
+</ol>
+<ul class="mz-legend" aria-label="מקרא">
+  {% for status, word in legend %}
+    <li><span class="mz-legend-dot is-{{ status }}" aria-hidden="true"></span>{{ word }}</li>
+  {% endfor %}
+</ul>
+<p class="mz-muted">מעבר לשש ההדרכות במסלול, אפשר ללמוד עוד הדרכות לבחירה, כמה שרוצים.</p>

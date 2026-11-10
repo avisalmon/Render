@@ -310,8 +310,14 @@ def recent_work(student, limit=3):
 # and the closing peak day. The certificate comes after all of it, and is not a
 # step in the list.
 
+#
+# Lital, 2026-11-10 (mail, 21:33), SPR-M.83: the year is two Scratch הדרכות, the peak
+# day at Intel, two Tinkercad הדרכות, two elective הדרכות, the good-instruction day,
+# two practicums and the closing peak day. Tinkercad takes the place Python had, and
+# a member may learn as many more הדרכות as they like beyond these six.
+
 PATH_COURSE_SCRATCH = REQUIRED_COURSE_SLUGS
-PATH_COURSE_PYTHON = "python"
+PATH_COURSE_TINKERCAD = ("tinkercad", "arduino-tinkercad")
 
 
 def _date_status(start, end, today):
@@ -351,16 +357,22 @@ def path_steps(user, student, per_course, peaks, today=None):
 
     # Scratch: both of the programme's two, as one step with the figure of how far.
     scratch_pcts = [int((per_course.get(slug) or {}).get("pct") or 0) for slug in PATH_COURSE_SCRATCH]
-    scratch_done = all(slug in held for slug in PATH_COURSE_SCRATCH)
+    scratch_held = sum(1 for slug in PATH_COURSE_SCRATCH if slug in held)
+    scratch_done = scratch_held == len(PATH_COURSE_SCRATCH)
     scratch_pct = 100 if scratch_done else int(sum(scratch_pcts) / max(len(scratch_pcts), 1))
-    scratch_status = DONE if scratch_done else (DOING if scratch_pct else TODO)
+    scratch_status = DONE if scratch_done else (DOING if scratch_pct or scratch_held else TODO)
 
-    python_status = DONE if PATH_COURSE_PYTHON in held else (
-        DOING if PATH_COURSE_PYTHON in enrolled else TODO)
+    # Tinkercad: the two of them, counted the same way.
+    tinker_held = sum(1 for slug in PATH_COURSE_TINKERCAD if slug in held)
+    tinker_started = any(slug in enrolled for slug in PATH_COURSE_TINKERCAD)
+    tinker_status = DONE if tinker_held >= 2 else (DOING if tinker_held or tinker_started else TODO)
 
-    other = {s for s in held if s not in PATH_COURSE_SCRATCH and s != PATH_COURSE_PYTHON}
+    other = {s for s in held if s not in PATH_COURSE_SCRATCH and s not in PATH_COURSE_TINKERCAD}
     electives = len(other)
     elective_status = DONE if electives >= 2 else (DOING if electives == 1 else TODO)
+    elective_word = f"{min(electives, 2)} מתוך 2"
+    if electives > 2:
+        elective_word += f", ועוד {electives - 2} לבחירה"
 
     practicums = 0
     if student is not None:
@@ -373,20 +385,21 @@ def path_steps(user, student, per_course, peaks, today=None):
         steps.append({"key": key, "month": month, "title": title, "status": status,
                       "word": word, "where": where, "where_args": where_args or [], "pct": pct})
 
-    add("scratch", "נובמבר–דצמבר 2026", "הדרכה על סקראץ'", scratch_status,
-        STATUS_WORD[scratch_status], "matazim:learn_course", [PATH_COURSE_SCRATCH[0]], pct=scratch_pct or None)
+    add("scratch", "נובמבר–דצמבר 2026", "2 הדרכות סקראץ'", scratch_status,
+        f"{scratch_held} מתוך 2", "matazim:learn_course", [PATH_COURSE_SCRATCH[0]],
+        pct=scratch_pct or None)
 
     status, word = _date_status(*peak(0), today)
-    add("peak1", "17.12.2026", "הגעה ליום שיא", status, word)
+    add("peak1", "17.12.2026", "הגעה ליום שיא באינטל", status, word)
 
-    add("python", "דצמבר–פברואר", "הדרכה על פייתון", python_status, STATUS_WORD[python_status],
-        "matazim:learn_course", [PATH_COURSE_PYTHON])
+    add("tinkercad", "דצמבר–פברואר", "2 הדרכות טינקרקאד", tinker_status,
+        f"{tinker_held} מתוך 2", "matazim:learn_course", [PATH_COURSE_TINKERCAD[0]])
+
+    add("electives", "לאורך השנה", "2 הדרכות לבחירה, מתוך ההדרכות שנשארו", elective_status,
+        elective_word, "matazim:courses")
 
     status, word = _date_status(*peak(1), today)
-    add("good", "פברואר 2027", "הדרכה טובה", status, word)
-
-    add("electives", "פברואר–מאי 2027", "2 הדרכות לבחירה, מתוך ההדרכות שנשארו", elective_status,
-        f"{min(electives, 2)} מתוך 2", "matazim:courses")
+    add("good", "פברואר 2027", "השתתפות ביום הדרכה טובה", status, word)
 
     add("practicum", "פברואר–מאי 2027", "2 פרקטיקומים", practicum_status,
         f"{min(practicums, 2)} מתוך 2", "matazim:my_teaching" if student is not None else None)

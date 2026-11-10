@@ -5245,3 +5245,25 @@ to approve with. Now they see the leader's buttons, greyed.
 where approving and returning work as before.
 
 **Tests.** `tests/test_spr_m_82.py`; `tests/test_spr_m_80.py` now looks for the button, not the box.
+
+
+## SPR-M.83: The leader sees the student's whole year  `DONE 2026-11-10`
+
+A mail from Lital of 10.11, 21:33 (spec C42): "נכנסתי למובילה עפיפה וראיתי שכאשר היא נכנסת
+להתקדמות של תלמיד היא לא רואה את כל המסלול השנתי". Run under Avi's standing rule of 2026-10-16.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.83.1 | `track.path_steps` is her new list: 2 Scratch, peak day at Intel, 2 Tinkercad, 2 electives, the good-instruction day, 2 practicums, the closing day; course steps read `N מתוך 2`, electives beyond two read `ועוד N לבחירה` | REQ-M.215 | DONE |
+| F-M.83.2 | `templates/matazim/_year_path.html`, shared by `my_path.html` and `student.html`; `for_leader` drops the links and says `השלב הנוכחי` | REQ-M.215 | DONE |
+| F-M.83.3 | `roster_views.student` hands the page the student's path; `<section id="mzStudentPath">` first on the page | REQ-M.215 | DONE |
+| F-M.83.4 | Migration 0048: the seeded winter row says Tinkercad instead of Python, only if the team has not edited it | REQ-M.215 | DONE |
+
+**How it was read.** The leader's page about a student showed the two Scratch הדרכות and the
+certification conditions, nothing of the year. The student's own page had the year, but as she
+wrote it on 15.10, with Python after Scratch. Her new list is the programme now, so the one
+function both pages read changed, and the leader's page reads it too. "דנה הדרכה טוב" is read as
+the good-instruction day. Months for the electives are not in her mail, so the step says
+`לאורך השנה`; the bot asked her.
+
+**Tests.** `tests/test_spr_m_83.py`; `tests/test_spr_m_69.py` now expects her new order.

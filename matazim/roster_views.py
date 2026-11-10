@@ -241,6 +241,10 @@ def student(request, student_id):
         (per_course.get(slug) or {}).get("title", slug) for slug in state.missing_courses
     ]
 
+    # SPR-M.83 (REQ-M.215) - the whole year's path, the one the student sees.
+    from . import track
+    from .path_views import _peak_days
+
     return render(
         request,
         "matazim/student.html",
@@ -248,6 +252,8 @@ def student(request, student_id):
             request,
             "leader",
             person=person,
+            path_steps=track.path_steps(person.user, person, per_course, _peak_days(who)),
+            legend=track.LEGEND,
             eligibility=state,
             # REQ-M.77 — an ineligible student is an explained state, never a
             # missing button, so the page is given what is outstanding and not
