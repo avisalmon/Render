@@ -28,6 +28,16 @@
     <a class="mz-linkbtn" href="{% url 'matazim:roster' %}">חזרה לרשימה</a>
   </p>
 
+  {% comment %}
+    SPR-M.83, REQ-M.215 (Lital, 2026-11-10): a leader opening a student's progress
+    saw only the two Scratch הדרכות, not the year. The whole path is here now,
+    the same steps the student sees on המסלול שלי, each with where it stands.
+  {% endcomment %}
+  <section class="mz-panel mz-panel-wide" id="mzStudentPath">
+    <h2>המסלול השנתי</h2>
+    {% include "matazim/_year_path.html" with for_leader=True %}
+  </section>
+
   <section class="mz-panel">
     <h2>הסמכה למטצ</h2>
 
