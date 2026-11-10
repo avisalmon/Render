@@ -7,6 +7,8 @@ The skill tables (Skill, SkillVersion, SkillFile, SkillChat, ChatMessage,
 AICall, Strike) arrive with their own sprints, SPR-G.5 to G.7.
 """
 
+import re
+
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 from django.db import models
@@ -339,3 +341,55 @@ class Strike(models.Model):
 
     class Meta:
         ordering = ["-created_at", "-id"]
+
+
+# ---------------------------------------------------------------- materials (SPR-G.11)
+
+
+def material_path(instance, filename):
+    import re
+
+    safe = re.sub(r"[^\w.\-]", "_", filename)[-80:]
+    return f"materials/{timezone.now():%Y%m%d%H%M%S}-{safe}"
+
+
+YOUTUBE_ID = re.compile(r"(?:youtu\.be/|youtube\.com/(?:watch\?(?:.*&)?v=|embed/|shorts/|live/))([\w-]{11})")
+
+
+def youtube_id(url):
+    m = YOUTUBE_ID.search(url or "")
+    return m.group(1) if m else ""
+
+
+class Material(models.Model):
+    """Two shelves (REQ-G.120 to G.126), the same as cohort's (copied, not
+    shared, Rule 2). With no owner: the shared shelf, Avi's, seen by every
+    signed-in person in the order he sets. With an owner: that person's own
+    shelf, seen by them alone, Avi included."""
+
+    VIDEO, FILE, COURSE, LINK = "video", "file", "course", "link"
+    KINDS = [(VIDEO, "video"), (FILE, "file"), (COURSE, "course"), (LINK, "link")]
+
+    kind = models.CharField(max_length=8, choices=KINDS)
+    title = models.CharField(max_length=160)
+    line = models.CharField(max_length=280)
+    url = models.URLField(max_length=500, blank=True)
+    youtube_id = models.CharField(max_length=20, blank=True)
+    file = models.FileField(upload_to=material_path, storage=gallery_storage, blank=True)
+    owner = models.ForeignKey(Person, null=True, blank=True, on_delete=models.CASCADE, related_name="materials")
+    position = models.PositiveIntegerField(default=0, db_index=True)
+    # Where a copied item came from ("cohort:<id>"), so the one-time copy never
+    # brings an item twice (SPR-G.11).
+    source = models.CharField(max_length=40, blank=True, db_index=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+
+    class Meta:
+        ordering = ["position", "created_at", "id"]
+
+    def save(self, *args, **kwargs):
+        self.youtube_id = youtube_id(self.url) if self.kind == self.VIDEO else ""
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.title

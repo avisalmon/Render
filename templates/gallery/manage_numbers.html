@@ -17,7 +17,7 @@
     <thead><tr><th>{% t "manage.training" %}</th><th>{% t "manage.n_people" %}</th><th>{% t "chip.pages" %}</th><th>{% t "chip.skills" %}</th><th>{% t "manage.ai_cost" %}</th></tr></thead>
     <tbody>
       {% for t, b in trainings %}
-        <tr{% if not t.is_open %} class="is-closed"{% endif %}><td>{% tr t "name" %}</td><td>{{ b.people }}</td><td>{{ b.pages }}</td><td>{{ b.skills }}</td><td dir="ltr">${{ b.cost|floatformat:4 }}</td></tr>
+        <tr{% if not t.is_open %} class="is-closed"{% endif %}><td><a href="{% url 'gallery:home' %}?course={{ t.pk }}">{% tr t "name" %}</a></td><td>{{ b.people }}</td><td>{{ b.pages }}</td><td>{{ b.skills }}</td><td dir="ltr">${{ b.cost|floatformat:4 }}</td></tr>
       {% endfor %}
       <tr><td>{% t "training.other" %}</td><td>{{ other.people|default:0 }}</td><td>{{ other.pages|default:0 }}</td><td>{{ other.skills|default:0 }}</td><td dir="ltr">${{ other.cost|default:0|floatformat:4 }}</td></tr>
       <tr class="is-closed"><td>{% t "manage.not_answered" %}</td><td>{{ unanswered.people|default:0 }}</td><td>{{ unanswered.pages|default:0 }}</td><td>{{ unanswered.skills|default:0 }}</td><td dir="ltr">${{ unanswered.cost|default:0|floatformat:4 }}</td></tr>

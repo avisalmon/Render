@@ -88,8 +88,8 @@ class TopicChoices(forms.ModelMultipleChoiceField):
 
 
 class ExhibitForm(forms.ModelForm):
-    """A page (REQ-G.10), or for Avi a BKM card too (REQ-G.80). Skills come
-    in through the skill chat, never this form."""
+    """A page (REQ-G.10). Skills come in through the skill chat; BKMs are
+    not cards here (REQ-G.80)."""
 
     class Meta:
         model = Exhibit
@@ -110,10 +110,9 @@ class ExhibitForm(forms.ModelForm):
             del self.fields["url"]  # a skill has files, not a link
         else:
             self.fields["url"].required = True
-        if admin and not is_skill:
-            self.fields["kind"].choices = [(Exhibit.PAGE, text("kind.page", language)), (Exhibit.BKM, text("kind.bkm", language))]
-        else:
-            del self.fields["kind"]
+        # Only pages are made here: skills come through the skill chat, and BKMs
+        # live in Avi's bkm app, which the menu links to (Avi, 2026-11-10).
+        del self.fields["kind"]
 
     def clean_url(self):
         return _http(self.cleaned_data.get("url", ""), self.language)

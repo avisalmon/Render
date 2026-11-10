@@ -17,6 +17,38 @@ Newest first.
 
 ---
 
+## PM-93 · 2026-11-10 · Sprint G.11 end (gallery materials): nothing new
+
+**What happened.** Porting cohort's materials brought a `.gl-icon` rule that
+would have restyled the admin arrows (renamed `.gl-micon` before it shipped),
+and the screen contract found material titles 20 to 40px tall as tap targets
+(cohort has the same; fixed here). The privacy test passed first time and was
+proved by breaking the rule.
+
+**Rule.** Nothing new: methodology 7 (namespace classes) and the screen
+contract caught both, as they are meant to.
+
+Here: `docs/gallery/backlog.md` (SPR-G.11)
+BKM: deferred - nothing general
+
+## PM-92 · 2026-11-10 · Avi's first look at the live gallery: search in the way, BKM built wrong
+
+**What happened.** Avi opened the live gallery and corrected two things: the
+search fields took most of a phone's first screen, and BKMs were built as
+cards Avi adds, when to him a BKM is only a link to his bkm app.
+
+**Why.** The search: methodology 25 (on a phone the content comes first,
+options fold) was known and not applied to the board's own tools. BKM: the
+data model ended with three open points; Avi approved it without answering
+them, and I built my defaults instead of asking once more.
+
+**Rule.** An approval with open questions unanswered is not an answer to
+them: ask them again in one short message before building on the defaults.
+A screen's tools fold behind a button on a phone from the first build.
+
+Here: `docs/gallery/spec.md` (REQ-G.80, G.110 to G.116), this file
+BKM: FullStackBKM 495d07b
+
 ## PM-91 · 2026-11-09 · Sprints G.8 and G.9 end (gallery): the sweep found what earlier sprints should have
 
 **What happened.** The final security sweep and the screen contract found

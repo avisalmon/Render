@@ -3,7 +3,7 @@
 from django.urls import include, path
 from rest_framework import permissions, routers
 
-from . import auth_views, manage_views, views
+from . import auth_views, manage_views, materials_views, views
 from .api import ROUTES
 
 app_name = "gallery"
@@ -33,6 +33,7 @@ urlpatterns = [
     path("e/<int:pk>/edit/", views.exhibit_edit, name="exhibit_edit"),
     path("skills/", views.skills_home, name="skills"),
     path("skills/new/", views.skill_new, name="skill_new"),
+    path("skills/guide/", views.skill_guide, name="skill_guide"),
     path("skills/chat/<int:pk>/", views.skill_chat, name="skill_chat"),
     path("skills/chat/<int:pk>/act/", views.skill_chat_act, name="skill_chat_act"),
     path("e/<int:pk>/update/", views.skill_new, name="skill_update"),
@@ -42,6 +43,10 @@ urlpatterns = [
     path("manage/people/<int:pk>/", manage_views.person, name="manage_person"),
     path("manage/trainings/", manage_views.trainings, name="manage_trainings"),
     path("manage/topics/", manage_views.topics, name="manage_topics"),
+    path("materials/", materials_views.materials, name="materials"),
+    path("materials/new/", materials_views.material_edit, name="material_new"),
+    path("materials/<int:pk>/edit/", materials_views.material_edit, name="material_edit"),
+    path("materials/files/<path:path>", materials_views.material_file, name="material_file"),
     path("u/<str:slug>/", views.person_page, name="person"),
     path("settings/", views.settings_page, name="settings"),
     path("training/", views.training, name="training"),

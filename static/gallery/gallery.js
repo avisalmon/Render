@@ -132,3 +132,17 @@
     });
   });
 })();
+
+
+/* The search hides behind the magnifier (Avi, 2026-11-10): only the cards
+   show until it is pressed; pressing it again hides the fields. */
+(function () {
+  "use strict";
+  var find = document.getElementById("gl-find");
+  var form = document.getElementById("gl-search");
+  if (!find || !form) return;
+  find.addEventListener("toggle", function () {
+    form.hidden = !find.open;
+    if (find.open) { var q = document.getElementById("gl-q"); if (q) q.focus(); }
+  });
+})();
