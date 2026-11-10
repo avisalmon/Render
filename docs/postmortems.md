@@ -17,6 +17,20 @@ Newest first.
 
 ---
 
+## PM-93 · 2026-11-10 · Sprint G.11 end (gallery materials): nothing new
+
+**What happened.** Porting cohort's materials brought a `.gl-icon` rule that
+would have restyled the admin arrows (renamed `.gl-micon` before it shipped),
+and the screen contract found material titles 20 to 40px tall as tap targets
+(cohort has the same; fixed here). The privacy test passed first time and was
+proved by breaking the rule.
+
+**Rule.** Nothing new: methodology 7 (namespace classes) and the screen
+contract caught both, as they are meant to.
+
+Here: `docs/gallery/backlog.md` (SPR-G.11)
+BKM: deferred - nothing general
+
 ## PM-92 · 2026-11-10 · Avi's first look at the live gallery: search in the way, BKM built wrong
 
 **What happened.** Avi opened the live gallery and corrected two things: the

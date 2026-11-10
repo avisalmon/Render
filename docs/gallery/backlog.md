@@ -17,6 +17,7 @@ spec. Built in dev; pushed only on Avi's word, through the release train.
 | SPR-G.8 | Avi's screens and BKMs: delete anything, trainings, topics, people, numbers, BKM cards | REQ-G.80, G.81, G.90 to G.94 | **DONE 2026-11-09** (dev) |
 | SPR-G.9 | Whole walk-through on the narrowest phones and desktop, both languages by eye, security sweep (methodology 51), screen contract, dashboard | REQ-G.100, G.101, G.105 | **DONE 2026-11-09** (dev) |
 | SPR-G.10 | Round 2 from Avi's look at the live site: course galleries by default, search behind a magnifier, newest on top then by likes (or by date), skills banner and guide, BKM only a link, a one-line intro | REQ-G.5 (changed), G.80, G.81 (changed), G.110 to G.116 | **DONE 2026-11-10** |
+| SPR-G.11 | Materials, as cohort's: the shared shelf (Avi's) and everyone's own, four kinds, drag to order, keep it, files private; cohort's shared shelf copied once | REQ-G.120 to G.127 | **DONE 2026-11-10** |
 
 **MVP (SPR-G.1 to G.4), 2026-11-09.** Built in dev, not pushed. A visitor sees everything; a signed-in person hangs pages (after the training question), likes, stars and comments; search without AI; Hebrew and English. Avi can make BKM cards and delete anything. Trainings, topics and people are edited in Django admin until SPR-G.8. Tests: `tests/test_gallery_mvp.py` (31). Checked on screenshots at 320, 360, 390 and 1280, both languages; a newcomer walked from the link to a hung page on a 360px phone.
 
@@ -29,6 +30,8 @@ spec. Built in dev; pushed only on Avi's word, through the release train.
 **SPR-G.9, 2026-11-09.** Security sweep (methodology 51): two findings fixed with tests first, daily AI caps per person and site-wide, and cost records that blocked deleting an account; an open redirect on the people screen caught by its own test before it ran. The REST API gained skills, skill chats (start and act, same rules as the page), AI calls and strikes (Avi only). Screen contract `tests/test_gallery_screens.py`: 23 screens as their role at 320, 360, 390 and 1280 plus English at 360; it found the cork contrast, 30px targets, a small upload field and two unlabelled fields, all fixed.
 
 **SPR-G.10, 2026-11-10.** Avi's first look at the live gallery. Course galleries (a course member lands on theirs; Avi opens any from `?course=`), the search behind a magnifier with the kind inside it, one row of chips on a phone (my course / the whole gallery, liked / new), "new in the gallery" on top then by likes, a banner and a two-language guide on the skills tab, BKM as a menu link only. Tests: `tests/test_gallery_round2.py` (10); the screen contract gained the guide and the whole-gallery view.
+
+**SPR-G.11, 2026-11-10.** Materials ported from cohort with the gallery's prefix and both languages; the 17 items on cohort's shared shelf copied by a one-time migration, in order, with documents' files. The screen contract found material titles too small to tap (cohort has the same) and a `.gl-icon` collision with the admin arrows; both fixed. Tests: `tests/test_gallery_materials.py` (12), the privacy test proved by breaking the rule.
 
 **Tests.** Each sprint brings its own `tests/test_gallery_*.py`. No test makes a
 network call: screenshots, OpenAI and mail come from fakes. The skill chat is

@@ -1,0 +1,55 @@
+{% load gallery_tags %}{# One item on a shelf, as a small card. shelf: "shared" or "mine"; can_sort, can_edit, show_keep decide the controls. #}
+<article class="gl-paper gl-material{% if shelf == 'mine' %} is-mine{% endif %}" id="m{{ m.pk }}" data-id="{{ m.pk }}">
+  <span class="gl-pin" aria-hidden="true"></span>
+  {% if m.kind == "video" and m.youtube_id %}
+    <button type="button" class="gl-thumb" data-embed="{{ m.youtube_id }}" aria-label="{% t 'materials.play' %} {{ m.title }}">
+      <img src="https://i.ytimg.com/vi/{{ m.youtube_id }}/mqdefault.jpg" alt="" loading="lazy">
+      <span class="gl-play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span>
+    </button>
+  {% endif %}
+  <div class="gl-material-tags">
+    <span class="gl-tag gl-tag-m-{{ m.kind }}">{% if m.kind == 'video' %}{% t "materials.kind_video" %}{% elif m.kind == 'file' %}{% t "materials.kind_file" %}{% elif m.kind == 'course' %}{% t "materials.kind_course" %}{% else %}{% t "materials.kind_link" %}{% endif %}</span>
+    {% if shelf == 'mine' %}
+      <span class="gl-private"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 7V5a4 4 0 0 1 8 0v2h1v8H3V7zm2 0h4V5a2 2 0 0 0-4 0z"/></svg>{% t "materials.only_you" %}</span>
+    {% endif %}
+  </div>
+  <h2 class="gl-material-title" dir="auto">
+    {% if m.kind == "video" and m.youtube_id %}<a href="https://www.youtube.com/watch?v={{ m.youtube_id }}" target="_blank" rel="noopener noreferrer">{{ m.title }}</a>
+    {% elif m.kind == "file" and m.file %}<a href="{% url 'gallery:material_file' m.file.name %}" target="_blank" rel="noopener">{{ m.title }}</a>
+    {% elif m.url %}<a href="{{ m.url }}" target="_blank" rel="noopener noreferrer">{{ m.title }}</a>
+    {% else %}{{ m.title }}{% endif %}
+  </h2>
+  <p class="gl-material-line" dir="auto">{{ m.line }}</p>
+  {% if can_sort or can_edit or show_keep %}
+    <div class="gl-material-foot">
+      {% if can_sort %}
+        <span class="gl-sort">
+          <button type="button" class="gl-micon gl-handle" aria-label="{% t 'materials.drag' %}" title="{% t 'materials.drag' %}">
+            <svg viewBox="0 0 12 20" aria-hidden="true"><circle cx="3" cy="4" r="1.7"/><circle cx="9" cy="4" r="1.7"/><circle cx="3" cy="10" r="1.7"/><circle cx="9" cy="10" r="1.7"/><circle cx="3" cy="16" r="1.7"/><circle cx="9" cy="16" r="1.7"/></svg>
+          </button>
+          <button type="button" class="gl-micon gl-move" data-move="up" aria-label="{% t 'materials.earlier' %}: {{ m.title }}">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13 8L6 14V2z"/></svg>
+          </button>
+          <button type="button" class="gl-micon gl-move" data-move="down" aria-label="{% t 'materials.later' %}: {{ m.title }}">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8l7-6v12z"/></svg>
+          </button>
+        </span>
+      {% endif %}
+      <span class="gl-acts">
+        {% if show_keep %}
+          <button type="button" class="gl-micon gl-keep" data-keep="{{ m.pk }}" aria-label="{% t 'materials.keep' %}: {{ m.title }}" title="{% t 'materials.keep' %}">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 1.5h9v13L8 11l-4.5 3.5z"/></svg>
+          </button>
+        {% endif %}
+        {% if can_edit %}
+          <a class="gl-micon" href="{% url 'gallery:material_edit' m.pk %}" aria-label="{% t 'detail.edit' %}: {{ m.title }}" title="{% t 'detail.edit' %}">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M11.3 1.3l3.4 3.4-9 9H2.3v-3.4zM10 4.4l1.6 1.6"/></svg>
+          </a>
+          <button type="button" class="gl-micon gl-delete" data-delete="{{ m.pk }}" data-title="{{ m.title }}" aria-label="{% t 'thread.delete' %}: {{ m.title }}" title="{% t 'thread.delete' %}">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4h11M6 4V2.5h4V4M4 4l.8 10h6.4L12 4M6.6 6.5v5M9.4 6.5v5"/></svg>
+          </button>
+        {% endif %}
+      </span>
+    </div>
+  {% endif %}
+</article>

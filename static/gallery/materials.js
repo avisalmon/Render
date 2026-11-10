@@ -1,0 +1,270 @@
+/* gallery: the two material shelves (REQ-G.120 to G.126), ported from
+   static/cohort/materials.js. Its words come from data- attributes on
+   #gl-shelves, so they follow the page's language.
+
+   Tabs that remember which shelf you were on; order changed by dragging the
+   handle (mouse, pen or finger, all through pointer events) or by the arrows;
+   every change saved at once through the API, with a toast and an undo.
+   Dragging only starts on the handle, so on a phone the page still scrolls
+   normally everywhere else. */
+
+(function () {
+  "use strict";
+
+  var root = document.getElementById("gl-shelves");
+  if (!root) return;
+
+  function csrf() {
+    var m = document.cookie.match(/(?:^|; )csrftoken=([^;]*)/);
+    return m ? decodeURIComponent(m[1]) : "";
+  }
+
+  function api(method, path, body) {
+    return fetch("/gallery/api/" + path, {
+      method: method, credentials: "same-origin",
+      headers: { "Content-Type": "application/json", "X-CSRFToken": csrf() },
+      body: body ? JSON.stringify(body) : undefined
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (data) {
+        if (!r.ok) throw new Error(root.dataset.error);
+        return data;
+      });
+    });
+  }
+
+  /* ---------- tabs ---------- */
+
+  var tabs = Array.prototype.slice.call(root.querySelectorAll('[role="tab"]'));
+  var stale = false;
+
+  function show(name, focus) {
+    if (name === "mine" && stale) { location.replace(location.pathname + "#mine"); location.reload(); return; }
+    tabs.forEach(function (t) {
+      var on = t.dataset.tab === name;
+      t.setAttribute("aria-selected", on ? "true" : "false");
+      t.tabIndex = on ? 0 : -1;
+      document.getElementById("panel-" + t.dataset.tab).hidden = !on;
+      if (on && focus) t.focus();
+    });
+    try { localStorage.setItem("gl-shelf", name); } catch (e) { /* private mode */ }
+    if (history.replaceState) history.replaceState(null, "", location.pathname + (name === "mine" ? "#mine" : ""));
+  }
+
+  var first = location.hash === "#mine" ? "mine" : null;
+  if (!first) { try { first = localStorage.getItem("gl-shelf"); } catch (e) { first = null; } }
+  show(first === "mine" ? "mine" : "shared");
+
+  tabs.forEach(function (t, i) {
+    t.addEventListener("click", function () { show(t.dataset.tab); });
+    t.addEventListener("keydown", function (e) {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      e.preventDefault();
+      show(tabs[(i + 1) % tabs.length].dataset.tab, true);
+    });
+  });
+
+  /* ---------- the toast ---------- */
+
+  var toast = document.getElementById("gl-toast");
+  var toastText = document.getElementById("gl-toast-text");
+  var toastUndo = document.getElementById("gl-toast-undo");
+  var toastTimer = null, undoFn = null;
+
+  function say(text, undo) {
+    toastText.textContent = text;
+    undoFn = undo || null;
+    toastUndo.hidden = !undo;
+    toast.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toast.hidden = true; undoFn = null; }, undo ? 6000 : 3500);
+  }
+  toastUndo.addEventListener("click", function () {
+    var fn = undoFn;
+    toast.hidden = true;
+    undoFn = null;
+    if (fn) fn();
+  });
+
+  /* ---------- order ---------- */
+
+  function cards(list) { return Array.prototype.slice.call(list.querySelectorAll(":scope > .gl-material")); }
+  function order(list) { return cards(list).map(function (c) { return c.dataset.id; }); }
+  function same(a, b) { return a.join(",") === b.join(","); }
+
+  function apply(list, ids) {
+    ids.forEach(function (id) {
+      var c = list.querySelector(':scope > .gl-material[data-id="' + id + '"]');
+      if (c) list.appendChild(c);
+    });
+  }
+
+  function save(list, before) {
+    var after = order(list);
+    if (same(before, after)) return;
+    api("POST", "materials/reorder/", { shelf: list.dataset.shelf, order: after }).then(function () {
+      say(root.dataset.saved, function () {
+        apply(list, before);
+        api("POST", "materials/reorder/", { shelf: list.dataset.shelf, order: before })
+          .then(function () { say(root.dataset.restored); })
+          .catch(function (err) { say(err.message); });
+      });
+    }).catch(function (err) {
+      apply(list, before);
+      say(err.message);
+    });
+  }
+
+  // The arrows: one step at a time, for keyboards and for anybody who prefers them.
+  root.addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-move]");
+    if (!btn) return;
+    var card = btn.closest(".gl-material");
+    var list = card.parentNode;
+    var before = order(list);
+    if (btn.dataset.move === "up" && card.previousElementSibling) {
+      list.insertBefore(card, card.previousElementSibling);
+    } else if (btn.dataset.move === "down" && card.nextElementSibling) {
+      list.insertBefore(card.nextElementSibling, card);
+    } else {
+      return;
+    }
+    btn.focus();
+    save(list, before);
+  });
+
+  // Dragging by the handle.
+  var drag = null;
+
+  function autoscroll() {
+    if (!drag) return;
+    var top = (document.querySelector(".gl-top") || { offsetHeight: 0 }).offsetHeight + 40;
+    var bottom = window.innerHeight - 50;
+    var y = drag.y, step = 0;
+    if (y < top) step = -Math.min(22, (top - y) / 3 + 4);
+    else if (y > bottom) step = Math.min(22, (y - bottom) / 3 + 4);
+    if (step) { window.scrollBy(0, step); place(); }
+    drag.raf = requestAnimationFrame(autoscroll);
+  }
+
+  // The cards sit in a grid that reads right to left, so a card goes before
+  // the first card that is in a lower row, or in the same row and to the
+  // left of the pointer's half of it.
+  var rtl = getComputedStyle(root).direction === "rtl";
+
+  function place() {
+    drag.card.style.top = (drag.y - drag.offset) + "px";
+    drag.card.style.left = (drag.x - drag.offsetX) + "px";
+    var others = cards(drag.list).filter(function (c) { return c !== drag.card; });
+    var target = null;
+    for (var i = 0; i < others.length; i++) {
+      var r = others[i].getBoundingClientRect();
+      var mid = r.left + r.width / 2;
+      if (drag.y < r.top || (drag.y <= r.bottom && (rtl ? drag.x > mid : drag.x < mid))) { target = others[i]; break; }
+    }
+    if (target) drag.list.insertBefore(drag.holder, target);
+    else drag.list.appendChild(drag.holder);
+  }
+
+  root.addEventListener("pointerdown", function (e) {
+    var handle = e.target.closest(".gl-handle");
+    if (!handle || (e.pointerType === "mouse" && e.button !== 0)) return;
+    var card = handle.closest(".gl-material");
+    var list = card.parentNode;
+    if (!list.dataset.sortable) return;
+    e.preventDefault();
+    var r = card.getBoundingClientRect();
+    var holder = document.createElement("div");
+    holder.className = "gl-placeholder";
+    holder.style.height = r.height + "px";
+    list.insertBefore(holder, card);
+    drag = { card: card, list: list, holder: holder, before: order(list), id: e.pointerId,
+             offset: e.clientY - r.top, offsetX: e.clientX - r.left, y: e.clientY, x: e.clientX };
+    card.classList.add("is-dragging");
+    card.style.width = r.width + "px";
+    card.style.left = r.left + "px";
+    card.style.top = r.top + "px";
+    document.body.classList.add("gl-dragging");
+    try { handle.setPointerCapture(e.pointerId); } catch (err) { /* not needed */ }
+    drag.raf = requestAnimationFrame(autoscroll);
+  });
+
+  window.addEventListener("pointermove", function (e) {
+    if (!drag || e.pointerId !== drag.id) return;
+    e.preventDefault();
+    drag.y = e.clientY;
+    drag.x = e.clientX;
+    place();
+  });
+
+  function end(e) {
+    if (!drag || e.pointerId !== drag.id) return;
+    cancelAnimationFrame(drag.raf);
+    var d = drag;
+    drag = null;
+    d.list.insertBefore(d.card, d.holder);
+    d.holder.remove();
+    d.card.classList.remove("is-dragging");
+    document.body.classList.remove("gl-dragging");
+    d.card.style.width = d.card.style.left = d.card.style.top = "";
+    save(d.list, d.before);
+  }
+  window.addEventListener("pointerup", end);
+  window.addEventListener("pointercancel", end);
+
+  /* ---------- a video plays in its card ---------- */
+
+  root.addEventListener("click", function (e) {
+    var thumb = e.target.closest("[data-embed]");
+    if (!thumb) return;
+    var box = document.createElement("div");
+    box.className = "gl-video";
+    var frame = document.createElement("iframe");
+    frame.src = "https://www.youtube-nocookie.com/embed/" + thumb.dataset.embed + "?autoplay=1";
+    frame.title = thumb.getAttribute("aria-label");
+    frame.allow = "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen";
+    frame.allowFullscreen = true;
+    frame.referrerPolicy = "strict-origin-when-cross-origin";
+    box.appendChild(frame);
+    thumb.replaceWith(box);
+  });
+
+  /* ---------- delete ---------- */
+
+  root.addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-delete]");
+    if (!btn || btn.disabled) return;
+    if (!confirm(root.dataset.confirm.replace("{title}", btn.dataset.title))) return;
+    btn.disabled = true;
+    var card = btn.closest(".gl-material");
+    var list = card.parentNode;
+    api("DELETE", "materials/" + btn.dataset.delete + "/").then(function () {
+      card.remove();
+      if (list.dataset.shelf === "mine") {
+        var count = document.getElementById("gl-mine-count");
+        count.textContent = String(Math.max(0, parseInt(count.textContent, 10) - 1));
+      } else {
+        var c = document.querySelector("#tab-shared .gl-tab-count");
+        c.textContent = String(Math.max(0, parseInt(c.textContent, 10) - 1));
+      }
+      say(root.dataset.deleted);
+    }).catch(function (err) { btn.disabled = false; say(err.message); });
+  });
+
+  /* ---------- keep a course item on my shelf ---------- */
+
+  root.addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-keep]");
+    if (!btn || btn.disabled) return;
+    btn.disabled = true;
+    api("POST", "materials/" + btn.dataset.keep + "/keep/").then(function (r) {
+      btn.title = root.dataset.keptLabel;
+      btn.setAttribute("aria-label", root.dataset.keptLabel);
+      stale = true;
+      if (r.created) {
+        var count = document.getElementById("gl-mine-count");
+        count.textContent = String(parseInt(count.textContent, 10) + 1);
+      }
+      say(r.created ? root.dataset.kept : root.dataset.already);
+    }).catch(function (err) { btn.disabled = false; say(err.message); });
+  });
+})();

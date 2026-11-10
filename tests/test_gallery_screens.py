@@ -164,7 +164,7 @@ def _screens(w):
         ("skills", None, "/gallery/skills/"), ("skill-guide", None, "/gallery/skills/guide/"), ("home-all", "dana", "/gallery/?scope=all&sort=new"), ("page", None, f"/gallery/e/{p}/"), ("skill", None, f"/gallery/e/{s}/"),
         ("person", None, f"/gallery/u/{w['dana'].slug}/"), ("login", None, "/gallery/login/"), ("signup", None, "/gallery/signup/"),
         ("home-in", "dana", "/gallery/"), ("page-in", "omer", f"/gallery/e/{p}/"), ("new", "dana", "/gallery/new/"),
-        ("edit", "dana", f"/gallery/e/{p}/edit/"), ("settings", "dana", "/gallery/settings/"),
+        ("edit", "dana", f"/gallery/e/{p}/edit/"), ("materials", "dana", "/gallery/materials/"), ("materials-avi", "avi", "/gallery/materials/"), ("material-new", "dana", "/gallery/materials/new/?shelf=mine"), ("settings", "dana", "/gallery/settings/"),
         ("training", "new", "/gallery/training/"), ("skill-new", "omer", "/gallery/skills/new/"),
         ("skill-at-limit", "dana", "/gallery/skills/new/"),
         ("chat-published", "dana", f"/gallery/skills/chat/{w['confirm']}/"),

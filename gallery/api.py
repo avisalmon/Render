@@ -8,13 +8,14 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 
-from . import access, shots, skillpack, skills
+from . import access, shelves, shots, skillpack, skills
 from . import skill_chat as chat_engine
 from .models import (
     AICall,
     Comment,
     Exhibit,
     Like,
+    Material,
     Person,
     Skill,
     SkillChat,
@@ -28,6 +29,7 @@ from .serializers import (
     CommentSerializer,
     ExhibitSerializer,
     LikeSerializer,
+    MaterialSerializer,
     PersonAdminSerializer,
     PersonOwnSerializer,
     PersonPublicSerializer,
@@ -359,6 +361,61 @@ class StrikeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Strike.objects.all()
 
 
+class MaterialViewSet(viewsets.ModelViewSet):
+    """Both shelves (REQ-G.120 to G.126). You see the shared shelf and your
+    own, never anybody else's. The shared shelf is written by Avi; yours by you.
+    `shelf` on create says which ("shared" or "mine")."""
+
+    serializer_class = MaterialSerializer
+    permission_classes = [SignedIn]
+
+    def get_queryset(self):
+        return shelves.visible(me(self.request))
+
+    def perform_create(self, serializer):
+        person = me(self.request)
+        shelf = self.request.data.get("shelf", "shared")
+        if shelf not in ("shared", "mine"):
+            raise ValidationError({"shelf": "shared or mine"})
+        if shelf == "shared" and not person.admin:
+            raise PermissionDenied("materials.only_avi_adds")
+        owner = person if shelf == "mine" else None
+        upload = serializer.validated_data.get("file")
+        if upload and owner is not None:
+            try:
+                shelves.check_quota(person, upload.size)
+            except shelves.Refused as why:
+                raise ValidationError({"file": str(why)}) from None
+        serializer.save(created_by=self.request.user, owner=owner, position=shelves.next_position(owner))
+
+    def perform_update(self, serializer):
+        if not shelves.may_change(me(self.request), serializer.instance):
+            raise PermissionDenied("materials.not_yours")
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        if not shelves.may_change(me(self.request), instance):
+            raise PermissionDenied("materials.not_yours")
+        shelves.remove(instance)
+
+    @action(detail=False, methods=["post"])
+    def reorder(self, request):
+        try:
+            ids = shelves.reorder(me(request), request.data.get("shelf"), request.data.get("order") or [])
+        except shelves.Refused as why:
+            code = status.HTTP_403_FORBIDDEN if str(why) == "materials.only_avi_orders" else status.HTTP_400_BAD_REQUEST
+            return Response({"detail": str(why)}, status=code)
+        return Response({"order": ids})
+
+    @action(detail=True, methods=["post"])
+    def keep(self, request, pk=None):
+        try:
+            copy, created = shelves.keep(me(request), self.get_object())
+        except shelves.Refused as why:
+            return Response({"detail": str(why)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"id": copy.pk, "created": created}, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+
 ROUTES = [
     ("persons", PersonViewSet, Person),
     ("trainings", TrainingViewSet, Training),
@@ -371,4 +428,5 @@ ROUTES = [
     ("skillchats", SkillChatViewSet, SkillChat),
     ("aicalls", AICallViewSet, AICall),
     ("strikes", StrikeViewSet, Strike),
+    ("materials", MaterialViewSet, Material),
 ]

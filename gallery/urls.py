@@ -3,7 +3,7 @@
 from django.urls import include, path
 from rest_framework import permissions, routers
 
-from . import auth_views, manage_views, views
+from . import auth_views, manage_views, materials_views, views
 from .api import ROUTES
 
 app_name = "gallery"
@@ -43,6 +43,10 @@ urlpatterns = [
     path("manage/people/<int:pk>/", manage_views.person, name="manage_person"),
     path("manage/trainings/", manage_views.trainings, name="manage_trainings"),
     path("manage/topics/", manage_views.topics, name="manage_topics"),
+    path("materials/", materials_views.materials, name="materials"),
+    path("materials/new/", materials_views.material_edit, name="material_new"),
+    path("materials/<int:pk>/edit/", materials_views.material_edit, name="material_edit"),
+    path("materials/files/<path:path>", materials_views.material_file, name="material_file"),
     path("u/<str:slug>/", views.person_page, name="person"),
     path("settings/", views.settings_page, name="settings"),
     path("training/", views.training, name="training"),

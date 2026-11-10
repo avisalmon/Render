@@ -1,0 +1,25 @@
+{% extends "gallery/base.html" %}{% load gallery_tags %}
+{% block title %}{% if item %}{% t "detail.edit" %}{% else %}{% t "materials.new" %}{% endif %} · {% t "brand" %}{% endblock %}
+{% block content %}
+<p class="gl-back"><a href="{{ back }}">{% t "materials.back" %}</a></p>
+<article class="gl-paper gl-form-paper{% if shelf == 'mine' %} is-mine{% endif %}">
+  <span class="gl-pin" aria-hidden="true"></span>
+  <h1 class="gl-h1">{% if item %}{% t "form.edit_title" %} <span dir="auto">{{ item.title }}</span>{% elif shelf == 'mine' %}{% t "materials.new_mine" %}{% else %}{% t "materials.new_shared" %}{% endif %}</h1>
+  <p class="gl-muted">{% if shelf == 'mine' %}{% t "materials.only_you_will" %}{% else %}{% t "materials.everyone_will" %}{% endif %} {% t "materials.kinds_hint" %}</p>
+  <form method="post" enctype="multipart/form-data" class="gl-form">
+    {% csrf_token %}
+    {% for field in form %}
+      <label class="gl-field" for="{{ field.id_for_label }}"><span>{{ field.label }}</span>{{ field }}
+        {% for e in field.errors %}<small class="gl-error">{{ e }}</small>{% endfor %}</label>
+    {% endfor %}
+    {% for e in form.non_field_errors %}<p class="gl-error">{{ e }}</p>{% endfor %}
+    <button type="submit" class="gl-btn" id="gl-save">{% t "form.save" %}</button>
+  </form>
+  {% if item %}
+    <form method="post" data-confirm="{% t 'materials.js_confirm_plain' %}">
+      {% csrf_token %}<input type="hidden" name="action" value="delete">
+      <button type="submit" class="gl-btn gl-btn-danger" id="gl-delete">{% t "form.remove" %}</button>
+    </form>
+  {% endif %}
+</article>
+{% endblock %}

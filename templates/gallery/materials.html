@@ -1,0 +1,63 @@
+{% extends "gallery/base.html" %}{% load static gallery_tags %}
+{% block title %}{% t "materials.title" %} · {% t "brand" %}{% endblock %}
+{% block content %}
+{% comment %}
+  REQ-G.120 to G.126, ported from cohort's materials. Two shelves in tabs: the
+  shared one (Avi decides what is on it and in what order) and the reader's
+  own (only they see it, add to it and order it). Order changes by dragging the
+  handle, with a mouse or a finger, or with the arrows; saved at once, with an undo.
+{% endcomment %}
+<div id="gl-shelves" data-saved="{% t 'materials.js_saved' %}" data-restored="{% t 'materials.js_restored' %}"
+     data-deleted="{% t 'materials.js_deleted' %}" data-kept="{% t 'materials.js_kept' %}" data-already="{% t 'materials.js_already' %}"
+     data-kept-label="{% t 'materials.js_kept_label' %}" data-confirm="{% t 'materials.js_confirm' %}" data-error="{% t 'materials.js_error' %}">
+  <div class="gl-head"><h1 class="gl-title">{% t "materials.title" %}</h1></div>
+
+  <div class="gl-tabs" role="tablist" aria-label="{% t 'materials.title' %}">
+    <button type="button" role="tab" class="gl-tab" id="tab-shared" data-tab="shared" aria-controls="panel-shared" aria-selected="true">
+      {% t "materials.shared" %} <span class="gl-tab-count">{{ shared_items|length }}</span>
+    </button>
+    <button type="button" role="tab" class="gl-tab" id="tab-mine" data-tab="mine" aria-controls="panel-mine" aria-selected="false" tabindex="-1">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 7V5a4 4 0 0 1 8 0v2h1v8H3V7zm2 0h4V5a2 2 0 0 0-4 0z"/></svg>
+      {% t "materials.mine" %} <span class="gl-tab-count" id="gl-mine-count">{{ my_items|length }}</span>
+    </button>
+  </div>
+
+  <section class="gl-panel" role="tabpanel" id="panel-shared" aria-labelledby="tab-shared">
+    <div class="gl-panel-head">
+      <p class="gl-intro">{% if is_admin %}{% t "materials.shared_intro_admin" %}{% else %}{% t "materials.shared_intro" %}{% endif %}</p>
+      {% if is_admin %}<a class="gl-btn" href="{% url 'gallery:material_new' %}" id="gl-material-add">+ {% t "materials.add_shared" %}</a>{% endif %}
+    </div>
+    {% if shared_items %}
+      <div class="gl-materials" data-shelf="shared"{% if is_admin %} data-sortable="1"{% endif %}>
+        {% for m in shared_items %}{% include "gallery/_material.html" with shelf="shared" can_sort=is_admin can_edit=is_admin show_keep=True %}{% endfor %}
+      </div>
+    {% else %}
+      <article class="gl-paper gl-empty"><p>{% t "materials.shared_empty" %}</p></article>
+    {% endif %}
+  </section>
+
+  <section class="gl-panel" role="tabpanel" id="panel-mine" aria-labelledby="tab-mine" hidden>
+    <div class="gl-panel-head">
+      <p class="gl-intro">{% t "materials.mine_intro" %}
+        {% if space.used %}<span class="gl-small">({{ space.used_mb }}MB / 200MB)</span>{% endif %}</p>
+      <a class="gl-btn" href="{% url 'gallery:material_new' %}?shelf=mine" id="gl-mine-add">+ {% t "materials.add_mine" %}</a>
+    </div>
+    {% if my_items %}
+      <div class="gl-materials" data-shelf="mine" data-sortable="1">
+        {% for m in my_items %}{% include "gallery/_material.html" with shelf="mine" can_sort=True can_edit=True show_keep=False %}{% endfor %}
+      </div>
+    {% else %}
+      <article class="gl-paper gl-empty is-mine" id="gl-mine-empty">
+        <p>{% t "materials.mine_empty" %}</p>
+        <a class="gl-btn" href="{% url 'gallery:material_new' %}?shelf=mine">+ {% t "materials.add_mine" %}</a>
+      </article>
+    {% endif %}
+  </section>
+
+  <div class="gl-toast" id="gl-toast" role="status" aria-live="polite" hidden>
+    <span id="gl-toast-text"></span>
+    <button type="button" class="gl-toast-btn" id="gl-toast-undo" hidden>{% t "materials.js_undo" %}</button>
+  </div>
+</div>
+<script src="{% static 'gallery/materials.js' %}" defer></script>
+{% endblock %}

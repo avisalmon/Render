@@ -490,7 +490,7 @@ def test_full_rest_api_routes(client, people):
     """REQ-G.103, Rule 6"""
     root = client.get("/gallery/api/").json()
     assert set(root) == {"persons", "trainings", "topics", "exhibits", "likes", "stars", "comments",
-                         "skills", "skillchats", "aicalls", "strikes"}
+                         "skills", "skillchats", "aicalls", "strikes", "materials"}
     client.force_login(people["dana"].user)
     assert client.post("/gallery/api/topics/", {"slug": "x", "name_he": "x", "name_en": "x"}).status_code == 403
     assert client.post("/gallery/api/trainings/", {"name_he": "x", "name_en": "x"}).status_code == 403

@@ -10,6 +10,7 @@ from .models import (
     Comment,
     Exhibit,
     Like,
+    Material,
     Person,
     Skill,
     SkillChat,
@@ -217,3 +218,24 @@ class StrikeSerializer(serializers.ModelSerializer):
         model = Strike
         fields = ["id", "person", "chat", "findings", "created_at", "emailed_at", "cleared_at"]
         read_only_fields = fields
+
+
+class MaterialSerializer(serializers.ModelSerializer):
+    file_url = serializers.SerializerMethodField()
+    shelf = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Material
+        fields = ["id", "kind", "title", "line", "url", "youtube_id", "file", "file_url", "shelf", "position", "created_at"]
+        read_only_fields = ["id", "youtube_id", "file_url", "shelf", "position", "created_at"]
+        extra_kwargs = {"file": {"write_only": True, "required": False}}
+
+    def get_file_url(self, obj):
+        return f"/gallery/materials/files/{obj.file.name}" if obj.file else None
+
+    def get_shelf(self, obj):
+        return "shared" if obj.owner_id is None else "mine"
+
+    def validate(self, attrs):
+        _http(attrs.get("url") or "")
+        return attrs

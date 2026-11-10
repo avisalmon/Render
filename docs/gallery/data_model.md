@@ -226,6 +226,23 @@ the person and mails Avi.
 | emailed_at | datetime, null | the email to Avi, set once, so it goes once |
 | cleared_at | datetime, null | set when Avi lifts a block: kept on record, no longer counted (SPR-G.8) |
 
+### Material (SPR-G.11)
+
+One item on a shelf, the same shape as cohort's (copied, not shared).
+
+| Field | Type | Notes |
+|---|---|---|
+| owner | FK → Person, null | null: the shared shelf (Avi's). Set: that person's own shelf, seen by nobody else |
+| kind | choice | `video`, `file`, `course`, `link` |
+| title | char 160 | |
+| line | char 280 | one line of explanation |
+| url | URL, blank | YouTube, a babook course, or any page |
+| youtube_id | char 20, blank | taken from the URL on save |
+| file | file, blank | a document, under `materials/`; a kept copy points at the same file |
+| position | int | order within its shelf, rewritten as 10, 20, 30 on a reorder |
+| source | char 40, blank | `cohort:<id>` for an item the one-time copy brought, so it never comes twice |
+| created_at, created_by | | |
+
 ## 3. What is shared, and what is not
 
 - Shared with babook: the `User` table and sign-in only.

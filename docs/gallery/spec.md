@@ -210,6 +210,19 @@ The same as cohort's exhibition, for every kind of card (page, skill, BKM).
 | REQ-G.115 | The skill guide | `/gallery/skills/guide/`, in both languages: what a skill is, SKILL.md with an example, where it lives for Claude Code and Copilot, skill-creator, what makes a good skill, how uploading works. | DONE |
 | REQ-G.116 | One line, not a paragraph | The gallery's intro is one short line; on a phone the cards come first. | DONE |
 
+## Chapter 8c: Materials (Avi, 2026-11-10: "the same as cohort's")
+
+| REQ | Title | Expectation | Status |
+|---|---|---|---|
+| REQ-G.120 | Materials, for signed-in people | A "materials" page in the menu, for anybody signed in. Visitors are sent to sign in: the shared shelf came from a closed course and its documents were never public. | DONE |
+| REQ-G.121 | The shared shelf is Avi's | Only Avi adds, edits, deletes and orders it; everybody signed in sees it. | DONE |
+| REQ-G.122 | Everyone's own shelf | Each person adds videos, documents and links of their own. Only they see them, Avi included. | DONE |
+| REQ-G.123 | Keep it | Anything on the shared shelf is copied to one's own shelf with one tap; a kept document shares the file and costs no room. | DONE |
+| REQ-G.124 | Four kinds, small cards, order | A YouTube video (plays in its card), a document kept on the site, a babook course, a link. Small cards, two a row on a phone. Order by dragging the handle or the arrows, saved at once with an undo. Private files: 25MB each, 200MB a person. | DONE |
+| REQ-G.125 | Documents stay inside | A document is served only to someone who can see an item pointing at it. A file that could carry script (HTML, SVG) always downloads, never opens on the site. | DONE |
+| REQ-G.126 | Both languages, the full API | The page and its messages in Hebrew and English; `api/materials/` with reorder and keep, the same rules as the page. | DONE |
+| REQ-G.127 | Copied from cohort, once | Everything on cohort's shared shelf (17 items on 2026-11-10, with documents' files) copied in the same order by a one-time migration. People's private shelves in cohort are not copied. | DONE |
+
 ## Chapter 9: How it must behave
 
 | REQ | Title | Expectation | Status |
@@ -266,3 +279,12 @@ The same as cohort's exhibition, for every kind of card (page, skill, BKM).
   per-address throttle (inflating a count harms nobody; comments come from
   signed-in accounts Avi can delete). A message that starts with an English word
   inside a Hebrew sentence reads left to right (the browser's first-letter rule).
+- **Materials: Avi said "do it and push" without answering the four questions,
+  so the careful answers were built and are listed here to be changed:** the
+  name is "materials" (not "הדרכות", babook's word for its courses); the shared
+  shelf is for signed-in people only; one shelf for everyone, not per course;
+  the copy from cohort is a one-time migration.
+- **Two recorded exceptions to the rules.** Rule 2: the one-time migration
+  `0008_copy_cohort_materials` reads cohort's rows and files once; nothing in
+  the running gallery touches cohort. Rule 3: "babook course" materials link
+  into babook's courses, as cohort's do.
