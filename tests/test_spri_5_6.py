@@ -15,6 +15,7 @@ import re
 import shutil
 import subprocess
 from pathlib import Path
+from unittest import mock
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -460,7 +461,9 @@ def test_the_new_reads_are_behind_the_gate_and_read_only(people, path, name):
 def test_the_weakness_read_carries_the_claims(people, path):
     player = _player(people["member"])
     _played(player, days_ago=0, **_good(notes=40, withinPct=10))
-    data = _client(people["member"]).get(f"{API}weakness/").json()
+    # The view reads the real clock; pin it to the takes' day so the thirty-day window holds.
+    with mock.patch("django.utils.timezone.now", return_value=NOW):
+        data = _client(people["member"]).get(f"{API}weakness/").json()
     assert set(data) == {"days", "floor", "notes", "enough", "notes_needed", "claims"}
     assert data["enough"] is True and data["claims"][0]["area"] == "timing"
     assert set(data["claims"][0]) == {
