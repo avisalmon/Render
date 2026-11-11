@@ -17,6 +17,25 @@ Newest first.
 
 ---
 
+## PM-95 · 2026-11-11 · The shared menu's first train: four failures my run did not cover
+
+**What happened.** Train T1111-081822 stopped on four failures my own run
+missed: books keeps every word of its interface in its strings file and I
+wrote the menu's label into its template; and babook's own drawer has rules
+(it links no app to strangers, it reads the portal registry, it does not
+link into books) that the shared menu broke, while that drawer already
+listed the apps. Fixed: books' label from its strings; babook draws no
+shared menu and keeps its portal list.
+
+**Why.** I ran the seal and class tests I could think of for each app, not
+each app's whole test set, though I was changing their frames.
+
+**Rule.** Nothing new: methodology 18 already says a change to a shared
+frame runs that app's whole tests. I did not follow it.
+
+Here: `docs/building_an_app.md` (methodology 18, Rule 3)
+BKM: deferred - covered by an existing rule
+
 ## PM-94 · 2026-11-11 · A new way of working: one menu for all official apps
 
 **What happened.** Avi asked that every official app show the same "more on

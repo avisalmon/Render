@@ -12,6 +12,8 @@ product, meant to move to a site of its own one day (Avi, 2026-11-11).
 
 This replaces Rule 3's "no link back to the main site" for official apps:
 the shared menu is their one sanctioned way out (docs/building_an_app.md).
+babook itself (courses) is in the list but draws no menu: its drawer already
+lists the apps from the portal registry (app/portal.py), as its rules ask.
 """
 
 from dataclasses import dataclass

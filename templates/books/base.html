@@ -27,7 +27,7 @@
   <header class="bk-header">
     <a class="bk-wordmark" href="{% url 'books:home' %}">{% t "brand" %}</a>
     <details class="mob" id="more-on-babook" data-more-on-babook>
-      <summary>{% if request.books_lang == 'en' %}More on babook{% else %}עוד ב-babook{% endif %}</summary>
+      <summary>{% t "more_on_site" %}</summary>
       <ul class="mob-list">{% for a in more_on_babook %}<li><a href="{{ a.path }}">{% if request.books_lang == 'en' %}{{ a.en }}{% else %}{{ a.he }}{% endif %}</a></li>{% endfor %}</ul>
     </details>
     <div class="bk-account">

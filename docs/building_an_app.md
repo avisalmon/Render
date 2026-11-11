@@ -80,6 +80,8 @@ app official: one line in `OFFICIAL`, the menu in that app's base template,
 and its page in `tests/test_more_on_babook.py`, which fails while any
 official app lacks the menu. An app that is not official (מט״צים, by
 Avi's decision, being its own product) shows no menu and is not listed.
+babook itself (courses) is listed but draws no menu: its drawer already lists
+the apps from the portal registry, and its rules keep that the one list there.
 An app's own no-link-out test strips the `data-more-on-babook` block and
 checks the rest as before.
 

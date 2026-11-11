@@ -1857,8 +1857,6 @@ html[data-theme="dark"] .site-drawer .btn-close { filter: invert(1); }
 .site-drawer-nav a i,
 .site-drawer-nav button i { color: var(--accent-primary); width: 1.3rem; text-align: center; }
 .site-drawer-sep { border-color: var(--border); margin: .5rem 0; opacity: 1; }
-/* the official apps' shared menu (mysite/more_on_babook.py) */
-.site-drawer-label { font-size: .8rem; font-weight: 700; color: var(--text-muted, #6c757d); padding: .25rem .75rem; }
 
 /* =====================================================================
    Home "discover more" — image circles (members)

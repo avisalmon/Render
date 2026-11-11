@@ -13,9 +13,12 @@ from django.contrib.auth.models import User
 
 from mysite.more_on_babook import OFFICIAL
 
-# One page in each official app where its own frame is drawn.
+# One page in each official app where its own frame is drawn. babook itself
+# (courses) is listed in the menu but draws none: its drawer already lists the
+# apps from the portal registry, and its own rules (tests/test_spr_13_5.py,
+# test_smoke.py) keep that the one list there.
+NO_MENU = {"courses"}
 PAGES = {
-    "courses": "/courses/",
     "books": "/books/login/",
     "design3d": "/design3d/login/",
     "blackjack": "/blackjack/",
@@ -38,7 +41,7 @@ def _menu(html):
 
 
 def test_every_official_app_has_a_page_here():
-    assert set(PAGES) == {a.slug for a in OFFICIAL}
+    assert set(PAGES) | NO_MENU == {a.slug for a in OFFICIAL}
 
 
 @pytest.mark.parametrize("slug", sorted(PAGES))

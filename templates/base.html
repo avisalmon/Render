@@ -174,13 +174,6 @@
         <a href="{% url 'showcase_wall' %}"><i class="bi bi-easel2"></i> דוכן השוויץ</a>
         <a href="{% url 'class_directory' %}"><i class="bi bi-easel"></i> כל הכיתות</a>
         <a href="{% url 'blog' %}"><i class="bi bi-newspaper"></i> הבלוג של אבי סלמון</a>
-        {# The official apps (mysite/more_on_babook.py, Avi 2026-11-11). #}
-        <hr class="site-drawer-sep">
-        <div class="site-drawer-more d-flex flex-column" id="more-on-babook" data-more-on-babook>
-          <span class="site-drawer-label d-block">עוד ב-babook</span>
-          {% for a in more_on_babook %}<a href="{{ a.path }}"><i class="bi bi-box-arrow-up-left"></i> {{ a.he }}</a>
-          {% endfor %}
-        </div>
         {% if user.is_authenticated %}
         <hr class="site-drawer-sep">
         <a href="{% url 'profile' %}"><i class="bi bi-person-circle"></i> פרופיל</a>
