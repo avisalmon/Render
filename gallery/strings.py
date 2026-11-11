@@ -487,11 +487,6 @@ STRINGS = {
 
     # ---- more on babook (Avi, 2026-11-10)
     "nav.more": {"he": "עוד ב-babook", "en": "More on babook"},
-    "more.courses": {"he": "הדרכות", "en": "Courses"},
-    "more.books": {"he": "שיתוף ספרים", "en": "Book sharing"},
-    "more.design3d": {"he": "הדפסה בתלת-ממד", "en": "3D printing"},
-    "more.matazim": {"he": "מט״צים", "en": "Matazim"},
-    "more.blackjack": {"he": "blackjack", "en": "Blackjack"},
 
     # ---- errors
     "error.404": {"he": "הדף הזה לא נמצא.", "en": "This page was not found."},

@@ -83,7 +83,9 @@ def test_the_gate_puts_google_first_and_the_password_folded(client, db):
     assert 'href="/accounts/google/login/?process=login&amp;next=/bkm/"' in gate
     assert 'name="password"' in gate.split("<details", 1)[1]
     login = client.get("/bkm/login/?next=/bkm/%23de10-lite").content.decode()
-    assert "next=/bkm/%23de10-lite" in login and login.index("Continue with Google") < login.index("<details")
+    # The main block only: the menu's shared "more on babook" is a <details> too (2026-11-11).
+    main = login.split('<main', 1)[1]
+    assert "next=/bkm/%23de10-lite" in login and main.index("Continue with Google") < main.index("<details")
 
 
 def test_signed_in_the_cards_open_and_count(client, world):
@@ -112,17 +114,17 @@ def test_the_wall_and_its_pages_are_english(client, world):
 
 
 def test_the_wall_never_links_to_babook(client, world):
-    """Rule 3: no way from the app to the main site. One deliberate exception,
-    asked for by Avi on 2026-11-10: the menu's way back to the 10x gallery,
-    which links here."""
+    """Rule 3: no way from the app to the main site, except the official apps'
+    shared "more on babook" menu (Avi, 2026-11-11)."""
     client.force_login(world["dana"])
     for path in ("/bkm/", "/bkm/full-stack/"):
         html = client.get(path).content.decode()
+        # Since 2026-11-11 the way back to the gallery is the official apps' shared menu.
+        assert 'data-more-on-babook' in html and 'href="/gallery/"' in html, path
+        html = re.sub(r'<details[^>]*data-more-on-babook[^>]*>.*?</details>', "", html, flags=re.S)
         hrefs = re.findall(r'href="([^"]+)"', html)
-        inside = [h for h in hrefs if h.startswith("/") and not h.startswith(("/bkm/", "/static/", "/media/", "/accounts/google/"))
-                  and h != "/gallery/"]
+        inside = [h for h in hrefs if h.startswith("/") and not h.startswith(("/bkm/", "/static/", "/media/", "/accounts/google/"))]
         assert inside == [], (path, inside)
-        assert hrefs.count("/gallery/") == 1, path
         assert "babook.co.il" not in html
 
 

@@ -192,7 +192,7 @@ def test_more_on_babook_and_the_way_back_from_bkm(client, world):
     the bkm app links back to the gallery."""
     page = client.get("/gallery/").content.decode()
     menu = page[page.index('id="gl-more"'):page.index("</details>", page.index('id="gl-more"'))]
-    # Avi, 2026-11-11: exactly these, in this order.
-    assert re.findall(r'href="([^"]+)"', menu) == ["/courses/", "/books/", "/design3d/", "/matazim/", "/blackjack/"]
+    # The official apps' shared list (mysite/more_on_babook.py), without the gallery itself.
+    assert re.findall(r'href="([^"]+)"', menu) == ["/courses/", "/books/", "/design3d/", "/blackjack/", "/bkm/"]
     wall = client.get("/bkm/").content.decode()
-    assert 'id="bm-nav-gallery"' in wall and 'href="/gallery/"' in wall
+    assert "data-more-on-babook" in wall and 'href="/gallery/"' in wall

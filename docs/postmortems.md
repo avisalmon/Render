@@ -17,6 +17,23 @@ Newest first.
 
 ---
 
+## PM-94 · 2026-11-11 · A new way of working: one menu for all official apps
+
+**What happened.** Avi asked that every official app show the same "more on
+babook" menu, and that naming a new official app add it everywhere. Six apps
+had six hand-made frames; doing it by hand would drift the first time
+somebody forgot one.
+
+**Rule.** One list (`mysite/more_on_babook.py`) feeds every frame through a
+context processor, and a test fails while any official app lacks the menu.
+Apps' own no-link-out tests strip that one block and check the rest. Building
+it, the shared stylesheet's file name tripped a books test forbidding the
+word "babook" anywhere, and a menu at the left end of an RTL bar opened past
+the screen; both fixed before shipping.
+
+Here: `docs/building_an_app.md` (Rule 3), `tests/test_more_on_babook.py`
+BKM: FullStackBKM 189f508
+
 ## PM-93 · 2026-11-10 · Sprint G.11 end (gallery materials): nothing new
 
 **What happened.** Porting cohort's materials brought a `.gl-icon` rule that

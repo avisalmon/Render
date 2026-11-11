@@ -189,10 +189,19 @@ def test_deleting_my_profile_keeps_my_account(client, onboarded):
 
 # ---- the seal ----------------------------------------------------------------
 
+
+def _without_more_on_babook(html):
+    """The official apps' shared menu (mysite/more_on_babook.py, Avi
+    2026-11-11) is the one sanctioned way out; everything else stays sealed."""
+    import re as _re
+
+    return _re.sub(r'<(details|div)[^>]*data-more-on-babook[^>]*>.*?</\1>', "", html, flags=_re.S)
+
+
 @pytest.mark.parametrize("path", ["/books/login/", "/books/signup/", "/books/terms/", "/books/privacy/",
                                   "/books/password/reset/", "/books/nope/"])
 def test_books_pages_carry_no_babook_chrome_and_no_link_out(client, path):
-    html = client.get(path).content.decode()
+    html = _without_more_on_babook(client.get(path).content.decode())
     assert "babook" not in html.lower()
     for href in re.findall(r'href="([^"]+)"', html):
         assert href.startswith(("/books/", "/static/", "/accounts/google/", "https://fonts.", "#")), href
@@ -200,7 +209,7 @@ def test_books_pages_carry_no_babook_chrome_and_no_link_out(client, path):
 
 def test_the_library_page_is_sealed_too(client, onboarded):
     client.force_login(onboarded)
-    html = client.get("/books/").content.decode()
+    html = _without_more_on_babook(client.get("/books/").content.decode())
     # One door out, asked for by Avi (2026-10-21): the menu's "more on the site", to babook's main page.
     door = 'class="bk-nav-item bk-nav-item--site" href="/babook/"'
     assert html.count(door) == 2
@@ -211,7 +220,8 @@ def test_the_library_page_is_sealed_too(client, onboarded):
 
 
 def test_babook_does_not_link_to_books(client, db):
-    html = client.get("/babook/").content.decode()
+    """Except through the official apps' shared menu (Avi, 2026-11-11)."""
+    html = _without_more_on_babook(client.get("/babook/").content.decode())
     assert 'href="/books' not in html
 
 

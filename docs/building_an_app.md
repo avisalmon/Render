@@ -70,6 +70,19 @@ unless explicitly asked for. This is the same encapsulation idea as Rules
 able to tell, or need to know, that the main site exists at all, unless
 that is specifically wanted.
 
+**Official apps share one "more on babook" menu (Avi, 2026-11-11).** Avi
+names which apps are official; the list lives in one place,
+`mysite/more_on_babook.py` (`OFFICIAL`). Every official app's own base
+template draws "more on babook" from it (the `more_on_babook` context
+variable, already without the app it is in), in the app's own look and
+language; that menu is the app's one sanctioned way out. When Avi makes an
+app official: one line in `OFFICIAL`, the menu in that app's base template,
+and its page in `tests/test_more_on_babook.py`, which fails while any
+official app lacks the menu. An app that is not official (מט״צים, by
+Avi's decision, being its own product) shows no menu and is not listed.
+An app's own no-link-out test strips the `data-more-on-babook` block and
+checks the rest as before.
+
 **Rule 4: An app has its own docs directory, encapsulated the same way the
 code is. Inside it: a spec, a backlog, a dashboard, and a separate data
 model document.**

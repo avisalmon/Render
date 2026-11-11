@@ -20,11 +20,16 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="{% t "brand" %}">
   {% block meta %}{% endblock %}
+  <link rel="stylesheet" href="{% static 'apps_menu.css' %}">
 </head>
 <body class="bk" data-screen="{% block screen %}page{% endblock %}" data-csrf="{{ csrf_token }}">
   <a class="bk-skip" href="#bk-content">{% t "skip" %}</a>
   <header class="bk-header">
     <a class="bk-wordmark" href="{% url 'books:home' %}">{% t "brand" %}</a>
+    <details class="mob" id="more-on-babook" data-more-on-babook>
+      <summary>{% if request.books_lang == 'en' %}More on babook{% else %}עוד ב-babook{% endif %}</summary>
+      <ul class="mob-list">{% for a in more_on_babook %}<li><a href="{{ a.path }}">{% if request.books_lang == 'en' %}{{ a.en }}{% else %}{{ a.he }}{% endif %}</a></li>{% endfor %}</ul>
+    </details>
     <div class="bk-account">
       <form method="post" action="{% url 'books:set_language' request.books_other_lang|default:'en' %}"{% if user.books_profile %} class="bk-wide-only"{% endif %}>{% csrf_token %}
         <input type="hidden" name="next" value="{{ request.get_full_path }}">
