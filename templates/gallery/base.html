@@ -29,14 +29,11 @@
         <details class="gl-more" id="gl-more">
           <summary>{% t "nav.more" %}</summary>
           <ul class="gl-more-list">
-            <li><a href="/babook/">{% t "more.babook" %}</a></li>
             <li><a href="/courses/">{% t "more.courses" %}</a></li>
-            <li><a href="/blog/">{% t "more.blog" %}</a></li>
             <li><a href="/books/">{% t "more.books" %}</a></li>
             <li><a href="/design3d/">{% t "more.design3d" %}</a></li>
-            <li><a href="/exo/">{% t "more.exo" %}</a></li>
-            <li><a href="/improv/">{% t "more.improv" %}</a></li>
-            <li><a href="/sensorlab/">{% t "more.sensorlab" %}</a></li>
+            <li><a href="/matazim/">{% t "more.matazim" %}</a></li>
+            <li><a href="/blackjack/">{% t "more.blackjack" %}</a></li>
           </ul>
         </details>
         {% if nav.me %}<a href="{% url 'gallery:person' nav.me.slug %}" {% if section == 'me' %}aria-current="page"{% endif %}>{% t "nav.mine" %}</a>{% endif %}

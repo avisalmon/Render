@@ -289,6 +289,6 @@ The same as cohort's exhibition, for every kind of card (page, skill, BKM).
   the running gallery touches cohort. Rule 3: "babook course" materials link
   into babook's courses, as cohort's do.
 - **More on babook, and BKM back to the gallery** (Avi, 2026-11-10). The menu
-  has "עוד ב-babook": babook's main page, its courses, the blog, books,
-  design3d, ExO, improv and SensorLab (private apps left out). A recorded
+  has "עוד ב-babook". Avi chose the list on 2026-11-11: הדרכות, שיתוף ספרים,
+  הדפסה בתלת-ממד, מט״צים, blackjack. A recorded
   exception to Rule 3, like the BKM link; the bkm app links back here.

@@ -192,8 +192,7 @@ def test_more_on_babook_and_the_way_back_from_bkm(client, world):
     the bkm app links back to the gallery."""
     page = client.get("/gallery/").content.decode()
     menu = page[page.index('id="gl-more"'):page.index("</details>", page.index('id="gl-more"'))]
-    for path in ("/babook/", "/courses/", "/blog/", "/books/", "/design3d/", "/exo/", "/improv/", "/sensorlab/"):
-        assert f'href="{path}"' in menu
-    assert "/ustrip/" not in menu and "/home/" not in menu
+    # Avi, 2026-11-11: exactly these, in this order.
+    assert re.findall(r'href="([^"]+)"', menu) == ["/courses/", "/books/", "/design3d/", "/matazim/", "/blackjack/"]
     wall = client.get("/bkm/").content.decode()
     assert 'id="bm-nav-gallery"' in wall and 'href="/gallery/"' in wall
