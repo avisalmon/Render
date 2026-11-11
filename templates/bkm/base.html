@@ -14,6 +14,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap">
   <link rel="stylesheet" href="{% static 'bkm/bkm.css' %}">
+  <link rel="stylesheet" href="{% static 'apps_menu.css' %}">
 </head>
 <body class="bm{% if not user.is_authenticated %} is-visitor{% endif %}">
   <header class="bm-bar">
@@ -21,12 +22,15 @@
     <nav class="bm-nav" aria-label="Menu">
       <a href="{% url 'bkm:wall' %}" {% if section == 'wall' %}aria-current="page"{% endif %}>The wall</a>
       <a href="{% url 'bkm:projects' %}" {% if section == 'projects' %}aria-current="page"{% endif %}>Projects</a>
-      {# Avi, 2026-11-10: a way back to the 10x gallery, which links here. #}
-      <a href="/gallery/" id="bm-nav-gallery">10x Gallery</a>
       {% if user.is_authenticated %}
         <a href="{% url 'bkm:wall' %}?starred=1" {% if section == 'stars' %}aria-current="page"{% endif %}>My stars</a>
       {% endif %}
     </nav>
+    {# Avi, 2026-11-11: the official apps' shared menu, the 10x gallery among them. #}
+    <details class="mob" id="more-on-babook" data-more-on-babook>
+      <summary>More on babook</summary>
+      <ul class="mob-list">{% for a in more_on_babook %}<li><a href="{{ a.path }}">{{ a.en }}</a></li>{% endfor %}</ul>
+    </details>
     <div class="bm-account">
       {% if user.is_authenticated %}
         <span class="bm-who">{{ user.first_name|default:user.email }}</span>

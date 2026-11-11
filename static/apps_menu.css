@@ -1,0 +1,26 @@
+/* The official apps' shared "more on babook" menu (mysite/more_on_babook.py).
+   Neutral on purpose: the summary takes the colour of whichever bar it sits
+   in, and the list is a plain white sheet, so it fits every app's own look.
+   44px targets; on a phone the list opens inside the bar at full width. */
+.mob { position: relative; font: inherit; }
+.mob summary {
+  list-style: none; cursor: pointer; color: inherit; font-weight: 600;
+  min-height: 44px; display: inline-flex; align-items: center; gap: 4px; padding: 0 4px;
+}
+.mob summary::-webkit-details-marker { display: none; }
+.mob summary::after { content: "\25BE"; font-size: .8em; }
+.mob:not([open]) .mob-list { display: none; }
+.mob-list {
+  position: absolute; z-index: 1000; top: 100%; inset-inline-end: 0; min-width: 210px;
+  margin: 4px 0 0; padding: 6px 0; list-style: none;
+  background: #fff; color: #222; border-radius: 6px; box-shadow: 0 8px 20px rgba(0, 0, 0, .25);
+}
+.mob-list a {
+  display: flex; align-items: center; min-height: 44px; padding: 0 14px;
+  color: #222 !important; text-decoration: none; font-weight: 600; font-size: 1rem;
+}
+.mob-list a:hover, .mob-list a:focus-visible { background: #f2efe8; }
+@media (max-width: 760px) {
+  .mob { flex-basis: 100%; }
+  .mob-list { position: static; min-width: 0; width: 100%; margin: 4px 0 6px; }
+}

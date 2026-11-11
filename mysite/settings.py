@@ -116,6 +116,8 @@ TEMPLATES = [
                 "app.context_processors.breadcrumbs_ctx",
                 "app.context_processors.plausible_events_ctx",
                 "app.context_processors.portal_apps",
+                # The official apps' shared "more on babook" menu (mysite/more_on_babook.py).
+                "mysite.more_on_babook.menu",
             ],
         },
     },

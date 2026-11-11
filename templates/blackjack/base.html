@@ -17,6 +17,7 @@
     served from our own domain. REQ-B.10.1.
   {% endcomment %}
   <link rel="stylesheet" href="{% static 'blackjack/blackjack.css' %}">
+  <link rel="stylesheet" href="{% static 'apps_menu.css' %}">
 </head>
 <body class="bj-body">
 
@@ -55,6 +56,10 @@
         from the sheet, which is the screen that shows them. Seven links wrap onto a second line on a phone, which the nav allows.
       {% endcomment %}
     </nav>
+    <details class="mob" id="more-on-babook" data-more-on-babook>
+      <summary>עוד ב-babook</summary>
+      <ul class="mob-list">{% for a in more_on_babook %}<li><a href="{{ a.path }}">{{ a.he }}</a></li>{% endfor %}</ul>
+    </details>
   </header>
 
   <main class="bj-main">

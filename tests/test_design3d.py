@@ -492,11 +492,19 @@ def test_the_api_shows_your_rows_only(client, world):
     assert client.post(f"/design3d/api/makers/{m.pk}/approve/").json()["status"] == "approved"
 
 
+def _without_more_on_babook(html):
+    """The official apps' shared menu (mysite/more_on_babook.py, Avi
+    2026-11-11) is the one sanctioned way out; everything else stays sealed."""
+    import re as _re
+
+    return _re.sub(r'<(details|div)[^>]*data-more-on-babook[^>]*>.*?</\1>', "", html, flags=_re.S)
+
+
 def test_pages_are_english_and_never_link_to_babook(client, world):
     d = _design(client, world["dana"])
     _say(client, d)
     for path in ("/design3d/designs/", f"/design3d/d/{d.pk}/", "/design3d/shared/"):
-        html = client.get(path).content.decode()
+        html = _without_more_on_babook(client.get(path).content.decode())
         assert not HEBREW.search(html), path
         inside = [h for h in re.findall(r'href="([^"]+)"', html)
                   if h.startswith("/") and not h.startswith(("/design3d/", "/static/", "/accounts/google/"))]

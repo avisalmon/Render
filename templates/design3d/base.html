@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap">
   <link rel="stylesheet" href="{% static 'design3d/design3d.css' %}">
   {% block head %}{% endblock %}
+  <link rel="stylesheet" href="{% static 'apps_menu.css' %}">
 </head>
 <body class="d3">
   <header class="d3-bar">
@@ -26,6 +27,10 @@
         {% if f.admin %}<a href="{% url 'design3d:people' %}" {% if section == 'people' %}aria-current="page"{% endif %}>People{% if f.waiting %} ({{ f.waiting }}){% endif %}</a>{% endif %}
       </nav>
     {% endif %}
+    <details class="mob" id="more-on-babook" data-more-on-babook>
+      <summary>More on babook</summary>
+      <ul class="mob-list">{% for a in more_on_babook %}<li><a href="{{ a.path }}">{{ a.en }}</a></li>{% endfor %}</ul>
+    </details>
     <div class="d3-account">
       {% if user.is_authenticated %}
         <span class="d3-who">{{ user.first_name|default:user.email }}</span>

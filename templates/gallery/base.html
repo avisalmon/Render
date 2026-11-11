@@ -25,19 +25,10 @@
         {# BKMs live in Avi's bkm app; the gallery only links there (Avi, 2026-11-10; the one link out, REQ-G.81). #}
         {% if user.is_authenticated %}<a href="{% url 'gallery:materials' %}" {% if section == 'materials' %}aria-current="page"{% endif %} id="gl-nav-materials">{% t "nav.materials" %}</a>{% endif %}
         <a href="/bkm/" id="gl-nav-bkm">{% t "nav.bkm" %}</a>
-        {# Avi, 2026-11-10: "more on babook", links out to his other things there (a recorded exception to Rule 3). #}
-        <details class="gl-more" id="gl-more">
+        {# The official apps' shared "more on babook" menu (mysite/more_on_babook.py, Avi 2026-11-11). #}
+        <details class="gl-more" id="gl-more" data-more-on-babook>
           <summary>{% t "nav.more" %}</summary>
-          <ul class="gl-more-list">
-            <li><a href="/babook/">{% t "more.babook" %}</a></li>
-            <li><a href="/courses/">{% t "more.courses" %}</a></li>
-            <li><a href="/blog/">{% t "more.blog" %}</a></li>
-            <li><a href="/books/">{% t "more.books" %}</a></li>
-            <li><a href="/design3d/">{% t "more.design3d" %}</a></li>
-            <li><a href="/exo/">{% t "more.exo" %}</a></li>
-            <li><a href="/improv/">{% t "more.improv" %}</a></li>
-            <li><a href="/sensorlab/">{% t "more.sensorlab" %}</a></li>
-          </ul>
+          <ul class="gl-more-list">{% for a in more_on_babook %}<li><a href="{{ a.path }}">{% if request.gallery_language == "en" %}{{ a.en }}{% else %}{{ a.he }}{% endif %}</a></li>{% endfor %}</ul>
         </details>
         {% if nav.me %}<a href="{% url 'gallery:person' nav.me.slug %}" {% if section == 'me' %}aria-current="page"{% endif %}>{% t "nav.mine" %}</a>{% endif %}
         {% if nav.admin %}<a href="{% url 'gallery:manage' %}" {% if section == 'manage' %}aria-current="page"{% endif %}>{% t "nav.admin" %}</a>{% endif %}

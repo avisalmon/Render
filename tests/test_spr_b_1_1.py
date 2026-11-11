@@ -45,6 +45,8 @@ def test_the_app_never_links_back_to_babook(client, person):
 
     client.force_login(person)
     body = client.get("/blackjack/").content.decode()
+    # The official apps' shared menu is the one sanctioned way out (Avi, 2026-11-11).
+    body = re.sub(r'<details[^>]*data-more-on-babook[^>]*>.*?</details>', "", body, flags=re.S)
 
     targets = re.findall(r'(?:href|action)="([^"]+)"', body)
     escaped = [

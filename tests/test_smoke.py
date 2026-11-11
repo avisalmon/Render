@@ -76,6 +76,11 @@ def test_books_stays_sealed_too(client, db):
     assert 'href="/books' not in babook
 
     books = client.get("/books/login/").content.decode()
+    # The official apps' shared "more on babook" menu is Books' one sanctioned
+    # way out (Avi, 2026-11-11; mysite/more_on_babook.py); the rest stays sealed.
+    import re
+
+    books = re.sub(r'<details[^>]*data-more-on-babook[^>]*>.*?</details>', "", books, flags=re.S)
     assert "babook" not in books.lower()
     assert "/matazim" not in books and "/memz" not in books
 

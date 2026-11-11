@@ -40,6 +40,8 @@ STRINGS = {
     "nav.rooms": {"he": "חדרים", "en": "Rooms"},
     "sign_in": {"he": "כניסה", "en": "Sign in"},
     "sign_out": {"he": "יציאה", "en": "Sign out"},
+    # The official apps' shared menu (mysite/more_on_babook.py, Avi 2026-11-11).
+    "more_on_site": {"he": "עוד ב-babook", "en": "More on babook"},
     "settings": {"he": "הגדרות", "en": "Settings"},
     "footer.terms": {"he": "תנאי שימוש", "en": "Terms"},
     "footer.privacy": {"he": "פרטיות", "en": "Privacy"},
