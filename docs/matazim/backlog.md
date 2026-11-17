@@ -5334,3 +5334,26 @@ that view was built. The practicum form stays closed in the view, since a report
 
 **Tests.** `tests/test_spr_m_86.py`.
 
+
+## SPR-M.87: The graduates' space as squares  `DONE 2026-11-17`
+
+A mail from Lital of 17.11, 21:05 (spec C46), after SPR-M.86: she does not like how the graduates'
+space looks and asks for squares, all the הדרכות, the yearly 120 hour track, how to build a הדרכה with
+the kit, and something for asking questions with AI. Run under Avi's standing rule of 2026-10-16.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.87.1 | Six squares under the welcome, the whole square a link, the page wide instead of narrow | REQ-M.224 | DONE |
+| F-M.87.2 | `/matazim/graduates/courses/`: the programme's הדרכות as cards with cover and ring | REQ-M.224 | DONE |
+| F-M.87.3 | `/matazim/graduates/teaching/` (kit, six steps, shelf) and `/matazim/graduates/ai/` (shelf) | REQ-M.224 | DONE |
+| F-M.87.4 | `/matazim/graduates/ask/`: a question builder, in the browser only | REQ-M.225 | DONE |
+| F-M.87.5 | The same pages in the team's preview, with the bar and a way back | REQ-M.224 | DONE |
+
+**How it was read.** "ריבועים עם הדרכות" is read as the student home's squares for the space and the
+course cards for the הדרכות. "שאילת שאלות עם AI" is read as a tool that helps a graduate ask an AI a
+good question about a הדרכה; it builds the question on the page and sends nothing, so no child's words
+leave the site through us. A chat with an AI inside the site would need Avi (cost, keys, safety), so it
+was asked back. New הדרכות made for the graduates she asked of Avi, and they were passed on to him.
+
+**Tests.** `tests/test_spr_m_87.py`; three assertions of `tests/test_spr_m_84.py` follow the new order
+and names.

@@ -161,6 +161,102 @@ def _is_staff(user):
     return access.is_program_manager(user)
 
 
+def _course_cards(user, zero=False):
+    """SPR-M.87, REQ-M.224 - the הדרכות as cards (`_course_card.html`), cover and ring.
+
+    Lital, 2026-11-17 21:05: "בוא נעשה לה גם ריבועים עם הדרכות", with all of them
+    in it (spec C46). `zero` is the team's preview: every הדרכה of the programme at 0%.
+    """
+    from app.models import Course
+
+    from .progress import JustAUser, cohort_progress
+
+    slugs = _course_slugs()
+    if not zero:
+        slugs = [s for s in slugs if s in access.visible_course_slugs(user)]
+        per = cohort_progress([JustAUser(user.id)], slugs).get(user.id, {})
+    else:
+        per = {}
+    cards = []
+    for c in Course.objects.filter(slug__in=slugs):
+        pct = int((per.get(c.slug) or {}).get("pct") or 0)
+        done = pct >= 100
+        cards.append({
+            "slug": c.slug,
+            "title": c.title or c.slug,
+            "thumbnail": c.thumbnail or "",
+            "about": c.description or "",
+            "pct": pct,
+            "done": done,
+            "locked": False,
+            "exists": True,
+            "word": "הושלמה" if done else ("בתהליך" if pct else "מוכנה לחזרה"),
+            "action": "לחזור ולתרגל" if done else ("להמשיך" if pct else "לפתוח"),
+        })
+    cards.sort(key=lambda r: r["title"])
+    return cards
+
+
+def _space_reader(request):
+    """Who reads a page inside the space: ("graduate", g), ("preview", None) or (None, None).
+
+    An approved graduate reads it as theirs; the team and approved leaders read it
+    as the preview (REQ-M.223), with nothing saved; anybody else goes back to the
+    graduates' page.
+    """
+    graduate = access.graduate_of(request.user)
+    if graduate is not None:
+        return ("graduate", graduate) if graduate.is_approved else (None, None)
+    if _may_see_as_graduate(request.user):
+        return "preview", None
+    return None, None
+
+
+def _space_page(request, part, **ctx):
+    mode, graduate = _space_reader(request)
+    if mode is None:
+        return redirect("matazim:graduates")
+    return render(
+        request,
+        "matazim/graduates_part.html",
+        shell(request, "graduates", part=part, graduate_preview=(mode == "preview"), **ctx),
+    )
+
+
+@login_required(login_url=LOGIN_URL)
+def graduates_courses(request):
+    """כל ההדרכות שלי: the cards, for review and practice (REQ-M.224)."""
+    mode, _ = _space_reader(request)
+    cards = _course_cards(request.user, zero=(mode == "preview")) if mode else []
+    return _space_page(request, "courses", cards=cards)
+
+
+@login_required(login_url=LOGIN_URL)
+def graduates_teaching(request):
+    """איך בונים הדרכה: the kit, and what the team added on the shelf (REQ-M.224)."""
+    rows = [r for r in access.visible_graduate_resources(request.user) if r.section == GraduateResource.TEACHING]
+    return _space_page(request, "teaching", rows=rows)
+
+
+@login_required(login_url=LOGIN_URL)
+def graduates_ai(request):
+    """לומדים AI: the team's shelf (REQ-M.224)."""
+    rows = [r for r in access.visible_graduate_resources(request.user) if r.section == GraduateResource.AI]
+    return _space_page(request, "ai", rows=rows)
+
+
+@login_required(login_url=LOGIN_URL)
+def graduates_ask(request):
+    """שואלים את ה AI: a builder for a good question about a הדרכה (REQ-M.225).
+
+    Lital: "אשמח שאולי גם תעזור לבנות להם משהו... שאילת שאלות עם AI". The page
+    puts a good question together in the browser, to copy into an AI tool. It
+    sends nothing anywhere and keeps nothing: a teenager's words do not leave
+    the page through us.
+    """
+    return _space_page(request, "ask")
+
+
 # ------------------------------------------------------------------ the space
 
 
@@ -181,8 +277,10 @@ def graduates(request):
         # REQ-M.222 - the space, dates included, opens only after the leader approves.
         ctx["dates"] = list(access.visible_graduate_dates(user))
         resources = list(access.visible_graduate_resources(user))
+        courses = _courses_for(user)
         ctx.update(
-            courses=_courses_for(user),
+            courses=courses,
+            courses_done=sum(1 for c in courses if c["pct"] >= 100),
             ai=[r for r in resources if r.section == GraduateResource.AI],
             teaching=[r for r in resources if r.section == GraduateResource.TEACHING],
             hours=hours_of(graduate),
@@ -228,7 +326,8 @@ def graduates_preview(request):
         "welcome_text": WELCOME_TEXT,
         "dates": list(access.visible_graduate_dates(user)),
         "courses": courses,
-        "ai": [r for r in resources if r.section == GraduateResource.AI],
+        "courses_done": 0,
+        "ai":[r for r in resources if r.section == GraduateResource.AI],
         "teaching": [r for r in resources if r.section == GraduateResource.TEACHING],
         "hours": zero,
     }

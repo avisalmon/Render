@@ -1,0 +1,153 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  SPR-M.87, REQ-M.224 and REQ-M.225 - one square of the graduates' space, opened.
+  Lital, 2026-11-17 21:05. `part` is courses, teaching, ai or ask. The team and
+  approved leaders read it as the preview (REQ-M.223): a bar, nothing saved.
+{% endcomment %}
+
+{% block title %}{% if part == "courses" %}כל ההדרכות שלי{% elif part == "teaching" %}איך בונים הדרכה?{% elif part == "ai" %}לומדים AI{% else %}שואלים את ה AI{% endif %} · בוגרי מטצים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page mz-grad" id="mzGradPart" data-part="{{ part }}">
+  {% if graduate_preview %}
+    <div class="mz-preview-bar" role="status" id="mzGradPreviewBar">
+      <strong>אתם רואים את המרחב כמו בוגר/ת שהמוביל/ה אישר/ה.</strong>
+      <span>תצוגה בלבד, שום דבר לא נשמר.</span>
+      <a href="{% url 'matazim:graduates_preview' %}" class="mz-preview-off">חזרה למרחב</a>
+    </div>
+  {% endif %}
+  <p class="mz-grad-back"><a href="{% if graduate_preview %}{% url 'matazim:graduates_preview' %}{% else %}{% url 'matazim:graduates' %}{% endif %}" id="mzGradBack">חזרה למרחב הבוגרים</a></p>
+
+  {% if part == "courses" %}
+    <section aria-labelledby="mzGradPartTitle" id="mzGradCoursesPage">
+      <h1 id="mzGradPartTitle">כל ההדרכות שלי</h1>
+      <p>כל ההדרכות מהתכנית, לחזרה ולתרגול. אפשר לפתוח כל הדרכה שוב, גם אם כבר סיימתם אותה.</p>
+      {% if cards %}
+        <ul class="mz-course-grid" id="mzCourseGrid">
+          {% for card in cards %}
+            {% include "matazim/_course_card.html" with card=card group="all" %}
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="mz-muted">ההדרכות של התכנית יופיעו כאן.</p>
+      {% endif %}
+    </section>
+
+  {% elif part == "teaching" %}
+    <section aria-labelledby="mzGradPartTitle" id="mzGradTeachingPage">
+      <h1 id="mzGradPartTitle">איך בונים הדרכה?</h1>
+      <p>הכנה להדרכה: תכנון שיעור, פתיחה, הסבר, הפעלת תלמידים, ניהול קבוצה וסיכום.</p>
+      <p class="mz-home-do">
+        <a class="mz-btn mz-btn-primary mz-btn-lg" id="mzKitButton" href="{% url 'matazim:teaching_kit' %}" target="_blank" rel="noopener">להדרכה טובה, לחצו כאן</a>
+      </p>
+      <ol class="mz-grad-steps">
+        <li><strong>תכנון:</strong> מה הקבוצה תדע או תעשה בסוף ההדרכה? משפט אחד.</li>
+        <li><strong>פתיחה:</strong> שאלה, סרטון קצר או אתגר שתופס אותם בדקה הראשונה.</li>
+        <li><strong>הסבר:</strong> קצר ופשוט, עם דוגמה אחת מהחיים שלהם.</li>
+        <li><strong>הפעלה:</strong> הם עושים בעצמם, ואתם עוברים ביניהם ועוזרים.</li>
+        <li><strong>ניהול קבוצה:</strong> כללים ברורים מההתחלה, ושם לכל אחד.</li>
+        <li><strong>סיכום:</strong> מה למדנו היום, במילים שלהם.</li>
+      </ol>
+      {% include "matazim/_grad_resources.html" with rows=rows %}
+    </section>
+
+  {% elif part == "ai" %}
+    <section aria-labelledby="mzGradPartTitle" id="mzGradAiPage">
+      <h1 id="mzGradPartTitle">לומדים AI</h1>
+      <p>תכנים, הדרכות ומשימות בנושאי בינה מלאכותית, בדגש על שימוש מעשי ושילוב בהדרכה.</p>
+      {% include "matazim/_grad_resources.html" with rows=rows %}
+      <p class="mz-home-do"><a class="mz-btn mz-btn-secondary" href="{% url 'matazim:graduates_ask' %}">לבנות שאלה טובה ל AI</a></p>
+    </section>
+
+  {% else %}
+    <section aria-labelledby="mzGradPartTitle" id="mzGradAskPage">
+      <h1 id="mzGradPartTitle">שואלים את ה AI</h1>
+      <p>תשובה טובה מתחילה בשאלה טובה. ממלאים כאן כמה פרטים על ההדרכה, והאתר בונה שאלה מסודרת. מעתיקים אותה לכלי הבינה המלאכותית שלכם וממשיכים משם.</p>
+
+      <form class="mz-grad-form mz-panel" id="mzAskForm" onsubmit="return false;">
+        <label class="mz-field">נושא ההדרכה
+          <input type="text" id="mzAskTopic" maxlength="120" placeholder="למשל: הלולאה בסקראץ׳">
+        </label>
+        <label class="mz-field">למי ההדרכה?
+          <select id="mzAskWho">
+            <option>תלמידי כיתות ג׳ עד ד׳</option>
+            <option selected>תלמידי כיתות ה׳ עד ו׳</option>
+            <option>תלמידי כיתות ז׳ עד ח׳</option>
+            <option>תלמידי כיתה ט׳</option>
+            <option>מורים</option>
+            <option>הורים</option>
+          </select>
+        </label>
+        <label class="mz-field">כמה זמן?
+          <select id="mzAskTime">
+            <option>15 דקות</option>
+            <option>30 דקות</option>
+            <option selected>45 דקות</option>
+            <option>90 דקות</option>
+          </select>
+        </label>
+        <label class="mz-field">במה צריך עזרה?
+          <select id="mzAskNeed">
+            <option>רעיון לפתיחה שתופסת את הקבוצה</option>
+            <option>הסבר פשוט של הנושא</option>
+            <option>פעילות קצרה שבה המשתתפים עושים בעצמם</option>
+            <option>שאלות שבודקות שהבינו</option>
+            <option>סיכום קצר שזוכרים</option>
+            <option selected>מערך הדרכה מלא, שלב אחרי שלב</option>
+          </select>
+        </label>
+        <label class="mz-field">עוד משהו שחשוב לדעת (לא חובה)
+          <input type="text" id="mzAskMore" maxlength="200" placeholder="למשל: יש מחשב לכל שניים">
+        </label>
+        <button type="button" class="mz-btn mz-btn-primary" id="mzAskBuild">לבנות את השאלה</button>
+      </form>
+
+      <div class="mz-panel" id="mzAskResult" hidden>
+        <h2>השאלה שלכם</h2>
+        <textarea id="mzAskText" rows="9" readonly dir="rtl"></textarea>
+        <p class="mz-home-do">
+          <button type="button" class="mz-btn mz-btn-primary" id="mzAskCopy">להעתיק</button>
+          <span class="mz-muted" id="mzAskCopied" role="status"></span>
+        </p>
+      </div>
+
+      <section class="mz-panel" id="mzAskRules" aria-labelledby="mzAskRulesTitle">
+        <h2 id="mzAskRulesTitle">שלושה כללים לשאלות עם AI</h2>
+        <ol class="mz-grad-steps">
+          <li><strong>שומרים על פרטיות:</strong> לא כותבים שמות, טלפונים או כל פרט על התלמידים שלכם.</li>
+          <li><strong>בודקים:</strong> הבינה המלאכותית טועה לפעמים. קוראים את התשובה ומחליטים בעצמכם מה נכון.</li>
+          <li><strong>שואלים שוב:</strong> "תקצר", "תן דוגמה אחרת", "תסביר את זה לכיתה ד׳". שאלה שנייה משפרת את התשובה.</li>
+        </ol>
+      </section>
+    </section>
+    <script>
+      (function () {
+        var $ = function (id) { return document.getElementById(id); };
+        $("mzAskBuild").addEventListener("click", function () {
+          var topic = $("mzAskTopic").value.trim() || "נושא שאבחר";
+          var more = $("mzAskMore").value.trim();
+          var lines = [
+            "אני מדריך/ה צעיר/ה בתכנית מטצים, ואני מכין/ה הדרכה בנושא: " + topic + ".",
+            "הקהל: " + $("mzAskWho").value + ". ההדרכה נמשכת " + $("mzAskTime").value + ".",
+            "אני צריך/ה עזרה ב: " + $("mzAskNeed").value + "."
+          ];
+          if (more) { lines.push("חשוב לדעת: " + more + "."); }
+          lines.push("כתבו בעברית פשוטה, ותנו דוגמה אחת מהחיים של המשתתפים.");
+          lines.push("בסוף, שאלו אותי שאלה אחת שתעזור לשפר את התשובה.");
+          $("mzAskText").value = lines.join("\n");
+          $("mzAskResult").hidden = false;
+          $("mzAskCopied").textContent = "";
+        });
+        $("mzAskCopy").addEventListener("click", function () {
+          var box = $("mzAskText");
+          var done = function () { $("mzAskCopied").textContent = "הועתק. עכשיו מדביקים בכלי הבינה המלאכותית."; };
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(box.value).then(done, function () { box.select(); });
+          } else { box.select(); document.execCommand("copy"); done(); }
+        });
+      })();
+    </script>
+  {% endif %}
+</div>
+{% endblock %}

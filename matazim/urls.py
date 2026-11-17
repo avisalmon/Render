@@ -208,6 +208,11 @@ urlpatterns = [
         name="practicum_delete",
     ),
     path("graduates/kit/", graduate_views.teaching_kit, name="teaching_kit"),
+    # SPR-M.87 - the space as tiles, each opening its own page.
+    path("graduates/courses/", graduate_views.graduates_courses, name="graduates_courses"),
+    path("graduates/teaching/", graduate_views.graduates_teaching, name="graduates_teaching"),
+    path("graduates/ai/", graduate_views.graduates_ai, name="graduates_ai"),
+    path("graduates/ask/", graduate_views.graduates_ask, name="graduates_ask"),
     path("leader/graduates/", graduate_views.leader_graduates, name="leader_graduates"),
     path(
         "graduates/<int:graduate_id>/approve/",
