@@ -17,6 +17,22 @@ Newest first.
 
 ---
 
+## PM-96 Â· 2026-11-17 Â· Sprint M.84 end (graduates' space, the mail bot): nothing new
+
+**What happened.** The first full run of the matazim suite "failed" in
+seconds with exit code 5: PowerShell passes `tests/test_spr_m_*.py` to
+pytest unexpanded, so nothing was collected. Run through bash it expanded.
+One new test collided with a slug a migration had already seeded; renamed.
+The screenshots showed the new form's dropdowns unstyled (the site styles
+only their width), fixed for the new screens before shipping.
+
+**Rule.** Nothing new: PM-1 already says Windows shells need care, and
+methodology 6 (look at every screen) is what caught the dropdowns. Exit
+code 5 from pytest means "nothing collected", never "passed" or "failed".
+
+Here: this file
+BKM: deferred - covered by PM-1 and methodology 6
+
 ## PM-95 · 2026-11-11 · The shared menu's first train: four failures my run did not cover
 
 **What happened.** Train T1111-081822 stopped on four failures my own run

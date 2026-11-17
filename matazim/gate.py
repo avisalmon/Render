@@ -50,6 +50,12 @@ def learner_stage(user):
         return None
     if leader_of(user) or candidate_of(user):
         return None
+    # REQ-M.216 - a graduate finished the programme last year. They are not
+    # sent to this year's entrance test; their space is /matazim/graduates/.
+    from .models import Graduate
+
+    if Graduate.objects.filter(user=user).exists():
+        return None
 
     from .views import _has_leader, member_profile
 

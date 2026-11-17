@@ -22,7 +22,7 @@
     fourteen. Rubik is served from our own disk instead: see the @font-face
     block at the top of matazim.css (spec §4.10, REQ-M.83).
   {% endcomment %}
-  <link rel="stylesheet" href="{% static 'matazim/matazim.css' %}?v=2">
+  <link rel="stylesheet" href="{% static 'matazim/matazim.css' %}?v=3">
   {% comment %}
     SPR-M.49 — מצב לילה, decided before the first paint.
 
@@ -120,9 +120,14 @@
         {# Lital, 2026-10-15: "about" on the right, and registration the only other item. #}
         <a href="{% url 'matazim:about' %}" {% if section == 'about' %}class="is-active"{% endif %}>אודות התכנית</a>
         <a href="{% url 'matazim:register' %}?next={% url 'matazim:entrance_test' %}" {% if section == 'register' %}class="is-active"{% endif %}>הרשמה לתכנית</a>
+        {# SPR-M.84: the graduates' button is on the home page and in the footer; this menu stays her two items (2026-10-15). #}
       {% else %}
 
-        {% if learner_stage == 'test' %}
+        {% if is_graduate %}
+          {# SPR-M.84 - a graduate's own menu: their space and their practicum. #}
+          <a href="{% url 'matazim:graduates' %}" id="mzNavGraduates" {% if section == 'graduates' %}class="is-active"{% endif %}>בוגרי מטצים</a>
+          <a href="{% url 'matazim:graduates_practicum' %}">הפרקטיקום שלי</a>
+        {% elif learner_stage == 'test' %}
           {# REQ-M.191: before the test there is one thing to do. #}
           <a href="{% url 'matazim:entrance_test' %}" class="is-active">מבחן הכניסה</a>
         {% elif learner_stage == 'join' %}
@@ -405,6 +410,7 @@
       <a href="{% url 'matazim:community' %}">קהילת מטצים</a>
       <a href="{% url 'matazim:events' %}">ימי שיא</a>
       <a href="{% url 'matazim:leader_entrance' %}">כניסת מובילים</a>
+      <a href="{% url 'matazim:graduates' %}">בוגרי מטצים</a>
     </span>
     <span class="mz-footer-legal">
       <a href="{% url 'matazim:privacy' %}">פרטיות</a>

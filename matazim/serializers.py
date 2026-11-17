@@ -35,8 +35,12 @@ from .models import (
     School,
     SiteUpdate,
     Feedback,
+    Graduate,
+    GraduateDate,
+    GraduateResource,
     Institution,
     Leader,
+    PracticumReport,
     LeaderCourse,
     LeaderInvite,
     MatazCertificate,
@@ -531,3 +535,53 @@ class OpenClassMemberSerializer(serializers.ModelSerializer):
 
     def get_last_active(self, obj):
         return self._lens(obj)["last_active"]
+
+
+# ------------------------------------------------------------- בוגרי מטצים (SPR-M.84)
+
+
+class GraduateSerializer(serializers.ModelSerializer):
+    """Read-only. Joining needs a parent's drawn signature, which only the page
+    collects; the signature itself is never handed out here, only whether it exists."""
+
+    has_signature = serializers.BooleanField(read_only=True)
+    is_approved = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = Graduate
+        fields = [
+            "id", "full_name", "school", "leader", "guardian_name", "guardian_signed_at",
+            "has_signature", "is_approved", "approved_at", "created_at",
+        ]
+        read_only_fields = fields
+
+
+class PracticumReportSerializer(serializers.ModelSerializer):
+    """REQ-M.219. The decision is the leader's, through the actions, never a field."""
+
+    class Meta:
+        model = PracticumReport
+        fields = [
+            "id", "graduate", "happened_on", "place", "topic", "hours", "insight",
+            "status", "decision_note", "decided_at", "created_at",
+        ]
+        read_only_fields = ["id", "graduate", "status", "decision_note", "decided_at", "created_at"]
+
+    def validate_hours(self, value):
+        if value <= 0 or value > 12 or (value * 2) != (value * 2).to_integral_value():
+            raise serializers.ValidationError("מספר השעות הוא בין חצי שעה ל-12, בחצאי שעה.")
+        return value
+
+
+class GraduateDateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GraduateDate
+        fields = ["id", "institution", "title", "on"]
+        read_only_fields = ["id", "institution"]
+
+
+class GraduateResourceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GraduateResource
+        fields = ["id", "institution", "section", "title", "about", "link", "created_at"]
+        read_only_fields = ["id", "institution", "created_at"]

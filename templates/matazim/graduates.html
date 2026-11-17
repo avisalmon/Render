@@ -1,0 +1,101 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  SPR-M.84, REQ-M.216 to REQ-M.220 - בוגרי מטצים. Lital, 2026-11-17.
+  Three readers: somebody who has not joined (the way in), a graduate waiting
+  for their leader, and an approved graduate (the space, in her order).
+{% endcomment %}
+
+{% block title %}בוגרי מטצים · מטצים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page mz-page-narrow mz-grad" id="mzGraduates">
+
+  {% if not graduate %}
+    <section class="mz-signup-box" aria-labelledby="mzGradIntro">
+      <h1 id="mzGradIntro">בוגרי מטצים</h1>
+      <p>המרחב לתלמידי כיתה י׳ שסיימו את התכנית ועכשיו מתחילים להדריך בבתי הספר.</p>
+      {% if not user.is_authenticated %}
+        <p class="mz-home-do">
+          <a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:register' %}?next={% url 'matazim:graduates_join' %}">נרשמים כאן</a>
+          <a class="mz-btn mz-btn-secondary" href="{% url 'matazim:login' %}?next={% url 'matazim:graduates_join' %}">כבר יש לי חשבון</a>
+        </p>
+      {% elif is_staff_here %}
+        <p class="mz-home-do"><a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:staff_graduates' %}">כל הבוגרים</a></p>
+      {% elif is_leader_here %}
+        <p class="mz-home-do"><a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:leader_graduates' %}">הבוגרים שלי</a></p>
+      {% else %}
+        <p class="mz-home-do"><a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:graduates_join' %}">להצטרפות לבוגרים</a></p>
+      {% endif %}
+    </section>
+
+  {% else %}
+    <section class="mz-signup-box mz-grad-welcome" aria-labelledby="mzGradWelcome">
+      <h1 id="mzGradWelcome">{{ welcome_title }}</h1>
+      <p>{{ welcome_text }}</p>
+    </section>
+
+    {% if not graduate.is_approved %}
+      <section class="mz-panel" id="mzGradWaiting">
+        <h2>ההצטרפות מחכה לאישור</h2>
+        <p>{% if leader_name %}{{ leader_name }} צריך/ה לאשר את ההצטרפות שלך.{% else %}המורה המוביל/ה צריך/ה לאשר את ההצטרפות שלך.{% endif %}
+          כשזה יקרה תקבלו הודעה, והמרחב ייפתח.</p>
+      </section>
+    {% else %}
+
+      <section class="mz-panel" id="mzGradCourses">
+        <h2>כל ההדרכות שלי</h2>
+        <p>כל ההדרכות מהתכנית, לחזרה ולתרגול.</p>
+        {% if courses %}
+          <ul class="mz-cards">
+            {% for c in courses %}
+              <li class="mz-card{% if c.pct == 100 %} is-done{% endif %}">
+                <div class="mz-card-head"><h3 dir="auto">{{ c.title }}</h3></div>
+                <div class="mz-progress" aria-hidden="true"><span style="width: {{ c.pct }}%"></span></div>
+                <p class="mz-card-pct">{{ c.pct }}%</p>
+                <a class="mz-btn mz-btn-secondary" href="{% url 'matazim:learn_course' c.slug %}">{% if c.pct %}להמשיך{% else %}לפתוח{% endif %}</a>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="mz-muted">עוד אין כאן הדרכות.</p>
+        {% endif %}
+      </section>
+
+      <section class="mz-panel" id="mzGradAi">
+        <h2>לומדים AI</h2>
+        <p>תכנים, הדרכות ומשימות בנושאי בינה מלאכותית, בדגש על שימוש מעשי ושילוב בהדרכה.</p>
+        {% include "matazim/_grad_resources.html" with rows=ai %}
+      </section>
+
+      <section class="mz-panel" id="mzGradTeaching">
+        <h2>איך מעבירים שיעור?</h2>
+        <p>הכנה להדרכה: תכנון שיעור, פתיחה, הסבר, הפעלת תלמידים, ניהול קבוצה וסיכום.</p>
+        <p class="mz-home-do">
+          <a class="mz-btn mz-btn-primary mz-btn-lg" id="mzKitButton" href="{% url 'matazim:teaching_kit' %}" target="_blank" rel="noopener">להדרכה טובה, לחצו כאן</a>
+        </p>
+        {% include "matazim/_grad_resources.html" with rows=teaching %}
+      </section>
+
+      <section class="mz-panel" id="mzGradPracticum">
+        <h2>הפרקטיקום שלי</h2>
+        <p>{{ hours.approved }} שעות אושרו מתוך {{ hours.target }}. נותרו {{ hours.left }} שעות להשלמת היעד.{% if hours.waiting %} עוד {{ hours.waiting }} שעות מחכות לאישור.{% endif %}</p>
+        <div class="mz-progress" aria-hidden="true"><span style="width: {{ hours.pct }}%"></span></div>
+        <p class="mz-home-do"><a class="mz-btn mz-btn-primary" href="{% url 'matazim:graduates_practicum' %}">לדיווח על הדרכה</a></p>
+      </section>
+    {% endif %}
+
+    <section class="mz-panel" id="mzGradDates">
+      <h2>ימי השיא שלנו</h2>
+      <p>שני מועדי החובה של השנה.</p>
+      <ul class="mz-grad-dates">
+        {% for d in dates %}
+          <li><strong>{{ d.title }}</strong> <span dir="ltr">{{ d.on|date:"j.n.Y" }}</span></li>
+        {% empty %}
+          <li class="mz-muted">המועדים יפורסמו כאן.</li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+</div>
+{% endblock %}

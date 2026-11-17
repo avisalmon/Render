@@ -62,6 +62,11 @@
     <p><a class="mz-linkbtn" href="{% url 'matazim:entrance_test' %}">על מבחן הכניסה</a></p>
   </section>
 
+  {# SPR-M.84 - Lital, 2026-11-17: a button for last year's graduates. #}
+  <p class="mz-home-do" id="mzHomeGraduates">
+    <a class="mz-btn mz-btn-secondary mz-btn-lg" href="{% url 'matazim:graduates' %}">בוגרי מטצים</a>
+  </p>
+
   <section class="mz-how" aria-labelledby="mzHow">
     <h2 id="mzHow">לאן זה מוביל</h2>
     <div class="mz-stages">
@@ -140,6 +145,8 @@
     <ul class="mz-tiles">
       {% if hero.kind == 'staff' and not previewing and not viewing_leader %}<li><a class="mz-tile mz-tile-role" href="{% url 'matazim:staff_home' %}">ניהול</a></li>{% endif %}
       {% if hero.kind == 'leader' and not previewing or viewing_leader %}<li><a class="mz-tile mz-tile-role" href="{% url 'matazim:leader_home' %}">האזור שלי</a></li>{% endif %}
+      {% if hero.kind == 'staff' and not previewing and not viewing_leader %}<li><a class="mz-tile mz-grad-tile" href="{% url 'matazim:staff_graduates' %}">בוגרי מטצים</a></li>
+      {% elif hero.kind == 'leader' and not previewing and not viewing_leader %}<li><a class="mz-tile mz-grad-tile" href="{% url 'matazim:leader_graduates' %}">הבוגרים שלי</a></li>{% endif %}
       <li><a class="mz-tile" href="{% url 'matazim:courses' %}">ההדרכות</a></li>
       <li><a class="mz-tile" href="{% url 'matazim:my_path' %}">המסלול שלי</a></li>
       <li><a class="mz-tile" href="{% url 'matazim:community' %}">הקהילה</a></li>
@@ -176,6 +183,10 @@
       </form>
     {% endif %}
     <p class="mz-home-do"><a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:entrance_test' %}">להתחיל</a></p>
+    {% if not previewing %}
+      {# SPR-M.84 - a graduate who registered lands here first; their door is one tap away. #}
+      <p class="mz-home-do"><a class="mz-linkbtn" href="{% url 'matazim:graduates' %}">סיימתם את התכנית? בוגרי מטצים</a></p>
+    {% endif %}
 
   {% endif %}
 

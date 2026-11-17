@@ -1,0 +1,86 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  SPR-M.84, REQ-M.221, REQ-M.218, REQ-M.220 - the programme team's view of the
+  graduates. Lital, 2026-11-17: every graduate, by school and by leader, with
+  the parents' approval, progress in the הדרכות and practicum hours. Below it the
+  space's content, editable here without a deploy: the peak days and the two
+  shelves.
+{% endcomment %}
+
+{% block title %}בוגרי מטצים · ניהול · מטצים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page mz-grad">
+  <div class="mz-page-head">
+    <h1>בוגרי מטצים</h1>
+    <p>{{ total }} נרשמו, {{ approved }} מאושרים. היעד לפרקטיקום: {{ target }} שעות לכל בוגר/ת.</p>
+  </div>
+
+  {% if error %}<div class="mz-alert" role="alert">{{ error }}</div>{% endif %}
+
+  <section class="mz-panel" id="mzGradAll">
+    <h2>לפי בית ספר ומורה מוביל/ה</h2>
+    {% for group in grouped %}
+      <h3>{{ group.school }} · {{ group.leader }}</h3>
+      <ul class="mz-grad-cards">
+        {% for card in group.cards %}{% include "matazim/_grad_card.html" with back="/matazim/staff/graduates/" show_leader=False %}{% endfor %}
+      </ul>
+    {% empty %}
+      <p class="mz-muted">עוד אין בוגרים רשומים.</p>
+    {% endfor %}
+  </section>
+
+  <section class="mz-panel" id="mzGradDatesEdit">
+    <h2>ימי השיא של הבוגרים</h2>
+    {% for d in dates %}
+      <details class="mz-milestone-edit">
+        <summary>{{ d.title }} · <span dir="ltr">{{ d.on|date:"j.n.Y" }}</span></summary>
+        <form method="post">
+          {% csrf_token %}<input type="hidden" name="do" value="edit_date"><input type="hidden" name="id" value="{{ d.pk }}">
+          <label class="mz-field"><span>מה</span><input type="text" name="title" maxlength="120" required value="{{ d.title }}"></label>
+          <label class="mz-field"><span>תאריך</span><input type="date" name="on" required value="{{ d.on|date:'Y-m-d' }}"></label>
+          <button type="submit" class="mz-btn mz-btn-primary">שמירה</button>
+        </form>
+        <form method="post">
+          {% csrf_token %}<input type="hidden" name="do" value="delete_date"><input type="hidden" name="id" value="{{ d.pk }}">
+          <button type="submit" class="mz-btn mz-btn-ghost">מחיקה</button>
+        </form>
+      </details>
+    {% endfor %}
+    <form method="post" class="mz-grad-form">
+      {% csrf_token %}<input type="hidden" name="do" value="add_date">
+      <label class="mz-field"><span>יום שיא חדש</span><input type="text" name="title" maxlength="120" required></label>
+      <label class="mz-field"><span>תאריך</span><input type="date" name="on" required></label>
+      <button type="submit" class="mz-btn mz-btn-secondary">הוספה</button>
+    </form>
+  </section>
+
+  <section class="mz-panel" id="mzGradContent">
+    <h2>תכנים לבוגרים</h2>
+    <p>מה שמוסיפים כאן מופיע לבוגרים תחת לומדים AI או איך מעבירים שיעור.</p>
+    <ul class="mz-grad-list">
+      {% for r in resources %}
+        <li>
+          <strong dir="auto">{{ r.title }}</strong> · {{ r.get_section_display }}{% if r.link %} · <span dir="ltr">{{ r.link|truncatechars:60 }}</span>{% endif %}
+          <form method="post" class="mz-inline-form">
+            {% csrf_token %}<input type="hidden" name="do" value="delete_resource"><input type="hidden" name="id" value="{{ r.pk }}">
+            <button type="submit" class="mz-btn mz-btn-ghost">מחיקה</button>
+          </form>
+        </li>
+      {% empty %}
+        <li class="mz-muted">עוד אין תכנים.</li>
+      {% endfor %}
+    </ul>
+    <form method="post" class="mz-grad-form">
+      {% csrf_token %}<input type="hidden" name="do" value="add_resource">
+      <label class="mz-field"><span>איפה</span>
+        <select name="section" required>{% for key, label in sections %}<option value="{{ key }}">{{ label }}</option>{% endfor %}</select></label>
+      <label class="mz-field"><span>כותרת</span><input type="text" name="title" maxlength="160" required dir="auto"></label>
+      <label class="mz-field"><span>כמה מילים</span><textarea name="about" rows="2" dir="auto"></textarea></label>
+      <label class="mz-field"><span>קישור (לא חובה)</span><input type="url" name="link" maxlength="200" dir="ltr" placeholder="https://"></label>
+      <button type="submit" class="mz-btn mz-btn-secondary">הוספה</button>
+    </form>
+  </section>
+</div>
+{% endblock %}

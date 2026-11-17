@@ -1,0 +1,70 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  SPR-M.84, REQ-M.219 - הפרקטיקום של בוגר/ת. Lital, 2026-11-17: 120 hours over the
+  year; each report has the date, the place, the topic, the hours and a short
+  insight, goes to the leader for approval, and the graduate sees how many hours
+  were approved and how many are left.
+{% endcomment %}
+
+{% block title %}הפרקטיקום שלי · בוגרי מטצים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page mz-page-narrow mz-grad">
+  <div class="mz-page-head">
+    <h1>הפרקטיקום שלי</h1>
+    <p><a href="{% url 'matazim:graduates' %}">חזרה לבוגרי מטצים</a></p>
+  </div>
+
+  <section class="mz-panel" id="mzGradHours">
+    <h2>{{ hours.approved }} מתוך {{ hours.target }} שעות</h2>
+    <div class="mz-progress" aria-hidden="true"><span style="width: {{ hours.pct }}%"></span></div>
+    <ul class="mz-grad-hours">
+      <li><strong>{{ hours.approved }}</strong> שעות אושרו</li>
+      <li><strong>{{ hours.left }}</strong> שעות נותרו להשלמת היעד</li>
+      <li><strong>{{ hours.waiting }}</strong> שעות מחכות לאישור</li>
+    </ul>
+  </section>
+
+  {% if error %}<div class="mz-alert" role="alert">{{ error }}</div>{% endif %}
+
+  <form method="post" class="mz-panel mz-grad-form" id="mzGradReport">
+    {% csrf_token %}
+    <h2>דיווח על הדרכה</h2>
+    <label class="mz-field"><span>תאריך הפעילות</span>
+      <input type="date" name="happened_on" required max="{{ today|date:'Y-m-d' }}" value="{{ posted.happened_on|default:'' }}"></label>
+    <label class="mz-field"><span>מקום ההדרכה</span>
+      <input type="text" name="place" maxlength="200" required dir="auto" value="{{ posted.place|default:'' }}"></label>
+    <label class="mz-field"><span>נושא ההדרכה</span>
+      <input type="text" name="topic" maxlength="200" required dir="auto" value="{{ posted.topic|default:'' }}"></label>
+    <label class="mz-field"><span>מספר השעות</span>
+      <input type="number" name="hours" min="0.5" max="12" step="0.5" required inputmode="decimal" value="{{ posted.hours|default:'' }}"></label>
+    <label class="mz-field"><span>תובנה קצרה מהמפגש</span>
+      <textarea name="insight" rows="3" dir="auto">{{ posted.insight|default:'' }}</textarea></label>
+    <button type="submit" class="mz-btn mz-btn-primary">שליחה לאישור המוביל/ה</button>
+  </form>
+
+  <section class="mz-panel" id="mzGradReports">
+    <h2>הדיווחים שלי</h2>
+    <ul class="mz-grad-list">
+      {% for r in reports %}
+        <li class="mz-grad-report">
+          <span class="mz-tag {% if r.status == 'approved' %}mz-tag-done{% elif r.status == 'returned' %}mz-tag-fix{% else %}mz-tag-doing{% endif %}">{{ r.get_status_display }}</span>
+          <strong dir="auto">{{ r.topic }}</strong>
+          <span><span dir="ltr">{{ r.happened_on|date:"j.n.Y" }}</span> · <span dir="auto">{{ r.place }}</span> · {{ r.hours|floatformat:"-1" }} שעות</span>
+          {% if r.insight %}<p class="mz-muted" dir="auto">{{ r.insight }}</p>{% endif %}
+          {% if r.decision_note %}<p dir="auto">הערת המוביל/ה: {{ r.decision_note }}</p>{% endif %}
+          {% if r.status != 'approved' %}
+            <form method="post" action="{% url 'matazim:practicum_delete' r.pk %}" class="mz-inline-form">
+              {% csrf_token %}
+              <button type="submit" class="mz-btn mz-btn-ghost">מחיקת הדיווח</button>
+            </form>
+          {% endif %}
+        </li>
+      {% empty %}
+        <li class="mz-muted">עוד אין דיווחים.</li>
+      {% endfor %}
+    </ul>
+  </section>
+</div>
+{% endblock %}

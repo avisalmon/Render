@@ -1026,6 +1026,10 @@ class Notification(models.Model):
     ENTRANCE_APPROVED = "entrance_approved"
     ENTRANCE_RETURNED = "entrance_returned"
     SITE_UPDATE = "site_update"
+    GRADUATE_WAITING = "graduate_waiting"
+    GRADUATE_APPROVED = "graduate_approved"
+    PRACTICUM_WAITING = "practicum_waiting"
+    PRACTICUM_DECIDED = "practicum_decided"
     KIND_CHOICES = [
         (FEEDBACK, "משוב חדש"),
         (WORK_APPROVED, "עבודה אושרה"),
@@ -1038,6 +1042,10 @@ class Notification(models.Model):
         (ENTRANCE_APPROVED, "מבחן הכניסה אושר"),
         (ENTRANCE_RETURNED, "מבחן הכניסה הוחזר"),
         (SITE_UPDATE, "עדכון באתר"),
+        (GRADUATE_WAITING, "בוגר/ת מחכה לאישור"),
+        (GRADUATE_APPROVED, "ההצטרפות לבוגרים אושרה"),
+        (PRACTICUM_WAITING, "דיווח פרקטיקום מחכה"),
+        (PRACTICUM_DECIDED, "דיווח פרקטיקום נבדק"),
     ]
 
     user = models.ForeignKey(
@@ -1569,6 +1577,156 @@ class SiteUpdate(models.Model):
         ordering = ["-pinned", "-posted_at"]
         verbose_name = "עדכון באתר"
         verbose_name_plural = "עדכונים באתר"
+
+    def __str__(self):
+        return self.title
+
+
+# --------------------------------------------------------------- בוגרי מטצים
+#
+# REQ-M.216 to REQ-M.220, SPR-M.84. Lital, 2026-11-17: tenth-graders who finished
+# the programme last year and now teach in the schools get their own space. They
+# are not learners at a stage (gate.py): they register, choose their school and
+# leader, a parent signs, and the leader approves them. Then they review the
+# הדרכות, read the teaching kit, report practicum hours towards 120, and see the
+# two peak days.
+
+
+class Graduate(models.Model):
+    """A graduate of the programme, in the space for graduates (REQ-M.216).
+
+    Approved is derived from `approved_at`, never a status beside it. The parent's
+    signature is drawn on the screen and kept as a small PNG (a data URL); it is
+    a parent's consent for a minor, so only the graduate's leader and the
+    programme team see it, and the API never hands it out.
+    """
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="matazim_graduate")
+    full_name = models.CharField(max_length=150, verbose_name="שם מלא")
+    school = models.ForeignKey(
+        "School", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="graduates", verbose_name="בית ספר",
+    )
+    leader = models.ForeignKey(
+        "Leader", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="graduates", verbose_name="מוביל/ה",
+    )
+    guardian_name = models.CharField(max_length=150, verbose_name="שם ההורה")
+    guardian_email = models.EmailField(verbose_name="אימייל של ההורה")
+    guardian_signature = models.TextField(verbose_name="חתימת ההורה")
+    guardian_signed_at = models.DateTimeField(verbose_name="ההורה חתם/ה בתאריך")
+    approved_at = models.DateTimeField(null=True, blank=True, verbose_name="אושר/ה בתאריך")
+    approved_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
+        verbose_name="אושר/ה על ידי",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["full_name"]
+        verbose_name = "בוגר/ת מטצים"
+        verbose_name_plural = "בוגרי מטצים"
+
+    def __str__(self):
+        return self.full_name
+
+    @property
+    def is_approved(self):
+        return self.approved_at is not None
+
+    @property
+    def has_signature(self):
+        return bool(self.guardian_signature)
+
+
+class PracticumReport(models.Model):
+    """One teaching session a graduate reports towards the year's 120 hours (REQ-M.219).
+
+    Her five fields: the date, the place, the topic, the hours and a short
+    insight. Each report goes to the graduate's leader, who approves it or sends
+    it back with a word; only approved hours count towards the target.
+    """
+
+    WAITING, APPROVED, RETURNED = "waiting", "approved", "returned"
+    STATUS_CHOICES = [
+        (WAITING, "מחכה לאישור"),
+        (APPROVED, "אושר"),
+        (RETURNED, "הוחזר לתיקון"),
+    ]
+
+    graduate = models.ForeignKey(Graduate, on_delete=models.CASCADE, related_name="reports")
+    happened_on = models.DateField(verbose_name="תאריך הפעילות")
+    place = models.CharField(max_length=200, verbose_name="מקום ההדרכה")
+    topic = models.CharField(max_length=200, verbose_name="נושא ההדרכה")
+    hours = models.DecimalField(max_digits=4, decimal_places=1, verbose_name="מספר השעות")
+    insight = models.TextField(blank=True, default="", verbose_name="תובנה מהמפגש")
+    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default=WAITING, db_index=True)
+    decision_note = models.CharField(max_length=300, blank=True, default="", verbose_name="הערת המוביל/ה")
+    decided_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    decided_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-happened_on", "-created_at"]
+        verbose_name = "דיווח פרקטיקום"
+        verbose_name_plural = "דיווחי פרקטיקום"
+
+    def __str__(self):
+        return f"{self.graduate} · {self.happened_on} · {self.hours}"
+
+
+class GraduateDate(models.Model):
+    """A date every graduate must attend, ימי השיא שלנו (REQ-M.220).
+
+    Seeded once with her two dates; the programme team edits them on
+    `/matazim/staff/graduates/`. No institution means it is for everybody.
+    """
+
+    institution = models.ForeignKey(
+        "Institution", on_delete=models.CASCADE, null=True, blank=True,
+        related_name="graduate_dates", verbose_name="מוסד",
+    )
+    title = models.CharField(max_length=120, verbose_name="מה")
+    on = models.DateField(verbose_name="תאריך")
+
+    class Meta:
+        ordering = ["on"]
+        verbose_name = "יום שיא לבוגרים"
+        verbose_name_plural = "ימי שיא לבוגרים"
+
+    def __str__(self):
+        return f"{self.title} {self.on}"
+
+
+class GraduateResource(models.Model):
+    """One item of content in the graduates' space (REQ-M.218).
+
+    Two shelves: לומדים AI, and איך מעבירים שיעור. The team adds a title, a few
+    words and a link; nothing here needs a deploy.
+    """
+
+    AI, TEACHING = "ai", "teaching"
+    SECTION_CHOICES = [(AI, "לומדים AI"), (TEACHING, "איך מעבירים שיעור")]
+
+    institution = models.ForeignKey(
+        "Institution", on_delete=models.CASCADE, null=True, blank=True,
+        related_name="graduate_resources", verbose_name="מוסד",
+    )
+    section = models.CharField(max_length=12, choices=SECTION_CHOICES, verbose_name="איפה")
+    title = models.CharField(max_length=160, verbose_name="כותרת")
+    about = models.TextField(blank=True, default="", verbose_name="כמה מילים")
+    link = models.URLField(blank=True, default="", verbose_name="קישור")
+    added_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["section", "created_at"]
+        verbose_name = "תוכן לבוגרים"
+        verbose_name_plural = "תכנים לבוגרים"
 
     def __str__(self):
         return self.title
