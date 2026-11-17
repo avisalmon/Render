@@ -3172,3 +3172,35 @@ button.mz-lamp { border: 0; font: inherit; cursor: pointer; }
 .mz-preview-bar a.is-on { font-weight: 800; text-decoration: none; border-bottom: 2px solid var(--mz-accent); }
 .mz-preview-entry { margin-top: 28px; }
 .mz-preview-off { font-weight: 700; }
+
+/* ------------------------------------------ בוגרי מטצים (SPR-M.84, Lital 2026-11-17) */
+.mz-grad .mz-panel { margin-top: 18px; }
+.mz-grad-welcome { margin-top: 8px; }
+.mz-grad-dates, .mz-grad-list, .mz-grad-hours, .mz-grad-cards { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 10px; }
+.mz-grad-dates li { display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline; font-size: 1.1rem; }
+.mz-grad-list li { min-width: 0; overflow-wrap: anywhere; }
+.mz-grad-list li p { margin: 4px 0 0; }
+.mz-grad-hours li { min-width: 0; }
+.mz-grad-form { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.mz-grad-form input, .mz-grad-form select, .mz-grad-form textarea { font-size: 16px; min-width: 0; max-width: 100%; }
+.mz-grad-sig {
+  display: block; width: 100%; max-width: 600px; height: auto; aspect-ratio: 3 / 1;
+  background: #fff; border: 2px dashed var(--mz-line); border-radius: var(--mz-radius-sm);
+  touch-action: none; cursor: crosshair;
+}
+.mz-grad-sig-img { display: block; max-width: 100%; height: auto; background: #fff; border-radius: var(--mz-radius-sm); }
+.mz-grad-card {
+  display: grid; gap: 8px; min-width: 0; padding: 16px;
+  border: 1px solid var(--mz-line); border-radius: var(--mz-radius-sm); background: var(--mz-card);
+}
+.mz-grad-report { display: grid; gap: 6px; min-width: 0; padding: 10px 0; border-top: 1px solid var(--mz-line); }
+.mz-grad-report p { margin: 0; overflow-wrap: anywhere; }
+.mz-grad-decide { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+.mz-grad-decide .mz-field { flex: 1 1 12rem; min-width: 0; }
+.mz-grad-more summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; }
+.mz-grad-form select {
+  width: 100%; min-height: 48px; padding: 11px 14px;
+  border: 1px solid var(--mz-line); border-radius: var(--mz-radius-sm);
+  background: var(--mz-card); color: var(--mz-ink); font: inherit; font-size: 16px;
+}
+.mz-grad-tile { border-color: var(--mz-action); color: var(--mz-action-text, var(--mz-link)); }

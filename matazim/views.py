@@ -153,6 +153,11 @@ def _is_member(user):
     # is on their account.
     if is_site_staff(user) or leader_of(user):
         return False
+    # REQ-M.216 - a graduate has their own space and menu, not a pupil's.
+    from .models import Graduate
+
+    if Graduate.objects.filter(user=user).exists():
+        return False
     if Student.objects.filter(user=user).exists():
         return True
     return not candidate_of(user)
@@ -172,6 +177,14 @@ def _unread_notices(user):
     from .notify import unread_count
 
     return unread_count(user)
+
+
+def _is_graduate(user):
+    from .models import Graduate
+
+    if not getattr(user, "is_authenticated", False):
+        return False
+    return Graduate.objects.filter(user=user).exists()
 
 
 def _can_request(user):
@@ -263,6 +276,8 @@ def shell(request, section, **extra):
         # REQ-M.84 — why they cannot join yet, in words, on whatever page they
         # are looking at. None when nothing is in the way.
         "consent_blocker": _consent_blocker(member),
+        # REQ-M.216 - a graduate's own menu, and the leader's and team's door to them.
+        "is_graduate": _is_graduate(request.user),
     }
     ctx.update(extra)
     return ctx
@@ -290,6 +305,9 @@ def home(request):
     stage = stage_for(request)
     if stage == JOIN:
         return redirect("matazim:join_leader")
+    if stage is None and _is_graduate(request.user) and not _preview_stage(request):
+        # REQ-M.216 - a graduate's home is their own space.
+        return redirect("matazim:graduates")
 
     ctx = {"stage": stage, "hero": hero_state(request)}
     if stage == TEST:
@@ -392,6 +410,8 @@ def _landing_for(user):
         return "matazim:staff_home"
     if leader_of(user):
         return "matazim:leader_home"
+    if _is_graduate(user):
+        return "matazim:graduates"
     if Student.objects.filter(user=user).exists() or member_profile(user).has_passed_entrance_test():
         return "matazim:my_path"
     return "matazim:home"

@@ -17,6 +17,7 @@ from . import (
     entrance_views,
     event_views,
     year_views,
+    graduate_views,
     guide_views,
     internal_views,
     invite_views,
@@ -195,6 +196,28 @@ urlpatterns = [
     # what one leader offers their own מטצים.
     path("staff/offered/", learn_views.staff_offered, name="staff_offered"),
     path("leader/courses/", learn_views.leader_shelf, name="leader_shelf"),
+    # SPR-M.84 - בוגרי מטצים: the graduates' space, their leader's and the team's views.
+    path("graduates/", graduate_views.graduates, name="graduates"),
+    path("graduates/join/", graduate_views.graduates_join, name="graduates_join"),
+    path("graduates/practicum/", graduate_views.graduates_practicum, name="graduates_practicum"),
+    path(
+        "graduates/practicum/<int:report_id>/delete/",
+        graduate_views.practicum_delete,
+        name="practicum_delete",
+    ),
+    path("graduates/kit/", graduate_views.teaching_kit, name="teaching_kit"),
+    path("leader/graduates/", graduate_views.leader_graduates, name="leader_graduates"),
+    path(
+        "graduates/<int:graduate_id>/approve/",
+        graduate_views.graduate_approve,
+        name="graduate_approve",
+    ),
+    path(
+        "graduates/report/<int:report_id>/decide/",
+        graduate_views.report_decide,
+        name="report_decide",
+    ),
+    path("staff/graduates/", graduate_views.staff_graduates, name="staff_graduates"),
     path("profile/", views.profile, name="profile"),
     path("profile/replay-welcome/", views.profile_reset_welcome, name="profile_reset_welcome"),
 ]

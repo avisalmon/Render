@@ -43,9 +43,13 @@ from .models import (
     School,
     SiteUpdate,
     Feedback,
+    Graduate,
+    GraduateDate,
+    GraduateResource,
     Institution,
     Leader,
     LeaderCourse,
+    PracticumReport,
     LeaderInvite,
     MatazCertificate,
     MemberProfile,
@@ -70,7 +74,11 @@ from .serializers import (
     SchoolSerializer,
     SiteUpdateSerializer,
     FeedbackSerializer,
+    GraduateDateSerializer,
+    GraduateResourceSerializer,
+    GraduateSerializer,
     InstitutionSerializer,
+    PracticumReportSerializer,
     LeaderCourseSerializer,
     LeaderInviteSerializer,
     LeaderSerializer,
@@ -1058,6 +1066,115 @@ class OpenClassMemberViewSet(NoUpdateMixin, Scoped):
         oc.end_membership(instance, by=self.request.user)
 
 
+# ------------------------------------------------------------- בוגרי מטצים
+
+
+class GraduateViewSet(ReadOnlyScoped):
+    """SPR-M.84, REQ-M.216. Read through the same scope as the screens.
+
+    Joining is the page's, because it needs a parent's drawn signature; the
+    leader's yes is the one write, as an action.
+    """
+
+    serializer_class = GraduateSerializer
+    scope = staticmethod(access.visible_graduates)
+
+    @action(detail=True, methods=["post"])
+    def approve(self, request, pk=None):
+        from .graduate_views import _may_decide
+
+        graduate = self.get_object()
+        if not _may_decide(request.user, graduate):
+            raise PermissionDenied("רק המורה המוביל/ה או צוות התכנית.")
+        if graduate.approved_at is None:
+            graduate.approved_at = timezone.now()
+            graduate.approved_by = request.user
+            graduate.save(update_fields=["approved_at", "approved_by"])
+        return Response(GraduateSerializer(graduate).data)
+
+
+class PracticumReportViewSet(Scoped):
+    """SPR-M.84, REQ-M.219. A graduate writes their own; their leader decides.
+
+    An approved report is a fact the leader signed, so its author can no longer
+    change or delete it.
+    """
+
+    serializer_class = PracticumReportSerializer
+    scope = staticmethod(access.visible_practicum_reports)
+
+    def perform_create(self, serializer):
+        graduate = access.graduate_of(self.request.user)
+        if graduate is None or not graduate.is_approved:
+            raise PermissionDenied("הדיווח נפתח כשההצטרפות לבוגרים מאושרת.")
+        serializer.save(graduate=graduate)
+
+    def _mine_and_open(self, report):
+        if report.graduate.user_id != self.request.user.id:
+            raise PermissionDenied("זה הדיווח של מישהו אחר.")
+        if report.status == PracticumReport.APPROVED:
+            raise PermissionDenied("דיווח שאושר נשאר כמו שהוא.")
+
+    def perform_update(self, serializer):
+        self._mine_and_open(serializer.instance)
+        serializer.save(status=PracticumReport.WAITING)
+
+    def perform_destroy(self, instance):
+        self._mine_and_open(instance)
+        instance.delete()
+
+    def _decide(self, request, status):
+        from .graduate_views import _may_decide
+
+        report = self.get_object()
+        if not _may_decide(request.user, report.graduate):
+            raise PermissionDenied("רק המורה המוביל/ה או צוות התכנית.")
+        report.status = status  # not-a-student-status: PracticumReport, a report's review
+        report.decision_note = (request.data.get("note") or "")[:300] if status == PracticumReport.RETURNED else ""
+        report.decided_by = request.user
+        report.decided_at = timezone.now()
+        report.save(update_fields=["status", "decision_note", "decided_by", "decided_at"])
+        return Response(PracticumReportSerializer(report).data)
+
+    @action(detail=True, methods=["post"])
+    def approve(self, request, pk=None):
+        return self._decide(request, PracticumReport.APPROVED)
+
+    @action(detail=True, methods=["post"], url_path="return")
+    def send_back(self, request, pk=None):
+        return self._decide(request, PracticumReport.RETURNED)
+
+
+class GraduateDateViewSet(Scoped):
+    """SPR-M.84, REQ-M.220. Signed-in people read, a program manager writes."""
+
+    serializer_class = GraduateDateSerializer
+    scope = staticmethod(access.visible_graduate_dates)
+
+    def get_permissions(self):
+        if self.action in ("list", "retrieve"):
+            return [IsSignedIn()]
+        return [IsProgramManager()]
+
+    def perform_create(self, serializer):
+        serializer.save(institution=access.institution_of(self.request.user))
+
+
+class GraduateResourceViewSet(Scoped):
+    """SPR-M.84, REQ-M.218. Signed-in people read, a program manager writes."""
+
+    serializer_class = GraduateResourceSerializer
+    scope = staticmethod(access.visible_graduate_resources)
+
+    def get_permissions(self):
+        if self.action in ("list", "retrieve"):
+            return [IsSignedIn()]
+        return [IsProgramManager()]
+
+    def perform_create(self, serializer):
+        serializer.save(institution=access.institution_of(self.request.user), added_by=self.request.user)
+
+
 # Every model in this app, and the route it answers on. Kept here rather than in
 # urls.py so that adding a model and forgetting its endpoint is visible in one
 # place: `test_every_model_has_an_endpoint` reads this.
@@ -1087,4 +1204,8 @@ ROUTES = [
     ("leader-courses", LeaderCourseViewSet, LeaderCourse),
     ("open-classes", OpenClassViewSet, OpenClass),
     ("open-class-members", OpenClassMemberViewSet, OpenClassMember),
+    ("graduates", GraduateViewSet, Graduate),
+    ("practicum-reports", PracticumReportViewSet, PracticumReport),
+    ("graduate-dates", GraduateDateViewSet, GraduateDate),
+    ("graduate-resources", GraduateResourceViewSet, GraduateResource),
 ]

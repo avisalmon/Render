@@ -5267,3 +5267,33 @@ the good-instruction day. Months for the electives are not in her mail, so the s
 `לאורך השנה`; the bot asked her.
 
 **Tests.** `tests/test_spr_m_83.py`; `tests/test_spr_m_69.py` now expects her new order.
+
+## SPR-M.84: בוגרי מטצים, a space for last year's graduates  `DONE 2026-11-17`
+
+A mail from Lital of 17.11, 18:28 (spec C43), with the teaching kit attached: "יש להוסיף באתר
+כפתור בשם ״בוגרי מטצים״, המיועד לתלמידי כיתה י׳ שסיימו את התכנית וכעת מתחילים להדריך בבתי
+הספר". Run under Avi's standing rule of 2026-10-16.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.84.1 | Models `Graduate`, `PracticumReport`, `GraduateDate`, `GraduateResource` (migration 0049); four notification kinds; the two dates seeded once (0050) | REQ-M.216 to REQ-M.221 | DONE |
+| F-M.84.2 | The button: logged-out menu, logged-out home, the test-stage home, the footer; `/matazim/graduates/` for a visitor, a waiting graduate and an approved one | REQ-M.216 | DONE |
+| F-M.84.3 | `/matazim/graduates/join/`: full name, school, leader, parent's name, email, consent and a drawn signature; a graduate has no learner stage | REQ-M.216 | DONE |
+| F-M.84.4 | The space: her welcome, כל ההדרכות שלי, לומדים AI, איך מעבירים שיעור? with the kit (`/matazim/graduates/kit/`), הפרקטיקום שלי, ימי השיא שלנו | REQ-M.217 to REQ-M.220 | DONE |
+| F-M.84.5 | `/matazim/graduates/practicum/`: report, approved of 120, left, waiting; delete before approval | REQ-M.219 | DONE |
+| F-M.84.6 | `/matazim/leader/graduates/` and `/matazim/staff/graduates/` (by school and leader; dates and content edited there) | REQ-M.221 | DONE |
+| F-M.84.7 | API: `graduates`, `practicum-reports`, `graduate-dates`, `graduate-resources` | Rule 6 | DONE |
+
+**How it was read.** A graduate is a new kind of person here: not a learner at a stage (so never sent
+to this year's entrance test), not a leader. They register like anybody (with the parent's details
+the sign-up already asks for a minor), and then fill her form once. "Personal details" was kept to a
+full name: the less a site holds about a minor the better, and she was asked what else she needs. The
+parent's signature is drawn on the phone and kept as a small picture that only the leader and the team
+see; the API says only whether it exists. "All my courses" is every live הדרכה of the programme, since
+the graduates finished last year on paper and have no record here. Her text says קורסים and has a dash
+and an emoji; the site says הדרכות, a colon and no emoji. The kit is the PDF she attached, kept in the
+app (`matazim/files/`) and opened only for graduates, leaders and the team: the exception to "content
+is edited in the app", written down here; replacing it means sending the new file. AI and teaching
+content start empty and are the team's to fill on the management screen.
+
+**Tests.** `tests/test_spr_m_84.py`, with a phone test (360px) that draws the signature and signs up.

@@ -1,0 +1,32 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  SPR-M.84, REQ-M.221 - הבוגרים שלי. Lital, 2026-11-17: the leader sees their
+  graduates, approves their joining and their practicum hours, and follows their
+  progress in the הדרכות.
+{% endcomment %}
+
+{% block title %}הבוגרים שלי · מטצים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page mz-grad">
+  <div class="mz-page-head">
+    <h1>הבוגרים שלי</h1>
+    <p>בוגרי מטצים שבחרו בך כמורה מוביל/ה: אישור הצטרפות, אישור שעות פרקטיקום, והתקדמות.</p>
+  </div>
+
+  <section class="mz-panel" id="mzGradToApprove">
+    <h2>מחכים לאישור הצטרפות</h2>
+    <ul class="mz-grad-cards">
+      {% for card in waiting %}{% include "matazim/_grad_card.html" with back="/matazim/leader/graduates/" %}{% empty %}<li class="mz-muted">אין מי שמחכה.</li>{% endfor %}
+    </ul>
+  </section>
+
+  <section class="mz-panel" id="mzGradMine">
+    <h2>הבוגרים המאושרים</h2>
+    <ul class="mz-grad-cards">
+      {% for card in approved %}{% include "matazim/_grad_card.html" with back="/matazim/leader/graduates/" %}{% empty %}<li class="mz-muted">עוד אין בוגרים מאושרים.</li>{% endfor %}
+    </ul>
+  </section>
+</div>
+{% endblock %}

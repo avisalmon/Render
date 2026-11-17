@@ -709,7 +709,89 @@ def visible_course_slugs(user):
     slugs |= set(
         Enrollment.objects.filter(user=user).values_list("course__slug", flat=True)
     )
+    # REQ-M.217 - an approved graduate may go back over every הדרכה of the
+    # programme, for review and practice: the whole live pool.
+    graduate = graduate_of(user)
+    if graduate is not None and graduate.is_approved:
+        slugs |= shelvable_slugs()
     return slugs
+
+
+# ------------------------------------------------------------- בוגרי מטצים
+
+
+def graduate_of(user):
+    """This person's row in the graduates' space, approved or not, or None (REQ-M.216)."""
+    if not getattr(user, "is_authenticated", False):
+        return None
+    from .models import Graduate
+
+    return Graduate.objects.filter(user=user).select_related("leader", "school").first()
+
+
+def visible_graduates(user):
+    """The graduates this person may see. The same shape as `visible_students`.
+
+    Root sees all; a program manager the graduates of their institution's leaders
+    and any with no leader; a leader their own; a graduate themselves.
+    """
+    from .models import Graduate
+
+    if not getattr(user, "is_authenticated", False):
+        return Graduate.objects.none()
+    if user.is_superuser:
+        return Graduate.objects.all()
+    if is_program_manager(user):
+        return Graduate.objects.filter(
+            Q(leader__institution__managers=user) | Q(leader__isnull=True)
+        ).distinct()
+    if leader := leader_of(user):
+        return Graduate.objects.filter(leader=leader)
+    return Graduate.objects.filter(user=user)
+
+
+def visible_practicum_reports(user):
+    """REQ-M.219 - a graduate's reports, reached through the graduate."""
+    from .models import PracticumReport
+
+    if not getattr(user, "is_authenticated", False):
+        return PracticumReport.objects.none()
+    return PracticumReport.objects.filter(graduate__in=visible_graduates(user))
+
+
+def _graduate_world(user):
+    """The institution whose graduate content this person reads."""
+    from .models import Institution
+
+    graduate = graduate_of(user)
+    if graduate is not None and graduate.leader_id:
+        return graduate.leader.institution
+    return institution_of(user) or Institution.default()
+
+
+def _for_graduates(model, user):
+    if not getattr(user, "is_authenticated", False):
+        return model.objects.none()
+    if user.is_superuser:
+        return model.objects.all()
+    world = _graduate_world(user)
+    if world is None:
+        return model.objects.filter(institution__isnull=True)
+    return model.objects.filter(Q(institution=world) | Q(institution__isnull=True))
+
+
+def visible_graduate_dates(user):
+    """REQ-M.220 - the graduates' peak days: their institution's, and the ones for all."""
+    from .models import GraduateDate
+
+    return _for_graduates(GraduateDate, user)
+
+
+def visible_graduate_resources(user):
+    """REQ-M.218 - the content on the graduates' two shelves."""
+    from .models import GraduateResource
+
+    return _for_graduates(GraduateResource, user)
 
 
 def open_slugs():

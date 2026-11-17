@@ -89,6 +89,9 @@ MAILED_KINDS = frozenset(
         # site yet, so the bell alone is a message they never read.
         Notification.ENTRANCE_APPROVED,
         Notification.ENTRANCE_RETURNED,
+        # SPR-M.84 - a graduate waiting for their leader, and the leader's yes.
+        Notification.GRADUATE_WAITING,
+        Notification.GRADUATE_APPROVED,
     }
 )
 

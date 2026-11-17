@@ -746,3 +746,17 @@ reachable only through the scope functions in `access.py` (RULE-2, §4.4).
 `MemberProfile.entrance_test_passed_at` stays the one flag every downstream
 reader asks. What changes is who sets it: approval by a program manager, not
 the measuring script. No reader changes.
+
+## 10. בוגרי מטצים (SPR-M.84, Lital 2026-11-17)
+
+| Model | What it is | Key fields |
+|---|---|---|
+| `Graduate` | A graduate in the graduates' space, one per user | `user` (1:1), `full_name`, `school`, `leader`, `guardian_name`, `guardian_email`, `guardian_signature` (PNG data URL, never in the API), `guardian_signed_at`, `approved_at`, `approved_by` |
+| `PracticumReport` | One teaching session towards 120 hours | `graduate`, `happened_on`, `place`, `topic`, `hours` (0.5 to 12), `insight`, `status` (waiting, approved, returned), `decision_note`, `decided_by`, `decided_at` |
+| `GraduateDate` | A peak day graduates must attend | `institution` (null: everybody), `title`, `on` |
+| `GraduateResource` | Content on the two shelves | `institution`, `section` (ai, teaching), `title`, `about`, `link` |
+
+Derived, never stored: approved (`approved_at`), approved hours, hours left (120 minus approved).
+Scope: `access.visible_graduates` has the shape of `visible_students` (root all, a program manager
+their institution's leaders' graduates and those with no leader, a leader their own, a graduate
+themselves); reports follow their graduate.

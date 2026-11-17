@@ -1,0 +1,13 @@
+{% comment %}SPR-M.84 - one shelf of the graduates' content, added by the programme team.{% endcomment %}
+{% if rows %}
+  <ul class="mz-grad-list">
+    {% for r in rows %}
+      <li>
+        {% if r.link %}<a href="{{ r.link }}" target="_blank" rel="noopener noreferrer" dir="auto">{{ r.title }}</a>{% else %}<strong dir="auto">{{ r.title }}</strong>{% endif %}
+        {% if r.about %}<p class="mz-muted" dir="auto">{{ r.about }}</p>{% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p class="mz-muted">בקרוב יעלו כאן תכנים.</p>
+{% endif %}
