@@ -17,7 +17,28 @@ Newest first.
 
 ---
 
-## PM-96 Â· 2026-11-17 Â· Sprint M.84 end (graduates' space, the mail bot): nothing new
+## PM-97 · 2026-11-17 · Sprint M.85 end (the mail bot): "only then can they enter" was read loosely
+
+**What happened.** Lital's first graduates mail said the leader approves
+the students who joined. SPR-M.84 let a graduate who was still waiting see
+the welcome text and the peak days, and left the site's other pages open
+to them. Seventeen minutes later she wrote again: the leader approves them
+"ורק כך הם יוכלו להיכנס למערכת", and asked for two clear doors on the
+site, one for graduates and one for those starting. SPR-M.85 closed both.
+
+**Why our process let it happen.** An approval step was built as a status
+("waiting") instead of as a gate. Nothing asked what a waiting person can
+still reach, so the pages outside the new space were never checked.
+
+**Rule.** When someone approves a person in, the approval is a gate:
+before it, the person reaches one page that says what they are waiting
+for, and every other page sends them back to it. Test it from the waiting
+person's side, on the pages outside the new feature too.
+
+Here: this file, REQ-M.222, tests/test_spr_m_85.py
+BKM: deferred - the mail bot may change only the matazim app; Avi's chat carries it to FullStackBKM (bkm_drift lists it)
+
+## PM-96 · 2026-11-17 · Sprint M.84 end (graduates' space, the mail bot): nothing new
 
 **What happened.** The first full run of the matazim suite "failed" in
 seconds with exit code 5: PowerShell passes `tests/test_spr_m_*.py` to

@@ -29,19 +29,19 @@
       {% endif %}
     </section>
 
+  {% elif not graduate.is_approved %}
+    {# REQ-M.222 - Lital, 2026-11-17: they enter only after the leader approves. Until then, this and nothing else. #}
+    <section class="mz-signup-box" id="mzGradWaiting" aria-labelledby="mzGradWaitingTitle">
+      <h1 id="mzGradWaitingTitle">ההצטרפות מחכה לאישור</h1>
+      <p>הפרטים שלך התקבלו. {% if leader_name %}{{ leader_name }} צריך/ה לאשר את ההצטרפות שלך.{% else %}המורה המוביל/ה צריך/ה לאשר את ההצטרפות שלך.{% endif %}</p>
+      <p>כשזה יקרה תקבלו הודעה, ואז ייפתח המרחב של בוגרי מטצים.</p>
+    </section>
+
   {% else %}
     <section class="mz-signup-box mz-grad-welcome" aria-labelledby="mzGradWelcome">
       <h1 id="mzGradWelcome">{{ welcome_title }}</h1>
       <p>{{ welcome_text }}</p>
     </section>
-
-    {% if not graduate.is_approved %}
-      <section class="mz-panel" id="mzGradWaiting">
-        <h2>ההצטרפות מחכה לאישור</h2>
-        <p>{% if leader_name %}{{ leader_name }} צריך/ה לאשר את ההצטרפות שלך.{% else %}המורה המוביל/ה צריך/ה לאשר את ההצטרפות שלך.{% endif %}
-          כשזה יקרה תקבלו הודעה, והמרחב ייפתח.</p>
-      </section>
-    {% else %}
 
       <section class="mz-panel" id="mzGradCourses">
         <h2>כל ההדרכות שלי</h2>
@@ -83,7 +83,6 @@
         <div class="mz-progress" aria-hidden="true"><span style="width: {{ hours.pct }}%"></span></div>
         <p class="mz-home-do"><a class="mz-btn mz-btn-primary" href="{% url 'matazim:graduates_practicum' %}">לדיווח על הדרכה</a></p>
       </section>
-    {% endif %}
 
     <section class="mz-panel" id="mzGradDates">
       <h2>ימי השיא שלנו</h2>

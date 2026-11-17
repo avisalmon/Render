@@ -3204,3 +3204,10 @@ button.mz-lamp { border: 0; font: inherit; cursor: pointer; }
   background: var(--mz-card); color: var(--mz-ink); font: inherit; font-size: 16px;
 }
 .mz-grad-tile { border-color: var(--mz-action); color: var(--mz-action-text, var(--mz-link)); }
+
+/* ---------------------------------------------------- two doors (SPR-M.85, REQ-M.222)
+ * Lital, 2026-11-17: one link to the site, two ways in: those starting the
+ * programme, and last year's graduates. */
+.mz-doors { margin-top: 4px; }
+.mz-doors-note { margin: 12px 0 0; font-size: 0.95rem; color: var(--mz-muted, inherit); }
+.mz-doors-note .mz-linkbtn { margin-inline-start: 8px; }

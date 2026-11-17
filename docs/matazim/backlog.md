@@ -5297,3 +5297,22 @@ is edited in the app", written down here; replacing it means sending the new fil
 content start empty and are the team's to fill on the management screen.
 
 **Tests.** `tests/test_spr_m_84.py`, with a phone test (360px) that draws the signature and signs up.
+
+## SPR-M.85: Two doors, and a graduate enters only once approved  `DONE 2026-11-17`
+
+A second mail from Lital of 17.11, 18:45 (spec C44), seventeen minutes after C43: the tenth-graders
+get a link to the site; on it there is a way in for the graduates and a way in for whoever starts
+the programme, as until now; they give their details and choose a leader, the leader approves them,
+"ורק כך הם יוכלו להיכנס למערכת". Run under Avi's standing rule of 2026-10-16.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.85.1 | The logged-out home's hero: two doors, `כניסה למתחילים את התכנית` and `כניסה לבוגרי מטצים`, with a line saying who the graduates are | REQ-M.222 | DONE |
+| F-M.85.2 | A waiting graduate sees only the waiting note; the site's pages (`entrance_gated`, and `graduate_gated` on ההדרכות, המסלול שלי, the community) send them back to it; their menu has no practicum | REQ-M.222 | DONE |
+
+**How it was read.** Most of the mail was already built by SPR-M.84 an hour earlier (details, school
+and leader, the leader's approval). What was new: the two doors at the very top, side by side, so the
+one link serves both kinds of student; and "only so can they enter", which SPR-M.84 had read loosely
+(a waiting graduate saw the welcome and the dates). Now nothing opens before the approval.
+
+**Tests.** `tests/test_spr_m_85.py`; one test of SPR-M.84 changed with the rule (the waiting page).

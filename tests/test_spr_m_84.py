@@ -173,11 +173,11 @@ def test_a_graduate_is_never_sent_to_this_years_entrance_test(client, world):
 # ------------------------------------------------------------------ the space
 
 
-def test_waiting_for_the_leader_shows_the_welcome_and_nothing_to_report_yet(client, world):
+def test_waiting_for_the_leader_shows_the_waiting_note_and_nothing_to_report_yet(client, world):
+    # SPR-M.85 (REQ-M.222): until the leader approves, the waiting note is all there is.
     _graduate(world, approved=False)
     client.force_login(world["grad_user"])
     html = client.get("/matazim/graduates/").content.decode()
-    assert "ברוכים הבאים לנבחרת בוגרי מטצים!" in html
     assert "רונית" in _section(html, "mzGradWaiting")
     assert 'id="mzGradPracticum"' not in html and 'id="mzGradCourses"' not in html
     assert client.get("/matazim/graduates/practicum/")["Location"] == "/matazim/graduates/"
