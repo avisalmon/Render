@@ -175,9 +175,10 @@ def graduates(request):
         ctx["is_staff_here"] = _is_staff(user)
         return render(request, "matazim/graduates.html", shell(request, "graduates", **ctx))
 
-    ctx["dates"] = list(access.visible_graduate_dates(user))
     ctx["leader_name"] = _name(graduate.leader.user) if graduate.leader_id else ""
     if graduate.is_approved:
+        # REQ-M.222 - the space, dates included, opens only after the leader approves.
+        ctx["dates"] = list(access.visible_graduate_dates(user))
         resources = list(access.visible_graduate_resources(user))
         ctx.update(
             courses=_courses_for(user),

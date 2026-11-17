@@ -21,7 +21,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from .access import institution_of, is_program_manager, readable_posts, visible_posts
-from .gate import entrance_gated
+from .gate import entrance_gated, graduate_gated
 from .models import Post, Submission
 from .views import shell
 
@@ -76,6 +76,7 @@ def _shareable(user):
     )
 
 
+@graduate_gated
 def community(request):
     """One door, and whoever opens it gets their own page.
 

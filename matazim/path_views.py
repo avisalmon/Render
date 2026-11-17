@@ -26,6 +26,7 @@ from django.shortcuts import render
 
 from .certification import eligibility, eligibility_for_user
 from .content import FUNNEL, REQUIRED_COURSE_SLUGS
+from .gate import graduate_gated
 from .models import Student
 from .progress import JustAUser, cohort_progress, track_summary
 from .views import member_profile, shell
@@ -212,6 +213,7 @@ def _peak_days(user):
 
 
 @login_required(login_url=LOGIN_URL)
+@graduate_gated
 def my_path(request):
     """REQ-M.12 — where I am, what I have done, what is next.
 

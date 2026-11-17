@@ -38,10 +38,13 @@
         ותורמים לקהילה.
       </p>
       <p class="mz-hero-motto">לומדים. מתנסים. מובילים. משפיעים.</p>
-      <div class="mz-hero-cta">
-        <a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:register' %}?next={% url 'matazim:entrance_test' %}">אני רוצה להצטרף</a>
-        <a class="mz-linkbtn" href="{% url 'matazim:login' %}">כבר יש לי חשבון</a>
+      {# REQ-M.222 - Lital, 2026-11-17: one link to the site, and two ways in. #}
+      <div class="mz-hero-cta mz-doors" id="mzDoors">
+        <a class="mz-btn mz-btn-primary mz-btn-lg" id="mzDoorStart" href="{% url 'matazim:register' %}?next={% url 'matazim:entrance_test' %}">כניסה למתחילים את התכנית</a>
+        <a class="mz-btn mz-btn-secondary mz-btn-lg" id="mzHomeGraduates" href="{% url 'matazim:graduates' %}">כניסה לבוגרי מטצים</a>
       </div>
+      <p class="mz-doors-note">בוגרי מטצים: תלמידי כיתה י׳ שסיימו את התכנית ומדריכים בבתי הספר.
+        <a class="mz-linkbtn" href="{% url 'matazim:login' %}">כבר יש לי חשבון</a></p>
     </div>
     <div class="mz-hero-media mz-photo"
          style="background-image:url('/static/matazim/img/hero.webp')"
@@ -62,10 +65,7 @@
     <p><a class="mz-linkbtn" href="{% url 'matazim:entrance_test' %}">על מבחן הכניסה</a></p>
   </section>
 
-  {# SPR-M.84 - Lital, 2026-11-17: a button for last year's graduates. #}
-  <p class="mz-home-do" id="mzHomeGraduates">
-    <a class="mz-btn mz-btn-secondary mz-btn-lg" href="{% url 'matazim:graduates' %}">בוגרי מטצים</a>
-  </p>
+  {# SPR-M.84's button for the graduates is now the second door at the top (REQ-M.222). #}
 
   <section class="mz-how" aria-labelledby="mzHow">
     <h2 id="mzHow">לאן זה מוביל</h2>

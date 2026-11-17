@@ -25,6 +25,7 @@ from django.views.decorators.http import require_POST
 from app.models import CourseCertificate, Enrollment, UserProfile
 
 from .content import public_stages
+from .gate import graduate_gated
 from .models import MemberProfile, School, Student
 
 # --- Shared helpers ---------------------------------------------------------
@@ -187,6 +188,12 @@ def _is_graduate(user):
     return Graduate.objects.filter(user=user).exists()
 
 
+def _graduate_waiting(user):
+    from .gate import graduate_waiting
+
+    return graduate_waiting(user)
+
+
 def _can_request(user):
     """§4.11 — the program-manager role and root see the lamp."""
     from .access import is_program_manager
@@ -278,6 +285,8 @@ def shell(request, section, **extra):
         "consent_blocker": _consent_blocker(member),
         # REQ-M.216 - a graduate's own menu, and the leader's and team's door to them.
         "is_graduate": _is_graduate(request.user),
+        # REQ-M.222 - a waiting graduate's menu has only the waiting page.
+        "graduate_waiting": _graduate_waiting(request.user),
     }
     ctx.update(extra)
     return ctx
@@ -936,6 +945,7 @@ def _locked_course_cards(request, shown):
     return cards
 
 
+@graduate_gated
 def courses(request):
     """REQ-M.59, REQ-M.12b — the training path, and where this reader is in it.
 

@@ -22,7 +22,7 @@
     fourteen. Rubik is served from our own disk instead: see the @font-face
     block at the top of matazim.css (spec §4.10, REQ-M.83).
   {% endcomment %}
-  <link rel="stylesheet" href="{% static 'matazim/matazim.css' %}?v=3">
+  <link rel="stylesheet" href="{% static 'matazim/matazim.css' %}?v=4">
   {% comment %}
     SPR-M.49 — מצב לילה, decided before the first paint.
 
@@ -126,7 +126,7 @@
         {% if is_graduate %}
           {# SPR-M.84 - a graduate's own menu: their space and their practicum. #}
           <a href="{% url 'matazim:graduates' %}" id="mzNavGraduates" {% if section == 'graduates' %}class="is-active"{% endif %}>בוגרי מטצים</a>
-          <a href="{% url 'matazim:graduates_practicum' %}">הפרקטיקום שלי</a>
+          {% if not graduate_waiting %}<a href="{% url 'matazim:graduates_practicum' %}">הפרקטיקום שלי</a>{% endif %}
         {% elif learner_stage == 'test' %}
           {# REQ-M.191: before the test there is one thing to do. #}
           <a href="{% url 'matazim:entrance_test' %}" class="is-active">מבחן הכניסה</a>

@@ -114,6 +114,27 @@ def applies(user):
     return learner_stage(user) in (TEST, JOIN)
 
 
+def graduate_waiting(user):
+    """REQ-M.222 - a graduate whose leader has not approved them yet."""
+    if not getattr(user, "is_authenticated", False):
+        return False
+    from .models import Graduate
+
+    return Graduate.objects.filter(user=user, approved_at__isnull=True).exists()
+
+
+def graduate_gated(view):
+    """REQ-M.222 - a page a waiting graduate does not reach: they go back to the waiting note."""
+
+    @wraps(view)
+    def wrapper(request, *args, **kwargs):
+        if graduate_waiting(request.user):
+            return redirect("/matazim/graduates/")
+        return view(request, *args, **kwargs)
+
+    return wrapper
+
+
 def entrance_gated(view):
     """Send a learner who is not yet through to the one thing they can do."""
 
@@ -122,6 +143,9 @@ def entrance_gated(view):
         stage = stage_for(request)
         if stage in WHERE:
             return redirect(WHERE[stage])
+        if graduate_waiting(request.user):
+            # REQ-M.222 - Lital, 2026-11-17: a graduate enters only once their leader approved.
+            return redirect("/matazim/graduates/")
         return view(request, *args, **kwargs)
 
     return wrapper
