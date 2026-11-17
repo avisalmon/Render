@@ -193,10 +193,11 @@ def test_an_approved_graduate_sees_her_five_parts_in_her_order(client, world):
     client.force_login(world["grad_user"])
     html = client.get("/matazim/graduates/").content.decode()
 
-    order = ["mzGradCourses", "mzGradAi", "mzGradTeaching", "mzGradPracticum", "mzGradDates"]
+    # SPR-M.87 (Lital, 2026-11-17 21:05): squares, in her new order.
+    order = ["mzGradCourses", "mzGradPracticum", "mzGradTeaching", "mzGradAi", "mzGradAsk", "mzGradDates"]
     positions = [html.index(f'id="{a}"') for a in order]
     assert positions == sorted(positions)
-    assert "כל ההדרכות שלי" in html and "לומדים AI" in html and "איך מעבירים שיעור?" in html
+    assert "כל ההדרכות שלי" in html and "לומדים AI" in html and "איך בונים הדרכה?" in html
     teaching = _section(html, "mzGradTeaching")
     assert "להדרכה טובה, לחצו כאן" in teaching and 'href="/matazim/graduates/kit/"' in teaching
     dates = _section(html, "mzGradDates")
@@ -396,7 +397,8 @@ def test_the_team_edits_the_dates_and_the_content_and_the_graduate_sees_them(cli
 
     client.force_login(world["grad_user"])
     html = client.get("/matazim/graduates/").content.decode()
-    assert "פרומפטים טובים" in _section(html, "mzGradAi")
+    assert 'href="/matazim/graduates/ai/"' in _section(html, "mzGradAi")
+    assert "פרומפטים טובים" in client.get("/matazim/graduates/ai/").content.decode()
     assert "18.12.2026" in _section(html, "mzGradDates")
 
     client.force_login(world["pm"])
