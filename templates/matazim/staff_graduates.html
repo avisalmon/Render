@@ -15,6 +15,7 @@
   <div class="mz-page-head">
     <h1>בוגרי מטצים</h1>
     <p>{{ total }} נרשמו, {{ approved }} מאושרים. היעד לפרקטיקום: {{ target }} שעות לכל בוגר/ת.</p>
+    <p class="mz-home-do"><a class="mz-btn mz-btn-secondary" id="mzSeeAsGraduate" href="{% url 'matazim:graduates_preview' %}">מה הבוגרים רואים</a></p>
   </div>
 
   {% if error %}<div class="mz-alert" role="alert">{{ error }}</div>{% endif %}

@@ -173,6 +173,7 @@ def graduates(request):
     if graduate is None:
         ctx["is_leader_here"] = bool(access.leader_of(user))
         ctx["is_staff_here"] = _is_staff(user)
+        ctx["may_see_as_graduate"] = _may_see_as_graduate(user)
         return render(request, "matazim/graduates.html", shell(request, "graduates", **ctx))
 
     ctx["leader_name"] = _name(graduate.leader.user) if graduate.leader_id else ""
@@ -186,6 +187,51 @@ def graduates(request):
             teaching=[r for r in resources if r.section == GraduateResource.TEACHING],
             hours=hours_of(graduate),
         )
+    return render(request, "matazim/graduates.html", shell(request, "graduates", **ctx))
+
+
+def _may_see_as_graduate(user):
+    """Root, a program manager or an approved leader (SPR-M.86, REQ-M.223)."""
+    from .gate import MEMBER, preview_stages
+
+    return MEMBER in preview_stages(user)
+
+
+@login_required(login_url=LOGIN_URL)
+def graduates_preview(request):
+    """REQ-M.223 - the team sees the space as an approved graduate sees it.
+
+    Lital, 2026-11-17 19:42: "תשלח לי לינק איך התלמיד רואה את האתר ברגע שנכנס".
+    The space is shown only to an approved graduate, so the team had no way to see
+    it. Read only: no Graduate row is made, the hours are a new graduate's (0 of
+    120) and the practicum button does nothing.
+    """
+    user = request.user
+    if not _may_see_as_graduate(user):
+        raise PermissionDenied
+    from types import SimpleNamespace
+
+    from app.models import Course
+
+    resources = list(access.visible_graduate_resources(user))
+    slugs = _course_slugs()
+    titles = dict(Course.objects.filter(slug__in=slugs).values_list("slug", "title"))
+    courses = sorted(
+        ({"slug": s, "title": titles[s] or s, "pct": 0} for s in slugs if s in titles),
+        key=lambda r: r["title"],
+    )
+    zero = {"approved": 0, "waiting": 0, "left": TARGET_HOURS, "pct": 0, "target": TARGET_HOURS}
+    ctx = {
+        "graduate": SimpleNamespace(is_approved=True),
+        "graduate_preview": True,
+        "welcome_title": WELCOME_TITLE,
+        "welcome_text": WELCOME_TEXT,
+        "dates": list(access.visible_graduate_dates(user)),
+        "courses": courses,
+        "ai": [r for r in resources if r.section == GraduateResource.AI],
+        "teaching": [r for r in resources if r.section == GraduateResource.TEACHING],
+        "hours": zero,
+    }
     return render(request, "matazim/graduates.html", shell(request, "graduates", **ctx))
 
 

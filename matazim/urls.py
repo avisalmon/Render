@@ -199,6 +199,8 @@ urlpatterns = [
     # SPR-M.84 - בוגרי מטצים: the graduates' space, their leader's and the team's views.
     path("graduates/", graduate_views.graduates, name="graduates"),
     path("graduates/join/", graduate_views.graduates_join, name="graduates_join"),
+    # SPR-M.86 - the team sees the space as an approved graduate.
+    path("graduates/preview/", graduate_views.graduates_preview, name="graduates_preview"),
     path("graduates/practicum/", graduate_views.graduates_practicum, name="graduates_practicum"),
     path(
         "graduates/practicum/<int:report_id>/delete/",

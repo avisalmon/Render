@@ -3211,3 +3211,7 @@ button.mz-lamp { border: 0; font: inherit; cursor: pointer; }
 .mz-doors { margin-top: 4px; }
 .mz-doors-note { margin: 12px 0 0; font-size: 0.95rem; color: var(--mz-muted, inherit); }
 .mz-doors-note .mz-linkbtn { margin-inline-start: 8px; }
+
+/* SPR-M.86, REQ-M.223 - the practicum button in the team's look at the graduates' space: shown, does nothing. */
+.mz-btn[aria-disabled="true"] { opacity: .55; cursor: not-allowed; pointer-events: none; }
+#mzGradPreviewBar { margin-bottom: 1rem; border-radius: 12px; }
