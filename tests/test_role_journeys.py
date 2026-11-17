@@ -156,7 +156,8 @@ def _crawl(client, start="/matazim/"):
             continue
         seen.add(url)
         response = client.get(url, follow=True)
-        if response.status_code != 200:
+        if response.status_code != 200 or getattr(response, "streaming", False):
+            # SPR-M.86: a file (the graduates' teaching kit) is reached, not read.
             continue
         for href in re.findall(r'href="([^"]+)"', response.content.decode("utf-8", "replace")):
             href = href.split("#")[0].split("?")[0]

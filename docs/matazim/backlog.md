@@ -5316,3 +5316,21 @@ one link serves both kinds of student; and "only so can they enter", which SPR-M
 (a waiting graduate saw the welcome and the dates). Now nothing opens before the approval.
 
 **Tests.** `tests/test_spr_m_85.py`; one test of SPR-M.84 changed with the rule (the waiting page).
+
+## SPR-M.86: The team sees the graduates' space as a graduate  `DONE 2026-11-17`
+
+A mail from Lital of 17.11, 19:42 (spec C45), after SPR-M.85 went live: "תשלח לי לינק איך התלמיד
+רואה את האתר ברגע שנכנס". Run under Avi's standing rule of 2026-10-16.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.86.1 | `/matazim/graduates/preview/`: the approved graduate's space, read only, with a bar and a way back; nothing is made | REQ-M.223 | DONE |
+| F-M.86.2 | "מה הבוגרים רואים" on the graduates' page (team and leaders), the team's graduates page and the leader's | REQ-M.223 | DONE |
+
+**How it was read.** The reply is mostly links: the site itself in a private window shows the two
+doors, and the existing student preview (REQ-M.198) shows the first-year entrance. What she could not
+see at all was the graduates' space, since it opens only after a leader approves a real graduate, so
+that view was built. The practicum form stays closed in the view, since a report needs a graduate.
+
+**Tests.** `tests/test_spr_m_86.py`.
+

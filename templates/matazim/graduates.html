@@ -27,6 +27,9 @@
       {% else %}
         <p class="mz-home-do"><a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:graduates_join' %}">להצטרפות לבוגרים</a></p>
       {% endif %}
+      {% if may_see_as_graduate %}
+        <p class="mz-home-do"><a class="mz-btn mz-btn-secondary" id="mzSeeAsGraduate" href="{% url 'matazim:graduates_preview' %}">מה הבוגרים רואים</a></p>
+      {% endif %}
     </section>
 
   {% elif not graduate.is_approved %}
@@ -38,6 +41,14 @@
     </section>
 
   {% else %}
+    {% if graduate_preview %}
+      {# REQ-M.223 - the team looking at the space as an approved graduate. #}
+      <div class="mz-preview-bar" role="status" id="mzGradPreviewBar">
+        <strong>אתם רואים את המרחב כמו בוגר/ת שהמוביל/ה אישר/ה.</strong>
+        <span>תצוגה בלבד, שום דבר לא נשמר.</span>
+        <a href="{% url 'matazim:graduates' %}" class="mz-preview-off">חזרה לתצוגה שלי</a>
+      </div>
+    {% endif %}
     <section class="mz-signup-box mz-grad-welcome" aria-labelledby="mzGradWelcome">
       <h1 id="mzGradWelcome">{{ welcome_title }}</h1>
       <p>{{ welcome_text }}</p>
@@ -81,7 +92,7 @@
         <h2>הפרקטיקום שלי</h2>
         <p>{{ hours.approved }} שעות אושרו מתוך {{ hours.target }}. נותרו {{ hours.left }} שעות להשלמת היעד.{% if hours.waiting %} עוד {{ hours.waiting }} שעות מחכות לאישור.{% endif %}</p>
         <div class="mz-progress" aria-hidden="true"><span style="width: {{ hours.pct }}%"></span></div>
-        <p class="mz-home-do"><a class="mz-btn mz-btn-primary" href="{% url 'matazim:graduates_practicum' %}">לדיווח על הדרכה</a></p>
+        <p class="mz-home-do">{% if graduate_preview %}<span class="mz-btn mz-btn-primary is-disabled" aria-disabled="true">לדיווח על הדרכה</span>{% else %}<a class="mz-btn mz-btn-primary" href="{% url 'matazim:graduates_practicum' %}">לדיווח על הדרכה</a>{% endif %}</p>
       </section>
 
     <section class="mz-panel" id="mzGradDates">
