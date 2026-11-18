@@ -3258,3 +3258,9 @@ button.mz-lamp { border: 0; font: inherit; cursor: pointer; }
 .mz-grad-steps { margin: 16px 0 0; padding-inline-start: 1.4em; display: grid; gap: 8px; }
 .mz-grad-steps li { overflow-wrap: anywhere; }
 #mzAskText { width: 100%; max-width: 100%; font: inherit; font-size: 16px; padding: 12px; border: 1px solid var(--mz-line); border-radius: var(--mz-radius-sm); background: var(--mz-card); color: var(--mz-ink); }
+
+/* SPR-M.88 - the graduates' yearly track: a meeting, and the leader's ticks. */
+.mz-grad-meeting { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+div.mz-grad-meeting { display: block; margin-block-end: 18px; }
+.mz-grad-tick { display: flex; align-items: center; gap: 8px; min-height: 44px; }
+.mz-grad-tick input { inline-size: 22px; block-size: 22px; }

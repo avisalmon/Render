@@ -26,6 +26,26 @@
     </ul>
   </section>
 
+  {% comment %}
+    SPR-M.88, REQ-M.226 - the yearly track's meetings. Lital, 18.11: מפגש 1,
+    היכרות עם התכנית, and the leader confirms that everybody took part.
+  {% endcomment %}
+  <section class="mz-panel" id="mzGradTrack">
+    <h2>המסלול השנתי</h2>
+    <p class="mz-muted">המפגשים של השנה. המורה המוביל/ה מאשר/ת את ההשתתפות בכל מפגש, ואת כל הדרכה שהשלמת.</p>
+    <ul class="mz-grad-list">
+      {% for row in track %}
+        <li class="mz-grad-meeting">
+          <span class="mz-tag {% if row.confirmed %}mz-tag-done{% else %}mz-tag-doing{% endif %}">{% if row.confirmed %}ההשתתפות אושרה{% else %}מחכה לאישור המוביל/ה{% endif %}</span>
+          <strong dir="auto">מפגש {{ row.meeting.number }}: {{ row.meeting.title }}</strong>
+          {% if row.meeting.on %}<span dir="ltr">{{ row.meeting.on|date:"j.n.Y" }}</span>{% endif %}
+        </li>
+      {% empty %}
+        <li class="mz-muted">עוד אין מפגשים במסלול.</li>
+      {% endfor %}
+    </ul>
+  </section>
+
   {% if error %}<div class="mz-alert" role="alert">{{ error }}</div>{% endif %}
 
   <form method="post" class="mz-panel mz-grad-form" id="mzGradReport">

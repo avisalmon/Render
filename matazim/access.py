@@ -794,6 +794,31 @@ def visible_graduate_resources(user):
     return _for_graduates(GraduateResource, user)
 
 
+def visible_graduate_meetings(user):
+    """REQ-M.226 - the meetings on the graduates' yearly track."""
+    from .models import GraduateMeeting
+
+    return _for_graduates(GraduateMeeting, user)
+
+
+def visible_graduate_attendance(user):
+    """REQ-M.226 - the leader's confirmations, reached through the graduate."""
+    from .models import GraduateAttendance
+
+    if not getattr(user, "is_authenticated", False):
+        return GraduateAttendance.objects.none()
+    return GraduateAttendance.objects.filter(graduate__in=visible_graduates(user))
+
+
+def visible_graduate_course_approvals(user):
+    """REQ-M.227 - the leader's approvals of finished הדרכות, through the graduate."""
+    from .models import GraduateCourseApproval
+
+    if not getattr(user, "is_authenticated", False):
+        return GraduateCourseApproval.objects.none()
+    return GraduateCourseApproval.objects.filter(graduate__in=visible_graduates(user))
+
+
 def open_slugs():
     """The open basics at this moment (REQ-M.163): active and open_to_all.
 

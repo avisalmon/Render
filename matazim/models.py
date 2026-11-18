@@ -1730,3 +1730,80 @@ class GraduateResource(models.Model):
 
     def __str__(self):
         return self.title
+
+
+# SPR-M.88 - the graduates' yearly track (REQ-M.226, REQ-M.227). Lital, 18.11:
+# "תוסיף במסלול השנתי מפגש 1 – היכרות עם התכנית – חשוב שהמוביל יאשר שכלל
+# התלמידים לקחו חלק המוביל תמיד צריך לאשר לאורך כל הדרך וגם בהדרכות".
+
+
+class GraduateMeeting(models.Model):
+    """One meeting on the graduates' yearly track (REQ-M.226).
+
+    Seeded once with מפגש 1, היכרות עם התכנית; the programme team adds the next
+    ones on `/matazim/staff/graduates/`. No institution means it is for everybody.
+    """
+
+    institution = models.ForeignKey(
+        "Institution", on_delete=models.CASCADE, null=True, blank=True,
+        related_name="graduate_meetings", verbose_name="מוסד",
+    )
+    number = models.PositiveSmallIntegerField(verbose_name="מספר המפגש")
+    title = models.CharField(max_length=120, verbose_name="נושא המפגש")
+    on = models.DateField(null=True, blank=True, verbose_name="תאריך")
+
+    class Meta:
+        ordering = ["number", "pk"]
+        verbose_name = "מפגש במסלול הבוגרים"
+        verbose_name_plural = "מפגשים במסלול הבוגרים"
+
+    def __str__(self):
+        return f"מפגש {self.number}: {self.title}"
+
+
+class GraduateAttendance(models.Model):
+    """The leader confirms that a graduate took part in a meeting (REQ-M.226).
+
+    A row is the confirmation itself: no row, not confirmed.
+    """
+
+    meeting = models.ForeignKey(GraduateMeeting, on_delete=models.CASCADE, related_name="attendance")
+    graduate = models.ForeignKey(Graduate, on_delete=models.CASCADE, related_name="attendance")
+    confirmed_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    confirmed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["meeting", "graduate"], name="mz_grad_attendance_once"),
+        ]
+        verbose_name = "נוכחות במפגש בוגרים"
+        verbose_name_plural = "נוכחות במפגשי בוגרים"
+
+    def __str__(self):
+        return f"{self.graduate} · {self.meeting}"
+
+
+class GraduateCourseApproval(models.Model):
+    """The leader approves a הדרכה a graduate finished (REQ-M.227).
+
+    A row is the approval: no row, waiting for the leader.
+    """
+
+    graduate = models.ForeignKey(Graduate, on_delete=models.CASCADE, related_name="course_approvals")
+    course_slug = models.SlugField(max_length=200, verbose_name="הדרכה")
+    approved_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    approved_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["graduate", "course_slug"], name="mz_grad_course_once"),
+        ]
+        verbose_name = "אישור הדרכה לבוגר/ת"
+        verbose_name_plural = "אישורי הדרכות לבוגרים"
+
+    def __str__(self):
+        return f"{self.graduate} · {self.course_slug}"

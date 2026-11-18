@@ -5357,3 +5357,31 @@ was asked back. New הדרכות made for the graduates she asked of Avi, and th
 
 **Tests.** `tests/test_spr_m_87.py`; three assertions of `tests/test_spr_m_84.py` follow the new order
 and names.
+
+
+## SPR-M.88: The graduates' yearly track, confirmed by the leader  `DONE 2026-11-18`
+
+Two mails from Lital of 18.11, 11:44 and 11:45 (spec C47, C48), in the graduates' thread. The first
+asks for the link to hand the tenth-grade graduates: answered with `https://babook.co.il/matazim/graduates/`,
+nothing to build. The second: "תוסיף במסלול השנתי מפגש 1 – היכרות עם התכנית – חשוב שהמוביל יאשר
+שכלל התלמידים לקחו חלק המוביל תמדי צריך לאשר לאורך כל הדרך וגם בהדרכות". Run under Avi's standing
+rule of 2026-10-16.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.88.1 | Models `GraduateMeeting`, `GraduateAttendance`, `GraduateCourseApproval` (migration 0051); מפגש 1, היכרות עם התכנית seeded once (0052) | REQ-M.226, REQ-M.227 | DONE |
+| F-M.88.2 | `#mzGradTrack` on the graduate's practicum page: each meeting confirmed or waiting | REQ-M.226 | DONE |
+| F-M.88.3 | `#mzGradMeetings` on the leader's graduates page: everybody ticked, one button confirms, a confirmation can be undone | REQ-M.226 | DONE |
+| F-M.88.4 | A finished הדרכה waits for `אישור ההדרכה` on the leader's card; the graduate's card says waiting or approved | REQ-M.227 | DONE |
+| F-M.88.5 | The team adds and deletes meetings on `/matazim/staff/graduates/` and sees how many were confirmed | REQ-M.226 | DONE |
+| F-M.88.6 | API: `graduate-meetings`, `graduate-attendance`, `graduate-course-approvals` | Rule 6 | DONE |
+
+**How it was read.** "המסלול השנתי" in this thread is the graduates' yearly track (the bot's last reply
+called the practicum that), so the meeting went there, not on the first-year students' year path; she
+was asked. "שכלל התלמידים לקחו חלק" became one form per meeting with everybody ticked, so confirming a
+whole group is one click and leaving someone out is unticking them. "לאורך כל הדרך" is every meeting
+the team adds after it; "וגם בהדרכות" is the leader's approval of each הדרכה a graduate finished. The
+practicum hours were already approved by the leader (SPR-M.84). Whether a meeting counts towards the
+120 hours is not in her mail, so it does not, and she was asked.
+
+**Tests.** `tests/test_spr_m_88.py`.

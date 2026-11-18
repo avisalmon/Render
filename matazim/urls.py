@@ -224,6 +224,17 @@ urlpatterns = [
         graduate_views.report_decide,
         name="report_decide",
     ),
+    # SPR-M.88 - the yearly track: the leader confirms meetings and finished הדרכות.
+    path(
+        "graduates/meeting/<int:meeting_id>/confirm/",
+        graduate_views.meeting_confirm,
+        name="meeting_confirm",
+    ),
+    path(
+        "graduates/<int:graduate_id>/course-approve/",
+        graduate_views.course_approve,
+        name="course_approve",
+    ),
     path("staff/graduates/", graduate_views.staff_graduates, name="staff_graduates"),
     path("profile/", views.profile, name="profile"),
     path("profile/replay-welcome/", views.profile_reset_welcome, name="profile_reset_welcome"),
