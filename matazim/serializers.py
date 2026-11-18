@@ -36,7 +36,10 @@ from .models import (
     SiteUpdate,
     Feedback,
     Graduate,
+    GraduateAttendance,
+    GraduateCourseApproval,
     GraduateDate,
+    GraduateMeeting,
     GraduateResource,
     Institution,
     Leader,
@@ -585,3 +588,30 @@ class GraduateResourceSerializer(serializers.ModelSerializer):
         model = GraduateResource
         fields = ["id", "institution", "section", "title", "about", "link", "created_at"]
         read_only_fields = ["id", "institution", "created_at"]
+
+
+class GraduateMeetingSerializer(serializers.ModelSerializer):
+    """SPR-M.88, REQ-M.226."""
+
+    class Meta:
+        model = GraduateMeeting
+        fields = ["id", "institution", "number", "title", "on"]
+        read_only_fields = ["id", "institution"]
+
+
+class GraduateAttendanceSerializer(serializers.ModelSerializer):
+    """SPR-M.88, REQ-M.226. The leader writes; who confirmed and when is the server's."""
+
+    class Meta:
+        model = GraduateAttendance
+        fields = ["id", "meeting", "graduate", "confirmed_at"]
+        read_only_fields = ["id", "confirmed_at"]
+
+
+class GraduateCourseApprovalSerializer(serializers.ModelSerializer):
+    """SPR-M.88, REQ-M.227."""
+
+    class Meta:
+        model = GraduateCourseApproval
+        fields = ["id", "graduate", "course_slug", "approved_at"]
+        read_only_fields = ["id", "approved_at"]

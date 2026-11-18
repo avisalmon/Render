@@ -32,6 +32,33 @@
     {% endfor %}
   </section>
 
+  {% comment %}SPR-M.88, REQ-M.226 - the meetings of the graduates' yearly track; the leaders confirm who took part.{% endcomment %}
+  <section class="mz-panel" id="mzGradMeetingsEdit">
+    <h2>המסלול השנתי של הבוגרים</h2>
+    <p>המפגשים של השנה. כל מורה מוביל/ה מאשר/ת מי מהבוגרים שלו/ה השתתף.</p>
+    <ul class="mz-grad-list">
+      {% for row in meeting_rows %}
+        <li>
+          <strong dir="auto">מפגש {{ row.meeting.number }}: {{ row.meeting.title }}</strong>{% if row.meeting.on %} · <span dir="ltr">{{ row.meeting.on|date:"j.n.Y" }}</span>{% endif %}
+          · {{ row.confirmed }} מתוך {{ row.people|length }} אושרו
+          <form method="post" class="mz-inline-form">
+            {% csrf_token %}<input type="hidden" name="do" value="delete_meeting"><input type="hidden" name="id" value="{{ row.meeting.pk }}">
+            <button type="submit" class="mz-btn mz-btn-ghost">מחיקה</button>
+          </form>
+        </li>
+      {% empty %}
+        <li class="mz-muted">עוד אין מפגשים.</li>
+      {% endfor %}
+    </ul>
+    <form method="post" class="mz-grad-form">
+      {% csrf_token %}<input type="hidden" name="do" value="add_meeting">
+      <label class="mz-field"><span>מספר המפגש</span><input type="number" name="number" min="1" max="999" required value="{{ next_number }}"></label>
+      <label class="mz-field"><span>נושא המפגש</span><input type="text" name="title" maxlength="120" required dir="auto"></label>
+      <label class="mz-field"><span>תאריך (לא חובה)</span><input type="date" name="on"></label>
+      <button type="submit" class="mz-btn mz-btn-secondary">הוספת מפגש</button>
+    </form>
+  </section>
+
   <section class="mz-panel" id="mzGradDatesEdit">
     <h2>ימי השיא של הבוגרים</h2>
     {% for d in dates %}

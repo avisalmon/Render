@@ -36,7 +36,10 @@ from django.views.decorators.http import require_POST
 from . import access
 from .models import (
     Graduate,
+    GraduateAttendance,
+    GraduateCourseApproval,
     GraduateDate,
+    GraduateMeeting,
     GraduateResource,
     Notification,
     PracticumReport,
@@ -131,11 +134,37 @@ def _course_slugs():
 
 def progress_rows(graduates):
     """{user_id: summary} over all the programme's הדרכות, in a fixed number of queries."""
-    from .progress import JustAUser, cohort_progress, track_summary
+    from .progress import track_summary
+
+    return {uid: track_summary(rows) for uid, rows in _per_course(graduates).items()}
+
+
+def _per_course(graduates):
+    """{user_id: {slug: {pct, done, total}}} for these graduates, in a fixed number of queries."""
+    from .progress import JustAUser, cohort_progress
 
     people = [JustAUser(g.user_id) for g in graduates]
-    per_user = cohort_progress(people, _course_slugs()) if people else {}
-    return {uid: track_summary(rows) for uid, rows in per_user.items()}
+    return cohort_progress(people, _course_slugs()) if people else {}
+
+
+def _finished_slugs(rows):
+    return {slug for slug, row in (rows or {}).items() if int(row.get("pct") or 0) >= 100}
+
+
+def _approved_slugs(graduate):
+    return set(graduate.course_approvals.values_list("course_slug", flat=True))
+
+
+def year_track(graduate, user):
+    """SPR-M.88, REQ-M.226 - the yearly track's meetings, each confirmed by the leader or not.
+
+    `graduate` None is the team's preview: every meeting reads as not yet confirmed.
+    """
+    meetings = list(access.visible_graduate_meetings(user))
+    confirmed = set()
+    if graduate is not None:
+        confirmed = set(graduate.attendance.values_list("meeting_id", flat=True))
+    return [{"meeting": m, "confirmed": m.pk in confirmed} for m in meetings]
 
 
 def _courses_for(user):
@@ -172,15 +201,24 @@ def _course_cards(user, zero=False):
     from .progress import JustAUser, cohort_progress
 
     slugs = _course_slugs()
+    approved = set()
     if not zero:
         slugs = [s for s in slugs if s in access.visible_course_slugs(user)]
         per = cohort_progress([JustAUser(user.id)], slugs).get(user.id, {})
+        graduate = access.graduate_of(user)
+        if graduate is not None:
+            approved = _approved_slugs(graduate)
     else:
         per = {}
     cards = []
     for c in Course.objects.filter(slug__in=slugs):
         pct = int((per.get(c.slug) or {}).get("pct") or 0)
         done = pct >= 100
+        if done:
+            # REQ-M.227 - a finished הדרכה counts once the leader approves it.
+            word = "הושלמה ואושרה" if c.slug in approved else "הושלמה, מחכה לאישור המוביל/ה"
+        else:
+            word = "בתהליך" if pct else "מוכנה לחזרה"
         cards.append({
             "slug": c.slug,
             "title": c.title or c.slug,
@@ -190,7 +228,7 @@ def _course_cards(user, zero=False):
             "done": done,
             "locked": False,
             "exists": True,
-            "word": "הושלמה" if done else ("בתהליך" if pct else "מוכנה לחזרה"),
+            "word": word,
             "action": "לחזור ולתרגל" if done else ("להמשיך" if pct else "לפתוח"),
         })
     cards.sort(key=lambda r: r["title"])
@@ -457,7 +495,7 @@ def graduates_practicum(request):
         shell(
             request, "graduates", graduate=graduate, hours=hours_of(graduate),
             reports=list(graduate.reports.all()), error=error, posted=posted,
-            today=timezone.localdate(),
+            today=timezone.localdate(), track=year_track(graduate, request.user),
         ),
     )
 
@@ -492,19 +530,56 @@ def teaching_kit(request):
 # ------------------------------------------------------------ the leader's view
 
 
-def _graduate_cards(graduates):
+def _graduate_cards(graduates, meetings=()):
+    from app.models import Course
+    from .progress import track_summary
+
     graduates = list(graduates)
-    progress = progress_rows(graduates)
+    per = _per_course(graduates)
+    titles = dict(Course.objects.filter(slug__in=_course_slugs()).values_list("slug", "title"))
+    meeting_ids = {m.pk for m in meetings}
     cards = []
     for g in graduates:
+        rows = per.get(g.user_id, {})
+        approved = {a.course_slug for a in g.course_approvals.all()}
+        to_approve = sorted(
+            ({"slug": s, "title": titles.get(s) or s} for s in _finished_slugs(rows) - approved if s in titles),
+            key=lambda r: r["title"],
+        )
         cards.append({
             "g": g,
             "hours": hours_of(g),
-            "progress": progress.get(g.user_id, {"done": 0, "total": 0, "pct": 0}),
+            "progress": track_summary(rows) if rows else {"done": 0, "total": 0, "pct": 0},
             "leader_name": _name(g.leader.user) if g.leader_id else "",
             "waiting_reports": [r for r in g.reports.all() if r.status == PracticumReport.WAITING],
+            # REQ-M.227 - finished הדרכות the leader has not approved yet.
+            "courses_to_approve": to_approve,
+            "courses_approved": len(approved),
+            # REQ-M.226 - meetings of the yearly track the leader confirmed.
+            "meetings_confirmed": sum(1 for a in g.attendance.all() if a.meeting_id in meeting_ids),
+            "meetings_total": len(meeting_ids),
         })
     return cards
+
+
+def _meeting_rows(meetings, cards):
+    """For the leader's form: each meeting with the approved graduates, confirmed or not."""
+    rows = []
+    for m in meetings:
+        people = []
+        for card in cards:
+            g = card["g"]
+            if not g.is_approved:
+                continue
+            done = any(a.meeting_id == m.pk for a in g.attendance.all())
+            people.append({"g": g, "confirmed": done})
+        rows.append({
+            "meeting": m,
+            "people": people,
+            "all_confirmed": bool(people) and all(p["confirmed"] for p in people),
+            "confirmed": sum(1 for p in people if p["confirmed"]),
+        })
+    return rows
 
 
 @login_required(login_url=LOGIN_URL)
@@ -515,15 +590,20 @@ def leader_graduates(request):
         raise PermissionDenied
     rows = (
         Graduate.objects.filter(leader=leader)
-        .select_related("school", "leader__user").prefetch_related("reports")
+        .select_related("school", "leader__user")
+        .prefetch_related("reports", "attendance", "course_approvals")
     )
-    cards = _graduate_cards(rows)
+    meetings = list(access.visible_graduate_meetings(request.user))
+    cards = _graduate_cards(rows, meetings)
     waiting = [c for c in cards if not c["g"].is_approved]
     approved = [c for c in cards if c["g"].is_approved]
     return render(
         request,
         "matazim/leader_graduates.html",
-        shell(request, "leader", waiting=waiting, approved=approved),
+        shell(
+            request, "leader", waiting=waiting, approved=approved,
+            meeting_rows=_meeting_rows(meetings, cards),
+        ),
     )
 
 
@@ -581,6 +661,48 @@ def report_decide(request, report_id):
     return _back(request, "matazim:leader_graduates")
 
 
+@require_POST
+@login_required(login_url=LOGIN_URL)
+def meeting_confirm(request, meeting_id):
+    """REQ-M.226 - the leader confirms who took part in a meeting of the yearly track.
+
+    `graduate` carries the ticked graduates; `undo` takes one confirmation back.
+    Only approved graduates this person may decide on are touched; the rest of
+    the posted ids are ignored.
+    """
+    meeting = get_object_or_404(access.visible_graduate_meetings(request.user), pk=meeting_id)
+    undo = request.POST.get("undo") or ""
+    if undo.isdigit():
+        graduate = get_object_or_404(Graduate, pk=int(undo))
+        if not _may_decide(request.user, graduate):
+            raise PermissionDenied
+        GraduateAttendance.objects.filter(meeting=meeting, graduate=graduate).delete()
+        return _back(request, "matazim:leader_graduates")
+    ids = [int(x) for x in request.POST.getlist("graduate") if x.isdigit()]
+    for graduate in Graduate.objects.filter(pk__in=ids, approved_at__isnull=False):
+        if _may_decide(request.user, graduate):
+            GraduateAttendance.objects.get_or_create(
+                meeting=meeting, graduate=graduate, defaults={"confirmed_by": request.user},
+            )
+    return _back(request, "matazim:leader_graduates")
+
+
+@require_POST
+@login_required(login_url=LOGIN_URL)
+def course_approve(request, graduate_id):
+    """REQ-M.227 - the leader approves a הדרכה the graduate finished."""
+    graduate = get_object_or_404(Graduate, pk=graduate_id)
+    if not _may_decide(request.user, graduate) or not graduate.is_approved:
+        raise PermissionDenied
+    slug = request.POST.get("slug") or ""
+    if slug not in _finished_slugs(_per_course([graduate]).get(graduate.user_id)):
+        raise PermissionDenied("אפשר לאשר רק הדרכה שהושלמה.")
+    GraduateCourseApproval.objects.get_or_create(
+        graduate=graduate, course_slug=slug, defaults={"approved_by": request.user},
+    )
+    return _back(request, "matazim:leader_graduates")
+
+
 # ------------------------------------------------------------- the team's view
 
 
@@ -600,9 +722,10 @@ def staff_graduates(request):
     rows = (
         access.visible_graduates(user)
         .select_related("school", "leader__user", "leader__user__profile")
-        .prefetch_related("reports")
+        .prefetch_related("reports", "attendance", "course_approvals")
     )
-    cards = _graduate_cards(rows)
+    meetings = list(access.visible_graduate_meetings(user))
+    cards = _graduate_cards(rows, meetings)
     groups = {}
     for card in cards:
         g = card["g"]
@@ -621,7 +744,8 @@ def staff_graduates(request):
             dates=list(access.visible_graduate_dates(user)),
             resources=list(access.visible_graduate_resources(user)),
             sections=GraduateResource.SECTION_CHOICES, error=error,
-            target=TARGET_HOURS,
+            target=TARGET_HOURS, meeting_rows=_meeting_rows(meetings, cards),
+            next_number=max((m.number for m in meetings), default=0) + 1,
         ),
     )
 
@@ -659,6 +783,20 @@ def _staff_edit(request):
             institution=world, section=section, title=title, link=link[:200],
             about=(request.POST.get("about") or "").strip(), added_by=user,
         )
+        return ""
+    if do == "add_meeting":
+        # REQ-M.226 - the next meeting of the graduates' yearly track.
+        title = (request.POST.get("title") or "").strip()[:120]
+        raw = (request.POST.get("number") or "").strip()
+        if not title or not raw.isdigit() or not 0 < int(raw) < 1000:
+            return "למפגש צריך מספר ונושא."
+        GraduateMeeting.objects.create(
+            institution=world, number=int(raw), title=title,
+            on=parse_date(request.POST.get("on") or ""),
+        )
+        return ""
+    if do == "delete_meeting":
+        get_object_or_404(access.visible_graduate_meetings(user), pk=request.POST.get("id")).delete()
         return ""
     if do == "delete_resource":
         get_object_or_404(access.visible_graduate_resources(user), pk=request.POST.get("id")).delete()

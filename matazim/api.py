@@ -44,7 +44,10 @@ from .models import (
     SiteUpdate,
     Feedback,
     Graduate,
+    GraduateAttendance,
+    GraduateCourseApproval,
     GraduateDate,
+    GraduateMeeting,
     GraduateResource,
     Institution,
     Leader,
@@ -74,7 +77,10 @@ from .serializers import (
     SchoolSerializer,
     SiteUpdateSerializer,
     FeedbackSerializer,
+    GraduateAttendanceSerializer,
+    GraduateCourseApprovalSerializer,
     GraduateDateSerializer,
+    GraduateMeetingSerializer,
     GraduateResourceSerializer,
     GraduateSerializer,
     InstitutionSerializer,
@@ -1175,6 +1181,72 @@ class GraduateResourceViewSet(Scoped):
         serializer.save(institution=access.institution_of(self.request.user), added_by=self.request.user)
 
 
+class GraduateMeetingViewSet(Scoped):
+    """SPR-M.88, REQ-M.226. Signed-in people read, a program manager writes."""
+
+    serializer_class = GraduateMeetingSerializer
+    scope = staticmethod(access.visible_graduate_meetings)
+
+    def get_permissions(self):
+        if self.action in ("list", "retrieve"):
+            return [IsSignedIn()]
+        return [IsProgramManager()]
+
+    def perform_create(self, serializer):
+        serializer.save(institution=access.institution_of(self.request.user))
+
+
+class _LeaderDecides(Scoped):
+    """A row that is a leader's yes about a graduate: only their leader or the team writes it."""
+
+    def _check(self, graduate):
+        from .graduate_views import _may_decide
+
+        if not _may_decide(self.request.user, graduate) or not graduate.is_approved:
+            raise PermissionDenied("רק המורה המוביל/ה או צוות התכנית.")
+
+    def perform_update(self, serializer):
+        self._check(serializer.instance.graduate)
+        self._check(serializer.validated_data.get("graduate", serializer.instance.graduate))
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        self._check(instance.graduate)
+        instance.delete()
+
+
+class GraduateAttendanceViewSet(_LeaderDecides):
+    """SPR-M.88, REQ-M.226. The leader confirms that a graduate took part in a meeting."""
+
+    serializer_class = GraduateAttendanceSerializer
+    scope = staticmethod(access.visible_graduate_attendance)
+
+    def perform_create(self, serializer):
+        self._check(serializer.validated_data["graduate"])
+        meeting = serializer.validated_data["meeting"]
+        if not access.visible_graduate_meetings(self.request.user).filter(pk=meeting.pk).exists():
+            raise PermissionDenied("המפגש הזה לא שייך לכאן.")
+        serializer.save(confirmed_by=self.request.user)
+
+
+class GraduateCourseApprovalViewSet(_LeaderDecides):
+    """SPR-M.88, REQ-M.227. The leader approves a הדרכה the graduate finished."""
+
+    serializer_class = GraduateCourseApprovalSerializer
+    scope = staticmethod(access.visible_graduate_course_approvals)
+
+    def perform_create(self, serializer):
+        from .graduate_views import _finished_slugs, _per_course
+
+        graduate = serializer.validated_data["graduate"]
+        self._check(graduate)
+        if serializer.validated_data["course_slug"] not in _finished_slugs(
+            _per_course([graduate]).get(graduate.user_id)
+        ):
+            raise PermissionDenied("אפשר לאשר רק הדרכה שהושלמה.")
+        serializer.save(approved_by=self.request.user)
+
+
 # Every model in this app, and the route it answers on. Kept here rather than in
 # urls.py so that adding a model and forgetting its endpoint is visible in one
 # place: `test_every_model_has_an_endpoint` reads this.
@@ -1208,4 +1280,7 @@ ROUTES = [
     ("practicum-reports", PracticumReportViewSet, PracticumReport),
     ("graduate-dates", GraduateDateViewSet, GraduateDate),
     ("graduate-resources", GraduateResourceViewSet, GraduateResource),
+    ("graduate-meetings", GraduateMeetingViewSet, GraduateMeeting),
+    ("graduate-attendance", GraduateAttendanceViewSet, GraduateAttendance),
+    ("graduate-course-approvals", GraduateCourseApprovalViewSet, GraduateCourseApproval),
 ]

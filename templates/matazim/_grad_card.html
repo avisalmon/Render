@@ -11,7 +11,8 @@
   <p class="mz-muted">{% if card.g.school %}{{ card.g.school.name }}{% endif %}{% if show_leader and card.leader_name %} · {{ card.leader_name }}{% endif %}</p>
   <ul class="mz-grad-hours">
     <li>אישור הורים: {% if card.g.has_signature %}נחתם <span dir="ltr">{{ card.g.guardian_signed_at|date:"j.n.Y" }}</span> ({{ card.g.guardian_name }}){% else %}חסר{% endif %}</li>
-    <li>התקדמות בהדרכות: {{ card.progress.pct }}%</li>
+    <li>התקדמות בהדרכות: {{ card.progress.pct }}%{% if card.courses_approved %}, {{ card.courses_approved }} הדרכות אושרו{% endif %}</li>
+    {% if card.meetings_total %}<li>מפגשי המסלול השנתי: {{ card.meetings_confirmed }} מתוך {{ card.meetings_total }} אושרו</li>{% endif %}
     <li>פרקטיקום: {{ card.hours.approved }} מתוך {{ card.hours.target }} שעות{% if card.hours.waiting %}, עוד {{ card.hours.waiting }} מחכות{% endif %}</li>
   </ul>
   {% if card.g.has_signature %}
@@ -26,6 +27,13 @@
       <button type="submit" class="mz-btn mz-btn-primary">אישור ההצטרפות</button>
     </form>
   {% endif %}
+  {% if card.g.is_approved %}{% for c in card.courses_to_approve %}
+    <form method="post" action="{% url 'matazim:course_approve' card.g.pk %}" class="mz-grad-decide">
+      {% csrf_token %}<input type="hidden" name="next" value="{{ back }}"><input type="hidden" name="slug" value="{{ c.slug }}">
+      <p>השלים/ה את ההדרכה <strong dir="auto">{{ c.title }}</strong></p>
+      <button type="submit" class="mz-btn mz-btn-primary">אישור ההדרכה</button>
+    </form>
+  {% endfor %}{% endif %}
   {% for r in card.waiting_reports %}
     <div class="mz-grad-report">
       <p><strong dir="auto">{{ r.topic }}</strong> · <span dir="ltr">{{ r.happened_on|date:"j.n.Y" }}</span> · <span dir="auto">{{ r.place }}</span> · {{ r.hours|floatformat:"-1" }} שעות</p>

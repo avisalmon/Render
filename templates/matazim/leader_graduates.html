@@ -1,4 +1,4 @@
-{% extends "matazim/base.html" %}
+﻿{% extends "matazim/base.html" %}
 
 {% comment %}
   SPR-M.84, REQ-M.221 - הבוגרים שלי. Lital, 2026-11-17: the leader sees their
@@ -21,6 +21,46 @@
     <ul class="mz-grad-cards">
       {% for card in waiting %}{% include "matazim/_grad_card.html" with back="/matazim/leader/graduates/" %}{% empty %}<li class="mz-muted">אין מי שמחכה.</li>{% endfor %}
     </ul>
+  </section>
+
+  {% comment %}
+    SPR-M.88, REQ-M.226 - Lital, 18.11: "חשוב שהמוביל יאשר שכלל התלמידים לקחו
+    חלק". One form per meeting; everybody not yet confirmed is ticked already.
+  {% endcomment %}
+  <section class="mz-panel" id="mzGradMeetings">
+    <h2>המסלול השנתי: אישור השתתפות במפגשים</h2>
+    {% for row in meeting_rows %}
+      <div class="mz-grad-meeting" id="mzMeeting{{ row.meeting.pk }}">
+        <h3 dir="auto">מפגש {{ row.meeting.number }}: {{ row.meeting.title }}{% if row.meeting.on %} · <span dir="ltr">{{ row.meeting.on|date:"j.n.Y" }}</span>{% endif %}</h3>
+        {% if row.people %}
+          <p>{{ row.confirmed }} מתוך {{ row.people|length }} אושרו.{% if row.all_confirmed %} כל הבוגרים השתתפו.{% endif %}</p>
+          <ul class="mz-grad-list">
+            {% for p in row.people %}{% if p.confirmed %}
+              <li>
+                <span class="mz-tag mz-tag-done">השתתף/ה</span> <span dir="auto">{{ p.g.full_name }}</span>
+                <form method="post" action="{% url 'matazim:meeting_confirm' row.meeting.pk %}" class="mz-inline-form">
+                  {% csrf_token %}<input type="hidden" name="next" value="/matazim/leader/graduates/">
+                  <button type="submit" name="undo" value="{{ p.g.pk }}" class="mz-btn mz-btn-ghost">ביטול האישור</button>
+                </form>
+              </li>
+            {% endif %}{% endfor %}
+          </ul>
+          {% if not row.all_confirmed %}
+            <form method="post" action="{% url 'matazim:meeting_confirm' row.meeting.pk %}" class="mz-grad-form">
+              {% csrf_token %}<input type="hidden" name="next" value="/matazim/leader/graduates/">
+              {% for p in row.people %}{% if not p.confirmed %}
+                <label class="mz-grad-tick"><input type="checkbox" name="graduate" value="{{ p.g.pk }}" checked> <span dir="auto">{{ p.g.full_name }}</span></label>
+              {% endif %}{% endfor %}
+              <button type="submit" class="mz-btn mz-btn-primary">אישור: המסומנים השתתפו במפגש</button>
+            </form>
+          {% endif %}
+        {% else %}
+          <p class="mz-muted">עוד אין בוגרים מאושרים.</p>
+        {% endif %}
+      </div>
+    {% empty %}
+      <p class="mz-muted">עוד אין מפגשים במסלול.</p>
+    {% endfor %}
   </section>
 
   <section class="mz-panel" id="mzGradMine">
