@@ -309,7 +309,8 @@ def test_nothing_on_any_of_the_three_screens_is_invented(client, world):
     # test only appears for somebody whose leader asks for it). No first submission (nobody to hand it to yet) and no first
     # teaching session (not certified), because neither is a step they have.
     # Lital, 2026-10-15: her seven steps by months, the same for everyone.
-    assert member.count('class="mz-path-node') == 7
+    # SPR-M.89 (Lital, 2026-11-18): and מפגש 1 before them.
+    assert member.count('class="mz-path-node') == 8
 
 
 # ------------------------------------------ her padlocked cards, 2026-10-09

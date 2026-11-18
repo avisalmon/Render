@@ -135,8 +135,69 @@ def roster(request):
             classes=StudyClass.objects.filter(leader=leader) if leader else [],
             waiting=Student.objects.filter(pending_leader=leader).count() if leader else 0,
             removed=request.GET.get("removed") == "1",
+            meeting_rows=_student_meeting_rows(request, leader),
         ),
     )
+
+
+def _student_meeting_rows(request, leader):
+    """SPR-M.89, REQ-M.228 - for the leader's form: each meeting, their students, confirmed or not.
+
+    Only a leader's own students (never a manager's whole world), so the form is
+    the size of one leader's group.
+    """
+    from .access import visible_student_meetings
+
+    if leader is None:
+        return []
+    meetings = list(visible_student_meetings(leader.user))
+    if not meetings:
+        return []
+    students = list(
+        _students_for(request, leader).filter(leader=leader)
+        .select_related("user", "user__profile").prefetch_related("meeting_attendance")
+    )
+    rows = []
+    for m in meetings:
+        people = []
+        for s in students:
+            done = any(a.meeting_id == m.pk for a in s.meeting_attendance.all())
+            people.append({"s": s, "confirmed": done})
+        rows.append({
+            "meeting": m,
+            "people": people,
+            "all_confirmed": bool(people) and all(p["confirmed"] for p in people),
+            "confirmed": sum(1 for p in people if p["confirmed"]),
+        })
+    return rows
+
+
+@require_POST
+@login_required(login_url=LOGIN_URL)
+def student_meeting_confirm(request, meeting_id):
+    """SPR-M.89, REQ-M.228 - the leader confirms who took part in a meeting of the year path.
+
+    `student` carries the ticked students; `undo` takes one confirmation back. Only
+    students this person may see are touched (`visible_students`); other ids are
+    ignored, and an undo for somebody else's student is refused.
+    """
+    from .access import visible_student_meetings
+    from .models import StudentAttendance
+
+    _leader_or_403(request)
+    meeting = get_object_or_404(visible_student_meetings(request.user), pk=meeting_id)
+    mine = visible_students(request.user)
+    undo = request.POST.get("undo") or ""
+    if undo.isdigit():
+        person = get_object_or_404(mine, pk=int(undo))
+        StudentAttendance.objects.filter(meeting=meeting, student=person).delete()
+    else:
+        ids = [int(x) for x in request.POST.getlist("student") if x.isdigit()]
+        for person in mine.filter(pk__in=ids):
+            StudentAttendance.objects.get_or_create(
+                meeting=meeting, student=person, defaults={"confirmed_by": request.user},
+            )
+    return redirect(reverse("matazim:roster") + "#mzStudentMeetings")
 
 
 def _test_file(person):

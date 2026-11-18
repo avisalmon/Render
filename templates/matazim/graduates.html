@@ -15,6 +15,7 @@
     <section class="mz-signup-box" aria-labelledby="mzGradIntro">
       <h1 id="mzGradIntro">בוגרי מטצים</h1>
       <p>המרחב לתלמידי כיתה י׳ שסיימו את התכנית ועכשיו מתחילים להדריך בבתי הספר.</p>
+      <p><a href="{% url 'matazim:graduates_process' %}" id="mzGradProcessLink">מה מצפה לכם השנה? התהליך השנתי של הבוגרים</a></p>
       {% if not user.is_authenticated %}
         <p class="mz-home-do">
           <a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:register' %}?next={% url 'matazim:graduates_join' %}">נרשמים כאן</a>
@@ -52,6 +53,7 @@
     <section class="mz-grad-welcome mz-grad-hero" aria-labelledby="mzGradWelcome">
       <h1 id="mzGradWelcome">{{ welcome_title }}</h1>
       <p>{{ welcome_text }}</p>
+      <p><a href="{% url 'matazim:graduates_process' %}" id="mzGradProcessLink">התהליך השנתי שלכם ומה אנחנו מצפים מכם</a></p>
     </section>
 
     {% comment %}

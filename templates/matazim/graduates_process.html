@@ -1,0 +1,73 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  SPR-M.89, REQ-M.229 - התהליך השנתי של בוגרי מטצים. Lital, 2026-11-18 12:32,
+  about the letter to the leaders of grade 10: "חשוב שיהיה לבוגרי המטצים הסבר על
+  התהליך השנתי שלהם ומה אנחנו מצפים מהם לאורך השנה ... ותוסיף להם לינק לכניסה
+  להסבר אודות התהליך". Open to anybody, since the link goes out in a letter to
+  people who may not have an account yet. The words follow her letter.
+{% endcomment %}
+
+{% block title %}התהליך השנתי של בוגרי מטצים · מטצים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page mz-page-narrow mz-grad" id="mzGradProcess">
+  <div class="mz-page-head">
+    <h1>התהליך השנתי של בוגרי מטצים</h1>
+    <p>סיימתם בהצלחה את ההכשרה בכיתה ט׳, ועכשיו אתם מטצים. בכיתה י׳ אתם משתלבים כמדריכים טכנולוגיים צעירים בבית הספר, במסגרת שעות המעורבות האישית. כאן כתוב מה מצפה לכם השנה, ומה אנחנו מצפים מכם.</p>
+  </div>
+
+  <section class="mz-panel" id="mzProcessSteps">
+    <h2>השנה שלכם, שלב אחרי שלב</h2>
+    <ol class="mz-grad-steps">
+      <li><strong>מפגש 1: היכרות עם התכנית.</strong> המורה המוביל/ה מאשר/ת שהשתתפתם, וכך גם בכל מפגש שאחריו.</li>
+      <li><strong>בונים תכנית הדרכה שנתית</strong> לתלמידי כיתות ז׳, ח׳ וט׳.</li>
+      <li><strong>המורה המוביל/ה מאשר/ת</strong> את תכנית ההדרכה ואת התכנים.</li>
+      <li><strong>יום השיא באינטל.</strong> אחרי שהתכנית אושרה, משתתפים ביום השיא בחברת Intel.</li>
+      <li><strong>מעבירים את ההדרכות.</strong> כל כיתה עוברת רצף של 4 עד 5 מפגשים, לפי התכנית שבניתם.</li>
+      <li><strong>מדווחים על כל הדרכה</strong> באתר, בריבוע "הפרקטיקום שלי". המורה המוביל/ה מאשר/ת את השעות.</li>
+    </ol>
+  </section>
+
+  <section class="mz-panel" id="mzProcessHours">
+    <h2>{{ target }} שעות מעורבות אישית</h2>
+    <p>לכל בוגר/ת מאושרות {{ target }} שעות מעורבות אישית. הן כוללות את זמן ההכנה, את בניית תכנית ההדרכה ואת העברת ההדרכות בפועל.</p>
+    <p>רכז/ת המעורבות בבית הספר מאשר/ת את שעות המעורבות האישית. אם הפעילות בפועל גדולה יותר, אפשר לפנות לצוות התכנית דרך המורה המוביל/ה ולבקש לבחון שעות נוספות.</p>
+  </section>
+
+  <section class="mz-panel" id="mzProcessExpect">
+    <h2>מה אנחנו מצפים מכם</h2>
+    <ul class="mz-grad-list">
+      <li>להגיע למפגשים של המסלול השנתי.</li>
+      <li>לבנות תכנית הדרכה מסודרת ולהגיש אותה למורה המוביל/ה לאישור.</li>
+      <li>להדריך בסבלנות ובכבוד, ולהיות דוגמה לתלמידים הצעירים.</li>
+      <li>לדווח באתר על כל הדרכה שהעברתם.</li>
+      <li>לשמור על הפרטיות של התלמידים: לא כותבים שמות או פרטים שלהם, לא באתר ולא בכלי בינה מלאכותית.</li>
+    </ul>
+  </section>
+
+  <section class="mz-panel" id="mzProcessWho">
+    <h2>מי מלווה אתכם</h2>
+    <p>המורה המוביל/ה שליווה אתכם בכיתה ט׳ ממשיך/ה ללוות אתכם גם בשנת הפרקטיקום: מאשר/ת את התכנית והתכנים ומלווה אתכם לאורך ההדרכות בבית הספר. צוות התכנית ברשת עתיד מלווה את המורה ואתכם לאורך כל השנה.</p>
+  </section>
+
+  <section class="mz-panel mz-panel-soft" id="mzProcessIn">
+    <h2>איך נכנסים למרחב של הבוגרים</h2>
+    <ol class="mz-grad-steps">
+      <li>נרשמים לאתר (מי שכבר יש לו חשבון, פשוט מתחבר).</li>
+      <li>ממלאים את טופס הבוגרים: שם, בית ספר, המורה המוביל/ה, ופרטים וחתימה של ההורה.</li>
+      <li>המורה המוביל/ה מאשר/ת, ונפתח המרחב: ההדרכות, הפרקטיקום, איך בונים הדרכה, לומדים AI וימי השיא.</li>
+    </ol>
+    <p class="mz-home-do">
+      {% if is_graduate %}
+        <a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:graduates' %}">למרחב של הבוגרים</a>
+      {% elif user.is_authenticated %}
+        <a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:graduates' %}">לכניסה לבוגרים</a>
+      {% else %}
+        <a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:register' %}?next={% url 'matazim:graduates_join' %}">נרשמים כאן</a>
+        <a class="mz-btn mz-btn-secondary" href="{% url 'matazim:login' %}?next={% url 'matazim:graduates_join' %}">כבר יש לי חשבון</a>
+      {% endif %}
+    </p>
+  </section>
+</div>
+{% endblock %}
