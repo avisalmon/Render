@@ -176,6 +176,9 @@ urlpatterns = [
     # REQ-M.33 — the bell.
     path("notices/", notice_views.notices, name="notices"),
     path("my-path/", path_views.my_path, name="my_path"),
+    # SPR-M.90 - the student records they were at a meeting of the year path.
+    path("my-path/meeting/<int:meeting_id>/present/", path_views.my_meeting_present,
+         name="my_meeting_present"),
     # REQ-M.19 — יוצרים: work handed in, and the feedback that is the point.
     # REQ-M.32 — פרקטיקום, the stage the whole programme exists to produce.
     path("my-teaching/", teaching_views.my_teaching, name="my_teaching"),

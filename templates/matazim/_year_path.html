@@ -19,6 +19,17 @@
         {% endif %}
         <span class="mz-path-word">{{ step.word }}{% if step.pct and step.status == 'doing' %} {{ step.pct }}%{% endif %}</span>
         <span class="mz-path-when">{{ step.month }}</span>
+        {% if step.meeting_id and step.can_mark and not for_leader %}
+          {% comment %}SPR-M.90, REQ-M.230 - Lital: after taking part, the student records they were there.{% endcomment %}
+          <form method="post" action="{% url 'matazim:my_meeting_present' step.meeting_id %}" class="mz-inline-form" id="mzMeetingPresent{{ step.meeting_id }}">
+            {% csrf_token %}
+            {% if step.marked %}
+              <button type="submit" name="undo" value="1" class="mz-btn mz-btn-ghost">ביטול הרישום</button>
+            {% else %}
+              <button type="submit" class="mz-btn mz-btn-primary">הייתי במפגש</button>
+            {% endif %}
+          </form>
+        {% endif %}
       </span>
     </li>
   {% endfor %}

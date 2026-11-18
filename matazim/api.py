@@ -1267,10 +1267,10 @@ class StudentMeetingViewSet(Scoped):
 
 
 class StudentAttendanceViewSet(Scoped):
-    """SPR-M.89, REQ-M.228. A leader confirms that one of their students took part.
+    """SPR-M.89, REQ-M.228; SPR-M.90, REQ-M.230. Who was at a meeting.
 
-    The student must be one this person sees (`visible_students`), and the person
-    must be a leader or the team; a student cannot confirm themselves.
+    The student records their own presence (Lital, 18.11, 13:27); a leader or the
+    team may record it for a student they see (`visible_students`). Nobody else.
     """
 
     serializer_class = StudentAttendanceSerializer
@@ -1278,6 +1278,10 @@ class StudentAttendanceViewSet(Scoped):
 
     def _check(self, student, meeting=None):
         user = self.request.user
+        if student.user_id == user.pk:
+            if meeting is not None and not access.visible_student_meetings(user).filter(pk=meeting.pk).exists():
+                raise PermissionDenied("המפגש הזה לא שייך לכאן.")
+            return
         if access.leader_of(user) is None and not access.is_program_manager(user):
             raise PermissionDenied("רק המורה המוביל/ה או צוות התכנית.")
         if not access.visible_students(user).filter(pk=student.pk).exists():
