@@ -5409,3 +5409,23 @@ left out and asked about.
 
 **Tests.** `tests/test_spr_m_89.py`; the step counts of `tests/test_spr_m_56.py` and `tests/test_spr_m_69.py`
 now include מפגש 1 (`tests/test_spr_m_83.py` builds an institution of its own, which has no meeting).
+
+## SPR-M.90: the student records being at מפגש 1  `DONE 2026-11-18`
+
+A mail from Lital of 18.11, 13:27 (spec C51), in the graduates' thread. Run under Avi's standing
+rule of 2026-10-16.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.90.1 | The meetings on the students' year path read `הנוכחות נרשמה` or `עוד לא נרשמה נוכחות`, no more waiting for the leader | REQ-M.230 | DONE |
+| F-M.90.2 | `הייתי במפגש` and `ביטול הרישום` on the member's own path; POST `/matazim/my-path/meeting/<id>/present/` | REQ-M.230 | DONE |
+| F-M.90.3 | API `student-attendance`: a student writes their own row, nobody else's | REQ-M.230 | DONE |
+| F-M.90.4 | The leader's panel on `/matazim/leader/students/` reads `נוכחות במפגשים`: who recorded, and recording for someone who forgot | REQ-M.230 | DONE |
+
+**How it was read.** Her mail answers the bot's reply about the students' path, the one that said
+`מחכה לאישור המוביל/ה`, so the change is there. The leader keeps the panel, now to see who recorded
+and to help, not to approve. The graduates' track has the same wording (SPR-M.88, her own earlier
+request) and was left as it is; she was asked. No model change: a row is the record, and
+`confirmed_by` says who wrote it.
+
+**Tests.** `tests/test_spr_m_90.py`; `tests/test_spr_m_89.py` now reads the new words.

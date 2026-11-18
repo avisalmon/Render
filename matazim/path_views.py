@@ -22,6 +22,7 @@ does not know things.
 """
 
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
 from django.shortcuts import render
 
 from .certification import eligibility, eligibility_for_user
@@ -303,3 +304,33 @@ def my_path(request):
             pending_name=_leader_name(student.pending_leader) if student else "",
         ),
     )
+
+
+@require_POST
+@login_required(login_url=LOGIN_URL)
+def my_meeting_present(request, meeting_id):
+    """SPR-M.90, REQ-M.230 - the student records that they were at a meeting.
+
+    Lital, 18.11, 13:27: "תוריד את מחכה לאישור מוביל בפגישה ה 1 חשוב שלאחר שלקח
+    חלק הוא ירשום שהוא היה נוכח". Only the person's own `Student` row, only a meeting
+    they see, never one dated in the future; `undo` takes the record back.
+    """
+    from django.http import Http404
+    from django.shortcuts import get_object_or_404, redirect
+    from django.urls import reverse
+    from django.utils import timezone
+
+    from .access import visible_student_meetings
+    from .models import StudentAttendance
+
+    meeting = get_object_or_404(visible_student_meetings(request.user), pk=meeting_id)
+    student = Student.objects.filter(user=request.user).order_by("-cohort_year").first()
+    if student is None or (meeting.on and timezone.localdate() < meeting.on):
+        raise Http404
+    if request.POST.get("undo"):
+        StudentAttendance.objects.filter(meeting=meeting, student=student).delete()
+    else:
+        StudentAttendance.objects.get_or_create(
+            meeting=meeting, student=student, defaults={"confirmed_by": request.user},
+        )
+    return redirect(reverse("matazim:my_path"))

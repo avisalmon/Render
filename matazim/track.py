@@ -332,9 +332,11 @@ def _date_status(start, end, today):
 
 
 def meeting_rows(user, student, today):
-    """REQ-M.228 - the meetings of the year path, each confirmed by the leader or not.
+    """REQ-M.228, REQ-M.230 - the meetings of the year path, attended or not.
 
-    `student` None (somebody not attached yet) reads every meeting as not confirmed.
+    SPR-M.90 (Lital, 18.11, 13:27): no more waiting for the leader. The student
+    records that they were there (`can_mark`); a leader may still record it for them.
+    `student` None (somebody not attached yet) reads every meeting as not recorded.
     """
     from .access import visible_student_meetings
 
@@ -344,14 +346,16 @@ def meeting_rows(user, student, today):
         confirmed = set(student.meeting_attendance.values_list("meeting_id", flat=True))
     rows = []
     for m in meetings:
+        future = bool(m.on and today < m.on)
         if m.pk in confirmed:
-            status, word = DONE, "ההשתתפות אושרה"
-        elif m.on and today < m.on:
+            status, word = DONE, "הנוכחות נרשמה"
+        elif future:
             status, word = TODO, "בהמשך"
         else:
-            status, word = TODO, "מחכה לאישור המוביל/ה"
+            status, word = TODO, "עוד לא נרשמה נוכחות"
         month = m.on.strftime("%d.%m.%Y") if m.on else ("פתיחת התכנית" if m.number == 1 else "")
-        rows.append({"meeting": m, "status": status, "word": word, "month": month})
+        rows.append({"meeting": m, "status": status, "word": word, "month": month,
+                     "marked": m.pk in confirmed, "can_mark": student is not None and not future})
     return rows
 
 
@@ -410,9 +414,10 @@ def path_steps(user, student, per_course, peaks, today=None):
                       "word": word, "where": where, "where_args": where_args or [], "pct": pct})
 
     # SPR-M.89, REQ-M.228 - Lital, 18.11: מפגש 1, היכרות עם התכנית, comes first on
-    # the path, and it counts once the leader confirms the student took part.
+    # the path. SPR-M.90: it counts once the student records they were there.
     for row in meeting_rows(user, student, today):
         add(f"meeting{row['meeting'].pk}", row["month"], str(row["meeting"]), row["status"], row["word"])
+        steps[-1].update(meeting_id=row["meeting"].pk, marked=row["marked"], can_mark=row["can_mark"])
 
     add("scratch", "נובמבר–דצמבר 2026", "2 הדרכות סקראץ'", scratch_status,
         f"{scratch_held} מתוך 2", "matazim:learn_course", [PATH_COURSE_SCRATCH[0]],

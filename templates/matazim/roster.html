@@ -42,19 +42,20 @@
       not yet confirmed is ticked already, so one click confirms the whole group.
     {% endcomment %}
     <section class="mz-panel" id="mzStudentMeetings">
-      <h2>המסלול השנתי: אישור השתתפות במפגשים</h2>
+      <h2>המסלול השנתי: נוכחות במפגשים</h2>
+      <p class="mz-muted">כל מטצ רושם/ת בעצמו/ה במסלול השנתי שהיה/תה במפגש. כאן רואים מי כבר רשם/ה, ואפשר לרשום גם בשביל מי ששכח/ה.</p>
       {% for row in meeting_rows %}
         <div class="mz-grad-meeting" id="mzStudentMeeting{{ row.meeting.pk }}">
           <h3 dir="auto">מפגש {{ row.meeting.number }}: {{ row.meeting.title }}{% if row.meeting.on %} · <span dir="ltr">{{ row.meeting.on|date:"j.n.Y" }}</span>{% endif %}</h3>
           {% if row.people %}
-            <p>{{ row.confirmed }} מתוך {{ row.people|length }} אושרו.{% if row.all_confirmed %} כל המטצים השתתפו.{% endif %}</p>
+            <p>{{ row.confirmed }} מתוך {{ row.people|length }} נרשמו כנוכחים.{% if row.all_confirmed %} כל המטצים השתתפו.{% endif %}</p>
             <ul class="mz-grad-list">
               {% for p in row.people %}{% if p.confirmed %}
                 <li>
                   <span class="mz-tag mz-tag-done">השתתף/ה</span> <span dir="auto">{{ p.s.user.profile.display_name|default:p.s.user.email }}</span>
                   <form method="post" action="{% url 'matazim:student_meeting_confirm' row.meeting.pk %}" class="mz-inline-form">
                     {% csrf_token %}
-                    <button type="submit" name="undo" value="{{ p.s.pk }}" class="mz-btn mz-btn-ghost">ביטול האישור</button>
+                    <button type="submit" name="undo" value="{{ p.s.pk }}" class="mz-btn mz-btn-ghost">ביטול הרישום</button>
                   </form>
                 </li>
               {% endif %}{% endfor %}
@@ -65,7 +66,7 @@
                 {% for p in row.people %}{% if not p.confirmed %}
                   <label class="mz-grad-tick"><input type="checkbox" name="student" value="{{ p.s.pk }}" checked> <span dir="auto">{{ p.s.user.profile.display_name|default:p.s.user.email }}</span></label>
                 {% endif %}{% endfor %}
-                <button type="submit" class="mz-btn mz-btn-primary">אישור: המסומנים השתתפו במפגש</button>
+                <button type="submit" class="mz-btn mz-btn-primary">רישום: המסומנים השתתפו במפגש</button>
               </form>
             {% endif %}
           {% else %}

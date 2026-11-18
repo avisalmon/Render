@@ -73,7 +73,7 @@ def test_meeting_one_comes_first_on_the_students_path(world):
 
     steps = path_steps(world["kid"], world["student"], {}, [], today=date(2026, 11, 20))
     assert steps[0]["title"] == "מפגש 1: היכרות עם התכנית"
-    assert steps[0]["word"] == "מחכה לאישור המוביל/ה" and steps[0]["status"] == "todo"
+    assert steps[0]["word"] == "עוד לא נרשמה נוכחות" and steps[0]["status"] == "todo"
     assert steps[0]["month"] == "פתיחת התכנית"
     assert steps[1]["key"] == "scratch"
 
@@ -83,11 +83,11 @@ def test_the_student_sees_it_on_my_path_and_then_confirmed(client, world):
 
     client.force_login(world["kid"])
     html = client.get("/matazim/my-path/").content.decode()
-    assert "מפגש 1: היכרות עם התכנית" in html and "מחכה לאישור המוביל/ה" in html
+    assert "מפגש 1: היכרות עם התכנית" in html and "מחכה לאישור המוביל/ה" not in html
     StudentAttendance.objects.create(meeting=world["meeting"], student=world["student"],
                                      confirmed_by=world["leader"].user)
     html = client.get("/matazim/my-path/").content.decode()
-    assert "ההשתתפות אושרה" in html
+    assert "הנוכחות נרשמה" in html
 
 
 # ------------------------------------------------------------------ the leader
@@ -107,7 +107,7 @@ def test_the_leader_confirms_the_whole_group_at_once(client, world):
     assert resp.status_code == 302 and resp["Location"].startswith("/matazim/leader/students/")
     assert StudentAttendance.objects.filter(meeting=m).count() == 2
     html = _section(client.get("/matazim/leader/students/").content.decode(), "mzStudentMeetings")
-    assert "2 מתוך 2 אושרו" in html and "כל המטצים השתתפו" in html
+    assert "2 מתוך 2 נרשמו כנוכחים" in html and "כל המטצים השתתפו" in html
 
     client.post(f"/matazim/leader/meeting/{m.pk}/confirm/", {"undo": b.pk})
     assert list(StudentAttendance.objects.values_list("student_id", flat=True)) == [a.pk]
@@ -120,7 +120,7 @@ def test_the_leader_sees_it_on_the_students_page(client, world):
     client.force_login(world["leader"].user)
     html = client.get(f"/matazim/leader/students/{world['student'].pk}/").content.decode()
     panel = _section(html, "mzStudentPath")
-    assert "מפגש 1: היכרות עם התכנית" in panel and "ההשתתפות אושרה" in panel
+    assert "מפגש 1: היכרות עם התכנית" in panel and "הנוכחות נרשמה" in panel
 
 
 def test_another_leader_cannot_confirm_my_students(client, world):
@@ -149,7 +149,7 @@ def test_a_student_cannot_confirm_themselves(client, world):
 # ------------------------------------------------------------------ the API
 
 
-def test_the_api_lets_the_leader_confirm_and_refuses_the_student(world):
+def test_the_api_lets_the_leader_confirm_and_refuses_a_stranger(world):
     from rest_framework.test import APIClient
 
     from matazim.models import StudentAttendance
@@ -157,8 +157,9 @@ def test_the_api_lets_the_leader_confirm_and_refuses_the_student(world):
     api = APIClient()
     api.force_authenticate(world["kid"])
     assert api.get("/matazim/api/student-meetings/").status_code == 200
+    # SPR-M.90: the student may record themselves, but nobody else.
     resp = api.post("/matazim/api/student-attendance/",
-                    {"meeting": world["meeting"].pk, "student": world["student"].pk}, format="json")
+                    {"meeting": world["meeting"].pk, "student": world["student2"].pk}, format="json")
     assert resp.status_code == 403
     assert api.post("/matazim/api/student-meetings/", {"number": 2, "title": "x"}, format="json").status_code == 403
 
