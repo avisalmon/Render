@@ -819,6 +819,33 @@ def visible_graduate_course_approvals(user):
     return GraduateCourseApproval.objects.filter(graduate__in=visible_graduates(user))
 
 
+def visible_student_meetings(user):
+    """REQ-M.228 - the meetings on the first-year students' year path.
+
+    The person's institution's and the ones for everybody; a stranger or somebody
+    with no institution yet sees the ones for everybody and the programme's own.
+    """
+    from .models import Institution, StudentMeeting
+
+    if not getattr(user, "is_authenticated", False):
+        return StudentMeeting.objects.none()
+    if user.is_superuser:
+        return StudentMeeting.objects.all()
+    institution = institution_of(user) or Institution.default()
+    if institution is None:
+        return StudentMeeting.objects.filter(institution__isnull=True)
+    return StudentMeeting.objects.filter(Q(institution=institution) | Q(institution__isnull=True))
+
+
+def visible_student_attendance(user):
+    """REQ-M.228 - the leader's confirmations, reached through the student."""
+    from .models import StudentAttendance
+
+    if not getattr(user, "is_authenticated", False):
+        return StudentAttendance.objects.none()
+    return StudentAttendance.objects.filter(student__in=visible_students(user))
+
+
 def open_slugs():
     """The open basics at this moment (REQ-M.163): active and open_to_all.
 

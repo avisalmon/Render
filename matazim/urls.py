@@ -135,6 +135,12 @@ urlpatterns = [
     # The desk, once someone is standing at it (SPR-M.8).
     path("leader/students/", roster_views.roster, name="roster"),
     path("leader/students/<int:student_id>/", roster_views.student, name="student"),
+    # SPR-M.89 - the leader confirms who took part in a meeting of the year path.
+    path(
+        "leader/meeting/<int:meeting_id>/confirm/",
+        roster_views.student_meeting_confirm,
+        name="student_meeting_confirm",
+    ),
     path(
         "leader/students/<int:student_id>/certify/",
         roster_views.certify_student,
@@ -199,6 +205,8 @@ urlpatterns = [
     # SPR-M.84 - בוגרי מטצים: the graduates' space, their leader's and the team's views.
     path("graduates/", graduate_views.graduates, name="graduates"),
     path("graduates/join/", graduate_views.graduates_join, name="graduates_join"),
+    # SPR-M.89 - the graduates' yearly process, the link in the letter to the leaders.
+    path("graduates/process/", graduate_views.graduates_process, name="graduates_process"),
     # SPR-M.86 - the team sees the space as an approved graduate.
     path("graduates/preview/", graduate_views.graduates_preview, name="graduates_preview"),
     path("graduates/practicum/", graduate_views.graduates_practicum, name="graduates_practicum"),

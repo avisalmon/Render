@@ -326,6 +326,20 @@ def graduates(request):
     return render(request, "matazim/graduates.html", shell(request, "graduates", **ctx))
 
 
+def graduates_process(request):
+    """SPR-M.89, REQ-M.229 - the graduates' yearly process, open to anybody.
+
+    Lital, 18.11: the letter to the grade 10 leaders links here, so the page is
+    read by people who may not have an account yet.
+    """
+    return render(
+        request,
+        "matazim/graduates_process.html",
+        shell(request, "graduates", target=TARGET_HOURS,
+              is_graduate=access.graduate_of(request.user) is not None),
+    )
+
+
 def _may_see_as_graduate(user):
     """Root, a program manager or an approved leader (SPR-M.86, REQ-M.223)."""
     from .gate import MEMBER, preview_stages

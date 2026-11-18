@@ -331,6 +331,30 @@ def _date_status(start, end, today):
     return DONE, "התקיים"
 
 
+def meeting_rows(user, student, today):
+    """REQ-M.228 - the meetings of the year path, each confirmed by the leader or not.
+
+    `student` None (somebody not attached yet) reads every meeting as not confirmed.
+    """
+    from .access import visible_student_meetings
+
+    meetings = list(visible_student_meetings(user))
+    confirmed = set()
+    if student is not None and meetings:
+        confirmed = set(student.meeting_attendance.values_list("meeting_id", flat=True))
+    rows = []
+    for m in meetings:
+        if m.pk in confirmed:
+            status, word = DONE, "ההשתתפות אושרה"
+        elif m.on and today < m.on:
+            status, word = TODO, "בהמשך"
+        else:
+            status, word = TODO, "מחכה לאישור המוביל/ה"
+        month = m.on.strftime("%d.%m.%Y") if m.on else ("פתיחת התכנית" if m.number == 1 else "")
+        rows.append({"meeting": m, "status": status, "word": word, "month": month})
+    return rows
+
+
 def path_steps(user, student, per_course, peaks, today=None):
     """The member's path, in her order, each step with where it stands.
 
@@ -384,6 +408,11 @@ def path_steps(user, student, per_course, peaks, today=None):
     def add(key, month, title, status, word, where=None, where_args=None, pct=None):
         steps.append({"key": key, "month": month, "title": title, "status": status,
                       "word": word, "where": where, "where_args": where_args or [], "pct": pct})
+
+    # SPR-M.89, REQ-M.228 - Lital, 18.11: מפגש 1, היכרות עם התכנית, comes first on
+    # the path, and it counts once the leader confirms the student took part.
+    for row in meeting_rows(user, student, today):
+        add(f"meeting{row['meeting'].pk}", row["month"], str(row["meeting"]), row["status"], row["word"])
 
     add("scratch", "נובמבר–דצמבר 2026", "2 הדרכות סקראץ'", scratch_status,
         f"{scratch_held} מתוך 2", "matazim:learn_course", [PATH_COURSE_SCRATCH[0]],

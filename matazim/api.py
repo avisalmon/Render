@@ -42,6 +42,8 @@ from .models import (
     ProgramMilestone,
     School,
     SiteUpdate,
+    StudentAttendance,
+    StudentMeeting,
     Feedback,
     Graduate,
     GraduateAttendance,
@@ -76,6 +78,8 @@ from .serializers import (
     ProgramMilestoneSerializer,
     SchoolSerializer,
     SiteUpdateSerializer,
+    StudentAttendanceSerializer,
+    StudentMeetingSerializer,
     FeedbackSerializer,
     GraduateAttendanceSerializer,
     GraduateCourseApprovalSerializer,
@@ -1247,6 +1251,55 @@ class GraduateCourseApprovalViewSet(_LeaderDecides):
         serializer.save(approved_by=self.request.user)
 
 
+class StudentMeetingViewSet(Scoped):
+    """SPR-M.89, REQ-M.228. Signed-in people read, a program manager writes."""
+
+    serializer_class = StudentMeetingSerializer
+    scope = staticmethod(access.visible_student_meetings)
+
+    def get_permissions(self):
+        if self.action in ("list", "retrieve"):
+            return [IsSignedIn()]
+        return [IsProgramManager()]
+
+    def perform_create(self, serializer):
+        serializer.save(institution=access.institution_of(self.request.user))
+
+
+class StudentAttendanceViewSet(Scoped):
+    """SPR-M.89, REQ-M.228. A leader confirms that one of their students took part.
+
+    The student must be one this person sees (`visible_students`), and the person
+    must be a leader or the team; a student cannot confirm themselves.
+    """
+
+    serializer_class = StudentAttendanceSerializer
+    scope = staticmethod(access.visible_student_attendance)
+
+    def _check(self, student, meeting=None):
+        user = self.request.user
+        if access.leader_of(user) is None and not access.is_program_manager(user):
+            raise PermissionDenied("רק המורה המוביל/ה או צוות התכנית.")
+        if not access.visible_students(user).filter(pk=student.pk).exists():
+            raise PermissionDenied("רק המורה המוביל/ה או צוות התכנית.")
+        if meeting is not None and not access.visible_student_meetings(user).filter(pk=meeting.pk).exists():
+            raise PermissionDenied("המפגש הזה לא שייך לכאן.")
+
+    def perform_create(self, serializer):
+        self._check(serializer.validated_data["student"], serializer.validated_data["meeting"])
+        serializer.save(confirmed_by=self.request.user)
+
+    def perform_update(self, serializer):
+        self._check(serializer.instance.student)
+        self._check(serializer.validated_data.get("student", serializer.instance.student),
+                    serializer.validated_data.get("meeting", serializer.instance.meeting))
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        self._check(instance.student)
+        instance.delete()
+
+
 # Every model in this app, and the route it answers on. Kept here rather than in
 # urls.py so that adding a model and forgetting its endpoint is visible in one
 # place: `test_every_model_has_an_endpoint` reads this.
@@ -1283,4 +1336,6 @@ ROUTES = [
     ("graduate-meetings", GraduateMeetingViewSet, GraduateMeeting),
     ("graduate-attendance", GraduateAttendanceViewSet, GraduateAttendance),
     ("graduate-course-approvals", GraduateCourseApprovalViewSet, GraduateCourseApproval),
+    ("student-meetings", StudentMeetingViewSet, StudentMeeting),
+    ("student-attendance", StudentAttendanceViewSet, StudentAttendance),
 ]

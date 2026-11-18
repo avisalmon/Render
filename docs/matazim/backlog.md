@@ -5385,3 +5385,27 @@ practicum hours were already approved by the leader (SPR-M.84). Whether a meetin
 120 hours is not in her mail, so it does not, and she was asked.
 
 **Tests.** `tests/test_spr_m_88.py`.
+
+
+## SPR-M.89: מפגש 1 on the students' path, and the graduates' yearly process  `DONE 2026-11-18`
+
+Two mails from Lital of 18.11, 12:29 and 12:32 (spec C49, C50), in the graduates' thread. Run under
+Avi's standing rule of 2026-10-16.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.89.1 | Models `StudentMeeting`, `StudentAttendance` (migration 0053); מפגש 1, היכרות עם התכנית seeded once (0054) | REQ-M.228 | DONE |
+| F-M.89.2 | The meetings come first on the students' year path, confirmed or waiting | REQ-M.228 | DONE |
+| F-M.89.3 | `#mzStudentMeetings` on `/matazim/leader/students/`: everybody ticked, one button, undo | REQ-M.228 | DONE |
+| F-M.89.4 | API: `student-meetings`, `student-attendance` | Rule 6 | DONE |
+| F-M.89.5 | `/matazim/graduates/process/`, open to anybody, linked from the graduates' pages | REQ-M.229 | DONE |
+
+**How it was read.** 12:29 answers the bot's question of SPR-M.88: she meant the grade 9 students'
+path too, so מפגש 1 went there, with the same leader confirmation her 11:45 mail asked for. It is a
+step of its own before the הדרכות and does not change who may be certified. 12:32 asks to refine the
+letter and add a link to an explanation of the process: the page holds the explanation, and the
+refined letter, with the link, went back to her in the reply. The letter's date (15.7.2027) was
+left out and asked about.
+
+**Tests.** `tests/test_spr_m_89.py`; the step counts of `tests/test_spr_m_56.py` and `tests/test_spr_m_69.py`
+now include מפגש 1 (`tests/test_spr_m_83.py` builds an institution of its own, which has no meeting).

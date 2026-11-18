@@ -1807,3 +1807,56 @@ class GraduateCourseApproval(models.Model):
 
     def __str__(self):
         return f"{self.graduate} · {self.course_slug}"
+
+
+# SPR-M.89 - the first-year students' year path gets the same מפגש 1 (REQ-M.228).
+# Lital, 18.11, 12:29: "אני נכנסת ללינק של התלמידים של כיתה ט ולא רואה שבמסלול השנתי
+# מופיע מפגש 1". Her mail of 11:45 asked that the leader confirms everybody took part.
+
+
+class StudentMeeting(models.Model):
+    """A meeting on the first-year students' year path (REQ-M.228).
+
+    Seeded once with מפגש 1, היכרות עם התכנית. Shown first on the path, before the
+    הדרכות. No institution means it is for everybody.
+    """
+
+    institution = models.ForeignKey(
+        "Institution", on_delete=models.CASCADE, null=True, blank=True,
+        related_name="student_meetings", verbose_name="מוסד",
+    )
+    number = models.PositiveSmallIntegerField(verbose_name="מספר המפגש")
+    title = models.CharField(max_length=120, verbose_name="נושא המפגש")
+    on = models.DateField(null=True, blank=True, verbose_name="תאריך")
+
+    class Meta:
+        ordering = ["number", "pk"]
+        verbose_name = "מפגש במסלול התלמידים"
+        verbose_name_plural = "מפגשים במסלול התלמידים"
+
+    def __str__(self):
+        return f"מפגש {self.number}: {self.title}"
+
+
+class StudentAttendance(models.Model):
+    """The leader confirms that a student took part in a meeting (REQ-M.228).
+
+    A row is the confirmation itself: no row, not confirmed.
+    """
+
+    meeting = models.ForeignKey(StudentMeeting, on_delete=models.CASCADE, related_name="attendance")
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="meeting_attendance")
+    confirmed_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    confirmed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["meeting", "student"], name="mz_student_attendance_once"),
+        ]
+        verbose_name = "נוכחות במפגש תלמידים"
+        verbose_name_plural = "נוכחות במפגשי תלמידים"
+
+    def __str__(self):
+        return f"{self.student} · {self.meeting}"
