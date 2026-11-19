@@ -5429,3 +5429,21 @@ request) and was left as it is; she was asked. No model change: a row is the rec
 `confirmed_by` says who wrote it.
 
 **Tests.** `tests/test_spr_m_90.py`; `tests/test_spr_m_89.py` now reads the new words.
+## SPR-M.91: a leader brings students in without the test, grade 9 and grade 10  `DONE 2026-11-19`
+
+Naomi, by mail, 2026-11-19 09:35 (C52, REQ-M.231): every leader can bring students
+into their class without the entrance test, with a link for grade 9 and one for
+grade 10, sent from the leader's page.
+
+- `Leader.direct_code` and `Leader.graduate_code`, each its own secret (migration
+  0055 fills one per existing leader); `MemberProfile.entrance_waived_at`/`_by`,
+  so a waiver is never read as a pass. `has_passed_entrance_test` is true for either.
+- `/matazim/class-link/<code>/` (grade 9): signed out, names the leader and offers an
+  account; signed in, one button joins the leader now. A minor still goes through
+  the parent's consent first when that gate is on, then the ordinary link carries on.
+- `/matazim/graduates/link/<code>/` (grade 10): straight to the graduates' form with
+  the leader fixed; approved on sending, the parent's signature still required.
+- "צירוף תלמידים לכיתה, בלי מבחן כניסה" on `/matazim/leader/` and on the team's
+  `/matazim/staff/leaders/<id>/`; replacing the join link replaces both. The year
+  path shows the test as "צורף/ה בלי מבחן".
+- Tests: `tests/test_spr_m_91.py`.

@@ -1,0 +1,82 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  SPR-M.91, REQ-M.231 - where a leader's direct link lands, for grade 9 or grade 10.
+  Reachable signed out, like every invite link: it arrives by WhatsApp.
+{% endcomment %}
+
+{% block title %}הזמנה מ{{ leader_name }} · מטצים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page mz-page-narrow" id="mzDirectLink">
+  <div class="mz-page-head">
+    <p class="mz-eyebrow">{% if grade == "9" %}הזמנה לכיתה ט{% else %}הזמנה לבוגרי מטצים, כיתה י{% endif %}</p>
+    <h1>{{ leader_name }} מזמין/ה אתכם {% if grade == "9" %}לכיתה במטצים{% else %}לבוגרי מטצים{% endif %}</h1>
+    {% if schools %}<p>{{ schools|join:" · " }}</p>{% endif %}
+  </div>
+
+  {% if blocked == "staff" %}
+    <section class="mz-panel">
+      <h2>הקישור הזה מיועד לתלמידים</h2>
+      <p>אתם מחוברים כצוות או כמוביל/ה, ולכן אי אפשר להצטרף דרכו. כדי לבדוק איך הוא נראה, פתחו אותו בחלון גלישה בסתר.</p>
+    </section>
+
+  {% elif blocked == "graduate" %}
+    <section class="mz-panel">
+      <h2>אתם כבר בבוגרי מטצים</h2>
+      <p>הקישור הזה הוא לתלמידי כיתה ט. המרחב שלכם נמצא בבוגרי מטצים.</p>
+      <div class="mz-page-actions"><a class="mz-btn mz-btn-primary" href="{% url 'matazim:graduates' %}">לבוגרי מטצים</a></div>
+    </section>
+
+  {% elif blocked == "student" %}
+    <section class="mz-panel">
+      <h2>החשבון הזה רשום לתכנית השנה</h2>
+      <p>בוגרים נרשמים עם חשבון משלהם. צאו מהחשבון, ופתחו את הקישור שוב כדי לפתוח חשבון חדש.</p>
+    </section>
+
+  {% elif grade == "10" and graduate %}
+    <section class="mz-panel">
+      <h2>כבר נרשמתם</h2>
+      <p>ההרשמה שלכם לבוגרי מטצים כבר נמצאת אצלנו.</p>
+      <div class="mz-page-actions"><a class="mz-btn mz-btn-primary" href="{% url 'matazim:graduates' %}">למרחב הבוגרים</a></div>
+    </section>
+
+  {% elif already %}
+    <section class="mz-panel">
+      <h2>אתם כבר בכיתה</h2>
+      <p>אתם משויכים ל{{ leader_name }}. אין מה לעשות כאן.</p>
+      <div class="mz-page-actions"><a class="mz-btn mz-btn-primary" href="{% url 'matazim:my_path' %}">למסלול שלי</a></div>
+    </section>
+
+  {% elif not user.is_authenticated %}
+    <section class="mz-panel">
+      <h2>קודם חשבון</h2>
+      <p>
+        {% if grade == "9" %}
+          פותחים חשבון באתר, וחוזרים לכאן להצטרפות לכיתה. אין צורך במבחן הכניסה.
+        {% else %}
+          פותחים חשבון באתר, ממלאים טופס קצר עם אישור וחתימה של הורה, ומיד נכנסים למרחב הבוגרים.
+        {% endif %}
+        ההזמנה נשמרת לכם בינתיים.
+      </p>
+      <div class="mz-page-actions">
+        <a class="mz-btn mz-btn-primary" href="{% url 'matazim:register' %}?next={{ request.path }}">פתיחת חשבון</a>
+        <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:login' %}?next={{ request.path }}">כבר יש לי חשבון</a>
+      </div>
+    </section>
+
+  {% else %}
+    <section class="mz-panel">
+      <h2>מוכנים להצטרף</h2>
+      <p>
+        {{ leader_name }} הזמין/ה אתכם לכיתה. לחיצה אחת ואתם בפנים, בלי מבחן כניסה ובלי לחכות לאישור.
+      </p>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="join">
+        <button type="submit" class="mz-btn mz-btn-primary">הצטרפות לכיתה</button>
+      </form>
+    </section>
+  {% endif %}
+</div>
+{% endblock %}

@@ -88,8 +88,13 @@ def milestones(user, profile, student, state, per_course):
     #    never shown it.
     passed_at = getattr(profile, "entrance_test_passed_at", None) if profile else None
     tried = bool(profile) and EntranceAttempt.objects.filter(member=profile).exists()
+    waived_at = getattr(profile, "entrance_waived_at", None) if profile else None
     if passed_at:
         nodes.append(_node("test", "מבחן הכניסה", DONE, passed_at, parallel=True))
+    elif waived_at:
+        # SPR-M.91, REQ-M.231 - let in by the leader's direct link, never "passed".
+        nodes.append(_node("test", "מבחן הכניסה", DONE, waived_at,
+                           word="צורף/ה בלי מבחן", parallel=True))
     elif state.entrance_test_required or tried:
         nodes.append(_node(
             "test", "מבחן הכניסה", FIX if tried else TODO, where="matazim:entrance_test",
