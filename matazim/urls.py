@@ -14,6 +14,7 @@ from . import (
     certificate_views,
     cohort_views,
     community_views,
+    direct_views,
     entrance_views,
     event_views,
     year_views,
@@ -105,6 +106,9 @@ urlpatterns = [
     path("welcome/accept/", views.welcome_accept, name="welcome_accept"),
     # Becoming someone: the invite link, the open door, and the leader's page.
     path("code/", joining_views.enter_code, name="code"),
+    # SPR-M.91, REQ-M.231 - a leader's direct links, grade 9 and grade 10.
+    path("class-link/<str:code>/", direct_views.class_link, name="class_link"),
+    path("graduates/link/<str:code>/", direct_views.graduate_link, name="graduate_link"),
     path("join/<str:code>/", joining_views.join, name="join"),
     path("join-leader/", joining_views.join_leader, name="join_leader"),
     path("school/", views.set_school, name="set_school"),

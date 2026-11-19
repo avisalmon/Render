@@ -12,7 +12,11 @@
 <div class="mz-container mz-page mz-page-narrow mz-grad">
   <div class="mz-page-head">
     <h1>הצטרפות לבוגרי מטצים</h1>
-    <p>ממלאים פעם אחת, ואחר כך המורה המוביל/ה מאשר/ת את ההצטרפות.</p>
+    {% if invited %}
+      <p id="mzGradInvited">הגעתם בקישור של {{ leaders.0.name }} לכיתה י. ממלאים פעם אחת, ומיד נכנסים למרחב הבוגרים, בלי לחכות לאישור.</p>
+    {% else %}
+      <p>ממלאים פעם אחת, ואחר כך המורה המוביל/ה מאשר/ת את ההצטרפות.</p>
+    {% endif %}
   </div>
 
   {% if error %}<div class="mz-alert" role="alert">{{ error }}</div>{% endif %}
@@ -36,7 +40,7 @@
         <option value="">בחרו מהרשימה</option>
         {% for row in leaders %}
           <option value="{{ row.leader.pk }}" data-schools="{{ row.schools|join:'|' }}"
-            {% if posted.leader == row.leader.pk|stringformat:"d" %} selected{% endif %}>{{ row.name }}{% if row.schools %} · {{ row.schools|join:", " }}{% endif %}</option>
+            {% if invited or posted.leader == row.leader.pk|stringformat:"d" %} selected{% endif %}>{{ row.name }}{% if row.schools %} · {{ row.schools|join:", " }}{% endif %}</option>
         {% endfor %}
       </select></label>
 

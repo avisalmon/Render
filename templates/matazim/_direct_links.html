@@ -1,0 +1,26 @@
+{% comment %}
+  SPR-M.91, REQ-M.231 - Naomi, 2026-11-19: the leader sends a student a link that
+  brings them straight into the class, as grade 9 or as grade 10, without the
+  entrance test. Shown on the leader's own page and on the team's page of a leader.
+{% endcomment %}
+<section class="mz-panel" id="mzDirectLinks">
+  <h2>צירוף תלמידים לכיתה, בלי מבחן כניסה</h2>
+  <p class="mz-muted">
+    שולחים לתלמיד/ה את הקישור המתאים, בוואטסאפ או במייל. מי שנכנס דרכו מצטרף
+    {% if for_staff %}לכיתה של המוביל/ה{% else %}לכיתה שלכם{% endif %} ישירות, בלי מבחן כניסה ובלי לחכות לאישור.
+  </p>
+  <div class="mz-two-up">
+    <div>
+      <h3>תלמיד/ה בכיתה ט</h3>
+      <p class="mz-small">מצטרף/ת לכיתה ומתחיל/ה את תהליך ההכשרה. לתלמידים מתחת לגיל 18 יתבקש גם אישור הורה, כמו תמיד.</p>
+      <input class="mz-copy" type="text" value="{{ class_link_url }}" readonly onclick="this.select()"
+             aria-label="קישור הצטרפות לכיתה ט">
+    </div>
+    <div>
+      <h3>בוגר/ת בכיתה י</h3>
+      <p class="mz-small">מצטרף/ת לבוגרי מטצים, ממלא/ת טופס קצר עם חתימת הורה, ונכנס/ת מיד למרחב הבוגרים, כבר מאושר/ת.</p>
+      <input class="mz-copy" type="text" value="{{ graduate_link_url }}" readonly onclick="this.select()"
+             aria-label="קישור הצטרפות לכיתה י">
+    </div>
+  </div>
+</section>

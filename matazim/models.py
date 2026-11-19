@@ -117,6 +117,17 @@ class MemberProfile(models.Model):
         null=True, blank=True, verbose_name="עבר את מבחן הכניסה"
     )
 
+    # SPR-M.91 (REQ-M.231) - let in without the test, by their leader's direct
+    # link for grade 9. Kept apart from `entrance_test_passed_at` so nobody can
+    # read "passed the test" about somebody who never took it.
+    entrance_waived_at = models.DateTimeField(
+        null=True, blank=True, verbose_name="צורף/ה בלי מבחן כניסה"
+    )
+    entrance_waived_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
+        verbose_name="צורף/ה בלי מבחן על ידי",
+    )
+
     # The program-manager role lived here as a flag from SPR-M.6 to SPR-M.40,
     # renamed from `is_admin` on 2026-09-11 (spec §4.3) because "admin" pointed
     # at root in conversation and at the program manager on screen. It is
@@ -165,7 +176,8 @@ class MemberProfile(models.Model):
         return f"{self.user.email or self.user.username} · מטצים"
 
     def has_passed_entrance_test(self):
-        return self.entrance_test_passed_at is not None
+        """Through the entrance: passed it, or let in without it by a leader (REQ-M.231)."""
+        return self.entrance_test_passed_at is not None or self.entrance_waived_at is not None
 
     def has_accepted_welcome(self):
         return self.welcome_accepted_at is not None
@@ -314,6 +326,19 @@ class Leader(models.Model):
         default=new_join_code,
         db_index=True,
         verbose_name="קוד הצטרפות",
+    )
+
+    # SPR-M.91 (REQ-M.231) - Naomi, 2026-11-19: a leader may bring students into
+    # their class without the entrance test, by a link for grade 9 and another
+    # for grade 10. Each its own secret, so the ordinary join link above (which
+    # still asks for the test first) cannot be turned into either by editing it.
+    direct_code = models.CharField(
+        max_length=32, unique=True, default=new_join_code, db_index=True,
+        verbose_name="קוד קישור ישיר לכיתה ט",
+    )
+    graduate_code = models.CharField(
+        max_length=32, unique=True, default=new_join_code, db_index=True,
+        verbose_name="קוד קישור ישיר לכיתה י",
     )
 
     # REQ-M.67 — deactivating destroys nothing. They leave the join list, take

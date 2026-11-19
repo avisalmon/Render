@@ -395,9 +395,14 @@ def graduates_join(request):
     if access.leader_of(user) or access.candidate_of(user) or _is_staff(user):
         return redirect("matazim:graduates")
 
+    from .direct_views import GRADUATE_KEY, invited_graduate_leader
+
     profile = member_profile(user)
     error = ""
     posted = request.POST if request.method == "POST" else None
+    # SPR-M.91, REQ-M.231 - arrived by a leader's grade 10 link: that leader is
+    # the one, and they are approved on sending, because the leader sent the link.
+    invited = invited_graduate_leader(request)
 
     if Student.objects.filter(user=user).exists():
         error = "החשבון הזה רשום לתכנית השנה. בוגרים נרשמים עם חשבון משלהם."
@@ -410,6 +415,8 @@ def graduates_join(request):
             access.joinable_leaders().filter(approved_at__isnull=False, pk=raw_leader).first()
             if raw_leader.isdigit() else None
         )
+        if invited is not None:
+            leader = invited
         guardian_name = (posted.get("guardian_name") or "").strip()[:150]
         guardian_email = (posted.get("guardian_email") or "").strip()
         signature = clean_signature(posted.get("signature"))
@@ -437,6 +444,17 @@ def graduates_join(request):
                 guardian_name=guardian_name, guardian_email=guardian_email,
                 guardian_signature=signature, guardian_signed_at=timezone.now(),
             )
+            if invited is not None:
+                graduate.approved_at = timezone.now()
+                graduate.approved_by = invited.user
+                graduate.save(update_fields=["approved_at", "approved_by"])
+                request.session.pop(GRADUATE_KEY, None)
+                notify(
+                    leader.user, Notification.GRADUATE_WAITING,
+                    "בוגר/ת הצטרף/ה לבוגרי מטצים בקישור שלך לכיתה י.",
+                    url="/matazim/leader/graduates/", actor=user,
+                )
+                return redirect("matazim:graduates")
             notify(
                 leader.user, Notification.GRADUATE_WAITING,
                 # Mailed, so no name: a mail is a pointer (notify._mail).
@@ -451,7 +469,12 @@ def graduates_join(request):
         shell(
             request, "graduates", error=error, posted=posted,
             schools=School.objects.filter(is_active=True),
-            leaders=leaders_to_choose(),
+            leaders=(
+                [{"leader": invited, "name": _name(invited.user),
+                  "schools": access.leader_schools(invited)}]
+                if invited is not None else leaders_to_choose()
+            ),
+            invited=invited,
             default_name=(getattr(getattr(user, "profile", None), "display_name", "") or ""),
             default_school=profile.school_id if profile else None,
             default_guardian_name=profile.guardian_name if profile else "",
