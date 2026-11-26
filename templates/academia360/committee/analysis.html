@@ -1,0 +1,26 @@
+{% extends "academia360/base.html" %}{% load a360 %}
+{% block title %}ניתוח · {{ inst.name }} · הוועדה · אקדמיה 360°{% endblock %}
+{% block content %}
+<section class="a360-band a360-room">
+  <div class="a360-wrap">
+    <nav class="a360-crumbs" aria-label="מיקום"><a href="{% url 'academia360:committee' %}">הוועדה</a><span>·</span><a href="{% url 'academia360:committee_file' inst.slug %}" dir="auto">{{ inst.name }}</a><span>·</span><span>הניתוח</span></nav>
+    <h1 class="a360-h1 a360-h1-page">הניתוח · <span dir="auto">{{ inst.name }}</span></h1>
+    <p class="a360-lede a360-narrow">{{ sub.get_kind_display }}{% if sub.submitted_at %}, הוגשה <span class="a360-num">{{ sub.submitted_at|date:"d.m.Y" }}</span>{% endif %}. ניתוח אחד משותף להגשה: <span class="a360-state a360-state-{{ state }}">{{ analysis_states|a360_get:state }}</span>{% if analysis and analysis.author %} · נכתב על ידי <span dir="auto">{{ analysis.author|a360_name }}</span>{% endif %}{% if analysis %} · עודכן <span class="a360-num">{{ analysis.updated_at|date:"d.m.Y" }}</span>{% endif %}. תחת כל תחום: שורה לכל ממצא, חוזקה או אתגר; שורה שנמחקת מוחקת את הרשומה שלה.</p>
+
+    <form method="post" class="a360-analysis">
+      {% csrf_token %}
+      <label class="a360-field"><span>סיכום</span><textarea name="summary" rows="5" dir="auto">{% if analysis %}{{ analysis.summary }}{% endif %}</textarea></label>
+      {% for b in blocks %}
+      <fieldset class="a360-analysis-block">
+        <legend class="a360-h3 a360-room-h3">{% if b.criterion %}{{ b.criterion.name }}{% else %}כללי{% endif %}</legend>
+        <div class="a360-analysis-fields">
+          {% for kind, label, value in b.fields %}<label class="a360-field"><span>{{ label }}</span><textarea name="{{ b.key }}_{{ kind }}" rows="3" dir="auto">{{ value }}</textarea></label>{% endfor %}
+        </div>
+      </fieldset>
+      {% endfor %}
+      <label class="a360-check a360-check-confirm"><input type="checkbox" name="confirmed" value="1" {% if analysis and analysis.confirmed %}checked{% endif %}><span>הניתוח נקרא ומאושר על ידי חבר/ת ועדה</span></label>
+      <div class="a360-review-acts"><button type="submit" class="a360-pill a360-pill-dark">לשמור את הניתוח</button><a class="a360-pill a360-pill-line" href="{% url 'academia360:committee_file' inst.slug %}#analysis-{{ sub.pk }}">חזרה לתיק</a></div>
+    </form>
+  </div>
+</section>
+{% endblock %}

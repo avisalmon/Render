@@ -109,6 +109,7 @@ def main(argv=None):
     cmd("requests", status={"default": "open"})
     s = cmd("decide", "pk", note={"default": ""})
     s.add_argument("decision", choices=["approve", "decline"])
+    cmd("extract", limit={"type": int, "default": 10}, count={"action": "store_true"})
     s = cmd("invite", institution={"type": int}, title={"default": ""})
     s.add_argument("kind", choices=["committee", "leader", "admin"])
     s.add_argument("email")
@@ -147,6 +148,12 @@ def main(argv=None):
         out(data)
     elif a.cmd == "decide":
         status, data = c.call("POST", f"admin/requests/{a.pk}/decide/", data={"decision": a.decision, "note": a.note})
+        out({"status": status, **(data if isinstance(data, dict) else {"data": data})})
+    elif a.cmd == "extract":
+        if a.count:
+            status, data = c.call("GET", "admin/extract/")
+        else:
+            status, data = c.call("POST", "admin/extract/", data={"limit": a.limit})
         out({"status": status, **(data if isinstance(data, dict) else {"data": data})})
     elif a.cmd == "invite":
         body = {"kind": a.kind, "email": a.email, "title": a.title}

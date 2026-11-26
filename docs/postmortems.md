@@ -17,6 +17,39 @@ Newest first.
 
 ---
 
+## PM-106 · 2026-11-26 · Epic D2 end (Academia360 committee room): five small things, all caught before Avi
+
+**What happened.** (1) The API's change logger read DRF's `query_params`;
+called from a page view with Django's plain request it crashed every review
+and analysis page (the D2.4 tests found it on their first run). (2) A KPI
+value formatted with `:g` kept the Decimal's exponent and read "12.00"
+(D2.2's test). (3) A visually hidden `<legend>` inside the radios' fieldset
+sat outside the page at every width and made the phone page 32px wider
+(the contract and the first dev screenshot, 444px wide on a 412px phone).
+(4) After the fix the dev server, started with `--noreload`, kept serving
+the old template, so the second round of screenshots still showed the bug;
+it was noticed only because the picture's width had not changed. (5) The
+board marked a reviewer of an already-answered institution as "waiting",
+because the waiting rule had no state condition (D2.1's test).
+
+**Why the process let it.** A helper written for the API was reused by a
+page without a page test; a format spec was trusted for a type it does not
+suit; an accessibility idiom was carried from spans to a legend; a
+screenshot was trusted because it was taken, not because it showed the new
+thing; a "waits for me" rule was written from the person's side only.
+
+**Rule.** A helper shared by pages and the API reads only what both request
+types carry (`request.GET`, `request.headers`) and one page test drives it.
+Numbers for people come from a normalized Decimal. A hidden group label is
+an `aria-label` on the group, never a visually hidden legend. A screenshot
+proves itself: the server was started after the last edit, and the picture
+shows something only the new code has. A "waiting for you" rule names the
+states in which the thing can still wait.
+
+Here: `academia360/api.py: actor_of`, `committee.py: _kpi_table` and the board,
+`templates/academia360/committee/review.html`, [building_an_app.md](building_an_app.md) mistake 81
+BKM: FullStackBKM a4bc52c
+
 ## PM-105 · 2026-11-26 · Academia360 ships (Epics A, B, C): the secret was set, the service never saw it
 
 **What happened.** After the train pushed, the agent token was written to

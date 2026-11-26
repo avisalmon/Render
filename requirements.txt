@@ -47,3 +47,7 @@ pywebpush>=2.0
 # books (SPR-BK1.5): images in Books' own private Google Cloud Storage bucket
 # with short-lived signed links; the google extra brings google-cloud-storage.
 django-storages[google]>=1.14,<2
+# academia360 (D2.3): text out of submitted PDFs. Measured 2026-11-26 on four
+# real Hebrew files: pypdf reversed one of them word by word, PyMuPDF read all
+# four in order, five to ten times faster. Wheels for Linux, no system libs.
+PyMuPDF>=1.26,<2

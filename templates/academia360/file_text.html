@@ -1,0 +1,14 @@
+{% extends "academia360/base.html" %}
+{% block title %}{{ row.original_name }} · הטקסט · אקדמיה 360°{% endblock %}
+{% block content %}
+<section class="a360-band {% if committee %}a360-room{% endif %}">
+  <div class="a360-wrap">
+    <nav class="a360-crumbs" aria-label="מיקום">{% if committee %}<a href="{% url 'academia360:committee' %}">הוועדה</a><span>·</span><a href="{% url 'academia360:committee_file' inst.slug %}#sub-{{ sub.pk }}" dir="auto">{{ inst.name }}</a>{% else %}<a href="{% url 'academia360:institution' inst.slug %}" dir="auto">{{ inst.name }}</a>{% endif %}<span>·</span><span>הטקסט של הקובץ</span></nav>
+    <h1 class="a360-h1 a360-h1-page" dir="auto">{{ row.original_name }}</h1>
+    <p class="a360-lede a360-narrow">{{ row.get_kind_display }} · {{ sub.get_kind_display }} של <span dir="auto">{{ inst.name }}</span>. {% if row.extraction_note %}<span class="a360-mute">{{ row.extraction_note }}</span>{% if row.extracted_at %}, חולץ <span class="a360-num">{{ row.extracted_at|date:"d.m.Y" }}</span>{% endif %}.{% endif %} הטקסט כפי שנקרא מהקובץ, בלי עיצוב; המקור: <a href="{% url 'academia360:submitted_file' row.pk %}" target="_blank" rel="noopener">לפתוח את הקובץ</a>.</p>
+    <div class="a360-card a360-pad-lg a360-doc-text" dir="auto">
+      {% for p in paragraphs %}<p>{{ p|linebreaksbr }}</p>{% empty %}<p class="a360-mute">לא נקרא טקסט מהקובץ הזה{% if not row.extracted_at %} (עוד לא חולץ){% endif %}.</p>{% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

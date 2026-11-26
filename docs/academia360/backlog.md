@@ -14,7 +14,7 @@
 | **A. Foundation and the public front door** | The app, the data, the API, the agent's door, the import, and the public home and institution pages live on babook.co.il | shipped 2026-11-26, train T1126-191451 (0267727), live on babook.co.il; reviewed 2026-11-26 (style approved, phone pass A.6) |
 | B. The rest of the public site | The program page, map and list, researchers, compare, comments and corrections, search (programs by field wait for data, Epic I) | shipped 2026-11-26, train T1126-191451 (0267727), live on babook.co.il; approved by Avi 2026-11-26 ("All ok") |
 | C. People | Sign-in in the app's look, requests to join, approval queue, invitations, roles, admin overview | shipped 2026-11-26, train T1126-191451 (0267727), live on babook.co.il; approved by Avi 2026-11-26 ("All ok") |
-| D2. Committee file and flow dashboard | Submissions, files, extracts, analysis, review form, dashboard | planned |
+| D2. Committee file and flow dashboard | Submissions, files, extracts, analysis, review form, dashboard | built in dev 2026-11-26 night (Avi: "Go"), awaiting his epic review |
 | E. Discussion, decision, letters | Threads, meetings and summaries, decision, letters, notifications | planned |
 | F. Leader's workspace | Home, submit, KPIs, budget, 20%, letters | planned |
 | G. Committee assistant | Model metadata, read-only queries, document index, super chat | planned |
@@ -107,7 +107,37 @@ is Django's). Admin screens are drawn in the committee room's restraint
 | C.5 The admin overview | `/academia360/manage/`: people and roles in a sentence, institutions with and without a leader, participations by state, what is waiting on whom (open requests, open corrections, submissions with no review yet), what the public sent in lately with "hide" on a comment, what the agent did lately (`AgentRun`), AI spend today; the bar shows "ניהול" to the admin. Built to spec 4.5 as written; Avi's own words on it were cut off and he confirms or changes it at the epic review | admin only; every number read against the seed; hide works and is logged | built in dev (`tests/test_academia360_c4.py`); the bar shows ניהול to the admin as a yellow tab |
 | C.6 The epic's end | The screen contract for every new screen, the whole app suite, `manage.py check`, the security sweep for what C added (forms, mails, the signup door, redirects), bkm_drift, the review with Avi | the whole suite green | done 2026-11-26: 134 app tests green (110 + 24 of Epic C), screen contract at six widths, check clean, sweep clean, drift clean, PM-103 landed (BKM 062c4a2); approved by Avi 2026-11-26 ("All ok"), shipped 2026-11-26, train T1126-191451 (0267727), live on babook.co.il |
 
-## Epics D2 to J
+## Epic D2. The committee's file and flow dashboard
+
+Spec 4.3 (the flow dashboard, an institution's file, review, the analysis),
+4.7 (extraction), 5.3 (the committee room's restraint). Everything under
+`/academia360/committee/`, committee only (a leader gets "no access"; the
+leader's own workspace is Epic F). Discussion, decision and letters are Epic
+E; "compare across institutions" waits for the budget and 20% rows, which
+the import did not have (0 `TargetChoice`, 0 `BudgetLine`), and lands with E
+or F. The data the room opens on day one: 28 proposals, 81 files, 24
+analyses with 362 findings, 27 letters, 34 review questions under 11
+criteria, 0 reviews.
+
+Decisions taken while planning (2026-11-26 evening, to raise at the review):
+the committee member's door is a teal "הוועדה" tab; the admin keeps the
+yellow "ניהול" tab and reaches the room from the overview (six tabs do not
+fit a 320px phone). PDF text comes through PyMuPDF: measured on four real
+submitted PDFs, pypdf returned one of them with every Hebrew word reversed,
+PyMuPDF read all four in order, five to ten times faster. Extraction runs
+on the server that holds the files (a token endpoint and `a360 extract`),
+never by shipping text from the PC.
+
+| Sprint | What it delivers | Test first | Status |
+| --- | --- | --- | --- |
+| D2.1 The flow dashboard | `/academia360/committee/`: every institution of the round on one screen, a row each: kind, state, the latest submission and its files, the reviewers, reviews done of expected, the analysis (none / draft / confirmed), the decision, the letter (none / draft / sent, with its link); "waiting for me" first; filter by state, reviewer, kind, mine. A table on a computer, two-line rows on a phone. The "הוועדה" tab for committee members; the admin overview links to the room | closed to the public and to a leader (403), open to a member; a row per applied institution reading the seed; the reviewer's unfinished review counts as waiting for them and for nobody else; each filter narrows; the tab shows for the member and not the leader | built in dev 2026-11-26; `academia360/committee.py: board`, `templates/academia360/committee/board.html`; `tests/test_academia360_d1.py`, 5 tests |
+| D2.2 An institution's file | `/academia360/committee/<slug>/`: participation and allocation, contacts, every submission with its files (open in the browser, download, the extracted text), the structured extracts that exist (graduate profile, standard, plan programs, components by criterion, governance, institutional KPIs with their values by year, 20% basis, budget, commitments, community share; an empty part says so), the analysis read by criterion, the reviews and their state, the letter and its file; links to the public page and back to the board | closed to a leader of that very institution; every section renders from the seed; a file link is the private view; the letter file link only when the file exists; a submission without an analysis says "אין ניתוח" and offers to write one | built in dev 2026-11-26; `committee.py: file`, `committee/file.html`; `tests/test_academia360_d2.py`, 4 tests |
+| D2.3 Extraction | `academia360/extract.py`: PDF (PyMuPDF), DOCX (its XML), XLSX (`xlsx.py`) into `extracted_text`, with `extracted_at` and a note (pages, sheets, "no text", "unsupported", the error); on upload through the API; `POST api/admin/extract/` (token or admin) takes the files without text, a few at a time; `a360 extract`; `/academia360/files/<pk>/text/` shows the text beside the file for whoever may open the file; the admin overview counts files without text | each format from bytes built in the test; an empty PDF says "no text"; an unknown extension is noted, never raised; the endpoint is closed to a member; the text view follows the file's circle; the CLI builds the call; the overview number reads the seed | built in dev 2026-11-26; `academia360/extract.py`, migration 0005 (`extracted_at`, `extraction_note`), `api.py: ExtractView` and extraction on upload, `a360 extract [--count]`, `/files/<pk>/text/`; ten files per call (a real batch of 81 took 200 s on the PC); in dev 66 of 81 files have text, 14 are scans and one is `.ods`; `tests/test_academia360_d3.py`, 8 tests |
+| D2.4 The review form | `/academia360/committee/review/<submission>/`: my review of this submission, created on first open (and the submission moves to "under review"); the form question by question under each criterion: the mark (yes / partly / no / not relevant), main points, notes for improvement, an overall note; save as I go, mark done, reopen; progress on the board; the other reviewers' answers side by side once mine is done, or always for a chair | opening creates one review per member; saving keeps answers; done sets the time and shows on the board; another member's answers are hidden until mine is done and shown to a chair; a leader is refused; every save is logged | built in dev 2026-11-26; `academia360/reviewing.py` (my_review, save_review, others), `committee/review.html`; an answered package ("responded") never waits for a review; `tests/test_academia360_d4.py`, 4 tests |
+| D2.5 The analysis | `/academia360/committee/analysis/<submission>/`: the one shared analysis of a submission: summary, and under each criterion the findings, strengths and challenges, one per line, saved back as rows (a removed line removes its row); "confirmed" by a member; an AI draft shows as such (the flag exists for Epic G) | the seed's findings come back as lines; editing one line changes one row; removing a line deletes it; a new criterion block creates rows in order; confirmed and author are kept; logged; a leader refused | built in dev 2026-11-26; `reviewing.py: save_analysis, analysis_blocks`, `committee/analysis.html`; confirming an AI draft drops its flag; `tests/test_academia360_d5.py`, 3 tests |
+| D2.6 The epic's end | The screen contract for every new screen at six widths (a member and the admin), the whole app suite, `manage.py check`, the security sweep for what D2 added (the private text view, the token endpoint, forms, the safe filter), bkm_drift, the post-mortem, the review with Avi | the whole suite green | done 2026-11-26 night: 151 app tests green (24 new), screen contract at six widths with seven new screens (three contract findings fixed: the checkbox as a 44px target, links on the room's grey at 5:1, a hidden legend that widened the phone page), check clean, sweep clean, drift clean, PM-106 (BKM a4bc52c); awaiting Avi's epic review |
+
+## Epics E to J
 
 Written as sprints when their turn comes; their scope is spec chapter 4 and
 the order is spec chapter 6.

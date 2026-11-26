@@ -212,7 +212,50 @@ def build_world():
     LeaderOf.objects.create(user=lead, institution=technion, title="דיקנית לימודי הסמכה")
     Invitation.objects.create(email="invited@example.com", role_kind="leader", institution=technion, title="סגן נשיא",
                               token="screens-invite-token-4410", sent_by=avi, sent_at=timezone.now())
-    return {"technion": technion}
+    # Epic D2: the committee's room, with a submission in every state the screens show
+    from django.core.files.base import ContentFile
+
+    from academia360 import extract
+    from academia360.models import (
+        Allocation,
+        Analysis,
+        ContactPerson,
+        CriterionFinding,
+        KpiValue,
+        Review,
+        ReviewAnswer,
+        ReviewQuestion,
+        Submission,
+        SubmittedFile,
+    )
+    from academia360_d2_world import pdf_bytes, xlsx_bytes
+    part = Participation.objects.get(institution=technion)
+    part.status = "under_review"
+    part.save()
+    innovation = Criterion.objects.get(slug="innovation")
+    q1 = ReviewQuestion.objects.create(criterion=Criterion.objects.get(slug="formal"), text="ההגשה כוללת את כל הפרטים הנדרשים (תיאור חזון, פירוט האסטרטגיה המוסדית, תיאור מנגנוני הבקרה, תכנית תקציבית)", order=0)
+    ReviewQuestion.objects.create(criterion=innovation, text="התייחסות למגוון שיטות פדגוגיות והערכה", order=0)
+    ReviewQuestion.objects.create(criterion=innovation, text="תכניות לימוד גמישות ומותאמות לצרכים מגוונים של סטודנטים", order=1)
+    sub = Submission.objects.create(participation=part, kind="proposal", status="under_review", submitted_at=date(2024, 12, 1),
+                                    cover_note="מצורפת התכנית הארבע־שנתית של הטכניון, על נספחיה.")
+    plan = SubmittedFile(submission=sub, kind="plan", original_name="תוכנית אקדמיה 360 - הטכניון.pdf", size=348552)
+    plan.file.save("plan.pdf", ContentFile(pdf_bytes("Technion plan: a four-year strategy for the first degree.")), save=True)
+    annex = SubmittedFile(submission=sub, kind="annex_a", original_name="נספח א - מדדי הצלחה.xlsx", size=5781044)
+    annex.file.save("annex.xlsx", ContentFile(xlsx_bytes()), save=True)
+    extract.extract_missing(10)
+    Allocation.objects.create(program=program, institution=technion, undergrad_students=10057, approved_programs=36, allocation_thousands_nis=5500)
+    ContactPerson.objects.create(participation=part, name="רונית כהן", title="סמנכ״לית אקדמית", email="ronit@technion.example", is_primary=True)
+    year = AcademicYear.objects.get(hebrew_name="תשפ״ה")
+    for kpi in KpiDefinition.objects.filter(is_mandatory=True):
+        KpiValue.objects.create(kpi=kpi, participation=part, academic_year=year, kind="baseline", value=12)
+    analysis = Analysis.objects.create(submission=sub, summary="הטכניון מציג תכנית רחבה הנשענת על תשתית קיימת של חדשנות בהוראה.", author=shira)
+    CriterionFinding.objects.create(analysis=analysis, criterion=innovation, kind="finding", text="מרכז לקידום הלמידה וההוראה פועל מאז 2018", order=0)
+    CriterionFinding.objects.create(analysis=analysis, criterion=innovation, kind="strength", text="סגל מחויב, תקציב מוסדי משלים", order=1)
+    CriterionFinding.objects.create(analysis=analysis, criterion=innovation, kind="challenge", text="אין מנגנון הערכה כמותי לשיטות ההוראה החדשות", order=2)
+    review = Review.objects.create(submission=sub, reviewer=shira)
+    ReviewAnswer.objects.create(review=review, question=q1, answer="partly", main_points="החזון מפורט; מנגנוני הבקרה מתוארים בקצרה")
+    Review.objects.create(submission=sub, reviewer=avi, status="done", done_at=timezone.now(), overall_note="תכנית בשלה")
+    return {"technion": technion, "sub": sub.pk, "file": plan.pk}
 
 
 SCREENS = [
@@ -232,6 +275,12 @@ SCREENS = [
     ("join", "dana", "/academia360/join/?kind=leader"), ("me-dana", "dana", "/academia360/me/"),
     ("invite", None, "/academia360/invite/screens-invite-token-4410/"),
     ("manage", "avi", "/academia360/manage/"), ("manage-people", "avi", "/academia360/manage/people/"),
+    ("committee", "shira", "/academia360/committee/"), ("committee-mine", "shira", "/academia360/committee/?mine=1"),
+    ("committee-admin", "avi", "/academia360/committee/"),
+    ("committee-file", "shira", "/academia360/committee/technion/"),
+    ("committee-review", "shira", "/academia360/committee/review/{sub}/"),
+    ("committee-analysis", "shira", "/academia360/committee/analysis/{sub}/"),
+    ("file-text", "shira", "/academia360/files/{file}/text/"),
     ("login", None, "/academia360/login/"),
     ("no-access", None, "/academia360/no-access/"),
     ("not-found", None, "/academia360/nothing-here/"),
@@ -286,13 +335,14 @@ def _check(page, name, width, problems):
 
 
 def test_every_screen_holds_on_the_narrowest_phones_and_a_desktop(browser, live_server):
-    build_world()
+    world = build_world()
     SHOTS.mkdir(parents=True, exist_ok=True)
     problems = []
     for width in PHONES + [DESKTOP]:
         contexts = {}
         try:
             for name, who, path in SCREENS:
+                path = path.format(sub=world["sub"], file=world["file"])
                 if who not in contexts:
                     contexts[who] = _context(browser, live_server, who, width)
                 page = contexts[who].new_page()

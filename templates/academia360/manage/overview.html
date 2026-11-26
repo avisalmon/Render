@@ -5,7 +5,7 @@
   <div class="a360-wrap">
     <h1 class="a360-h1 a360-h1-page">ניהול</h1>
     <p class="a360-lede a360-narrow">{{ n.people }} אנשים עם תפקיד: {{ n.admins }} מנהלים, {{ n.committee }} חברי ועדה{% if n.chairs %} ({{ n.chairs }} יו״ר){% endif %}, {{ n.leaders }} מובילים ב־{{ n.led }} מוסדות. {{ n.applied }} מתוך {{ n.institutions }} המוסדות הגישו לתכנית.</p>
-    <p class="a360-actions"><a class="a360-pill a360-pill-dark" href="{% url 'academia360:manage_people' %}">אנשים ותפקידים{% if n.open_requests %} · {{ n.open_requests }} בתור{% endif %}</a><a class="a360-pill a360-pill-line" href="{% url 'academia360:api-root' %}">ה־API</a></p>
+    <p class="a360-actions"><a class="a360-pill a360-pill-dark" href="{% url 'academia360:manage_people' %}">אנשים ותפקידים{% if n.open_requests %} · {{ n.open_requests }} בתור{% endif %}</a><a class="a360-pill a360-pill-line" href="{% url 'academia360:committee' %}">חדר הוועדה: לוח הזרימה</a><a class="a360-pill a360-pill-line" href="{% url 'academia360:api-root' %}">ה־API</a></p>
 
     <div class="a360-room-grid">
       <div>
@@ -13,7 +13,8 @@
         <div class="a360-rows">
           <div class="a360-row"><div class="a360-row-main"><a href="{% url 'academia360:manage_people' %}#queue">בקשות להצטרף</a> שמחכות למנהל</div><span class="a360-num">{{ n.open_requests }}</span></div>
           <div class="a360-row"><div class="a360-row-main">הצעות תיקון מהציבור שמחכות ליו״ר או למנהל</div><span class="a360-num">{{ n.open_corrections }}</span></div>
-          <div class="a360-row"><div class="a360-row-main">הגשות שאף סוקר עוד לא פתח</div><span class="a360-num">{{ n.unreviewed }}</span></div>
+          <div class="a360-row"><div class="a360-row-main"><a href="{% url 'academia360:committee' %}">הגשות שאף סוקר עוד לא פתח</a></div><span class="a360-num">{{ n.unreviewed }}</span></div>
+          <div class="a360-row"><div class="a360-row-main">קבצים שהטקסט שלהם עוד לא חולץ (מתוך {{ n.files }}; <code>a360 extract</code> מהצ׳אט)</div><span class="a360-num">{{ n.files_without_text }}</span></div>
           <div class="a360-row"><div class="a360-row-main"><a href="{% url 'academia360:manage_people' %}#invite">הזמנות</a> שעוד לא נוצלו</div><span class="a360-num">{{ n.invitations_open }}</span></div>
         </div>
         {% if open_requests %}

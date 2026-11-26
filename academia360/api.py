@@ -87,7 +87,10 @@ def actor_of(request):
     (A.3 sets request.a360_agent)."""
     user = request.user if getattr(request.user, "is_authenticated", False) else None
     kind = ChangeLog.AGENT if getattr(request, "a360_agent", False) else ChangeLog.PERSON
-    run_id = request.headers.get("X-A360-Run") or request.query_params.get("run")
+    params = getattr(request, "query_params", None)
+    if params is None:
+        params = request.GET  # a page's plain request, not DRF's
+    run_id = request.headers.get("X-A360-Run") or params.get("run")
     run = AgentRun.objects.filter(pk=run_id).first() if run_id and str(run_id).isdigit() else None
     reason = (request.headers.get("X-A360-Reason") or "")[:300]
     return user, kind, run, reason
@@ -155,6 +158,9 @@ class CircleViewSet(viewsets.ModelViewSet):
             log_change(self.request, instance)
         if isinstance(instance, RoleRequest):
             people.announce_request(instance)  # a request through the API reaches the admin like any other
+        if type(instance).__name__ == "SubmittedFile" and instance.file:
+            from . import extract
+            extract.extract_row(instance)  # the text is read the moment a file arrives (D2.3)
 
     def perform_update(self, serializer):
         if not access.may_write(self.request.user, type(serializer.instance), serializer.instance):
@@ -313,6 +319,33 @@ class InviteView(APIView):
             body["invitation"] = done.row.pk
             body["link"] = people.invitation_link(done.row)
         return Response(body, status=status.HTTP_201_CREATED)
+
+
+# ------------------------------------------------ extraction (D2.3)
+
+class ExtractView(APIView):
+    """GET /academia360/api/admin/extract/: how many submitted files still
+    have no text. POST with {limit?}: reads the text out of that many of
+    them, where the files are (the server), and answers with a note per
+    file. The admin in a session or the agent's token; a member is refused."""
+
+    authentication_classes = AUTH
+    permission_classes = [AdminOrAgent]
+
+    def get(self, request):
+        from . import extract
+        from .models import SubmittedFile
+        return Response({"left": extract.missing().count(), "total": SubmittedFile.objects.count(),
+                         "with_text": SubmittedFile.objects.exclude(extracted_text="").count()})
+
+    def post(self, request):
+        from . import extract
+        data = request.data if isinstance(request.data, dict) else {}
+        try:
+            limit = max(1, min(int(data.get("limit") or 10), 200))
+        except (TypeError, ValueError):
+            limit = 10
+        return Response(extract.extract_missing(limit))
 
 
 # ------------------------------------------- replication: dev rows to prod

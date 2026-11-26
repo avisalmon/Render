@@ -30,7 +30,7 @@
         <a href="{% url 'academia360:institutions' %}" {% if section == 'institutions' %}aria-current="page"{% endif %}>המוסדות</a>
         <a href="{% url 'academia360:researchers' %}" {% if section == 'researchers' %}aria-current="page"{% endif %}>החוקרים</a>
         <a href="{% url 'academia360:search' %}" {% if section == 'search' %}aria-current="page"{% endif %}>חיפוש</a>
-        {% a360_is_admin user as is_admin %}{% if is_admin %}<a href="{% url 'academia360:manage' %}" class="a360-nav-room" {% if section == 'manage' %}aria-current="page"{% endif %}>ניהול</a>{% endif %}
+        {% a360_is_admin user as is_admin %}{% a360_is_committee user as is_committee %}{% if is_admin %}<a href="{% url 'academia360:manage' %}" class="a360-nav-room" {% if section == 'manage' %}aria-current="page"{% endif %}>ניהול</a>{% elif is_committee %}<a href="{% url 'academia360:committee' %}" class="a360-nav-committee" {% if section == 'committee' %}aria-current="page"{% endif %}>הוועדה</a>{% endif %}
       </nav>
       <div class="a360-account">
         {% if user.is_authenticated %}
