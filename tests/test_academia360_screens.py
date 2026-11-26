@@ -46,6 +46,7 @@ TAP_JS = """(minPx) => {
     const half = minPx / 2 - 1, bad = [];
     document.querySelectorAll('a, button, input[type=checkbox], select, summary').forEach(el => {
         if (getComputedStyle(el).visibility === 'hidden') return;
+        if (el.tagName !== 'SUMMARY' && el.closest('details:not([open])')) return;  // folded away, not tappable
         if (el.tagName === 'A' && el.closest('p, li, td, .a360-src, .a360-sub, .a360-crumbs, .a360-row, .a360-foot')) return;  // a link in running text
         el.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' });
         const r = el.getBoundingClientRect();
@@ -196,6 +197,9 @@ SCREENS = [
     ("institutions-filtered", None, "/academia360/institutions/?kind=university&q=%D7%97%D7%99%D7%A4%D7%94"),
     ("institution", None, "/academia360/institutions/technion/"),
     ("institution-long", None, "/academia360/institutions/long/"),
+    ("researchers", None, "/academia360/researchers/"),
+    ("researchers-filtered", None, "/academia360/researchers/?area=%D7%9C%D7%9E%D7%99%D7%93%D7%AA&inst=technion"),
+    ("researcher", None, "/academia360/researchers/r0/"),
     ("search", None, "/academia360/search/?q=%D7%97%D7%95%D7%A7%D7%A8"),
     ("search-empty", None, "/academia360/search/?q=zzzz"),
     ("login", None, "/academia360/login/"),

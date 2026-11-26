@@ -55,6 +55,7 @@ from academia360.models import (
     TimelineEvent,
     Unit,
 )
+from academia360.places import place
 
 DEFAULT_ROOT = Path(settings.BASE_DIR) / "docs" / "academia360" / "reference" / "Academia360"
 
@@ -166,6 +167,7 @@ class Command(BaseCommand):
         self.institutions = {}
         self.import_institutions()
         self.import_extra_folders()
+        self.import_places()
         self.import_tracking_sheet()
         for inst, folder in self.folders.items():
             self.import_structured(inst, folder)
@@ -292,6 +294,28 @@ class Command(BaseCommand):
                 for name in raw.get("proposalFiles") or []:
                     self._file(sub, self.root / folder / name)
                 self._analysis(sub, raw.get("programAlignment"))
+
+    def import_places(self):
+        """Region and map point by city (academia360/places.py), only where a
+        row has none yet; an institution the reference left without a city
+        takes it from the same table. Never overwrites."""
+        if self.dry:
+            return
+        for inst in Institution.objects.all():
+            hit = place(inst.city, inst.slug)
+            if hit is None:
+                continue
+            city, region, lat, lng = hit
+            fields = []
+            if not inst.city and city:
+                inst.city, fields = city, fields + ["city"]
+            if not inst.region:
+                inst.region, fields = region, fields + ["region"]
+            if inst.lat is None and inst.lng is None:
+                inst.lat, inst.lng, fields = lat, lng, fields + ["lat", "lng"]
+            if fields:
+                inst.save(update_fields=fields)
+                self.made("Institution place", True)
 
     def import_extra_folders(self):
         base = self.root / "documents" / "proposals"

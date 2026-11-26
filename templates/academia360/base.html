@@ -13,6 +13,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap">
   <link rel="stylesheet" href="{% static 'academia360/a360.css' %}">
+  {% block head %}{% endblock %}
 </head>
 <body class="a360" data-signed-in="{% if user.is_authenticated %}1{% endif %}">
   {# The pilot banner (spec 4.10): every page, every role, never dismissable. #}
@@ -27,6 +28,7 @@
         <a href="{% url 'academia360:home' %}" {% if section == 'home' %}aria-current="page"{% endif %}>הבית</a>
         <a href="{% url 'academia360:program' %}" {% if section == 'program' %}aria-current="page"{% endif %}>התכנית</a>
         <a href="{% url 'academia360:institutions' %}" {% if section == 'institutions' %}aria-current="page"{% endif %}>המוסדות</a>
+        <a href="{% url 'academia360:researchers' %}" {% if section == 'researchers' %}aria-current="page"{% endif %}>החוקרים</a>
       </nav>
       <div class="a360-account">
         {% if user.is_authenticated %}
@@ -46,7 +48,7 @@
   <footer class="a360-foot">
     <div class="a360-wrap a360-foot-in">
       <span>אקדמיה 360° · אתר מידע וניתוח על תכנית ות״ת לשינוי עומק בתואר הראשון. פיילוט אישי, לא אתר רשמי.</span>
-      <span class="a360-foot-links"><a href="{% url 'academia360:home' %}">הבית</a><a href="{% url 'academia360:program' %}">התכנית</a><a href="{% url 'academia360:institutions' %}">המוסדות</a></span>
+      <span class="a360-foot-links"><a href="{% url 'academia360:home' %}">הבית</a><a href="{% url 'academia360:program' %}">התכנית</a><a href="{% url 'academia360:institutions' %}">המוסדות</a><a href="{% url 'academia360:researchers' %}">החוקרים</a></span>
     </div>
   </footer>
   <script src="{% static 'academia360/a360.js' %}" defer></script>

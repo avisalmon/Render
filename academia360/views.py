@@ -4,11 +4,13 @@ file views. Pages are consumers of the same rows the API serves, filtered by
 the same circles; what a page shows the public is public-circle data only.
 """
 
+import json
 import re
 
 from django.db.models import Q
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, render
+from django.urls import reverse
 
 from . import access
 from .models import (
@@ -24,6 +26,7 @@ from .models import (
     StudyProgram,
     SubmittedFile,
 )
+from .places import REGION_LABELS, REGIONS
 from .text import render_markdown, slug_anchor
 
 METRIC_LABELS = {
@@ -99,20 +102,40 @@ def program_page(request):
 
 
 def institutions(request):
+    """The map and the list (B.2): the list is the page, the map a layer
+    over the same rows; both narrow by kind, region and a search word."""
     program = _program()
     kind = request.GET.get("kind", "")
+    region = request.GET.get("region", "")
+    if region not in REGION_LABELS:
+        region = ""
     q = (request.GET.get("q") or "").strip()
     rows = Institution.objects.filter(active=True)
     if kind in dict(Institution.KINDS):
         rows = rows.filter(kind=kind)
+    if region:
+        rows = rows.filter(region=region)
     if q:
         rows = rows.filter(Q(name_he__icontains=q) | Q(name_en__icontains=q) | Q(city__icontains=q)
                            | Q(short_name_he__icontains=q))
     rows = list(rows.order_by("kind", "name_he"))
     groups, _applied = _groups(rows, program)
     kinds = [(k, label, k == kind) for k, label in Institution.KINDS]
+    regions = [(k, label, k == region) for k, label in REGIONS]
+    pins = [{"slug": i.slug, "name": i.name_he, "city": i.city, "kind": i.kind, "applied": i.applied,
+             "lat": i.lat, "lng": i.lng, "url": reverse("academia360:institution", args=[i.slug])}
+            for i in rows if i.lat is not None and i.lng is not None]
+    keep = {}
+    if kind:
+        keep["kind"] = kind
+    if region:
+        keep["region"] = region
+    if q:
+        keep["q"] = q
     return render(request, "academia360/institutions.html", {
-        "section": "institutions", "groups": groups, "kinds": kinds, "kind": kind, "q": q, "total": len(rows),
+        "section": "institutions", "groups": groups, "kinds": kinds, "kind": kind, "regions": regions,
+        "region": region, "q": q, "total": len(rows), "pins": pins, "keep": keep,
+        "map_json": json.dumps(pins, ensure_ascii=False),
     })
 
 
@@ -150,6 +173,65 @@ def institution(request, slug):
         "program_count": inst.study_programs.filter(active=True).count(),
         "timeline": inst.timeline.order_by("year"), "centers": inst.centers.order_by("order", "name"),
         "metrics": metrics, "can_edit": access.is_admin(request.user),
+    })
+
+
+def _split_areas(text):
+    return [w.strip(" .;") for w in re.split(r"[,،;/]| ו(?=[א-ת])", text or "") if len(w.strip(" .;")) > 2]
+
+
+def researchers(request):
+    """Who works on what, across institutions (B.3): grouped by institution,
+    narrowed by institution, by an area word (the chips count people) and
+    by a search over names and areas. Verified people only."""
+    inst = request.GET.get("inst", "")
+    area = (request.GET.get("area") or "").strip()
+    q = (request.GET.get("q") or "").strip()
+    rows = Researcher.objects.filter(verified=True, institution__active=True).select_related("institution", "unit")
+    if inst:
+        rows = rows.filter(institution__slug=inst)
+    if area:
+        rows = rows.filter(areas__icontains=area)
+    if q:
+        rows = rows.filter(Q(name_he__icontains=q) | Q(name_en__icontains=q) | Q(areas__icontains=q))
+    rows = list(rows.order_by("institution__name_he", "-is_leading", "name_he").prefetch_related("metrics"))
+    for r in rows:
+        metrics = sorted(r.metrics.all(), key=lambda m: (m.as_of is None, m.as_of), reverse=True)
+        r.h_index = next((m for m in metrics if m.metric == "h_index"), None)
+    groups = []
+    for r in rows:
+        if not groups or groups[-1]["institution"].pk != r.institution_id:
+            groups.append({"institution": r.institution, "rows": []})
+        groups[-1]["rows"].append(r)
+    counts = {}
+    for areas in Researcher.objects.filter(verified=True).values_list("areas", flat=True):
+        for word in set(_split_areas(areas)):
+            counts[word] = counts.get(word, 0) + 1
+    top = sorted(((w, n) for w, n in counts.items() if n >= 2), key=lambda x: (-x[1], x[0]))[:14]
+    institutions = Institution.objects.filter(active=True, researchers__verified=True).distinct().order_by("name_he")
+    return render(request, "academia360/researchers.html", {
+        "section": "researchers", "groups": groups, "total": len(rows), "institution_count": len(groups),
+        "institutions": institutions, "inst": inst, "area": area, "q": q, "areas": top,
+    })
+
+
+METRIC_NAMES = {"h_index": "h-index", "citations": "ציטוטים", "i10": "i10-index"}
+
+
+def researcher(request, slug):
+    r = get_object_or_404(Researcher.objects.select_related("institution", "unit"), slug=slug, verified=True,
+                          institution__active=True)
+    metrics = []
+    seen = set()
+    for m in sorted(r.metrics.all(), key=lambda m: (m.as_of is None, m.as_of), reverse=True):
+        if m.metric in seen:
+            continue
+        seen.add(m.metric)
+        m.label = METRIC_NAMES.get(m.metric, m.metric)
+        metrics.append(m)
+    colleagues = list(r.institution.researchers.filter(verified=True).exclude(pk=r.pk).order_by("-is_leading", "name_he")[:8])
+    return render(request, "academia360/researcher.html", {
+        "section": "researchers", "r": r, "metrics": metrics, "links": list(r.links.all()), "colleagues": colleagues,
     })
 
 
