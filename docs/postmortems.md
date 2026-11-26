@@ -17,6 +17,58 @@ Newest first.
 
 ---
 
+## PM-99 · 2026-11-26 · breakout B.1 end: two small things, both caught by the sprint's own checks
+
+**What happened.** (1) The puzzle text on the experience page came out
+double-spaced: the template already turned blank lines into paragraphs
+(`linebreaks`) and the stylesheet kept them again (`white-space: pre-line`).
+Every test passed; the screenshot showed it (mistake 6, once more). (2) The
+"every class is defined" sweep counted every `"br-..."` string in the
+script, so element ids (`br-q`, `br-grade`) failed it as missing classes.
+
+**Why the process let it.** Two mechanisms for one job, added in different
+files an hour apart. The sweep was copied from an app whose script has no
+ids.
+
+**Rule.** A text field gets its line breaks from exactly one place, the
+template filter or the stylesheet, never both. A class sweep over a script
+matches the calls that apply a class (`classList.add/remove/toggle`), not
+every string that starts with the prefix. Otherwise: the kickoff sequence,
+the seed-twice test, the API ownership tests and the screen contract all
+did their job on day one, nothing else to report.
+
+Here: `static/breakout/breakout.css`, `tests/test_breakout_b1.py`,
+[building_an_app.md](building_an_app.md) mistake 73
+BKM: deferred - too small to generalise on its own; goes to FullStackBKM with the next lesson about rendered text
+
+## PM-98 · 2026-11-26 · Epic B end (Academia360 public site): three small things the sprint should have caught
+
+**What happened.** (1) The map's rows went into the page as
+`json.dumps(...)|safe`, where a `<` in a name would have closed the script
+tag; the security sweep found it at the epic's end, though mistake 51 says
+the sprint that creates the subject runs its item. (2) The map was built on
+CARTO's free basemap, which now answers "API KEY REQUIRED" across every
+tile; it was only seen in the first screenshot. (3) Two code patches went
+through a shell heredoc into Python again: `
+` inside a string became a
+real line break and `2` became a control byte; mistakes 22 and 73 both
+say not to.
+
+**Why the process let it.** The sweep is a list run "before saying secure"
+and I ran it once, at the end. A third-party URL was copied from memory,
+not opened first. The heredoc habit returns whenever a patch has several
+anchors and the editor feels slower.
+
+**Rule.** The sprint that renders data into a page uses the framework's
+escaping helper (`json_script`), never `json.dumps|safe`, and greps `|safe`
+before its own tests run. A third-party endpoint (tiles, fonts, a CDN
+file) is opened in the browser, or fetched, before any code depends on it.
+And a patch that contains a backslash goes through the file editor, no
+exceptions.
+
+Here: `docs/building_an_app.md` (mistake 75)
+BKM: FullStackBKM 784715b
+
 ## PM-97 · 2026-11-26 · "It did not open nicely on the phone": the contract measured, nobody looked
 
 **What happened.** Avi's first word on Academia360's Epic A was that the

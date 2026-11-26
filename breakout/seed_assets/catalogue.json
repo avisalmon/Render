@@ -1,0 +1,33 @@
+{
+  "subjects": [
+    {"slug": "programming", "name": "תכנות ומחשבים", "order": 1},
+    {"slug": "math", "name": "מתמטיקה", "order": 2},
+    {"slug": "science", "name": "מדעים", "order": 3},
+    {"slug": "history", "name": "היסטוריה", "order": 4},
+    {"slug": "language", "name": "שפה והבנת הנקרא", "order": 5},
+    {"slug": "society", "name": "חברה וקהילה", "order": 6},
+    {"slug": "general", "name": "כללי", "order": 9}
+  ],
+  "materials": [
+    {"name": "דף A4", "unit": "דף", "category": "paper", "approx_cost_ils": "0.10", "where_to_get": "כל חנות צרכי משרד"},
+    {"name": "בריסטול", "unit": "גיליון", "category": "paper", "approx_cost_ils": "2.00", "where_to_get": "חנות צרכי משרד"},
+    {"name": "כרטיסיות", "unit": "כרטיסייה", "category": "paper", "approx_cost_ils": "0.20", "where_to_get": "חבילה של 100 בחנות צרכי משרד"},
+    {"name": "פתקיות דביקות", "unit": "חבילה", "category": "paper", "approx_cost_ils": "5.00", "where_to_get": "חנות צרכי משרד"},
+    {"name": "מעטפה", "unit": "מעטפה", "category": "container", "approx_cost_ils": "0.50", "where_to_get": "חנות צרכי משרד"},
+    {"name": "מעטפה גדולה A4", "unit": "מעטפה", "category": "container", "approx_cost_ils": "1.00", "where_to_get": "חנות צרכי משרד"},
+    {"name": "שקית זיפ", "unit": "שקית", "category": "container", "approx_cost_ils": "0.30", "where_to_get": "סופר או חנות צרכי משרד"},
+    {"name": "מספריים", "unit": "זוג", "category": "tool", "approx_cost_ils": "8.00", "where_to_get": "יש בכל כיתה"},
+    {"name": "שדכן", "unit": "יחידה", "category": "tool", "approx_cost_ils": "15.00", "where_to_get": "יש בכל מזכירות"},
+    {"name": "מדפסת", "unit": "שימוש", "category": "tool", "approx_cost_ils": "0.00", "where_to_get": "המדפסת של בית הספר"},
+    {"name": "סיכות שדכן", "unit": "קופסה", "category": "fastener", "approx_cost_ils": "4.00", "where_to_get": "חנות צרכי משרד"},
+    {"name": "סיכות ביטחון", "unit": "חבילה", "category": "fastener", "approx_cost_ils": "6.00", "where_to_get": "חנות צרכי משרד או סופר"},
+    {"name": "אטבי נייר", "unit": "קופסה", "category": "fastener", "approx_cost_ils": "5.00", "where_to_get": "חנות צרכי משרד"},
+    {"name": "גומיות", "unit": "חבילה", "category": "fastener", "approx_cost_ils": "5.00", "where_to_get": "חנות צרכי משרד"},
+    {"name": "איזולירבנד", "unit": "גליל", "category": "fastener", "approx_cost_ils": "6.00", "where_to_get": "חנות צרכי משרד או חומרי בניין"},
+    {"name": "דבק", "unit": "שפופרת", "category": "fastener", "approx_cost_ils": "5.00", "where_to_get": "חנות צרכי משרד"},
+    {"name": "טוש", "unit": "יחידה", "category": "writing", "approx_cost_ils": "3.00", "where_to_get": "חנות צרכי משרד"},
+    {"name": "עט", "unit": "יחידה", "category": "writing", "approx_cost_ils": "1.50", "where_to_get": "יש לכל תלמיד"},
+    {"name": "עיפרון", "unit": "יחידה", "category": "writing", "approx_cost_ils": "1.00", "where_to_get": "יש לכל תלמיד"},
+    {"name": "חוט", "unit": "סליל", "category": "other", "approx_cost_ils": "6.00", "where_to_get": "חנות צרכי משרד או סדקית"}
+  ]
+}

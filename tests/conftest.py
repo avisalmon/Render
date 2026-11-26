@@ -25,3 +25,13 @@ def _books_no_real_model_calls(request, settings):
     settings.BOOKS_PILOT_GIFT = False  # the gift is tested where it is the subject (tests/test_books_give.py)
     settings.BOOKS_FRIENDS_FIRST_HOURS = 0  # friends-first is tested where it is the subject (test_books_give.py)
     yield
+
+
+@pytest.fixture(autouse=True)
+def _breakout_no_real_model_calls(request, settings):
+    """breakout has no AI feature (spec 1.5), and still blanks the key from
+    its first test, because a later sprint may put a model behind a path an
+    old test already walks (methodology 26)."""
+    if request.node.fspath.basename.startswith("test_breakout"):
+        settings.OPENAI_API_KEY = ""
+    yield

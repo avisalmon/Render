@@ -1480,3 +1480,30 @@ Every flaw found that way is turned into a line in the screen contract (the
 bar is at most two rows on a phone; brand and sign-in share a line), so the
 same flaw cannot come back unseen. Desktop is the priority; the phone is how
 Avi reviews from away, so both are looked at, not only measured.
+
+### 75. Escape through the framework, open the third-party URL first, and no backslash through a heredoc
+
+Academia360's Epic B put the map's rows into the page with `json.dumps(...)|safe`
+(a `<` in a name would have closed the script tag), built the map on a free
+basemap that had started demanding an API key, and twice mangled a patch by
+sending it through a shell heredoc (PM-98).
+
+**The rule.** Data rendered into a page goes through the framework's escaping
+helper (`json_script` in Django), never `json.dumps|safe`, and the sprint that
+adds it greps `|safe` and `mark_safe` before its own tests. A third-party
+endpoint is opened in the browser or fetched before code depends on it. A
+patch with a backslash in it goes through the file editor, never a heredoc.
+
+
+### 73. Line breaks come from one place; a class sweep reads the calls, not the strings
+
+breakout's puzzle text was double-spaced: the template made paragraphs with
+`linebreaks` and the stylesheet kept the blank lines again with
+`white-space: pre-line`. Only the screenshot showed it. The same sprint's
+"every class is defined" sweep failed on element ids, because it matched
+every string with the class prefix in the script (PM-99).
+
+**The rule.** A text field gets its line breaks from exactly one place, the
+template filter or the stylesheet. A class sweep over a script matches the
+calls that apply a class (`classList.add/remove/toggle`), never every
+string that starts with the prefix.

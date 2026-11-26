@@ -224,6 +224,10 @@ NOT_IN_THE_PORTAL = {
     # side is open to everyone at /academia360/, its own front door; whether
     # it is an official app on the portal is Avi's call, not yet made.
     "academia360",
+    # breakout (2026-11-26): paper escape rooms for teachers. Open to every
+    # signed-in person at /breakout/, its own door; whether it is an official
+    # app on the portal is Avi's call, not yet made.
+    "breakout",
 }
 
 _BY_SLUG = {a.slug: a for a in APPS}

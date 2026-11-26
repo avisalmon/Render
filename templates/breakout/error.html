@@ -1,0 +1,12 @@
+{% extends "breakout/base.html" %}
+{% block title %}{{ title }} · חדרי בריחה מנייר{% endblock %}
+{% block content %}
+<section class="br-door">
+  <article class="br-paper">
+    <p class="br-muted br-small" dir="ltr">{{ code }}</p>
+    <h1 class="br-h1">{{ title }}</h1>
+    <p>{{ text }}</p>
+    <p><a class="br-btn br-btn--quiet" href="{% url 'breakout:home' %}">אל הספרייה</a></p>
+  </article>
+</section>
+{% endblock %}

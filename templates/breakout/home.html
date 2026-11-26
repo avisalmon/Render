@@ -1,0 +1,73 @@
+{% extends "breakout/base.html" %}
+{% block title %}הספרייה · חדרי בריחה מנייר{% endblock %}
+{% block content %}
+<section class="br-pagehead">
+  <div>
+    <h1 class="br-h1">הספרייה</h1>
+    <p class="br-intro">חוויות חדר בריחה שבנויות מדפים, מספריים וציוד משרדי. בוחרים חוויה, מדפיסים את הערכה, ומריצים עם הקבוצה. בלי מסכים.</p>
+  </div>
+  <span class="br-btn br-btn--quiet br-pagehead-action" aria-disabled="true" title="הכתיבה מגיעה בספרינט B.3">כתיבת חוויה: בקרוב</span>
+</section>
+
+<details class="br-filterbox" id="br-filters">
+  <summary>חיפוש וסינון <span class="br-filter-summary" id="br-filter-summary"></span></summary>
+  <div class="br-filterbox-body">
+    <label class="br-field"><span>חיפוש</span><input type="search" id="br-q" name="q" placeholder="שם, נושא, מילה מהסיפור" autocomplete="off"></label>
+    <label class="br-field"><span>תחום</span>
+      <select id="br-subject" name="subject">
+        <option value="">כל התחומים</option>
+        {% for s in subjects %}<option value="{{ s.slug }}">{{ s.name }}</option>{% endfor %}
+      </select></label>
+    <label class="br-field"><span>רמה</span>
+      <select id="br-difficulty" name="difficulty">
+        <option value="">כל הרמות</option>
+        {% for key, label in difficulties %}<option value="{{ key }}">{{ label }}</option>{% endfor %}
+      </select></label>
+    <label class="br-field"><span>כיתה</span>
+      <select id="br-grade" name="grade">
+        <option value="">כל הכיתות</option>
+        {% for n, letter in grades %}<option value="{{ n }}">כיתה {{ letter }}</option>{% endfor %}
+      </select></label>
+    <label class="br-check"><input type="checkbox" id="br-has-runs"> רק חוויות שכבר הורצו</label>
+  </div>
+</details>
+
+{% if mine %}
+<section class="br-mine">
+  <h2 class="br-h2">הטיוטות שלי</h2>
+  <ul class="br-list">
+    {% for e in mine %}
+      <li><a href="{% url 'breakout:experience' e.slug %}" dir="auto">{{ e.title }}</a> <span class="br-tag br-tag--{{ e.status }}">{{ e.get_status_display }}</span></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+<section class="br-cards" id="br-cards" aria-live="polite">
+  {% for e in experiences %}
+    <article class="br-card{% if e.is_flagship %} br-card--flagship{% endif %}"
+             data-title="{{ e.title }}" data-text="{{ e.tagline }} {{ e.story|truncatechars:400 }}"
+             data-subjects="{% for s in e.subjects.all %}{{ s.slug }} {% endfor %}"
+             data-difficulty="{{ e.difficulty }}" data-from="{{ e.audience_from }}" data-to="{{ e.audience_to }}"
+             data-runs="{{ e.n_runs }}">
+      {% if e.is_flagship %}<span class="br-flag">חוויית דגל</span>{% endif %}
+      <h2 class="br-card-title"><a href="{% url 'breakout:experience' e.slug %}" dir="auto">{{ e.title }}</a></h2>
+      <p class="br-card-tagline" dir="auto">{{ e.tagline }}</p>
+      <ul class="br-chips">
+        <li>{{ e.grades }}</li>
+        <li>{{ e.duration_minutes }} דק׳</li>
+        <li>{{ e.get_difficulty_display }}</li>
+        {% for s in e.subjects.all %}<li class="br-chip--subject">{{ s.name }}</li>{% endfor %}
+      </ul>
+      <p class="br-card-foot">
+        <span class="br-count" title="הרצות שדווחו">{{ e.n_runs }} הרצות</span>
+        <span class="br-count" title="לייקים">{{ e.n_likes }} לייקים</span>
+        <span class="br-byline" dir="auto">מאת {{ e.author.breakout_profile.name|default:e.author.first_name }}</span>
+      </p>
+    </article>
+  {% empty %}
+    <p class="br-empty">עוד אין חוויות בספרייה. הראשונה בדרך.</p>
+  {% endfor %}
+</section>
+<p class="br-empty br-hidden" id="br-no-match">שום חוויה לא מתאימה לסינון הזה.</p>
+{% endblock %}

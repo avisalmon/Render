@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     "design3d",
     "gallery",
     "academia360",
+    "breakout",
 ]
 
 MIDDLEWARE = [
@@ -175,6 +176,9 @@ DESIGN3D_VOICE_PAID = os.environ.get("DESIGN3D_VOICE_PAID", "0") == "1"
 # committee, the committee's reviews and letters. Never under MEDIA_ROOT;
 # served only by a view that checks the asker's circle.
 ACADEMIA360_PRIVATE_DIR = PERSISTENT_ROOT / "academia360_private"
+# breakout (docs/breakout): attached printables and covers, handed out by the
+# app's own checking view to signed-in people.
+BREAKOUT_PRIVATE_DIR = PERSISTENT_ROOT / "breakout_private"
 # The agent's door (spec chapter 3): one token, acting as the admin inside
 # this app only. Unset means closed. Rotate by changing it in Render.
 ACADEMIA360_AGENT_TOKEN = os.environ.get("ACADEMIA360_AGENT_TOKEN", "")
