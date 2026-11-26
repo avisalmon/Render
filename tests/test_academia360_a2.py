@@ -240,7 +240,7 @@ def test_the_import_is_one_time_and_a_persons_edit_survives(db, capsys):
     first = _counts()
     assert first["Institution"] == 2 and first["Participation"] == 2 and first["Submission"] == 1
     assert first["SubmittedFile"] == 2 and first["ResponseLetter"] == 1 and first["Researcher"] == 3
-    assert first["Criterion"] == 11 and first["GuidelineSection"] == 2 and first["KpiDefinition"] == 5
+    assert first["Criterion"] == 11 and first["GuidelineSection"] == 3 and first["KpiDefinition"] == 5
     assert first["Analysis"] == 1 and first["CriterionFinding"] == 4 and first["ContactPerson"] == 1
     inst = Institution.objects.get(slug="example-academic-college")
     inst.city = "שונה על ידי אדם"

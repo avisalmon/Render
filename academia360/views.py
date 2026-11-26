@@ -4,6 +4,8 @@ file views. Pages are consumers of the same rows the API serves, filtered by
 the same circles; what a page shows the public is public-circle data only.
 """
 
+import re
+
 from django.db.models import Q
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, render
@@ -14,6 +16,7 @@ from .models import (
     Criterion,
     GuidelineSection,
     Institution,
+    KpiDefinition,
     Participation,
     Program,
     Researcher,
@@ -21,6 +24,7 @@ from .models import (
     StudyProgram,
     SubmittedFile,
 )
+from .text import render_markdown, slug_anchor
 
 METRIC_LABELS = {
     "students_total": "סטודנטים", "students_undergrad": "סטודנטים לתואר ראשון",
@@ -67,6 +71,29 @@ def home(request):
     return render(request, "academia360/home.html", {
         "section": "home", "program": program, "criteria": criteria, "groups": groups,
         "count": len(institutions), "applied": len(applied), "not_applied": len(institutions) - len(applied),
+        "timeline": PROGRAM_TIMELINE,
+    })
+
+
+def program_page(request):
+    """The program itself (spec 4.1, backlog B.1): goals, the review domains
+    with the five headline criteria, the guidelines rendered section by
+    section, the mandatory KPIs, the timeline and the official sources. All
+    public-circle rows; the institutional KPIs never appear here."""
+    program = _program()
+    if program is None:
+        raise Http404("no program yet")
+    criteria = list(Criterion.objects.filter(program=program).order_by("order"))
+    sections = []
+    for s in GuidelineSection.objects.filter(program=program).order_by("order"):
+        s.anchor = slug_anchor("sec", s.order)
+        s.short = re.sub(r"^\d+\.\s*", "", s.title)
+        s.html = render_markdown(s.body)
+        sections.append(s)
+    kpis = list(KpiDefinition.objects.filter(program=program, submission__isnull=True, is_mandatory=True).order_by("order"))
+    return render(request, "academia360/program.html", {
+        "section": "program", "program": program, "criteria": criteria, "sections": sections, "kpis": kpis,
+        "budget_m": round(program.total_budget_nis / 1_000_000) if program.total_budget_nis else None,
         "timeline": PROGRAM_TIMELINE,
     })
 

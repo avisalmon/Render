@@ -47,6 +47,7 @@
     <div>
       <h2 class="a360-h2">מה התכנית מבקשת</h2>
       <p class="a360-lede a360-mute">לא פרויקט בקורס אחד, אלא שינוי עומק: תכנית ארבע־שנתית שמכסה לפחות חמישית מתכניות הלימוד לתואר ראשון, או חמישית מהסטודנטים, עם יעדים, אבני דרך ותקציב שהמוסד מוסיף משלו.</p>
+      <div class="a360-actions"><a href="{% url 'academia360:program' %}" class="a360-pill a360-pill-line">התכנית במלואה: ההנחיות והמדדים</a></div>
     </div>
     <div class="a360-asks">
       <div class="a360-ask" style="border-top-color:#63BAC5"><b>דמות הבוגר</b><span>מי יוצא מהתואר, ואילו יכולות הוא נושא איתו לעולם משתנה. זו מפת הדרכים לכל עדכון.</span></div>
@@ -97,7 +98,7 @@
   <div class="a360-wrap a360-rel">
     <h2 class="a360-h2">איך מוצאים כאן את הדרך</h2>
     <div class="a360-doors">
-      <div class="a360-card a360-door"><span class="a360-door-icon" style="background:#E7F5F7"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1E7C88" stroke-width="1.8" aria-hidden="true"><path d="M3 11l9-7 9 7v9H3z"/><path d="M9 20v-6h6v6"/></svg></span><b>אני סקרן או סקרנית</b><p class="a360-mute">הכול כאן פתוח בלי כניסה: התכנית, המוסדות, תכניות הלימוד והחוקרים.</p><a href="#who">להתחיל מהמוסדות</a></div>
+      <div class="a360-card a360-door"><span class="a360-door-icon" style="background:#E7F5F7"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1E7C88" stroke-width="1.8" aria-hidden="true"><path d="M3 11l9-7 9 7v9H3z"/><path d="M9 20v-6h6v6"/></svg></span><b>אני סקרן או סקרנית</b><p class="a360-mute">הכול כאן פתוח בלי כניסה: התכנית, המוסדות, תכניות הלימוד והחוקרים.</p><a href="{% url 'academia360:program' %}">להתחיל מהתכנית</a></div>
       <div class="a360-card a360-door"><span class="a360-door-icon" style="background:#FEF5D6"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7A5A00" stroke-width="1.8" aria-hidden="true"><path d="M4 20h16M6 20V9l6-4 6 4v11M10 20v-5h4v5"/></svg></span><b>אני מוביל או מובילה את התכנית במוסד</b><p class="a360-mute">הגשת החומרים, המדדים והתקציב של המוסד שלכם, ומכתבי הוועדה.</p><a href="{% url 'academia360:login' %}">כניסה</a></div>
       <div class="a360-card a360-door"><span class="a360-door-icon" style="background:#FCE7E6"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#A3302D" stroke-width="1.8" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/><circle cx="19" cy="18" r="2"/></svg></span><b>אני בוועדה</b><p class="a360-mute">תיקי המוסדות, טופס הבדיקה, הדיון הפנימי, ההחלטות והמכתבים.</p><a href="{% url 'academia360:login' %}">כניסה לוועדה</a></div>
     </div>

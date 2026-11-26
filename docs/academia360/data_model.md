@@ -103,7 +103,7 @@ Circle: **public**. This is the general-interest site anyone can read.
 
 | Model | What it is | Main fields |
 | --- | --- | --- |
-| **Institution** | One higher-education institution. 32 rows from the reference to start; the list grows | name he, name en, slug, kind: `university` / `academic_college` / `teacher_training` / `research_institute`, city, website, founded, founder, campuses (rows below), logo, unique identity (short text), is budgeted by ות״ת, active |
+| **Institution** | One higher-education institution. 32 rows from the reference to start; the list grows | name he, name en, slug, kind: `university` / `academic_college` / `teacher_training` / `research_institute`, city, region (B.2: `north` / `haifa` / `center` / `tel_aviv` / `jerusalem` / `south` / `judea_samaria`, from the city), lat, lng (B.2: the main campus, seeded by city in the import, for the map), website, founded, founder, campuses (rows below), logo, unique identity (short text), is budgeted by ות״ת, active |
 | **Campus** | A campus or site | institution, name, city |
 | **Unit** | A faculty, school or department, nested | institution, parent unit, name, kind: `faculty` / `school` / `department`, website |
 | **StudyProgram** | A degree program ("learning track"). The thing the 20% target counts | institution, unit, name, degree (B.A., B.Sc., B.Ed., ...), field (one of the 15 למ"ס fields), level: `undergrad` / `masters` / `phd`, active |

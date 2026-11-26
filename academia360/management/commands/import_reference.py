@@ -77,6 +77,8 @@ CRITERIA = [
     ("measurement", "מדדי ביצוע והערכת תוצאות", "#323435"),
 ]
 DOMAIN_TO_SLUG = {name: slug for slug, name, _c in CRITERIA}
+DOMAIN_TO_SLUG.update({"מעורבות חברתית/קהילתית": "community", "מדיניות מוסדית": "institutional",
+                       "יכולת מדידה והערכה": "measurement"})  # the guidelines' table names them so
 DOMAIN_TO_SLUG.update({"אסטרטגיה מוסדית": "institutional", "מעורבות חברה וקהילה": "community",
                        "חדשנות בהוראה": "innovation", "תעסוקתיות": "employability",
                        "מדדי ביצוע והערכת תוצאות": "measurement", "ניהול ותקצוב": "management",
@@ -160,6 +162,7 @@ class Command(BaseCommand):
         self.import_review_form()
         self.import_mandatory_kpis()
         self.import_guidelines()
+        self.import_criterion_descriptions()
         self.institutions = {}
         self.import_institutions()
         self.import_extra_folders()
@@ -237,6 +240,20 @@ class Command(BaseCommand):
             title, _, text = part.partition("\n")
             self.get_or_create(GuidelineSection, program=self.program, title=title.strip(),
                                defaults=dict(body=text.strip(), order=i))
+
+    def import_criterion_descriptions(self):
+        """The guidelines' criteria table describes each domain in a line; a
+        criterion whose description is still empty takes it. Never overwrites,
+        so an edit made in the app survives the next run."""
+        for sec in GuidelineSection.objects.filter(program=self.program, title__contains="קריטריונים"):
+            for line in sec.body.splitlines():
+                cells = [c.strip().strip("*").strip() for c in line.strip().strip("|").split("|")]
+                if len(cells) < 2 or cells[0] not in DOMAIN_TO_SLUG or not cells[1]:
+                    continue
+                crit = self.criteria.get(DOMAIN_TO_SLUG[cells[0]])
+                if crit is not None and not crit.description and not self.dry:
+                    crit.description = cells[1]
+                    crit.save(update_fields=["description"])
 
     # -------------------------------------------------------- institutions
 

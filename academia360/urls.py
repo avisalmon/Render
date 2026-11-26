@@ -29,6 +29,7 @@ urlpatterns = [
     path("login/", auth_views.LoginView.as_view(), name="login"),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("no-access/", views.no_access_page, name="no_access"),
+    path("program/", views.program_page, name="program"),
     path("institutions/", views.institutions, name="institutions"),
     path("search/", views.search, name="search"),
     path("institutions/<str:slug>/", views.institution, name="institution"),

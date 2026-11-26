@@ -24,7 +24,8 @@
         <span>אקדמיה 360°</span>
       </a>
       <nav class="a360-nav" aria-label="ניווט ראשי">
-        <a href="{% url 'academia360:home' %}" {% if section == 'home' %}aria-current="page"{% endif %}>התכנית</a>
+        <a href="{% url 'academia360:home' %}" {% if section == 'home' %}aria-current="page"{% endif %}>הבית</a>
+        <a href="{% url 'academia360:program' %}" {% if section == 'program' %}aria-current="page"{% endif %}>התכנית</a>
         <a href="{% url 'academia360:institutions' %}" {% if section == 'institutions' %}aria-current="page"{% endif %}>המוסדות</a>
       </nav>
       <div class="a360-account">
@@ -45,7 +46,7 @@
   <footer class="a360-foot">
     <div class="a360-wrap a360-foot-in">
       <span>אקדמיה 360° · אתר מידע וניתוח על תכנית ות״ת לשינוי עומק בתואר הראשון. פיילוט אישי, לא אתר רשמי.</span>
-      <span class="a360-foot-links"><a href="{% url 'academia360:home' %}">התכנית</a><a href="{% url 'academia360:institutions' %}">המוסדות</a></span>
+      <span class="a360-foot-links"><a href="{% url 'academia360:home' %}">הבית</a><a href="{% url 'academia360:program' %}">התכנית</a><a href="{% url 'academia360:institutions' %}">המוסדות</a></span>
     </div>
   </footer>
   <script src="{% static 'academia360/a360.js' %}" defer></script>
