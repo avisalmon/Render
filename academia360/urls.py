@@ -3,7 +3,7 @@
 from django.urls import include, path
 from rest_framework import permissions, routers
 
-from . import auth_views, views
+from . import auth_views, talk, views
 from .api import ROUTES, ReplicateFileView, ReplicateView, RoleGrantView
 
 app_name = "academia360"
@@ -32,6 +32,11 @@ urlpatterns = [
     path("program/", views.program_page, name="program"),
     path("institutions/", views.institutions, name="institutions"),
     path("search/", views.search, name="search"),
+    path("me/", talk.me, name="me"),
+    path("compare/", views.compare, name="compare"),
+    path("talk/comment/", talk.comment, name="talk_comment"),
+    path("talk/like/", talk.like, name="talk_like"),
+    path("talk/correct/", talk.correct, name="talk_correct"),
     path("researchers/", views.researchers, name="researchers"),
     path("researchers/<str:slug>/", views.researcher, name="researcher"),
     path("institutions/<str:slug>/", views.institution, name="institution"),

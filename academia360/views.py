@@ -4,7 +4,6 @@ file views. Pages are consumers of the same rows the API serves, filtered by
 the same circles; what a page shows the public is public-circle data only.
 """
 
-import json
 import re
 
 from django.db.models import Q
@@ -27,6 +26,7 @@ from .models import (
     SubmittedFile,
 )
 from .places import REGION_LABELS, REGIONS
+from .talk import talk_context
 from .text import render_markdown, slug_anchor
 
 METRIC_LABELS = {
@@ -135,7 +135,6 @@ def institutions(request):
     return render(request, "academia360/institutions.html", {
         "section": "institutions", "groups": groups, "kinds": kinds, "kind": kind, "regions": regions,
         "region": region, "q": q, "total": len(rows), "pins": pins, "keep": keep,
-        "map_json": json.dumps(pins, ensure_ascii=False),
     })
 
 
@@ -172,7 +171,69 @@ def institution(request, slug):
         "units": units, "loose_programs": loose_programs,
         "program_count": inst.study_programs.filter(active=True).count(),
         "timeline": inst.timeline.order_by("year"), "centers": inst.centers.order_by("order", "name"),
+        "collaborations": inst.collaborations.order_by("kind", "partner"),
         "metrics": metrics, "can_edit": access.is_admin(request.user),
+        **talk_context(request, inst, "institution"),
+    })
+
+
+def _fact_rows(insts, program):
+    """The compare table's rows (B.6): public facts only, every number with
+    its year, the newest verified value per key."""
+    def cell(value="", note="", num=False):
+        return {"value": value, "note": note, "num": num}
+
+    def newest(inst, key):
+        return inst.metrics.filter(verified=True, key=key).order_by("-year", "-as_of").first()
+
+    def count_cell(n):
+        return cell(f"{n:,}", num=True) if n else cell()
+
+    parts = {p.institution_id: p for p in Participation.objects.filter(program=program, institution__in=insts)} if program else {}
+    sent = set(ResponseLetter.objects.filter(submission__participation__institution__in=insts, sent_at__isnull=False)
+               .values_list("submission__participation__institution_id", flat=True))
+    rows = [
+        ("סוג", [cell(i.get_kind_display()) for i in insts]),
+        ("עיר", [cell(i.city) for i in insts]),
+        ("שנת ההקמה", [cell(str(i.founded), num=True) if i.founded else cell() for i in insts]),
+    ]
+    status = []
+    for i in insts:
+        p = parts.get(i.pk)
+        if p is None:
+            status.append(cell())
+        elif p.applied:
+            status.append(cell("הגיש תכנית ארבע־שנתית", "מכתב הוועדה נשלח" if i.pk in sent else "בבדיקה"))
+        else:
+            status.append(cell("לא ניגש למחזור תשפ״ה"))
+    rows.append(("באקדמיה 360", status))
+    for key, label in (("students_total", "סטודנטים"), ("students_undergrad", "סטודנטים לתואר ראשון"),
+                       ("faculty_total", "חברי סגל")):
+        cells = []
+        for i in insts:
+            m = newest(i, key)
+            cells.append(cell(f"{m.value:,.0f}", str(m.year) if m.year else "", num=True) if m else cell())
+        if any(c["value"] for c in cells):
+            rows.append((label, cells))
+    rows += [
+        ("יחידות אקדמיות", [count_cell(i.units.filter(parent__isnull=True).count()) for i in insts]),
+        ("תכניות לימוד", [count_cell(i.study_programs.filter(active=True).count()) for i in insts]),
+        ("חוקרים מובילים", [count_cell(i.researchers.filter(verified=True).count()) for i in insts]),
+        ("שיתופי פעולה", [count_cell(i.collaborations.count()) for i in insts]),
+        ("מרכזי מחקר", [count_cell(i.centers.count()) for i in insts]),
+    ]
+    return [{"label": label, "cells": cells} for label, cells in rows if any(c["value"] for c in cells)]
+
+
+def compare(request):
+    slugs = [request.GET.get(k, "") for k in ("a", "b", "c")]
+    found = {i.slug: i for i in Institution.objects.filter(active=True, slug__in=[s for s in slugs if s])}
+    insts = [found[s] for s in slugs if s in found]
+    columns = [{"inst": i} for i in insts]
+    return render(request, "academia360/compare.html", {
+        "section": "institutions", "slots": list(zip(("a", "b", "c"), slugs)), "columns": columns,
+        "rows": _fact_rows(insts, _program()) if len(insts) >= 2 else [],
+        "all_institutions": Institution.objects.filter(active=True).order_by("kind", "name_he"),
     })
 
 
@@ -232,14 +293,17 @@ def researcher(request, slug):
     colleagues = list(r.institution.researchers.filter(verified=True).exclude(pk=r.pk).order_by("-is_leading", "name_he")[:8])
     return render(request, "academia360/researcher.html", {
         "section": "researchers", "r": r, "metrics": metrics, "links": list(r.links.all()), "colleagues": colleagues,
+        **talk_context(request, r, "researcher"),
     })
 
 
 def search(request):
     """Plain search over the public side (spec 4.1): no model, no cost."""
     q = (request.GET.get("q") or "").strip()
-    results = {"institutions": [], "researchers": [], "programs": [], "guidelines": []}
+    results = {"institutions": [], "researchers": [], "programs": [], "criteria": [], "guidelines": []}
     if len(q) >= 2:
+        results["criteria"] = list(Criterion.objects.filter(Q(name__icontains=q) | Q(description__icontains=q))
+                                   .order_by("order")[:11])
         results["institutions"] = list(Institution.objects.filter(active=True).filter(
             Q(name_he__icontains=q) | Q(name_en__icontains=q) | Q(city__icontains=q) | Q(short_name_he__icontains=q)
         ).order_by("name_he")[:30])
@@ -251,7 +315,11 @@ def search(request):
         results["guidelines"] = list(GuidelineSection.objects.filter(Q(title__icontains=q) | Q(body__icontains=q))
                                      .order_by("order")[:10])
     total = sum(len(v) for v in results.values())
-    return render(request, "academia360/search.html", {"section": "search", "q": q, "results": results, "total": total})
+    labels = {"institutions": "מוסדות", "researchers": "חוקרים", "programs": "תכניות לימוד", "criteria": "תחומי הבדיקה",
+              "guidelines": "בהנחיות"}
+    found = [(k, labels[k], len(v)) for k, v in results.items() if v]
+    return render(request, "academia360/search.html", {"section": "search", "q": q, "results": results, "total": total,
+                                                        "found": found, "short": 0 < len(q) < 2})
 
 
 def no_access_page(request):

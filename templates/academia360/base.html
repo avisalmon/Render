@@ -29,9 +29,11 @@
         <a href="{% url 'academia360:program' %}" {% if section == 'program' %}aria-current="page"{% endif %}>התכנית</a>
         <a href="{% url 'academia360:institutions' %}" {% if section == 'institutions' %}aria-current="page"{% endif %}>המוסדות</a>
         <a href="{% url 'academia360:researchers' %}" {% if section == 'researchers' %}aria-current="page"{% endif %}>החוקרים</a>
+        <a href="{% url 'academia360:search' %}" {% if section == 'search' %}aria-current="page"{% endif %}>חיפוש</a>
       </nav>
       <div class="a360-account">
         {% if user.is_authenticated %}
+          <a class="a360-pill a360-pill-ghost a360-pill-me" href="{% url 'academia360:me' %}" {% if section == 'me' %}aria-current="page"{% endif %}>שלי</a>
           <form method="post" action="{% url 'academia360:logout' %}">{% csrf_token %}<button type="submit" class="a360-pill a360-pill-ghost">יציאה</button></form>
         {% else %}
           <a class="a360-pill a360-pill-ghost" href="{% url 'academia360:login' %}?next={{ request.get_full_path|urlencode }}" id="a360-sign-in">כניסה</a>

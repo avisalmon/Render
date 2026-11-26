@@ -37,7 +37,7 @@ def world(db):
 
 
 def _map_rows(html):
-    raw = re.search(r'<script type="application/json" id="a360-map-data">(.*?)</script>', html, re.S).group(1)
+    raw = re.search(r'<script id="a360-map-data" type="application/json">(.*?)</script>', html, re.S).group(1)
     return json.loads(raw)
 
 

@@ -20,7 +20,7 @@
       <div class="a360-card a360-pad a360-prog-box">
         <b>איפה התכנית עומדת</b>
         <div class="a360-rows">
-          {% for when, what, state in timeline %}<div class="a360-row a360-row-tight a360-tl-{{ state }}"><span>{{ when }}</span><span class="{% if state == 'now' %}a360-b{% else %}a360-mute{% endif %}">{{ what }}</span></div>{% endfor %}
+          {% for when, what, state in timeline %}<div class="a360-row a360-row-tight"><span>{{ when }}</span><span class="{% if state == 'now' %}a360-b{% else %}a360-mute{% endif %}">{{ what }}</span></div>{% endfor %}
         </div>
       </div>
     </div>

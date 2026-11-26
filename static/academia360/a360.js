@@ -47,6 +47,10 @@
   var tools = document.querySelector(".a360-tools");
   if (tools && window.innerWidth < 900 && !tools.dataset.active) tools.open = false;
 
+  // On a phone the tab row may scroll; the current tab comes into view.
+  var current = document.querySelector(".a360-nav [aria-current]");
+  if (current && window.innerWidth < 700 && current.scrollIntoView) current.scrollIntoView({ inline: "center", block: "nearest" });
+
   if (document.readyState === "complete") draw();
   else window.addEventListener("load", draw);
 })();

@@ -5,8 +5,8 @@
 <section class="a360-band">
   <div class="a360-wrap">
     <h1 class="a360-h1 a360-h1-page">המוסדות</h1>
-    <p class="a360-lede a360-mute a360-narrow">כל המוסדות המתוקצבים על ידי ות״ת, על המפה וברשימה, לפי סוג ואזור. כל שם פותח את עמוד המוסד. באפור: מוסדות שלא ניגשו למחזור הזה.</p>
-    <form method="get" class="a360-filter" role="search">
+    <p class="a360-lede a360-mute a360-narrow">כל המוסדות המתוקצבים על ידי ות״ת, על המפה וברשימה, לפי סוג ואזור. כל שם פותח את עמוד המוסד. באפור: מוסדות שלא ניגשו למחזור הזה. אפשר גם <a href="{% url 'academia360:compare' %}">להשוות שניים או שלושה</a>.</p>
+    <form method="get" class="a360-filter a360-filter-tools" role="search">
       <div class="a360-search">
         <label class="a360-select"><span class="a360-sr">אזור</span>
           <select name="region" onchange="this.form.requestSubmit ? this.form.requestSubmit() : this.form.submit()">
@@ -49,7 +49,7 @@
       </div>
       {% endif %}
     </div>
-    <script type="application/json" id="a360-map-data">{{ map_json|safe }}</script>
+    {{ pins|json_script:"a360-map-data" }}
   </div>
 </section>
 {% if pins %}<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" crossorigin="anonymous" defer></script>{% endif %}

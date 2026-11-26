@@ -18,6 +18,7 @@
         <div class="a360-actions">
           {% if program_sections %}<a href="#a360" class="a360-pill a360-pill-dark">{{ inst.name }} באקדמיה 360</a>{% endif %}
           {% if researchers %}<a href="#r" class="a360-pill a360-pill-line">מי חוקר כאן</a>{% endif %}
+          <a href="{% url 'academia360:compare' %}?a={{ inst.slug }}" class="a360-pill a360-pill-line">להשוות למוסד אחר</a>
         </div>
       </div>
       {% if part %}
@@ -106,6 +107,7 @@
         <div class="a360-src">{% with metrics.0 as m0 %}מקור: {{ m0.source|default:"אתר הרפרנס" }}{% if m0.as_of %} · {{ m0.as_of|date:"m.Y" }}{% endif %}{% endwith %}</div>
       </div>
       {% endif %}
+      {% if collaborations %}<div class="a360-card a360-pad"><b>שותפים</b><div class="a360-rows">{% for c in collaborations %}<div class="a360-row a360-row-tight"><span dir="auto">{{ c.partner }}{% if c.description %} <span class="a360-mute">· {{ c.description|truncatechars:70 }}</span>{% endif %}</span><span class="a360-mute a360-small">{{ c.get_kind_display }}</span></div>{% endfor %}</div></div>{% endif %}
       {% if centers %}
       <div class="a360-card a360-pad"><b>מרכזים שכדאי להכיר</b><div class="a360-rows">{% for c in centers %}<div class="a360-row a360-row-tight"><span dir="auto">{{ c.name }}{% if c.focus %} <span class="a360-mute">· {{ c.focus|truncatechars:60 }}</span>{% endif %}</span></div>{% endfor %}</div></div>
       {% endif %}
@@ -114,8 +116,9 @@
         <ol class="a360-timeline">{% for t in timeline %}<li><span class="a360-num a360-year">{{ t.year }}</span><span dir="auto">{{ t.text }}</span></li>{% endfor %}</ol>
       </div>
       {% endif %}
-      <div class="a360-fix"><b>מצאתם טעות?</b><p>כל עובדה בעמוד נושאת מקור ותאריך. הצעת תיקון תיפתח כאן בקרוב.</p></div>
+      <div class="a360-fix"><b>מצאתם טעות?</b><p>כל עובדה בעמוד נושאת מקור ותאריך. <a href="#talk">הציעו תיקון</a>, והוא יגיע לוועדה.</p></div>
     </aside>
   </div>
 </section>
+{% include "academia360/_talk.html" %}
 {% endblock %}

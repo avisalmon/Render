@@ -1,0 +1,63 @@
+{% comment %}
+  The talk-back section (B.5), included at the foot of an institution's page
+  and a researcher's page. Context from academia360.talk.talk_context.
+{% endcomment %}
+<section id="talk" class="a360-band a360-band-white a360-talk">
+  <div class="a360-wrap a360-two">
+    <div>
+      <h2 class="a360-h2">לדבר בחזרה</h2>
+      <p class="a360-lede a360-mute">תגובה, לייק, או תיקון של עובדה שלא מדויקת כאן. התיקונים מגיעים לוועדה ומתקבלים אחרי בדיקה.</p>
+      <form method="post" action="{% url 'academia360:talk_like' %}" class="a360-like-form">
+        {% csrf_token %}
+        <input type="hidden" name="{{ talk_kind }}" value="{{ talk_target.slug }}"><input type="hidden" name="next" value="{{ talk_next }}#talk">
+        <button type="submit" class="a360-pill {% if talk_liked %}a360-pill-dark{% else %}a360-pill-line{% endif %}" aria-pressed="{% if talk_liked %}true{% else %}false{% endif %}">{% if talk_liked %}אהבתי{% else %}לייק{% endif %} <span class="a360-num">{{ talk_like_count }}</span></button>
+      </form>
+      {% if not user.is_authenticated %}<p class="a360-mute a360-small">הלייק, התגובה והתיקון מבקשים <a href="{% url 'academia360:login' %}?next={{ talk_next|urlencode }}%23talk">כניסה</a>.</p>{% endif %}
+    </div>
+    <div class="a360-stack a360-stack-tight">
+      <div class="a360-card a360-pad">
+        <h3 class="a360-h3">תגובות <span class="a360-mute a360-small">· {{ talk_comments|length }}</span></h3>
+        {% for c in talk_comments %}
+        <div class="a360-comment">
+          <div class="a360-small a360-mute"><b dir="auto">{{ c.author.first_name|default:c.author.email|default:"אורח" }}</b> · {{ c.created_at|date:"d.m.Y" }}</div>
+          <p dir="auto">{{ c.body|linebreaksbr }}</p>
+        </div>
+        {% empty %}
+        <p class="a360-mute a360-small">עוד אין תגובות. הראשונה יכולה להיות שלכם.</p>
+        {% endfor %}
+        {% if user.is_authenticated %}
+        <form method="post" action="{% url 'academia360:talk_comment' %}" class="a360-form a360-form-tight">
+          {% csrf_token %}
+          <input type="hidden" name="{{ talk_kind }}" value="{{ talk_target.slug }}"><input type="hidden" name="next" value="{{ talk_next }}#talk">
+          <label class="a360-field"><span>תגובה</span><textarea name="body" rows="3" maxlength="2000" required dir="auto" placeholder="מה חשבתם, מה חסר, מה מעניין"></textarea></label>
+          <div><button type="submit" class="a360-pill a360-pill-dark">לפרסם תגובה</button></div>
+        </form>
+        {% endif %}
+      </div>
+      {% if user.is_authenticated %}
+      <details class="a360-card a360-pad a360-correct">
+        <summary class="a360-h3">להציע תיקון לעובדה</summary>
+        <form method="post" action="{% url 'academia360:talk_correct' %}" class="a360-form a360-form-tight">
+          {% csrf_token %}
+          <input type="hidden" name="{{ talk_kind }}" value="{{ talk_target.slug }}"><input type="hidden" name="next" value="{{ talk_next }}#talk">
+          <label class="a360-field"><span>איזו עובדה</span>
+            <select name="field">
+              {% for f, label, current in talk_facts %}<option value="{{ f }}">{{ label }}{% if current %}: {{ current|truncatechars:40 }}{% endif %}</option>{% endfor %}
+              <option value="">משהו אחר בעמוד</option>
+            </select>
+          </label>
+          <label class="a360-field"><span>הערך הנכון</span><input type="text" name="proposed_value" maxlength="2000" required dir="auto"></label>
+          <label class="a360-field"><span>מאיפה זה ידוע (קישור או מקור)</span><input type="text" name="reason" maxlength="2000" dir="auto"></label>
+          <div><button type="submit" class="a360-pill a360-pill-dark">לשלוח לבדיקה</button></div>
+        </form>
+        {% if talk_mine %}
+        <div class="a360-rows a360-small">
+          {% for p in talk_mine %}<div class="a360-row a360-row-tight"><span dir="auto">{{ p.proposed_value|truncatechars:50 }}</span><span class="a360-status a360-status-{{ p.status }}">{{ p.get_status_display }}</span></div>{% endfor %}
+        </div>
+        <p class="a360-src"><a href="{% url 'academia360:me' %}">כל ההצעות שלי</a></p>
+        {% endif %}
+      </details>
+      {% endif %}
+    </div>
+  </div>
+</section>

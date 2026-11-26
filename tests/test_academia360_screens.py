@@ -112,6 +112,7 @@ def quiet(settings, tmp_path):
 def build_world():
     from academia360.models import (
         AcademicYear,
+        CorrectionProposal,
         Criterion,
         GuidelineSection,
         Institution,
@@ -120,6 +121,7 @@ def build_world():
         Participation,
         ProfileSection,
         Program,
+        PublicComment,
         ResearchCenter,
         Researcher,
         ResearcherLink,
@@ -185,13 +187,21 @@ def build_world():
     ProfileSection.objects.create(institution=technion, kind="overview", title="סקירה כללית",
                                   body="פסקה ראשונה על המוסד, ארוכה מספיק כדי להיראות כמו טקסט אמיתי בעמוד.\n\nפסקה שנייה עם עוד פרטים.",
                                   source="אתר הרפרנס", as_of=date(2025, 10, 1), order=2)
-    avi = User.objects.create_user("avi@example.com", "avi@example.com", PASSWORD, is_superuser=True, is_staff=True)
+    avi = User.objects.create_user("avi@example.com", "avi@example.com", PASSWORD, is_superuser=True, is_staff=True,
+                                   first_name="אבי")
     Role.objects.create(user=avi, kind=Role.ADMIN)
+    PublicComment.objects.create(author=avi, institution=technion, body="תגובה ראשונה על העמוד, עם משפט שני שמסביר למה.")
+    CorrectionProposal.objects.create(proposer=avi, model="academia360.Institution", row_id=str(technion.pk), field="founded",
+                                      current_value="1912", proposed_value="1924", reason="אתר הטכניון")
+    CorrectionProposal.objects.create(proposer=avi, model="academia360.Institution", row_id=str(technion.pk), field="city",
+                                      current_value="חיפה", proposed_value="חיפה, נשר", status="accepted")
     return {"technion": technion}
 
 
 SCREENS = [
     ("home", None, "/academia360/"), ("home-in", "avi", "/academia360/"),
+    ("institution-in", "avi", "/academia360/institutions/technion/"), ("me", "avi", "/academia360/me/"),
+    ("compare", None, "/academia360/compare/?a=technion&b=long&c=c1"), ("compare-empty", None, "/academia360/compare/"),
     ("program", None, "/academia360/program/"),
     ("institutions", None, "/academia360/institutions/"),
     ("institutions-filtered", None, "/academia360/institutions/?kind=university&q=%D7%97%D7%99%D7%A4%D7%94"),
