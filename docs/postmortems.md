@@ -17,6 +17,30 @@ Newest first.
 
 ---
 
+## PM-105 · 2026-11-26 · Academia360 ships (Epics A, B, C): the secret was set, the service never saw it
+
+**What happened.** After the train pushed, the agent token was written to
+Render's environment through its API. A memory note from the summer said
+that change redeploys the service by itself. It did not: the process kept
+its old environment and answered "bad token". The one-request probe run
+before the data replication caught it; a deploy was started through the API,
+the probe passed, and only then did 1919 rows and 108 files travel. Nothing
+reached Avi. The ship itself rode another chat's train (PM-13: any train
+carries any ready commit) after that chat merged origin/main in the shared
+tree; the merge renumbered the day's post-mortems and left two entries
+numbered mistake 78 in the methodology, fixed here (79, 80).
+
+**Why the process let it.** A note about a platform's side effects was
+trusted as a fact about today instead of being checked by one request.
+
+**Rule.** After setting a secret or a variable on the host, send one request
+that needs it and read the answer before any step depends on it. A note
+about a host's side effects is a hint to verify, not a step to skip; a note
+that proves wrong is corrected the same hour.
+
+Here: the memory note on the Render API corrected, [building_an_app.md](building_an_app.md) mistake 80
+BKM: FullStackBKM 5fc5d3d
+
 ## PM-104 · 2026-11-26 · breakout B.3 end: a one-line field drawn as a box, radios swallowed by a generic rule, a file named after a parent it did not know
 
 **What happened.** (1) The hint field is a `TextField` in the model, so the
@@ -76,7 +100,7 @@ on Windows goes as a script file run with `-X utf8`, or as `shell -c` with
 escapes, never through the shell's stdin.
 
 Here: `templates/academia360/manage/overview.html`, `templates/academia360/me.html`,
-`tests/test_academia360_c4.py`, [building_an_app.md](building_an_app.md) mistake 78
+`tests/test_academia360_c4.py`, [building_an_app.md](building_an_app.md) mistake 79
 BKM: FullStackBKM 062c4a2
 
 ## PM-102 · 2026-11-26 · breakout B.2 end: the kit's promise, tested on the content; a one-letter secret; a missing ignore line

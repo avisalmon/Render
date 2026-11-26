@@ -1541,7 +1541,7 @@ the page runs the phone screenshot. A file named after its parent is saved
 through a form whose instance already carries the parent. The test's
 stranger is a plain account, never the superuser.
 
-### 78. A template fallback is resolved whether or not it is needed
+### 79. A template fallback is resolved whether or not it is needed
 
 Academia360's admin overview chose between two relations with
 `{{ a.institution.name|default:a.researcher.name }}`. Django resolves the
@@ -1554,3 +1554,16 @@ with `default`'s argument. A page that lists rows of mixed shapes is tested
 with every shape on it at once. And Hebrew into a Django shell on Windows
 goes as a script file run with `-X utf8` or as `shell -c` with escapes, never
 through the shell's stdin, which mangles it.
+
+### 80. A secret set on the host is proven in the running service before anything leans on it
+
+After Academia360's first train, the agent token was written to the host's
+environment through its API; a months-old note said that change redeploys the
+service. It did not: the process kept its old environment and answered "bad
+token". A one-request probe run before the data replication caught it, a
+deploy was started by hand, and only then did the rows travel (PM-105).
+
+**The rule.** After setting a secret or a variable on the host, send one
+request that needs it and read the answer before any step depends on it. A
+note about a host's side effects is a hint to verify, not a step to skip; when
+it proves wrong, the note is corrected the same hour.
