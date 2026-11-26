@@ -1462,3 +1462,21 @@ file it reads must change, stop the run and start it again after. And a
 multi-line code patch is made with the file editor, never a shell heredoc
 (PM-1 said so; it was skipped because the patch looked small, and it
 mangled a regex into a control byte).
+
+### 74. Look at the phone page before calling a screen done; make what you find measurable
+
+Academia360's Epic A passed its screen contract at five phone widths and
+the first thing Avi said was that it did not open nicely on his phone: the
+bar wrapped into three ragged rows with the sign-in button alone on one,
+links drifted to the far side of the names, empty boxes left gaps (PM-97).
+The contract measured overflow, field sizes, tap targets and contrast; it
+cannot measure ugly.
+
+**The rule.** Before a screen is done: a full-page screenshot on a real
+phone profile at a narrow width (320 or 375) and a common one (390 or 412),
+and one on the desktop, opened and read top to bottom for wrapped bars,
+controls that drifted away from their text, empty boxes and lonely buttons.
+Every flaw found that way is turned into a line in the screen contract (the
+bar is at most two rows on a phone; brand and sign-in share a line), so the
+same flaw cannot come back unseen. Desktop is the priority; the phone is how
+Avi reviews from away, so both are looked at, not only measured.

@@ -13,7 +13,7 @@
           {% if part and part.applied %}<span class="a360-tag a360-tag-green">משתתף באקדמיה 360</span>{% elif part %}<span class="a360-tag a360-tag-line">לא ניגש למחזור תשפ״ה</span>{% endif %}
         </div>
         <h1 class="a360-h1" dir="auto">{{ inst.name_he }}</h1>
-        <div class="a360-mute a360-small a360-sub">{% if inst.name_en %}<span dir="ltr">{{ inst.name_en }}</span> · {% endif %}{% if inst.founded %}נוסד {{ inst.founded }} · {% endif %}{% if inst.website %}<a href="{{ inst.website }}" rel="noopener" dir="ltr">{{ inst.website|cut:"https://"|cut:"http://"|cut:"www."|cut:"/" }}</a>{% endif %}</div>
+        <div class="a360-mute a360-small a360-sub a360-sub-row">{% if inst.name_en %}<span dir="ltr">{{ inst.name_en }}</span>{% endif %}{% if inst.founded %}<span>נוסד {{ inst.founded }}</span>{% endif %}{% if inst.website %}<a href="{{ inst.website }}" rel="noopener" dir="ltr">{{ inst.website|cut:"https://"|cut:"http://"|cut:"www."|cut:"/" }}</a>{% endif %}</div>
         {% if inst.identity %}<p class="a360-lede a360-narrow" dir="auto">{{ inst.identity }}</p>{% endif %}
         <div class="a360-actions">
           {% if program_sections %}<a href="#a360" class="a360-pill a360-pill-dark">{{ inst.name }} באקדמיה 360</a>{% endif %}
@@ -63,10 +63,10 @@
           {% for r in researchers %}
           <div class="a360-row">
             <div class="a360-row-main"><b dir="auto">{% if r.title %}{{ r.title }} {% endif %}{{ r.name_he }}</b><div class="a360-mute a360-small" dir="auto">{% if r.unit %}{{ r.unit.name }}{% if r.areas %} · {% endif %}{% endif %}{{ r.areas }}</div></div>
-            <div class="a360-row-end">
+            {% if r.h_index or r.citations or r.links.all %}<div class="a360-row-end">
               {% if r.h_index or r.citations %}<div class="a360-small">{% if r.h_index %}h-index <span class="a360-num">{% if r.h_index.approximate %}≈{% endif %}{{ r.h_index.value }}</span>{% endif %}{% if r.citations %}{% if r.h_index %} · {% endif %}<span class="a360-num">{{ r.citations.value }}</span> ציטוטים{% endif %}</div>{% endif %}
               <div class="a360-src">{% for l in r.links.all %}<a href="{{ l.url }}" rel="noopener">{{ l.get_kind_display }}</a>{% if not forloop.last %} · {% endif %}{% endfor %}{% if r.h_index.as_of %}{% if r.links.all %} · {% endif %}{{ r.h_index.as_of|date:"m.Y" }}{% endif %}</div>
-            </div>
+            </div>{% endif %}
           </div>
           {% endfor %}
         </div>

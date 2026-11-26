@@ -17,6 +17,34 @@ Newest first.
 
 ---
 
+## PM-97 · 2026-11-26 · "It did not open nicely on the phone": the contract measured, nobody looked
+
+**What happened.** Avi's first word on Academia360's Epic A was that the
+style is right but it did not open nicely on his phone. The app's bar at
+phone width wrapped into three ragged rows (brand and tabs, then the
+sign-in button alone, a fifth of the screen), researcher links floated to
+the far side of the name, and an empty link box left a gap under every
+name. The screen contract had passed at five phone widths: it measured
+overflow, 16px fields, 44px targets, labels and contrast, and none of those
+was broken. The phone screenshots it wrote were looked at once, at one
+width, after the fact.
+
+**Why the process let it.** The contract checks what can be measured
+without taste; layout that is merely ugly passes it. The rule "desktop
+first, phone very good" had no step that makes someone look at a full
+phone page before the epic review.
+
+**Rule.** Before any screen is called done: a full-page screenshot on a
+real phone profile (a narrow one, 320 or 375, and a common one, 390 or
+412), opened and read top to bottom, looking for wrapped bars, controls
+that drifted to the far side, empty boxes and lonely buttons; the same on
+the desktop. And every layout flaw found that way becomes a measurable
+line in the screen contract, so it cannot return (here: the bar is at most
+two rows on a phone, its brand and sign-in on the same line).
+
+Here: `docs/building_an_app.md` (mistake 74), `tests/test_academia360_screens.py`
+BKM: FullStackBKM 178de07
+
 ## PM-96 · 2026-11-26 · Editing code while its test run was still going
 
 **What happened.** During Academia360's Epic A a long suite (ten minutes:

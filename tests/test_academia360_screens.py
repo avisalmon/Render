@@ -35,6 +35,10 @@ OVERFLOW_JS = """(w) => [...document.querySelectorAll('body *')].filter(el => {
     return r.height > 0 && r.width > 0 && (r.right > w + 1 || r.left < -1);
   }).slice(0, 5).map(el => el.tagName.toLowerCase() + '.' + String(el.className && el.className.baseVal !== undefined ? el.className.baseVal : el.className || '').split(' ')[0] + ' ' + Math.round(el.getBoundingClientRect().right))"""
 
+BAR_JS = """() => { const r = s => (document.querySelector(s) || document.body).getBoundingClientRect();
+    const a = document.querySelector('.a360-account .a360-pill, .a360-account button');
+    return {height: r('.a360-bar').height, brand_top: r('.a360-brand').top, account_top: (a ? a.getBoundingClientRect() : r('.a360-brand')).top}; }"""
+
 SMALL_FIELDS_JS = """() => [...document.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio]), select, textarea')]
     .filter(e => parseFloat(getComputedStyle(e).fontSize) < 16).map(e => e.name || e.className)"""
 
@@ -108,8 +112,10 @@ def build_world():
     from academia360.models import (
         AcademicYear,
         Criterion,
+        GuidelineSection,
         Institution,
         InstitutionMetric,
+        KpiDefinition,
         Participation,
         ProfileSection,
         Program,
@@ -123,7 +129,10 @@ def build_world():
         Unit,
     )
 
-    program = Program.objects.create(slug="academia-360", name="אקדמיה 360", short_name="אקדמיה 360")
+    program = Program.objects.create(slug="academia-360", name="אקדמיה 360", short_name="אקדמיה 360",
+                                     total_budget_nis=200_000_000, year_from=2024, year_to=2028,
+                                     official_url="https://che.org.il/decision/x/",
+                                     description="אקדמיה 360 מזמינה כל מוסד מתוקצב לבנות אסטרטגיה רב־שנתית לעדכון תכניות הלימוד לתואר ראשון.")
     AcademicYear.objects.create(program=program, hebrew_name="תשפ״ה", gregorian_from=2024, gregorian_to=2025)
     for i, (slug, name, colour) in enumerate([
         ("innovation", "חדשנות בהוראה", "#63BAC5"), ("employability", "תעסוקתיות", "#F6C21A"),
@@ -131,6 +140,18 @@ def build_world():
         ("measurement", "מדדי ביצוע והערכת תוצאות", "#323435"), ("formal", "עמידה בדרישות פורמליות", ""),
     ]):
         Criterion.objects.create(program=program, slug=slug, name=name, order=i, colour=colour)
+    GuidelineSection.objects.create(program=program, order=0, title="1. רקע כללי",
+                                    body="תוכנית **אקדמיה 360** היא יוזמה אסטרטגית של ות״ת ומל״ג.\n\n"
+                                         "- פתוחה לכל מוסד מתוקצב.\n- תכנית ארבע־שנתית.")
+    GuidelineSection.objects.create(program=program, order=1, title="2. קריטריונים עיקריים",
+                                    body="| תחום קריטריון | תיאור |\n|---|---|\n"
+                                         "| **חדשנות בהוראה** | שילוב שיטות הוראה עדכניות, למידה מבוססת פרויקטים, הוראה דיגיטלית, פיתוח קורסים חוצי־תחומים. |\n"
+                                         "| **תעסוקתיות** | התנסות מעשית, קשר למעסיקים, הכנה לעולם העבודה. |")
+    GuidelineSection.objects.create(program=program, order=2, title="3. מקורות",
+                                    body="- [החלטת ות״ת](https://che.org.il/decision/%D7%AA%D7%9B%D7%A0%D7%99%D7%AA-%D7%90%D7%A7%D7%93%D7%9E%D7%99%D7%94-360-%D7%A9%D7%9C-%D7%95%D7%AA%D7%AA-%D7%9C%D7%A7%D7%99%D7%93%D7%95%D7%9D/)")
+    for i, (name, how) in enumerate([("מספר תכניות הלימוד לתואר ראשון שעודכנו", "על פי תו התקן המוסדי"),
+                                     ("מספר הסטודנטים שעשו התנסות כחלק מתוכנית הלימודים", "בהיקף של לפחות 100 שעות")]):
+        KpiDefinition.objects.create(program=program, name=name, is_mandatory=True, order=i, how_measured=how)
     long_name = "המכללה האקדמית להנדסה ולעיצוב עם שם ארוך במיוחד שנמשך ונמשך על פני שורה שלמה"
     technion = Institution.objects.create(
         slug="technion", name_he="הטכניון – מכון טכנולוגי לישראל", short_name_he="הטכניון",
@@ -170,6 +191,7 @@ def build_world():
 
 SCREENS = [
     ("home", None, "/academia360/"), ("home-in", "avi", "/academia360/"),
+    ("program", None, "/academia360/program/"),
     ("institutions", None, "/academia360/institutions/"),
     ("institutions-filtered", None, "/academia360/institutions/?kind=university&q=%D7%97%D7%99%D7%A4%D7%94"),
     ("institution", None, "/academia360/institutions/technion/"),
@@ -221,6 +243,12 @@ def _check(page, name, width, problems):
             problems.append(f"{name}@{width}: {label} {found}")
     if page.evaluate("document.documentElement.scrollWidth") > width:
         problems.append(f"{name}@{width}: page wider than the screen")
+    if width < 700:
+        # PM-97: on a phone the bar is two tidy rows at most (brand and sign-in
+        # on one line, the tabs under them), never a ragged stack.
+        bar = page.evaluate(BAR_JS)
+        if bar["height"] > 110 or abs(bar["brand_top"] - bar["account_top"]) > 8:
+            problems.append(f"{name}@{width}: the bar wraps badly {bar}")
 
 
 def test_every_screen_holds_on_the_narrowest_phones_and_a_desktop(browser, live_server):

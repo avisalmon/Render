@@ -54,7 +54,33 @@ Open points carried into A (answered as reached): data model §12 (1 to 6);
 the admin overview's content (spec 2.6.7); official app or own product for
 the "more on babook" menu.
 
-## Epics B to J
+## Epic A, after the review (2026-11-26)
+
+Avi's verdict: the style is right ("הסגנון טוב אז תתקדם"); it did not open
+nicely on his phone. A.6 answers that before B begins.
+
+| Sprint | Scope | Tests | Status |
+| --- | --- | --- | --- |
+| A.6 The phone pass | The bar at phone width is two tidy rows (brand and sign-in, then the tabs); researcher links sit under the name, never across from it, and vanish when empty; the institution's English name, year and site as spaced spans; action pills may wrap; every public page read top to bottom on iPhone SE and Pixel 7 profiles and on the desktop | the screen contract gains the bar rule (PM-97); 7 screen and page tests green | built in dev |
+
+## Epic B. The rest of the public site
+
+Scope: spec 4.1 beyond the front door. Every sprint: desktop first, then
+the phone pass of A.6 (both profiles, read top to bottom), then the
+contract. What the data does not yet carry (programs by field, campuses,
+year series, timelines) is left to Epic I rather than faked.
+
+| Sprint | Scope | Tests | Status |
+| --- | --- | --- | --- |
+| B.1 The program | `/academia360/program/`: what the program is and its goals (the Program row), the eleven review domains with the five headline criteria in colour, the ten guideline sections readable in place, the five mandatory KPIs with how each is measured, the timeline, the official sources; the home links into it; guideline and criterion text searchable | page open to all; public-circle rows only; every section shows when its rows exist and hides when they do not; the search finds a guideline sentence | planned |
+| B.2 The map and the list | `/academia360/institutions/` gains a map of the country (Leaflet, pinned version, OSM tiles, markers by kind, a marker's popup links to the page) above the list, a region filter next to kind, and the institutions' coordinates (`Institution.lat`, `lng`, `region`, seeded by city in the import; data_model §7 updated) | coordinates seeded idempotently for every city; the region filter; a page with no coordinates still renders; the map is a progressive layer (the list stands without JS) | planned |
+| B.3 Researchers | `/academia360/researchers/` across institutions (filter by institution and kind, search by name and area, grouped by area words) and `/academia360/researchers/<slug>/` with the profile, dated metrics, links, unit and institution; the institution page links each name | public rows only, `verified` shown, the metric's date and source on the page, an unknown slug is the app's own 404 | planned |
+| B.4 The institution page, completed | Collaborations and research centers as sections; metrics as sentences with year and source (one year, no chart; the chart arrives with the year series in Epic I); a "compare" link; comments and corrections entry points (B.5) | sections appear only with rows; sources on every number | planned |
+| B.5 Talk back | Signed-in visitors comment and like on an institution's page and a researcher's page, and propose a correction on any fact (a short form: what is wrong, the right value, the source); `/academia360/me/` lists one's own proposals and their status; anonymous visitors see the comments and a sign-in invitation; the committee's and admin's decisions on corrections stay in the API (C and D2 build their screens) | anonymous cannot post (401/redirect), a signed-in person posts and sees their own status, a chair's decision shows on the proposer's page, every write in the ChangeLog, dir="auto" on typed text | planned |
+| B.6 Compare | `/academia360/compare/?a=&b=&c=`: two or three institutions side by side on public facts: kind, city, founded, participation, student and faculty numbers with year, units, programs, researchers, collaborations; chosen from the list page | two and three, a missing slug ignored, numbers with their year, nothing from the institution or committee circles | planned |
+| B.7 Search and the epic's end | Plain search widened to programs, researchers, guideline and criterion text, grouped by kind with counts; then the epic's end: the full app suite, `manage.py check`, the security sweep for what B added, bkm_drift, the review with Avi | search finds each kind; nothing private in results for anonymous; the whole suite green | planned |
+
+## Epics C to J
 
 Written as sprints when their turn comes; their scope is spec chapter 4 and
 the order is spec chapter 6.
