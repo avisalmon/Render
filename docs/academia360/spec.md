@@ -201,8 +201,13 @@ them.
 6. **Public corrections are visible to committee members**, but only the
    admin or a committee chair can accept one and change the public profile.
 7. **The admin has an overview** of the whole system (people, roles,
-   institutions, what is waiting). *Avi's words here were cut off; to
-   confirm what this view should show.*
+   institutions, what is waiting). *Avi's words here were cut off.* Built in
+   Epic C (C.5, `/academia360/manage/`) to 4.5 "Overview" as written: people
+   and roles in one sentence, institutions that applied and have no leader,
+   participations by state, what waits on whom (requests, corrections,
+   submissions with no review), what the public sent in lately with "hide"
+   on a comment, the agent's last runs, AI spend today. Avi confirms or
+   changes it at the Epic C review.
 
 ---
 

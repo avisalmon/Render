@@ -176,8 +176,13 @@ def me(request):
         p.field_label = labels.get(p.field, "אחר")
     comments = list(PublicComment.objects.filter(author=request.user).select_related("institution", "researcher")
                     .order_by("-created_at")[:50])
+    from . import people
+    from .models import RoleRequest
+
     return render(request, "academia360/me.html", {
         "section": "me", "proposals": proposals, "comments": comments,
         "likes": Like.objects.filter(user=request.user).count(),
+        "roles_line": people.role_sentence(request.user),
+        "requests": list(RoleRequest.objects.filter(user=request.user).select_related("institution").order_by("-created_at")),
     })
 

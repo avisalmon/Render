@@ -77,7 +77,7 @@ Circle: **committee** (the admin sees it all; a person sees their own).
 | **Role** | One role a person holds in this app. A person may hold several; the higher one wins (spec 2.6.1). The app's own model, one-to-many to the site's shared `User`; it never adds fields to `User` | user, kind: `admin` / `committee` / `leader`, granted_by, granted_at, active |
 | **CommitteeAttribute** | A mark on a committee member: `chair` (decides) or `reviewer` of one institution (the split in the reference). Attributes, not roles (spec 2.6.2 and 2.6.3) | user, kind: `chair` / `reviewer`, institution (reviewers only), program, since |
 | **LeaderOf** | Links a program leader to their institution. Several leaders per institution are allowed (2.6.4); a leader of two institutions is two rows | user, institution, title as shown (e.g. "סגנית נשיא לעניינים אקדמיים"), active |
-| **Invitation** | A role granted to an email before the person has an account, redeemed on first sign-in | email, role kind, institution (for leaders), token, sent_at, accepted_at, sent_by |
+| **Invitation** | A role granted to an email before the person has an account, redeemed by whoever is signed in when the link is opened (the link is the secret); 14 days; the redeemer may open it again, nobody else (Epic C) | email, role kind, institution and title (for leaders), token, sent_at (last time the backend accepted the mail), accepted_at, accepted_by, sent_by |
 | **PublicProfile** | What a signed-in member of the public may set: a display name for comments | user, display_name |
 
 Signed-in people with no `Role` row are the public. Anonymous visitors are

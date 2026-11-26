@@ -13,7 +13,7 @@
 | **D. Design** | One deep direction (Campus IL leads), approved by Avi, rules in spec ch. 5 | in progress |
 | **A. Foundation and the public front door** | The app, the data, the API, the agent's door, the import, and the public home and institution pages live on babook.co.il | built in dev; reviewed 2026-11-26 (style approved, phone pass A.6); not shipped |
 | B. The rest of the public site | The program page, map and list, researchers, compare, comments and corrections, search (programs by field wait for data, Epic I) | built in dev, awaiting Avi's epic review |
-| C. People | Sign-in in the app's look, requests to join, approval queue, roles, admin overview | planned |
+| C. People | Sign-in in the app's look, requests to join, approval queue, invitations, roles, admin overview | in progress (2026-11-26) |
 | D2. Committee file and flow dashboard | Submissions, files, extracts, analysis, review form, dashboard | planned |
 | E. Discussion, decision, letters | Threads, meetings and summaries, decision, letters, notifications | planned |
 | F. Leader's workspace | Home, submit, KPIs, budget, 20%, letters | planned |
@@ -88,7 +88,26 @@ HTML headings as people ("🎨 אמנות חזותית ואיור" at Bezalel); 
 researchers carry a metric, 84 a link; `StudyProgram.field` is empty for
 all 29 rows; `InstitutionMetric` has one year per key, so no series.
 
-## Epics C to J
+## Epic C. People
+
+Spec 2.2 to 2.6, 4.5 and 4.8. The rule the whole epic stands on (methodology
+53 and 55): every path that gives a person access goes through one function
+in `academia360/people.py`, which writes the rows, logs the change and sends
+the one mail, and a screen says "sent" only from the backend's own count.
+The admin's screens live under `/academia360/manage/` (not `/admin/`, which
+is Django's). Admin screens are drawn in the committee room's restraint
+(spec 5.3): greys, dense rows, flat tables, no arcs.
+
+| Sprint | What it delivers | Tests | Status |
+| --- | --- | --- | --- |
+| C.1 Ask to join | `/academia360/join/`: a signed-in person asks to be a program leader (their institution and title) or a committee member (who they are), with a message; anonymous visitors sign in first and come back; one open request per kind; the request is mailed to the admin; `/me/` shows the person's roles and requests with their status; the home page's doors and the sign-in page point at it | anonymous redirected and returned; a request lands and one mail leaves; a second open request of the same kind is refused; `/me/` shows status; a stranger's request never shows | built in dev (`tests/test_academia360_c1.py`, 5) |
+| C.2 People, one function per act | `people.py`: grant and revoke a role, set and clear chair and reviewer, link a leader to an institution, approve or decline a request; each writes, logs and mails through `mail.py`; `RoleGrantView` and the CLI call the same functions; `POST api/admin/requests/<pk>/decide/` for the chat; a plain PATCH of a request's status through the generic API is refused with the pointer | a mail per path, counted; the backend refusing reads "not sent"; approve grants the role and mails the person; decline mails the word; the API refusals | built in dev (`tests/test_academia360_c2.py`, 8; the role API's a3 tests still pass) |
+| C.3 Invitations | Invite by email a person who has no account: an `Invitation` with a token and a 14-day life, mailed with its link; the link page offers Google sign-in or a password account in the app's look (made only from a valid invitation, email fixed to the invited one); ownership first (the person who redeemed it may open it again), validity second; redeeming grants the role through C.2 | owner's second visit is a no-op; a stranger's is refused; expired refused; the account is made with the invited email and no flags; the role lands and the admin is told | built in dev (`tests/test_academia360_c3.py`, 6; migration 0004 adds `accepted_by`, `title`) |
+| C.4 The admin's people screen | `/academia360/manage/people/`: the queue of open requests (approve, or decline with a word), everyone with a role grouped (admins; committee members with chair and reviewed institutions; leaders by institution with title), grant by email, invite, revoke, mark chair, assign a reviewer; every form posts to C.2 | admin only (committee and leaders get "no access"); each form through the browser once; the screen contract at every width | built in dev (`tests/test_academia360_c4.py`) |
+| C.5 The admin overview | `/academia360/manage/`: people and roles in a sentence, institutions with and without a leader, participations by state, what is waiting on whom (open requests, open corrections, submissions with no review yet), what the public sent in lately with "hide" on a comment, what the agent did lately (`AgentRun`), AI spend today; the bar shows "ניהול" to the admin. Built to spec 4.5 as written; Avi's own words on it were cut off and he confirms or changes it at the epic review | admin only; every number read against the seed; hide works and is logged | built in dev (`tests/test_academia360_c4.py`); the bar shows ניהול to the admin as a yellow tab |
+| C.6 The epic's end | The screen contract for every new screen, the whole app suite, `manage.py check`, the security sweep for what C added (forms, mails, the signup door, redirects), bkm_drift, the review with Avi | the whole suite green | planned |
+
+## Epics D2 to J
 
 Written as sprints when their turn comes; their scope is spec chapter 4 and
 the order is spec chapter 6.

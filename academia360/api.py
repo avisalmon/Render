@@ -17,7 +17,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from . import access
+from . import access, people
 from .agent_auth import AgentTokenAuthentication
 from .models import (
     PUBLIC,
@@ -25,9 +25,9 @@ from .models import (
     ChangeLog,
     CommitteeAttribute,
     Institution,
-    LeaderOf,
-    Program,
+    Invitation,
     Role,
+    RoleRequest,
 )
 
 AUTH = [AgentTokenAuthentication, authentication.SessionAuthentication]
@@ -129,9 +129,18 @@ class CircleViewSet(viewsets.ModelViewSet):
     permission_classes = [CirclePermission]
 
     def get_queryset(self):
-        return access.visible(self.queryset.all(), self.request.user)
+        rows = access.visible(self.queryset.all(), self.request.user)
+        # ?field=value on a concrete field narrows the list (the CLI's
+        # `list route --q kind=university`, `requests --status open`).
+        names = {f.name for f in self.queryset.model._meta.concrete_fields}
+        for key, value in self.request.query_params.items():
+            if key in names and value != "":
+                rows = rows.filter(**{key: value})
+        return rows
 
     def perform_create(self, serializer):
+        if serializer.Meta.model is Invitation:
+            raise PermissionDenied("an invitation is made through api/admin/invitations/, which mails its link")
         # Saved inside a transaction and checked again with the row, so a
         # leader cannot plant a row in another institution's package: the
         # refusal rolls the insert back.
@@ -144,10 +153,15 @@ class CircleViewSet(viewsets.ModelViewSet):
             if touched:
                 raise PermissionDenied(f"only a chair sets {sorted(touched)}")
             log_change(self.request, instance)
+        if isinstance(instance, RoleRequest):
+            people.announce_request(instance)  # a request through the API reaches the admin like any other
 
     def perform_update(self, serializer):
         if not access.may_write(self.request.user, type(serializer.instance), serializer.instance):
             raise PermissionDenied
+        if isinstance(serializer.instance, RoleRequest) and (
+                serializer.validated_data.get("status", serializer.instance.status) != serializer.instance.status):
+            raise PermissionDenied("a request is decided through api/admin/requests/<pk>/decide/, which grants and mails")
         before = _snapshot(serializer.instance)
         with transaction.atomic():
             instance = serializer.save()
@@ -208,7 +222,9 @@ class RoleGrantView(APIView):
     leader) or an attribute (chair, reviewer) for an account that already
     exists. It never creates an account and never touches password, staff or
     superuser flags; such keys in the body are ignored. The one admin act the
-    agent's token may do (spec 3.4)."""
+    agent's token may do (spec 3.4). Everything goes through people.py, so
+    the person is mailed like from any other door, and `mailed` in the
+    answer is the backend's own count."""
 
     authentication_classes = AUTH
     permission_classes = [AdminOrAgent]
@@ -223,84 +239,80 @@ class RoleGrantView(APIView):
         email = (data.get("email") or "").strip()
         if action not in ("grant", "revoke") or kind not in self.KINDS or not email:
             return Response({"detail": "action, kind and email are required"}, status=status.HTTP_400_BAD_REQUEST)
-        User = get_user_model()
-        user = User.objects.filter(email__iexact=email).order_by("pk").first() or \
-            User.objects.filter(username__iexact=email).first()
+        user = people.find_account(email)
         if user is None:
-            return Response({"detail": "no such account; the person signs up first"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"detail": "no such account; the person signs up first, or use api/admin/invitations/"},
+                            status=status.HTTP_404_NOT_FOUND)
         institution = None
         if data.get("institution"):
             institution = Institution.objects.filter(pk=data["institution"]).first()
             if institution is None:
                 return Response({"detail": "no such institution"}, status=status.HTTP_404_NOT_FOUND)
-        with transaction.atomic():
-            if kind in ("admin", "committee", "leader"):
-                result = self._role(request, user, self.KINDS[kind], action, institution, data.get("title") or "")
-            else:
-                result = self._attribute(request, user, self.KINDS[kind], action, institution)
-        if isinstance(result, Response):
-            return result
-        return Response({"ok": True, "user": user.get_username(), "kind": kind, "action": action,
-                         "roles": sorted(access.roles(User.objects.get(pk=user.pk)))})
-
-    def _role(self, request, user, kind, action, institution, title):
-        if kind == Role.LEADER and institution is None:
-            return Response({"detail": "a leader needs an institution"}, status=status.HTTP_400_BAD_REQUEST)
-        role = Role.objects.filter(user=user, kind=kind).first()
-        if action == "grant":
-            if role is None:
-                role = Role.objects.create(user=user, kind=kind, granted_by=request.user, active=True)
-                log_change(request, role)
-            elif not role.active:
-                before = _snapshot(role)
-                role.active = True
-                role.save(update_fields=["active"])
-                log_change(request, role, before=before)
-            if kind == Role.LEADER:
-                lead, created = LeaderOf.objects.get_or_create(user=user, institution=institution,
-                                                               defaults={"title": title, "active": True})
-                if created:
-                    log_change(request, lead)
-                elif not lead.active or (title and lead.title != title):
-                    before = _snapshot(lead)
-                    lead.active, lead.title = True, title or lead.title
-                    lead.save(update_fields=["active", "title"])
-                    log_change(request, lead, before=before)
+        agent = bool(getattr(request, "a360_agent", False))
+        reason = (request.headers.get("X-A360-Reason") or "")[:300]
+        if kind in ("admin", "committee", "leader"):
+            fn = people.grant_role if action == "grant" else people.revoke_role
+            kwargs = {"title": data.get("title") or ""} if action == "grant" else {}
+            done = fn(request.user, user, self.KINDS[kind], institution=institution, agent=agent, reason=reason, **kwargs)
         else:
-            if kind == Role.LEADER and institution is not None:
-                for lead in LeaderOf.objects.filter(user=user, institution=institution, active=True):
-                    before = _snapshot(lead)
-                    lead.active = False
-                    lead.save(update_fields=["active"])
-                    log_change(request, lead, before=before)
-                if LeaderOf.objects.filter(user=user, active=True).exists():
-                    return None  # still leads somewhere else: the role stays
-            if role is not None and role.active:
-                before = _snapshot(role)
-                role.active = False
-                role.save(update_fields=["active"])
-                log_change(request, role, before=before)
-        return None
+            fn = people.set_attribute if action == "grant" else people.clear_attribute
+            done = fn(request.user, user, self.KINDS[kind], institution=institution, agent=agent, reason=reason)
+        if not done.ok:
+            return Response({"detail": done.what}, status=done.status)
+        User = get_user_model()
+        return Response({"ok": True, "user": user.get_username(), "kind": kind, "action": action, "what": done.what,
+                         "mailed": done.mailed, "roles": sorted(access.roles(User.objects.get(pk=user.pk)))})
 
-    def _attribute(self, request, user, kind, action, institution):
-        if not Role.objects.filter(user=user, kind=Role.COMMITTEE_MEMBER, active=True).exists():
-            return Response({"detail": "an attribute sits on a committee member; grant committee first"},
-                            status=status.HTTP_400_BAD_REQUEST)
-        if kind == CommitteeAttribute.REVIEWER and institution is None:
-            return Response({"detail": "a reviewer needs an institution"}, status=status.HTTP_400_BAD_REQUEST)
-        program = Program.objects.order_by("pk").first()
-        if program is None:
-            return Response({"detail": "no program yet"}, status=status.HTTP_400_BAD_REQUEST)
-        keys = dict(user=user, kind=kind, program=program, institution=institution)
-        if action == "grant":
-            attr, created = CommitteeAttribute.objects.get_or_create(**keys)
-            if created:
-                log_change(request, attr)
-        else:
-            for attr in CommitteeAttribute.objects.filter(**keys):
-                log_change(request, attr, deleted=True)
-                attr.delete()
-        return None
+
+class RequestDecideView(APIView):
+    """POST /academia360/api/admin/requests/<pk>/decide/ with {decision:
+    approve|decline, note?}: the chat's way to work the queue. Approving
+    grants the role and mails the person; declining mails the note."""
+
+    authentication_classes = AUTH
+    permission_classes = [AdminOrAgent]
+
+    def post(self, request, pk):
+        row = RoleRequest.objects.filter(pk=pk).select_related("user", "institution").first()
+        if row is None:
+            return Response({"detail": "no such request"}, status=status.HTTP_404_NOT_FOUND)
+        data = request.data if isinstance(request.data, dict) else {}
+        decision = data.get("decision")
+        if decision not in ("approve", "decline"):
+            return Response({"detail": "decision is approve or decline"}, status=status.HTTP_400_BAD_REQUEST)
+        done = people.decide_request(request.user, row, decision == "approve", note=data.get("note") or "",
+                                     agent=bool(getattr(request, "a360_agent", False)))
+        if not done.ok:
+            return Response({"detail": done.what}, status=done.status)
+        return Response({"ok": True, "request": row.pk, "status": row.status, "what": done.what, "mailed": done.mailed})
+
+
+class InviteView(APIView):
+    """POST /academia360/api/admin/invitations/ with {email, kind,
+    institution?, title?}: invites an address with no account (an
+    Invitation and its mail), or grants directly when the account exists.
+    The only way an Invitation is made: the generic route refuses creates,
+    because the token and the mail come from here."""
+
+    authentication_classes = AUTH
+    permission_classes = [AdminOrAgent]
+
+    def post(self, request):
+        data = request.data if isinstance(request.data, dict) else {}
+        kind = RoleGrantView.KINDS.get(data.get("kind") or "")
+        if kind not in (Role.ADMIN, Role.COMMITTEE_MEMBER, Role.LEADER):
+            return Response({"detail": "kind is admin, committee or leader"}, status=status.HTTP_400_BAD_REQUEST)
+        institution = Institution.objects.filter(pk=data.get("institution") or 0).first() if data.get("institution") else None
+        done = people.invite(request.user, data.get("email") or "", kind, institution=institution,
+                             title=data.get("title") or "", agent=bool(getattr(request, "a360_agent", False)),
+                             reason=(request.headers.get("X-A360-Reason") or "")[:300])
+        if not done.ok:
+            return Response({"detail": done.what}, status=done.status)
+        body = {"ok": True, "what": done.what, "mailed": done.mailed, **done.extra}
+        if isinstance(done.row, Invitation):
+            body["invitation"] = done.row.pk
+            body["link"] = people.invitation_link(done.row)
+        return Response(body, status=status.HTTP_201_CREATED)
 
 
 # ------------------------------------------- replication: dev rows to prod

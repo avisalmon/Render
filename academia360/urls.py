@@ -3,8 +3,8 @@
 from django.urls import include, path
 from rest_framework import permissions, routers
 
-from . import auth_views, talk, views
-from .api import ROUTES, ReplicateFileView, ReplicateView, RoleGrantView
+from . import auth_views, doors, manage, talk, views
+from .api import ROUTES, InviteView, ReplicateFileView, ReplicateView, RequestDecideView, RoleGrantView
 
 app_name = "academia360"
 
@@ -33,6 +33,11 @@ urlpatterns = [
     path("institutions/", views.institutions, name="institutions"),
     path("search/", views.search, name="search"),
     path("me/", talk.me, name="me"),
+    path("join/", doors.join, name="join"),
+    path("invite/<str:token>/", doors.invite, name="invite"),
+    path("manage/", manage.overview, name="manage"),
+    path("manage/people/", manage.people_page, name="manage_people"),
+    path("manage/act/", manage.act, name="manage_act"),
     path("compare/", views.compare, name="compare"),
     path("talk/comment/", talk.comment, name="talk_comment"),
     path("talk/like/", talk.like, name="talk_like"),
@@ -44,6 +49,8 @@ urlpatterns = [
     path("letters/<int:pk>/file/", views.letter_file, name="letter_file"),
     # Before the router, whose `roles/<pk>/` would otherwise swallow "grant".
     path("api/roles/grant/", RoleGrantView.as_view(), name="api_roles_grant"),
+    path("api/admin/requests/<int:pk>/decide/", RequestDecideView.as_view(), name="api_request_decide"),
+    path("api/admin/invitations/", InviteView.as_view(), name="api_invite"),
     path("api/admin/replicate/", ReplicateView.as_view(), name="api_replicate"),
     path("api/admin/replicate/file/<str:model>/<int:pk>/", ReplicateFileView.as_view(), name="api_replicate_file"),
     path("api/", include(router.urls)),

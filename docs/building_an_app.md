@@ -1507,3 +1507,17 @@ every string with the class prefix in the script (PM-99).
 template filter or the stylesheet. A class sweep over a script matches the
 calls that apply a class (`classList.add/remove/toggle`), never every
 string that starts with the prefix.
+
+### 78. A template fallback is resolved whether or not it is needed
+
+Academia360's admin overview chose between two relations with
+`{{ a.institution.name|default:a.researcher.name }}`. Django resolves the
+filter's argument first, so a row whose `researcher` is None raised inside
+the template and the page failed; the line had sat in another page since the
+epic before, where no test rendered both shapes of row at once (PM-101).
+
+**The rule.** Choose between two relations with an explicit `{% if %}`, never
+with `default`'s argument. A page that lists rows of mixed shapes is tested
+with every shape on it at once. And Hebrew into a Django shell on Windows
+goes as a script file run with `-X utf8` or as `shell -c` with escapes, never
+through the shell's stdin, which mangles it.

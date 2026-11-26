@@ -1,0 +1,30 @@
+{% extends "academia360/base.html" %}
+{% block title %}הזמנה · אקדמיה 360°{% endblock %}
+{% block content %}
+<section class="a360-band">
+  <div class="a360-wrap a360-door-wrap">
+    <div class="a360-card a360-pad-lg">
+      <h1 class="a360-h1 a360-h1-page">הזמנה לאקדמיה 360°</h1>
+      {% if refusal %}
+        <p class="a360-error" role="alert">{{ refusal }}</p>
+        <p class="a360-actions"><a class="a360-pill a360-pill-line" href="{% url 'academia360:home' %}">לדף הבית</a></p>
+      {% else %}
+        <p class="a360-lede">הוזמנתם בתפקיד <b>{{ word }}</b>, לכתובת <span class="a360-num" style="font-weight:600">{{ row.email }}</span>. הקישור תקף 14 ימים ופותח את הגישה פעם אחת, למי שנכנס איתו.</p>
+        <h2 class="a360-h3" style="margin-top:22px">כבר יש לכם חשבון באתר?</h2>
+        <p class="a360-actions"><a class="a360-pill a360-pill-dark" href="{{ login_url }}">כניסה עם סיסמה</a><a class="a360-pill a360-pill-line" href="{{ google_url }}">כניסה עם Google</a></p>
+        <h2 class="a360-h3" style="margin-top:26px">אין חשבון? פותחים כאן, לכתובת שהוזמנה</h2>
+        <form method="post" class="a360-form">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="make">
+          {% for e in errors %}<p class="a360-error" role="alert">{{ e }}</p>{% endfor %}
+          <label class="a360-field"><span>אימייל</span><input type="email" value="{{ row.email }}" disabled aria-describedby="inv-note"></label>
+          <label class="a360-field"><span>סיסמה</span><input type="password" name="password" autocomplete="new-password" required minlength="8"></label>
+          <label class="a360-field"><span>הסיסמה שוב</span><input type="password" name="password2" autocomplete="new-password" required minlength="8"></label>
+          <p class="a360-small a360-mute" id="inv-note">הכתובת קבועה: ההזמנה נשלחה אליה, וזה האימות.</p>
+          <button type="submit" class="a360-pill a360-pill-dark">לפתוח חשבון ולהיכנס</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -368,3 +368,54 @@ a:hover { color: #15606A; }
 .a360-found a { color: var(--a360-ink); text-decoration: none; }
 .a360-doc { min-width: 0; }
 .a360-talk { scroll-margin-top: 16px; }
+
+/* Epic C: people. The join form (public look) and the admin's room (spec 5.3:
+   greys, dense rows, flat forms, no arcs). */
+.a360-choice { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.a360-choice legend { font-weight: 600; font-size: 14px; padding: 0; margin-bottom: 4px; }
+.a360-radio { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border: 1.5px solid var(--a360-line); border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 15px; }
+.a360-radio input { width: 20px; height: 20px; margin: 0; accent-color: var(--a360-teal-deep); flex: none; }
+.a360-radio:has(input:checked) { border-color: var(--a360-char); background: var(--a360-paper); }
+.a360-join-leader { display: none; }
+.a360-join:has(input[value="leader"]:checked) .a360-join-leader { display: flex; }
+.a360-join-leader label { font-weight: 600; font-size: 14px; }
+.a360-me-role { margin-top: 18px; margin-bottom: 28px; }
+.a360-me-role-line { margin: 0; font-size: 16px; line-height: 1.6; }
+.a360-me-role .a360-rows { margin-top: 10px; }
+.a360-nav-room { color: var(--a360-yellow) !important; }
+.a360-room { background: #F3F4F4; }
+.a360-room .a360-h1-page { font-size: 28px; }
+.a360-room-h2 { font-size: 20px; margin: 30px 0 8px; padding-bottom: 6px; border-bottom: 2px solid var(--a360-char); }
+@media (min-width: 900px) { .a360-room-h2 { font-size: 22px; } }
+.a360-room-h3 { font-size: 15px; color: var(--a360-mute); margin: 16px 0 0; }
+.a360-room-h3 a { color: var(--a360-mute); text-decoration: none; display: inline-flex; min-height: 44px; align-items: center; }
+.a360-room-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px 40px; margin-top: 8px; }
+@media (min-width: 900px) { .a360-room-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.a360-room .a360-rows { background: var(--a360-card); border-radius: 10px; padding: 0 14px; }
+.a360-room .a360-row { align-items: center; }
+.a360-queue-item { padding: 16px 18px; margin-bottom: 10px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+@media (min-width: 900px) { .a360-queue-item { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); align-items: start; } }
+.a360-queue-main { min-width: 0; font-size: 15px; line-height: 1.55; }
+.a360-queue-msg { margin: 8px 0 0; padding: 10px 12px; background: var(--a360-paper); border-radius: 8px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; }
+.a360-queue-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; margin: 0; min-width: 0; }
+.a360-queue-form .a360-pill { flex: none; }
+.a360-field-grow { flex: 1 1 160px; min-width: 0; }
+.a360-field-grow input, .a360-field-grow select { width: 100%; min-width: 0; }
+.a360-pill-sm { height: 44px; padding: 0 14px; font-size: 14px; }
+.a360-person { flex-wrap: wrap; }
+.a360-acts { flex: 1 1 100%; min-width: 0; }
+@media (min-width: 700px) { .a360-acts { flex: none; } .a360-acts[open] { flex: 1 1 100%; } }
+.a360-acts > summary { list-style: none; cursor: pointer; display: inline-flex; }
+.a360-acts > summary::-webkit-details-marker { display: none; }
+.a360-acts-in { display: flex; flex-direction: column; gap: 8px; padding: 10px 0 4px; }
+.a360-acts-in form { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; margin: 0; }
+.a360-acts-row .a360-field { flex: 1 1 180px; }
+.a360-room form { margin: 0; }
+.a360-room .a360-form .a360-pill { align-self: flex-start; }
+.a360-hidden-row .a360-row-main { opacity: .55; }
+.a360-comment-row { gap: 10px; }
+.a360-wrap-names { line-height: 1.9; }
+/* the admin's fifth tab on the narrowest phones: tighter tabs so all five fit */
+@media (max-width: 360px) {
+  .a360-nav a { padding: 8px 7px; font-size: 14px; min-height: 44px; min-width: 52px; justify-content: center; }  /* 44 tall, 52 wide: a thumb each */
+}

@@ -116,6 +116,9 @@ class Invitation(Row):
                                 related_name="a360_invitations_sent")
     sent_at = models.DateTimeField(null=True, blank=True)
     accepted_at = models.DateTimeField(null=True, blank=True)
+    accepted_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+                                    related_name="a360_invitations_accepted")
+    title = models.CharField(max_length=160, blank=True, help_text="For leaders: the title shown")
 
     def __str__(self):
         return f"{self.email} · {self.role_kind}"

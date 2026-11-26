@@ -14,7 +14,8 @@
         <input type="hidden" name="next" value="{{ next }}">
         <button type="submit" class="a360-pill a360-pill-dark">להיכנס</button>
       </form>
-      <p class="a360-small a360-mute"><a href="{{ google_url }}">כניסה עם Google</a></p>
+      <p class="a360-small a360-mute"><a class="a360-link-sm" href="{{ google_url }}">כניסה עם Google</a></p>
+      <p class="a360-small a360-mute">עדיין בלי תפקיד? אחרי הכניסה אפשר <a class="a360-link-sm" href="{% url 'academia360:join' %}">לבקש להצטרף</a>; מי שהוזמן במייל פותח את הקישור שקיבל.</p>
     </div>
   </div>
 </section>

@@ -106,6 +106,12 @@ def main(argv=None):
         s.add_argument("kind", choices=["committee", "leader", "admin", "chair", "reviewer"])
         s.add_argument("email")
     cmd("import-json", "route", file={"required": True}, institution={"type": int})
+    cmd("requests", status={"default": "open"})
+    s = cmd("decide", "pk", note={"default": ""})
+    s.add_argument("decision", choices=["approve", "decline"])
+    s = cmd("invite", institution={"type": int}, title={"default": ""})
+    s.add_argument("kind", choices=["committee", "leader", "admin"])
+    s.add_argument("email")
     a = p.parse_args(argv)
 
     base = PROD if a.prod else DEV if a.dev else (a.base or DEV)
@@ -136,6 +142,18 @@ def main(argv=None):
     elif a.cmd == "delete":
         status, data = c.call("DELETE", f"{a.route}/{a.pk}/")
         out({"status": status})
+    elif a.cmd == "requests":
+        status, data = c.call("GET", "rolerequests/", params={"status": a.status} if a.status != "all" else None)
+        out(data)
+    elif a.cmd == "decide":
+        status, data = c.call("POST", f"admin/requests/{a.pk}/decide/", data={"decision": a.decision, "note": a.note})
+        out({"status": status, **(data if isinstance(data, dict) else {"data": data})})
+    elif a.cmd == "invite":
+        body = {"kind": a.kind, "email": a.email, "title": a.title}
+        if a.institution:
+            body["institution"] = a.institution
+        status, data = c.call("POST", "admin/invitations/", data=body)
+        out({"status": status, **(data if isinstance(data, dict) else {"data": data})})
     elif a.cmd == "run":
         if a.action == "start":
             status, data = c.call("POST", "agentruns/", data={"purpose": a.what, "sources": a.sources.replace(",", "\n")})

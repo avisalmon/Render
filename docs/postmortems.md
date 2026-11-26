@@ -17,6 +17,35 @@ Newest first.
 
 ---
 
+## PM-101 · 2026-11-26 · Epic C end (Academia360 people): a fallback that walks a null relation
+
+**What happened.** The admin overview listed the public's comments as
+`{{ c.institution.name_he|default:c.researcher.name_he }}`. Django resolves
+a filter's argument before the filter runs, so a comment on an institution
+(whose `researcher` is None) raised `VariableDoesNotExist` and the whole
+admin page failed. The same line sat in `/me/` since Epic B, where no test
+had rendered a comment on an institution and a researcher on one page. The
+sprint's own test caught it (C.5, the seed had one comment); nothing
+reached Avi. Two smaller things: a patch was sent through a shell heredoc
+once more (mistake 75, the same day) and failed on its first backslash,
+and the screenshot seed fed Hebrew through `manage.py shell < file` on
+Windows, which mangled every name until the shots were re-taken.
+
+**Why the process let it.** `default:` reads like a lazy "or"; it is not.
+And the B.5 tests built one comment per target, never both shapes on one
+page.
+
+**Rule.** Choosing between two relations in a template is an explicit
+`{% if %}`, never the argument of `default`, because the argument is
+resolved whether or not it is needed. A page that lists rows of mixed
+shapes is tested with every shape on it at once. Hebrew to a Django shell
+on Windows goes as a script file run with `-X utf8`, or as `shell -c` with
+escapes, never through the shell's stdin.
+
+Here: `templates/academia360/manage/overview.html`, `templates/academia360/me.html`,
+`tests/test_academia360_c4.py`, [building_an_app.md](building_an_app.md) mistake 78
+BKM: FullStackBKM 062c4a2
+
 ## PM-99 · 2026-11-26 · breakout B.1 end: two small things, both caught by the sprint's own checks
 
 **What happened.** (1) The puzzle text on the experience page came out

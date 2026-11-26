@@ -18,6 +18,7 @@ from urllib.parse import unquote
 
 import pytest
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 os.environ.setdefault("DJANGO_ALLOW_ASYNC_UNSAFE", "1")
 
@@ -195,6 +196,22 @@ def build_world():
                                       current_value="1912", proposed_value="1924", reason="אתר הטכניון")
     CorrectionProposal.objects.create(proposer=avi, model="academia360.Institution", row_id=str(technion.pk), field="city",
                                       current_value="חיפה", proposed_value="חיפה, נשר", status="accepted")
+    # Epic C: people in every state the admin's room shows
+    from academia360.models import CommitteeAttribute, Invitation, LeaderOf, RoleRequest
+    dana = User.objects.create_user("dana@example.com", "dana@example.com", PASSWORD, first_name="דנה")
+    RoleRequest.objects.create(user=dana, role_kind="leader", institution=technion, title="סגנית נשיא לעניינים אקדמיים",
+                               message="אני מרכזת את התכנית אצלנו מאז 2024, אפשר לוודא מול לשכת הרקטור.")
+    RoleRequest.objects.create(user=dana, role_kind="committee", message="בוועדה", status="declined", decision_note="לא השנה",
+                               decided_by=avi, decided_at=timezone.now())
+    shira = User.objects.create_user("shira@example.com", "shira@example.com", PASSWORD, first_name="שירה")
+    Role.objects.create(user=shira, kind=Role.COMMITTEE_MEMBER)
+    CommitteeAttribute.objects.create(user=shira, kind=CommitteeAttribute.CHAIR, program=program)
+    CommitteeAttribute.objects.create(user=shira, kind=CommitteeAttribute.REVIEWER, program=program, institution=technion)
+    lead = User.objects.create_user("lead@example.com", "lead@example.com", PASSWORD, first_name="דקלה")
+    Role.objects.create(user=lead, kind=Role.LEADER)
+    LeaderOf.objects.create(user=lead, institution=technion, title="דיקנית לימודי הסמכה")
+    Invitation.objects.create(email="invited@example.com", role_kind="leader", institution=technion, title="סגן נשיא",
+                              token="screens-invite-token-4410", sent_by=avi, sent_at=timezone.now())
     return {"technion": technion}
 
 
@@ -212,6 +229,9 @@ SCREENS = [
     ("researcher", None, "/academia360/researchers/r0/"),
     ("search", None, "/academia360/search/?q=%D7%97%D7%95%D7%A7%D7%A8"),
     ("search-empty", None, "/academia360/search/?q=zzzz"),
+    ("join", "dana", "/academia360/join/?kind=leader"), ("me-dana", "dana", "/academia360/me/"),
+    ("invite", None, "/academia360/invite/screens-invite-token-4410/"),
+    ("manage", "avi", "/academia360/manage/"), ("manage-people", "avi", "/academia360/manage/people/"),
     ("login", None, "/academia360/login/"),
     ("no-access", None, "/academia360/no-access/"),
     ("not-found", None, "/academia360/nothing-here/"),

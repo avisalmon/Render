@@ -5,6 +5,24 @@
   <div class="a360-wrap">
     <h1 class="a360-h1 a360-h1-page">שלי</h1>
     <p class="a360-lede a360-mute a360-narrow">{{ user.first_name|default:user.email }} · {{ proposals|length }} הצעות תיקון, {{ comments|length }} תגובות, {{ likes }} לייקים.</p>
+    <div class="a360-card a360-pad-lg a360-me-role" id="role">
+      {% if roles_line %}
+        <p class="a360-me-role-line"><b>התפקיד שלכם:</b> <span dir="auto">{{ roles_line }}</span></p>
+        <p class="a360-small a360-mute">מרחב העבודה של התפקיד נפתח באפיקים הבאים; עד אז הכול כאן ציבורי.</p>
+      {% else %}
+        <p class="a360-me-role-line"><b>בלי תפקיד.</b> הציבור קורא, מגיב ומציע תיקונים בלי תפקיד. מי שמוביל את התכנית במוסד, או בוועדה, <a href="{% url 'academia360:join' %}">מבקש להצטרף</a>.</p>
+      {% endif %}
+      {% if requests %}
+      <div class="a360-rows">
+        {% for r in requests %}
+        <div class="a360-row a360-row-tight">
+          <div class="a360-row-main"><b>בקשה: {{ r.get_role_kind_display }}</b>{% if r.institution %} <span class="a360-mute">· {{ r.institution.short_name_he|default:r.institution.name_he }}</span>{% endif %}<div class="a360-src">{{ r.created_at|date:"d.m.Y" }}{% if r.decided_at %} · הוכרעה {{ r.decided_at|date:"d.m.Y" }}{% endif %}{% if r.decision_note %} · <span dir="auto">{{ r.decision_note }}</span>{% endif %}</div></div>
+          <span class="a360-status a360-status-{{ r.status }}">{{ r.get_status_display }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
     <div class="a360-two">
       <div>
         <h2 class="a360-h2">הצעות התיקון שלי</h2>
@@ -33,7 +51,7 @@
     <div class="a360-rows">
       {% for c in comments %}
       <div class="a360-row a360-row-tight">
-        <div class="a360-row-main"><a href="{% if c.institution %}{% url 'academia360:institution' c.institution.slug %}{% else %}{% url 'academia360:researcher' c.researcher.slug %}{% endif %}#talk" dir="auto">{{ c.institution.name_he|default:c.researcher.name_he }}</a><div class="a360-small" dir="auto">{{ c.body|truncatechars:120 }}</div></div>
+        <div class="a360-row-main"><a href="{% if c.institution %}{% url 'academia360:institution' c.institution.slug %}{% else %}{% url 'academia360:researcher' c.researcher.slug %}{% endif %}#talk" dir="auto">{% if c.institution %}{{ c.institution.name_he }}{% else %}{{ c.researcher.name_he }}{% endif %}</a><div class="a360-small" dir="auto">{{ c.body|truncatechars:120 }}</div></div>
         <span class="a360-mute a360-small">{{ c.created_at|date:"d.m.Y" }}{% if c.hidden %} · הוסתרה{% endif %}</span>
       </div>
       {% empty %}

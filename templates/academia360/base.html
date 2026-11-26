@@ -1,4 +1,4 @@
-{% load static i18n %}{% language "he" %}<!doctype html>
+{% load static i18n a360 %}{% language "he" %}<!doctype html>
 <html lang="he" dir="rtl">
 <head>
   <meta charset="utf-8">
@@ -30,6 +30,7 @@
         <a href="{% url 'academia360:institutions' %}" {% if section == 'institutions' %}aria-current="page"{% endif %}>המוסדות</a>
         <a href="{% url 'academia360:researchers' %}" {% if section == 'researchers' %}aria-current="page"{% endif %}>החוקרים</a>
         <a href="{% url 'academia360:search' %}" {% if section == 'search' %}aria-current="page"{% endif %}>חיפוש</a>
+        {% a360_is_admin user as is_admin %}{% if is_admin %}<a href="{% url 'academia360:manage' %}" class="a360-nav-room" {% if section == 'manage' %}aria-current="page"{% endif %}>ניהול</a>{% endif %}
       </nav>
       <div class="a360-account">
         {% if user.is_authenticated %}
