@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     "bkm",
     "design3d",
     "gallery",
+    "academia360",
 ]
 
 MIDDLEWARE = [
@@ -170,6 +171,13 @@ DESIGN3D_BUILD_TIMEOUT = int(os.environ.get("DESIGN3D_BUILD_TIMEOUT", "90"))
 # Saying a message: the phone's own recognition, free. Paid transcription on
 # the server only if switched on (Avi, 2026-10-31: "not openAI, waste of tokens").
 DESIGN3D_VOICE_PAID = os.environ.get("DESIGN3D_VOICE_PAID", "0") == "1"
+# academia360 (docs/academia360): what the institutions submitted to the
+# committee, the committee's reviews and letters. Never under MEDIA_ROOT;
+# served only by a view that checks the asker's circle.
+ACADEMIA360_PRIVATE_DIR = PERSISTENT_ROOT / "academia360_private"
+# The agent's door (spec chapter 3): one token, acting as the admin inside
+# this app only. Unset means closed. Rotate by changing it in Render.
+ACADEMIA360_AGENT_TOKEN = os.environ.get("ACADEMIA360_AGENT_TOKEN", "")
 
 # REQ-M.84 — the guardian-consent gate, switched off while the site is being
 # built. Avi, 2026-09-14: "when sign up, don't force the parents agreement for

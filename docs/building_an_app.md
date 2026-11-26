@@ -170,6 +170,15 @@ next one starts; this is not a checklist to rush through in one pass.
 4. **Then the full spec, in high-level chapters.** Once the data model is
    approved, write the spec properly: what the app will be able to do,
    chapter by chapter, at a high level.
+4b. **Then the design, before any screen is coded (Avi, 2026-11-26).** A
+   few distinct look-and-feel directions, each as a mockup of the same two
+   or three key screens in `docs/<app>/design/` (sensorlab's `*.dc.html`
+   canvas is the pattern), shown to Avi; one is chosen and the rules that
+   survive the mockup (palette, type, grid, components, RTL rules) go into
+   the spec's design chapter. The bar: it must look like a professional
+   site made by people who make such sites, never like a generated one.
+   Said on Academia360, where it was missing from this list although
+   sensorlab had already done it.
 5. **Then the normal flow.** Backlog, sprints, test-driven development,
    everything else already established in this file and in
    [the_manager.md](the_manager.md), scaled to the size of the app (see

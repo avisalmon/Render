@@ -13,6 +13,7 @@ through to Django's own defaults, which is what renders babook's own
 from django.views import defaults
 
 from books import errors as books_errors
+from academia360 import errors as academia360_errors
 from bkm import errors as bkm_errors
 from cohort import errors as cohort_errors
 from design3d import errors as design3d_errors
@@ -44,6 +45,8 @@ def page_not_found(request, exception=None):
         return cohort_errors.page_not_found(request, exception)
     if request.path.startswith(gallery_errors.PREFIX):
         return gallery_errors.page_not_found(request, exception)
+    if request.path.startswith(academia360_errors.PREFIX):
+        return academia360_errors.page_not_found(request, exception)
     if request.path.startswith(bkm_errors.PREFIX):
         return bkm_errors.page_not_found(request, exception)
     if request.path.startswith(design3d_errors.PREFIX):
@@ -74,6 +77,8 @@ def server_error(request):
         return cohort_errors.server_error(request)
     if request.path.startswith(gallery_errors.PREFIX):
         return gallery_errors.server_error(request)
+    if request.path.startswith(academia360_errors.PREFIX):
+        return academia360_errors.server_error(request)
     if request.path.startswith(bkm_errors.PREFIX):
         return bkm_errors.server_error(request)
     if request.path.startswith(design3d_errors.PREFIX):
@@ -104,6 +109,8 @@ def permission_denied(request, exception=None):
         return cohort_errors.permission_denied(request, exception)
     if request.path.startswith(gallery_errors.PREFIX):
         return gallery_errors.permission_denied(request, exception)
+    if request.path.startswith(academia360_errors.PREFIX):
+        return academia360_errors.permission_denied(request, exception)
     if request.path.startswith(bkm_errors.PREFIX):
         return bkm_errors.permission_denied(request, exception)
     if request.path.startswith(design3d_errors.PREFIX):

@@ -1,0 +1,13 @@
+{% extends "academia360/base.html" %}
+{% block title %}אין גישה · אקדמיה 360°{% endblock %}
+{% block content %}
+<section class="a360-band">
+  <div class="a360-wrap a360-door-wrap">
+    <div class="a360-card a360-pad-lg">
+      <h1 class="a360-h1 a360-h1-page">העמוד הזה סגור לכם</h1>
+      <p class="a360-lede a360-mute">הוא פתוח רק לאנשים עם תפקיד במערכת: חברי הוועדה, או מוביל התכנית במוסד שהוא עוסק בו.{% if not user.is_authenticated %} אם זה אתם, היכנסו תחילה.{% endif %}</p>
+      <p class="a360-actions">{% if not user.is_authenticated %}<a class="a360-pill a360-pill-dark" href="{% url 'academia360:login' %}?next={{ request.get_full_path|urlencode }}">כניסה</a>{% endif %}<a class="a360-pill a360-pill-line" href="{% url 'academia360:home' %}">לדף הבית</a></p>
+    </div>
+  </div>
+</section>
+{% endblock %}

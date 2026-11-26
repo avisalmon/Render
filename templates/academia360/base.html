@@ -1,0 +1,53 @@
+{% load static i18n %}{% language "he" %}<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{% block title %}אקדמיה 360°{% endblock %}</title>
+  {% comment %}
+    Rule 3: Academia360's own frame. Nothing from babook's base or menu.
+    The look is design round 2 (docs/academia360/design/round2): charcoal
+    bar, paper, four colours, arcs of 360. Tokens live in a360.css.
+  {% endcomment %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&display=swap">
+  <link rel="stylesheet" href="{% static 'academia360/a360.css' %}">
+</head>
+<body class="a360" data-signed-in="{% if user.is_authenticated %}1{% endif %}">
+  {# The pilot banner (spec 4.10): every page, every role, never dismissable. #}
+  <div class="a360-pilot" id="a360-pilot" role="note">אתר פיילוט שנבנה על ידי אבי סלמון · אינו אתר רשמי של הממשלה, מל״ג/ות״ת, אינטל או כל מוסד</div>
+  <header class="a360-bar">
+    <div class="a360-wrap a360-bar-in">
+      <a class="a360-brand" href="{% url 'academia360:home' %}" aria-label="אקדמיה 360, דף הבית">
+        <svg class="a360-mark" width="28" height="28" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="11" fill="none" stroke="#63BAC5" stroke-width="4" stroke-dasharray="52 18" stroke-linecap="round" transform="rotate(-60 15 15)"/><circle cx="15" cy="15" r="3" fill="#F6C21A"/></svg>
+        <span>אקדמיה 360°</span>
+      </a>
+      <nav class="a360-nav" aria-label="ניווט ראשי">
+        <a href="{% url 'academia360:home' %}" {% if section == 'home' %}aria-current="page"{% endif %}>התכנית</a>
+        <a href="{% url 'academia360:institutions' %}" {% if section == 'institutions' %}aria-current="page"{% endif %}>המוסדות</a>
+      </nav>
+      <div class="a360-account">
+        {% if user.is_authenticated %}
+          <form method="post" action="{% url 'academia360:logout' %}">{% csrf_token %}<button type="submit" class="a360-pill a360-pill-ghost">יציאה</button></form>
+        {% else %}
+          <a class="a360-pill a360-pill-ghost" href="{% url 'academia360:login' %}?next={{ request.get_full_path|urlencode }}" id="a360-sign-in">כניסה</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <main class="a360-main">
+    {% if messages %}<div class="a360-flash" role="status">{% for m in messages %}<p>{{ m }}</p>{% endfor %}</div>{% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="a360-foot">
+    <div class="a360-wrap a360-foot-in">
+      <span>אקדמיה 360° · אתר מידע וניתוח על תכנית ות״ת לשינוי עומק בתואר הראשון. פיילוט אישי, לא אתר רשמי.</span>
+      <span class="a360-foot-links"><a href="{% url 'academia360:home' %}">התכנית</a><a href="{% url 'academia360:institutions' %}">המוסדות</a></span>
+    </div>
+  </footer>
+  <script src="{% static 'academia360/a360.js' %}" defer></script>
+</body>
+</html>{% endlanguage %}

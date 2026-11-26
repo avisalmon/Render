@@ -1,0 +1,21 @@
+{% extends "academia360/base.html" %}
+{% block title %}כניסה · אקדמיה 360°{% endblock %}
+{% block content %}
+<section class="a360-band">
+  <div class="a360-wrap a360-door-wrap">
+    <div class="a360-card a360-pad-lg">
+      <h1 class="a360-h1 a360-h1-page">כניסה</h1>
+      <p class="a360-mute">עם החשבון שלכם באתר. הציבור לא צריך להיכנס כדי לקרוא; הכניסה היא לחברי הוועדה ולמובילי התכנית במוסדות.</p>
+      <form method="post" class="a360-form">
+        {% csrf_token %}
+        {% if form.non_field_errors %}<p class="a360-error" role="alert">{{ form.non_field_errors.0 }}</p>{% endif %}
+        <label class="a360-field" for="{{ form.username.id_for_label }}"><span>אימייל או שם משתמש</span>{{ form.username }}</label>
+        <label class="a360-field" for="{{ form.password.id_for_label }}"><span>סיסמה</span>{{ form.password }}</label>
+        <input type="hidden" name="next" value="{{ next }}">
+        <button type="submit" class="a360-pill a360-pill-dark">להיכנס</button>
+      </form>
+      <p class="a360-small a360-mute"><a href="{{ google_url }}">כניסה עם Google</a></p>
+    </div>
+  </div>
+</section>
+{% endblock %}
