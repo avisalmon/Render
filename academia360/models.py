@@ -608,3 +608,6 @@ class AgentRun(Row):
 
     def __str__(self):
         return self.purpose
+
+
+from .models_program import *  # noqa: E402,F401,F403  (sections 4 to 9 live in their own file)

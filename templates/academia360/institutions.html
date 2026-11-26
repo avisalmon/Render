@@ -4,15 +4,26 @@
 <section class="a360-band">
   <div class="a360-wrap">
     <h1 class="a360-h1 a360-h1-page">המוסדות</h1>
-    <p class="a360-lede a360-mute a360-narrow">כל המוסדות המתוקצבים על ידי ות״ת, לפי סוג. כל שם פותח את עמוד המוסד.</p>
+    <p class="a360-lede a360-mute a360-narrow">כל המוסדות המתוקצבים על ידי ות״ת, לפי סוג. כל שם פותח את עמוד המוסד. באפור: מוסדות שלא ניגשו למחזור הזה.</p>
+    <form method="get" class="a360-filter" role="search">
+      <div class="a360-chips">
+        <a href="{% url 'academia360:institutions' %}{% if q %}?q={{ q|urlencode }}{% endif %}" class="a360-chip {% if not kind %}a360-chip-on{% endif %}">הכול</a>
+        {% for k, label, on in kinds %}<a href="?kind={{ k }}{% if q %}&q={{ q|urlencode }}{% endif %}" class="a360-chip {% if on %}a360-chip-on{% endif %}">{{ label }}</a>{% endfor %}
+      </div>
+      <label class="a360-search"><span class="a360-sr">חיפוש מוסד</span>
+        <input type="search" name="q" value="{{ q }}" placeholder="שם מוסד או עיר">
+        {% if kind %}<input type="hidden" name="kind" value="{{ kind }}">{% endif %}
+        <button type="submit" class="a360-pill a360-pill-dark">חיפוש</button>
+      </label>
+    </form>
     <div class="a360-inst-groups">
       {% for label, rows in groups %}
       <div class="a360-inst-group">
         <div class="a360-inst-head">{{ label }}</div>
-        {% for i in rows %}<a href="{% url 'academia360:institution' i.slug %}" dir="auto">{{ i.name_he }}</a>{% endfor %}
+        {% for i in rows %}<a href="{% url 'academia360:institution' i.slug %}" {% if not i.applied %}class="a360-out"{% endif %}><span dir="auto">{{ i.name_he }}</span>{% if i.city %} <small class="a360-mute">· {{ i.city }}</small>{% endif %}</a>{% endfor %}
       </div>
       {% empty %}
-      <p class="a360-mute">עוד אין מוסדות במערכת.</p>
+      <p class="a360-mute">{% if q or kind %}לא נמצא מוסד שמתאים. <a href="{% url 'academia360:institutions' %}">כל המוסדות</a>{% else %}עוד אין מוסדות במערכת.{% endif %}</p>
       {% endfor %}
     </div>
   </div>

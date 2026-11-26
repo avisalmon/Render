@@ -70,3 +70,4 @@ vendor/openscad.AppImage
 # Academia360 reference material: confidential committee documents and a local key file, never committed
 docs/academia360/reference/*
 !docs/academia360/reference/README.md
+academia360_private/

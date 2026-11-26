@@ -17,6 +17,34 @@ Newest first.
 
 ---
 
+## PM-96 · 2026-11-26 · Editing code while its test run was still going
+
+**What happened.** During Academia360's Epic A a long suite (ten minutes:
+the real import of 180 MB of reference files) ran in the background while
+I kept building the next sprint in the same tree. I added a view to
+`urls.py` before its class existed in `api.py`; Django loads the URLconf
+on the first request, which came after the edit, so 38 tests failed with
+an ImportError that had nothing to do with them. The run had to be
+repeated. The same morning, two patch scripts written as shell heredocs
+mangled escapes (a line break inside a string, a regex backreference
+turned into a control byte), which PM-1 had already warned about.
+
+**Why the process let it.** "Run the sprint's tests" said nothing about
+what the tree may do while they run, and a background run invites
+working on. PM-1's rule was known and skipped because the patch looked
+small.
+
+**Rule.** A test run owns the tree it reads: while a suite runs, edit no
+file that suite imports or renders (the app's code, templates, static).
+Work meanwhile on docs, on the next sprint's new files that nothing
+imports yet, or on another app. If a file it reads has to change, stop
+the run first and start it again after. And a multi-line code patch is
+written with the file editor, never through a shell heredoc (PM-1,
+again).
+
+Here: `docs/building_an_app.md` (mistake 73)
+BKM: FullStackBKM 1340936
+
 ## PM-95 · 2026-11-11 · The shared menu's first train: four failures my run did not cover
 
 **What happened.** Train T1111-081822 stopped on four failures my own run

@@ -83,6 +83,18 @@ services:
         sync: false
       - key: BOOKS_NLI_API_KEY
         sync: false
+      # Academia360 (docs/academia360/spec.md ch. 3): the agent's token, acting
+      # as the admin inside /academia360/ only; unset means closed. The account
+      # it acts as (username or email; empty = the first superuser). The
+      # submitted files' private bucket (the Books pattern); unset = the disk.
+      - key: ACADEMIA360_AGENT_TOKEN
+        sync: false
+      - key: ACADEMIA360_AGENT_USER
+        sync: false
+      - key: ACADEMIA360_GCS_BUCKET
+        sync: false
+      - key: ACADEMIA360_GCS_CREDENTIALS_JSON
+        sync: false
     disk:
       name: mysite-disk
       mountPath: /var/data

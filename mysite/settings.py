@@ -178,6 +178,13 @@ ACADEMIA360_PRIVATE_DIR = PERSISTENT_ROOT / "academia360_private"
 # The agent's door (spec chapter 3): one token, acting as the admin inside
 # this app only. Unset means closed. Rotate by changing it in Render.
 ACADEMIA360_AGENT_TOKEN = os.environ.get("ACADEMIA360_AGENT_TOKEN", "")
+# The account the token acts as (a username or email). Empty: the first
+# superuser. The token never creates this account; it must already exist.
+ACADEMIA360_AGENT_USER = os.environ.get("ACADEMIA360_AGENT_USER", "")
+# The submitted files in production: a private bucket of the app's own (the
+# Books pattern), else the private folder on the disk. Unset in dev.
+ACADEMIA360_GCS_BUCKET = os.environ.get("ACADEMIA360_GCS_BUCKET", "")
+ACADEMIA360_GCS_CREDENTIALS_JSON = os.environ.get("ACADEMIA360_GCS_CREDENTIALS_JSON", "")
 
 # REQ-M.84 — the guardian-consent gate, switched off while the site is being
 # built. Avi, 2026-09-14: "when sign up, don't force the parents agreement for

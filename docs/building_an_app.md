@@ -1446,3 +1446,19 @@ paid model stays off (PM-87).
 device does for free and what a sibling app already decided on the same
 question; that decision stands unless the owner says otherwise. A paid
 path, if kept, is a fallback behind a switch that is off.
+
+### 73. A test run owns the tree it reads
+
+Academia360's Epic A ran a ten-minute suite in the background (the real
+import of the reference) while the next sprint went on in the same tree. A
+view was added to `urls.py` before its class existed in `api.py`; Django
+loads the URLconf on the first request, which came after the edit, and 38
+tests failed with an ImportError that was not theirs (PM-96).
+
+**The rule.** While a suite runs, edit nothing it imports or renders: the
+app's code, its templates, its static files. Meanwhile work on docs, on the
+next sprint's new files that nothing imports yet, or on another app. If a
+file it reads must change, stop the run and start it again after. And a
+multi-line code patch is made with the file editor, never a shell heredoc
+(PM-1 said so; it was skipped because the patch looked small, and it
+mangled a regex into a control byte).

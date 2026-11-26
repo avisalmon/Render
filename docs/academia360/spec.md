@@ -539,27 +539,86 @@ is: "אתר פיילוט שנבנה על ידי אבי סלמון. אינו את
 
 ---
 
-## 5. Design (next step)
+## 5. Design
 
 The app must look like a professional website, built by people who build
 such sites for ministries, universities and funding bodies, and not like a
-generated one. Before any screen is coded, this chapter gets written the way
-sensorlab's did: a few distinct look-and-feel directions, each as a mockup
-of the same two or three screens (the public institution page, the
-committee's flow dashboard, the leader's home) in `docs/academia360/design/`,
-shown to Avi, one chosen, and the rules that survive the mockup written
-here: palette, type, grid, how Hebrew and numbers sit, the banner, the
-components. Phone, tablet and computer widths.
+generated one.
 
-Rules already known:
+**How it was settled.** Round 1 (2026-11-26): three directions on three
+screens, rejected by Avi as "boring, standard, AI made this": stat tiles,
+same-looking buttons, one template in three colours. Round 2 the same day:
+Avi picked **Campus IL** (campus.gov.il, Israel's national digital campus)
+as the lead, and one direction was built deep on the two public screens,
+the home page and the institution page, at computer and phone width
+(`design/round2/`, four artboards). Sprint A.4 was coded in that language
+before Avi's verdict on round 2, on his instruction to finish the epic and
+review it whole; if he sends it back, the templates change and the data and
+API do not.
+
+### 5.1 The language
+
+- **Ground:** paper `#FBFBF9`, cards white with a 14px radius and one soft
+  shadow (`0 2px 14px rgba(40,44,45,.07)`), lines `#E6E8E8`. Ink `#2A2C2D`,
+  muted `#666A6B` (4.5:1 on white and on paper).
+- **The bar:** charcoal `#323435`, white wordmark "אקדמיה 360°" with the
+  small ring mark; nav links in `#D6D8D8`, the current one white with a teal
+  underline; a ghost pill for sign-in.
+- **Four colours, used as colour and never as a wash:** teal `#63BAC5`
+  (deep `#1E7C88` for links and small text), yellow `#F6C21A`, coral
+  `#EE6B67`, green `#8FC457`, each with a tint for backgrounds (`#E7F5F7`,
+  `#FEF5D6`, `#FCE7E6`, `#EEF6E3`). The fifth arc of the ring is charcoal.
+- **The shape language is the 360:** arcs and rings in the tints, bleeding
+  off the page corners, drawn as inline SVG with `aria-hidden`. No people
+  illustrations, no gradients, no stock photos. A real photograph is allowed
+  where it says something.
+- **Type:** Assistant, 400/600/700/800. Page titles 34px on a phone, 48px on
+  a computer, weight 800, tight leading; section titles 24/28px; body 16px,
+  the lede 17/18px at 1.65.
+- **Buttons are pills:** 46px high, 999px radius; dark (charcoal fill) for
+  the one main action, line (1.5px charcoal border) for the second, ghost
+  (white border) on the bar. Never two dark pills side by side.
+- **Numbers live in sentences and small marks.** No stat tiles: no bare
+  number over a label. "36 מוסדות מתוקצבים. 28 מהם הגישו..." is the
+  pattern; a quantity that needs a visual gets a thin arc or a progress
+  line beside its sentence. Tabular numerals, `dir="ltr"` on the number.
+- **Every fact shows its source and date** in a 12px muted line under it
+  (`.a360-src`): "מקור: ... · נכון ל־12.2024".
+- **The pilot banner** (4.10) is the first element of every page: yellow
+  tint, 12px, one line, never dismissable.
+
+### 5.2 Components (all `a360-*`, tokens `--a360-*`, in `static/academia360/a360.css`)
+
+`a360-pilot`, `a360-bar` / `a360-nav` / `a360-account`, `a360-hero` with
+`a360-arc-*`, `a360-card`, `a360-pill-{dark,line,ghost}`, `a360-ring` (the
+five-arc criteria ring), `a360-asks` (bordered-top list of what the program
+asks), `a360-inst-groups` (institutions by kind, three columns on a
+computer, one on a phone; not-applied names muted), `a360-steps` (the
+program's timeline, horizontal on a computer, vertical on a phone),
+`a360-doors` (the three ways in), `a360-rows` / `a360-row` (key: value
+lines), `a360-tags`, `a360-chips` + `a360-search` (filters), `a360-form` /
+`a360-field` (46px inputs, 16px text so phones do not zoom), `a360-fix`
+(the "found a mistake" box), `a360-timeline`.
+
+### 5.3 The committee room (to be drawn in D.4)
+
+Same type, radii, pills and bar; the colour turned down: charcoal, greys,
+one accent, flat tables that scroll in their own box on a phone, dense rows.
+No arcs behind someone's budget.
+
+### 5.4 Rules that hold on every screen
 
 - Hebrew first, right to left; typed text `dir="auto"`; signed numbers and
   ranges `dir="ltr"`.
 - Every number shows its source and date; evidence, not decoration.
 - Dense, readable tables for the committee; calm, generous pages for the
   public; one system underneath.
-- Phone first for leaders (they read on the move), computer first for the
-  committee's dashboard, and both must work.
+- **Desktop is the priority, the phone is very good (Avi, 2026-11-26).**
+  Every screen is designed for the computer first and must be perfect
+  there; the same screen must also read well on a phone, because Avi
+  reviews from his phone when he is away. "Perfect on desktop, very good on
+  phone" is the bar, for every role and every screen; the screen contract
+  runs both.
 - The pilot banner on top of everything.
 
 ---

@@ -1,57 +1,185 @@
-"""Academia360's pages. Sprint A.1 gives the frame, the front door in outline
-and the institution page in outline; A.4 finishes both in the approved
-design. Pages are consumers of the same rows the API serves."""
+"""Academia360's pages (spec 4.1): the front door, the institutions, an
+institution's page, plain search, sign-in, "no access", and the two private
+file views. Pages are consumers of the same rows the API serves, filtered by
+the same circles; what a page shows the public is public-circle data only.
+"""
 
+from django.db.models import Q
+from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, render
 
 from . import access
-from .models import Criterion, Institution, Program
+from .models import (
+    AccessLog,
+    Criterion,
+    GuidelineSection,
+    Institution,
+    Participation,
+    Program,
+    Researcher,
+    ResponseLetter,
+    StudyProgram,
+    SubmittedFile,
+)
+
+METRIC_LABELS = {
+    "students_total": "סטודנטים", "students_undergrad": "סטודנטים לתואר ראשון",
+    "students_masters": "סטודנטים לתואר שני", "students_phd": "דוקטורנטים", "students_postdoc": "פוסט־דוקטורנטים",
+    "faculty_total": "חברי סגל", "programs_total": "תכניות לימוד", "faculties_total": "פקולטות",
+}
+
+# The program's public timeline (spec 4.1): dates from מל״ג's decision page
+# and the round itself. A row per step, the current one marked.
+PROGRAM_TIMELINE = [
+    ("אפריל 2024", "ות״ת מאשרת את התכנית", "done"),
+    ("מאי 2024", "כנס ההשקה והקול הקורא", "done"),
+    ("דצמבר 2024", "המוסדות מגישים תכניות ארבע־שנתיות", "done"),
+    ("אפריל 2025", "מכתבי התגובה של הוועדה", "done"),
+    ("תשפ״ו", "דוחות ביצוע ראשונים ומדדים", "now"),
+    ("תשפ״ח", "סיום התכנית וסיכום", "later"),
+]
 
 
 def _program():
     return Program.objects.order_by("pk").first()
 
 
-def home(request):
-    program = _program()
-    criteria = Criterion.objects.filter(program=program).order_by("order") if program else []
-    institutions = Institution.objects.filter(active=True).order_by("kind", "name_he")
+def _groups(institutions, program):
+    """Institutions by kind, each carrying whether it applied to the program."""
+    applied = set()
+    if program is not None:
+        applied = set(Participation.objects.filter(program=program, applied=True).values_list("institution_id", flat=True))
     groups = []
     for kind, label in Institution.KINDS:
         rows = [i for i in institutions if i.kind == kind]
         if rows:
+            for i in rows:
+                i.applied = i.pk in applied
             groups.append((label, rows))
+    return groups, applied
+
+
+def home(request):
+    program = _program()
+    criteria = list(Criterion.objects.filter(program=program).exclude(colour="").order_by("order")) if program else []
+    institutions = list(Institution.objects.filter(active=True).order_by("kind", "name_he"))
+    groups, applied = _groups(institutions, program)
     return render(request, "academia360/home.html", {
         "section": "home", "program": program, "criteria": criteria, "groups": groups,
-        "count": len(institutions),
+        "count": len(institutions), "applied": len(applied), "not_applied": len(institutions) - len(applied),
+        "timeline": PROGRAM_TIMELINE,
     })
 
 
 def institutions(request):
-    rows = Institution.objects.filter(active=True).order_by("kind", "name_he")
-    groups = []
-    for kind, label in Institution.KINDS:
-        picked = [i for i in rows if i.kind == kind]
-        if picked:
-            groups.append((label, picked))
-    return render(request, "academia360/institutions.html", {"section": "institutions", "groups": groups})
+    program = _program()
+    kind = request.GET.get("kind", "")
+    q = (request.GET.get("q") or "").strip()
+    rows = Institution.objects.filter(active=True)
+    if kind in dict(Institution.KINDS):
+        rows = rows.filter(kind=kind)
+    if q:
+        rows = rows.filter(Q(name_he__icontains=q) | Q(name_en__icontains=q) | Q(city__icontains=q)
+                           | Q(short_name_he__icontains=q))
+    rows = list(rows.order_by("kind", "name_he"))
+    groups, _applied = _groups(rows, program)
+    kinds = [(k, label, k == kind) for k, label in Institution.KINDS]
+    return render(request, "academia360/institutions.html", {
+        "section": "institutions", "groups": groups, "kinds": kinds, "kind": kind, "q": q, "total": len(rows),
+    })
 
 
 def institution(request, slug):
     inst = get_object_or_404(Institution, slug=slug, active=True)
-    sections = inst.sections.filter(published=True).order_by("order")
-    researchers = inst.researchers.filter(verified=True).order_by("-is_leading", "name_he")[:8]
+    program = _program()
+    part = Participation.objects.filter(program=program, institution=inst).first() if program else None
+    letter_sent = False
+    if part is not None and part.applied:
+        letter_sent = ResponseLetter.objects.filter(submission__participation=part, sent_at__isnull=False).exists()
+    sections = list(inst.sections.filter(published=True).order_by("order"))
+    program_sections = [s for s in sections if s.kind == "program_public"]
+    other_sections = [s for s in sections if s.kind != "program_public"]
+    researchers = list(inst.researchers.filter(verified=True).order_by("-is_leading", "name_he")
+                       .prefetch_related("links", "metrics")[:10])
     for r in researchers:
-        r.h_index = r.metrics.filter(metric="h_index").order_by("-as_of").first()
-        r.citations = r.metrics.filter(metric="citations").order_by("-as_of").first()
-    units = inst.units.filter(parent__isnull=True).order_by("order", "name").prefetch_related("study_programs")
+        metrics = sorted(r.metrics.all(), key=lambda m: (m.as_of is None, m.as_of), reverse=True)
+        r.h_index = next((m for m in metrics if m.metric == "h_index"), None)
+        r.citations = next((m for m in metrics if m.metric == "citations"), None)
+    units = list(inst.units.filter(parent__isnull=True).order_by("order", "name").prefetch_related("study_programs"))
+    loose_programs = list(inst.study_programs.filter(unit__isnull=True, active=True).order_by("name"))
+    metrics = []
+    seen = set()
+    for m in inst.metrics.filter(verified=True).order_by("key", "-year", "-as_of"):
+        if m.key in seen:
+            continue
+        seen.add(m.key)
+        m.label = METRIC_LABELS.get(m.key, m.key.replace("_", " "))
+        metrics.append(m)
     return render(request, "academia360/institution.html", {
-        "section": "institutions", "inst": inst, "sections": sections, "researchers": researchers,
-        "units": units, "timeline": inst.timeline.order_by("year"), "centers": inst.centers.order_by("order", "name"),
-        "metrics": inst.metrics.filter(verified=True).order_by("key", "-year"),
-        "can_edit": access.is_admin(request.user),
+        "section": "institutions", "inst": inst, "part": part, "letter_sent": letter_sent,
+        "program": program, "program_sections": program_sections, "sections": other_sections,
+        "researchers": researchers, "researcher_count": inst.researchers.filter(verified=True).count(),
+        "units": units, "loose_programs": loose_programs,
+        "program_count": inst.study_programs.filter(active=True).count(),
+        "timeline": inst.timeline.order_by("year"), "centers": inst.centers.order_by("order", "name"),
+        "metrics": metrics, "can_edit": access.is_admin(request.user),
     })
+
+
+def search(request):
+    """Plain search over the public side (spec 4.1): no model, no cost."""
+    q = (request.GET.get("q") or "").strip()
+    results = {"institutions": [], "researchers": [], "programs": [], "guidelines": []}
+    if len(q) >= 2:
+        results["institutions"] = list(Institution.objects.filter(active=True).filter(
+            Q(name_he__icontains=q) | Q(name_en__icontains=q) | Q(city__icontains=q) | Q(short_name_he__icontains=q)
+        ).order_by("name_he")[:30])
+        results["researchers"] = list(Researcher.objects.filter(verified=True).filter(
+            Q(name_he__icontains=q) | Q(name_en__icontains=q) | Q(areas__icontains=q)
+        ).select_related("institution").order_by("name_he")[:30])
+        results["programs"] = list(StudyProgram.objects.filter(active=True, name__icontains=q)
+                                   .select_related("institution").order_by("name")[:30])
+        results["guidelines"] = list(GuidelineSection.objects.filter(Q(title__icontains=q) | Q(body__icontains=q))
+                                     .order_by("order")[:10])
+    total = sum(len(v) for v in results.values())
+    return render(request, "academia360/search.html", {"section": "search", "q": q, "results": results, "total": total})
 
 
 def no_access_page(request):
     return access.no_access(request)
+
+
+# ------------------------------------------------------------ private files
+
+def _serve(request, row, name, download=False):
+    storage = row.file.storage
+    if not storage.exists(row.file.name):
+        raise Http404
+    response = FileResponse(storage.open(row.file.name, "rb"), as_attachment=download, filename=name)
+    response["Cache-Control"] = "private, no-store"
+    return response
+
+
+def submitted_file(request, pk):
+    """A submitted file, for whoever may see its submission (its institution's
+    leaders, the committee), with an access log row. Never a public URL."""
+    row = SubmittedFile.objects.filter(pk=pk).select_related("submission__participation").first()
+    if row is None:
+        raise Http404
+    if not request.user.is_authenticated or not access.can_see(request.user, row):
+        return access.no_access(request)
+    download = bool(request.GET.get("download"))
+    AccessLog.objects.create(user=request.user, target_model="academia360.SubmittedFile", target_id=str(row.pk),
+                             action="download" if download else "view")
+    return _serve(request, row, row.original_name, download)
+
+
+def letter_file(request, pk):
+    """The signed letter file: the committee, and the institution once it is sent."""
+    row = ResponseLetter.objects.filter(pk=pk).select_related("submission__participation").first()
+    if row is None or not row.file:
+        raise Http404
+    if not request.user.is_authenticated or not access.can_see(request.user, row):
+        return access.no_access(request)
+    AccessLog.objects.create(user=request.user, target_model="academia360.ResponseLetter", target_id=str(row.pk))
+    return _serve(request, row, row.file.name.rsplit("/", 1)[-1])

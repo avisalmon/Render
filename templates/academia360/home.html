@@ -3,6 +3,7 @@
 {% block content %}
 <section class="a360-hero">
   <svg class="a360-arc a360-arc-tl" aria-hidden="true" viewBox="0 0 520 520"><circle cx="260" cy="260" r="200" fill="none" stroke="#E7F5F7" stroke-width="88"/></svg>
+  <svg class="a360-arc a360-arc-br" aria-hidden="true" viewBox="0 0 360 360"><circle cx="180" cy="180" r="130" fill="none" stroke="#FEF5D6" stroke-width="60" stroke-dasharray="520 300" stroke-linecap="round" transform="rotate(120 180 180)"/></svg>
   <div class="a360-wrap a360-hero-in">
     <div class="a360-hero-text">
       <div class="a360-kicker">תכנית ות״ת ומל״ג · תשפ״ה עד תשפ״ח</div>
@@ -17,17 +18,23 @@
       <div class="a360-small a360-mute a360-b">חמשת המבטים של הוועדה על כל תכנית</div>
       <div class="a360-ring-row">
         <svg class="a360-ring" viewBox="0 0 200 200" role="img" aria-label="טבעת בחמישה צבעים, מבט אחד על כל קריטריון">
-          {% for c in criteria|slice:":5" %}<circle cx="100" cy="100" r="74" fill="none" stroke="{{ c.colour|default:'#323435' }}" stroke-width="26" stroke-dasharray="86 379" class="a360-ring-seg a360-ring-seg-{{ forloop.counter }}" transform="rotate(-90 100 100)"/>{% endfor %}
+          {% for c in criteria|slice:":5" %}<circle cx="100" cy="100" r="74" fill="none" stroke="{{ c.colour }}" stroke-width="26" stroke-dasharray="86 379" class="a360-ring-seg a360-ring-seg-{{ forloop.counter }}" transform="rotate(-90 100 100)"/>{% empty %}
+          <circle cx="100" cy="100" r="74" fill="none" stroke="#63BAC5" stroke-width="26" stroke-dasharray="86 379" class="a360-ring-seg a360-ring-seg-1" transform="rotate(-90 100 100)"/>
+          <circle cx="100" cy="100" r="74" fill="none" stroke="#F6C21A" stroke-width="26" stroke-dasharray="86 379" class="a360-ring-seg a360-ring-seg-2" transform="rotate(-90 100 100)"/>
+          <circle cx="100" cy="100" r="74" fill="none" stroke="#EE6B67" stroke-width="26" stroke-dasharray="86 379" class="a360-ring-seg a360-ring-seg-3" transform="rotate(-90 100 100)"/>
+          <circle cx="100" cy="100" r="74" fill="none" stroke="#8FC457" stroke-width="26" stroke-dasharray="86 379" class="a360-ring-seg a360-ring-seg-4" transform="rotate(-90 100 100)"/>
+          <circle cx="100" cy="100" r="74" fill="none" stroke="#323435" stroke-width="26" stroke-dasharray="86 379" class="a360-ring-seg a360-ring-seg-5" transform="rotate(-90 100 100)"/>
+          {% endfor %}
           <text x="100" y="94" text-anchor="middle" class="a360-ring-big">360°</text>
           <text x="100" y="116" text-anchor="middle" class="a360-ring-small">מבט מלא</text>
         </svg>
         <ol class="a360-ring-list">
-          {% for c in criteria %}<li><span class="a360-dot" style="background:{{ c.colour|default:'#323435' }}"></span>{{ c.name }}</li>{% empty %}
+          {% for c in criteria|slice:":5" %}<li><span class="a360-dot" style="background:{{ c.colour }}"></span>{{ c.name }}</li>{% empty %}
           <li><span class="a360-dot" style="background:#63BAC5"></span>חדשנות בהוראה</li>
-          <li><span class="a360-dot" style="background:#F6C21A"></span>תעסוקתיות הבוגרים</li>
-          <li><span class="a360-dot" style="background:#EE6B67"></span>מעורבות בחברה ובקהילה</li>
-          <li><span class="a360-dot" style="background:#8FC457"></span>מדיניות מוסדית ומחויבות הנהלה</li>
-          <li><span class="a360-dot" style="background:#323435"></span>מדידה והערכה לאורך זמן</li>
+          <li><span class="a360-dot" style="background:#F6C21A"></span>תעסוקתיות</li>
+          <li><span class="a360-dot" style="background:#EE6B67"></span>מעורבות חברה וקהילה</li>
+          <li><span class="a360-dot" style="background:#8FC457"></span>אסטרטגיה מוסדית ומחויבות הנהלה</li>
+          <li><span class="a360-dot" style="background:#323435"></span>מדדי ביצוע והערכת תוצאות</li>
           {% endfor %}
         </ol>
       </div>
@@ -46,21 +53,29 @@
       <div class="a360-ask" style="border-top-color:#F6C21A"><b>תו תקן מוסדי</b><span>מה הופך תכנית לימודים ל"מעודכנת": רף ברור, מדיד, שחל על כל מחלקה וניתן לבדיקה.</span></div>
       <div class="a360-ask" style="border-top-color:#EE6B67"><b>התנסות וקשר למעסיקים</b><span>פרויקטים, התמחויות ומרצים מהשטח, משלושת המגזרים: עסקי, ציבורי ושלישי.</span></div>
       <div class="a360-ask" style="border-top-color:#8FC457"><b>הכשרת סגל ותגמול</b><span>מרצים שמלווים בשינוי הקורס שלהם, ומוסד שיודע להכיר בזה.</span></div>
-      <div class="a360-ask a360-ask-wide" style="border-top-color:#323435"><b>מדדי הצלחה</b><span>ארבעה מדדים שות״ת קבעה לכולם, ושניים עד ארבעה שכל מוסד מוסיף, עם מצב נוכחי וצפי לכל שנה. חמישה־עשר אחוזים מהתמיכה מוקדשים לקשרי אקדמיה־קהילה.</span></div>
+      <div class="a360-ask a360-ask-wide" style="border-top-color:#323435"><b>מדדי הצלחה</b><span>מדדים שות״ת קבעה לכולם, ושניים עד ארבעה שכל מוסד מוסיף, עם מצב נוכחי וצפי לכל שנה. חמישה־עשר אחוזים מהתמיכה מוקדשים לקשרי אקדמיה־קהילה.</span></div>
     </div>
   </div>
 </section>
 
 <section id="who" class="a360-band">
-  <div class="a360-wrap">
-    <h2 class="a360-h2">מי משתתף</h2>
-    <p class="a360-lede a360-mute a360-narrow">{{ count }} מוסדות מתוקצבים. כל שם פותח את עמוד המוסד: מה הוא, מה הוא מלמד, מי חוקר בו, ומה הציע.</p>
+  <svg class="a360-arc a360-arc-bl" aria-hidden="true" viewBox="0 0 420 420"><circle cx="210" cy="210" r="150" fill="none" stroke="#FCE7E6" stroke-width="54" stroke-dasharray="420 600" stroke-linecap="round" transform="rotate(200 210 210)"/></svg>
+  <div class="a360-wrap a360-rel">
+    <div class="a360-head-row">
+      <div class="a360-narrow">
+        <h2 class="a360-h2">מי משתתף</h2>
+        <p class="a360-lede a360-mute">{{ count }} מוסדות מתוקצבים. {{ applied }} מהם הגישו תכנית ארבע־שנתית במחזור תשפ״ה{% if not_applied %}, {{ not_applied }} בחרו שלא לגשת למחזור הזה{% endif %}. כל שם פותח את עמוד המוסד: מה הוא, מה הוא מלמד, מי חוקר בו, ומה פרסם על התכנית שלו.</p>
+      </div>
+      <a href="{% url 'academia360:institutions' %}" class="a360-pill a360-pill-line">כל המוסדות</a>
+    </div>
     <div class="a360-inst-groups">
       {% for label, rows in groups %}
       <div class="a360-inst-group">
         <div class="a360-inst-head">{{ label }}</div>
-        {% for i in rows %}<a href="{% url 'academia360:institution' i.slug %}" dir="auto">{{ i.name }}</a>{% endfor %}
+        {% for i in rows %}<a href="{% url 'academia360:institution' i.slug %}" {% if not i.applied %}class="a360-out"{% endif %}><span dir="auto">{{ i.name }}</span>{% if not i.applied %} <small>· לא ניגש</small>{% endif %}</a>{% endfor %}
       </div>
+      {% empty %}
+      <p class="a360-mute">עוד אין מוסדות במערכת.</p>
       {% endfor %}
     </div>
   </div>
@@ -68,6 +83,18 @@
 
 <section class="a360-band a360-band-white">
   <div class="a360-wrap">
+    <h2 class="a360-h2">איפה התכנית עומדת</h2>
+    <ol class="a360-steps">
+      {% for when, what, state in timeline %}
+      <li class="a360-step a360-step-{{ state }}"><span class="a360-step-dot"></span><b>{{ when }}</b><span class="a360-mute">{{ what }}</span></li>
+      {% endfor %}
+    </ol>
+  </div>
+</section>
+
+<section class="a360-band">
+  <svg class="a360-arc a360-arc-tr2" aria-hidden="true" viewBox="0 0 400 400"><circle cx="200" cy="200" r="140" fill="none" stroke="#EEF6E3" stroke-width="64" stroke-dasharray="500 400" stroke-linecap="round" transform="rotate(30 200 200)"/></svg>
+  <div class="a360-wrap a360-rel">
     <h2 class="a360-h2">איך מוצאים כאן את הדרך</h2>
     <div class="a360-doors">
       <div class="a360-card a360-door"><span class="a360-door-icon" style="background:#E7F5F7"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1E7C88" stroke-width="1.8" aria-hidden="true"><path d="M3 11l9-7 9 7v9H3z"/><path d="M9 20v-6h6v6"/></svg></span><b>אני סקרן או סקרנית</b><p class="a360-mute">הכול כאן פתוח בלי כניסה: התכנית, המוסדות, תכניות הלימוד והחוקרים.</p><a href="#who">להתחיל מהמוסדות</a></div>
