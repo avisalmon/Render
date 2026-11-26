@@ -1,0 +1,139 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  REQ-M.208 - Naomi, 2026-10-29: the leaders see everyone who took the entrance
+  test, with the file the student uploaded, and beside each one approve or not.
+  The students of this leader and the test-takers of their school who have not
+  joined a leader yet. A "not yet" needs words, the same rule as every other
+  return here, and the student may try again.
+{% endcomment %}
+
+{% block title %}מבחני הכניסה · מטצים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page">
+  <div class="mz-page-head">
+    <h1>מבחני הכניסה של התלמידים</h1>
+    <p>
+      כל מי שהגיש את מבחן הכניסה{% if schools %} מ{{ schools|join:", " }}{% endif %}, עם הקובץ שהעלה.
+      ליד כל תלמיד/ה אתם מחליטים: עבר/ה ונכנס/ה לסיירת, או לא עבר/ה. בשני המקרים התלמיד/ה מקבלים הודעה באתר ובמייל.
+    </p>
+  </div>
+
+  {% if error == "note" %}
+    <div class="mz-alert" role="alert">כשמחזירים לתיקון צריך לכתוב מה לתקן, כדי שהתלמיד/ה ידעו מה לשנות.</div>
+  {% endif %}
+  {% if looking %}
+    <div class="mz-alert" role="status">זו תצוגה בלבד: כך המוביל/ה רואים את הדף, עם הכפתורים "עבר/ה" ו"לא עבר/ה" ליד כל תלמיד/ה. רק המוביל/ה יכולים ללחוץ עליהם. את ההחלטות שלכן עושים בדף הניהול של מבחני הכניסה.</div>
+  {% endif %}
+
+  {% if not schools %}
+    <section class="mz-panel">
+      <p class="mz-muted">עוד לא ידוע באיזה בית ספר אתם, ולכן מופיעים כאן רק המטצים שלכם. כשתפתחו כיתה בבית הספר שלכם, יופיעו כאן גם התלמידים שבחרו בו בהרשמה.</p>
+    </section>
+  {% endif %}
+
+  <section class="mz-panel">
+    <h2>מי שהגיש <span class="mz-muted">({{ rows|length }})</span> · מחכים להחלטה שלכם <span class="mz-count">{{ waiting }}</span></h2>
+    {% for row in rows %}
+      <article class="mz-entrance-row" id="attempt-{{ row.attempt.pk }}" data-state="{{ row.state }}">
+        <header>
+          <strong>{{ row.name }}</strong>
+          {% if row.school %}<span class="mz-muted">{{ row.school }}</span>{% endif %}
+          {% if row.state == "waiting" %}<span class="mz-tag mz-tag-doing">מחכה להחלטה</span>
+          {% elif row.state == "approved" %}<span class="mz-tag mz-tag-done">אושר</span>
+          {% elif row.not_passed %}<span class="mz-tag mz-tag-fix">לא עבר/ה, נשלחה הודעה</span>
+          {% elif row.state == "returned" %}<span class="mz-tag mz-tag-fix">לא אושר, נשלח לתיקון</span>
+          {% else %}<span class="mz-tag">הבדיקה האוטומטית מצאה מה לתקן</span>{% endif %}
+        </header>
+        <p class="mz-muted">הוגש {{ row.attempt.submitted_at|date:"j.n.Y" }}, ניסיון {{ row.attempt.number }}.</p>
+        {% if row.attempt.model_file %}
+          {% if row.picture %}
+            <p>
+              <img src="{% url 'matazim:attempt_file' row.attempt.pk %}?view=1" alt="הקובץ של {{ row.name }}"
+                   style="max-width: 100%; max-height: 360px; height: auto; border-radius: 8px;">
+            </p>
+          {% endif %}
+          <p>
+            <a class="mz-btn mz-btn-secondary" href="{% url 'matazim:attempt_file' row.attempt.pk %}?view=1"
+               target="_blank" rel="noopener">פתיחת הקובץ</a>
+            <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:attempt_file' row.attempt.pk %}">הורדת הקובץ</a>
+          </p>
+        {% endif %}
+        {% if row.state == "returned" and row.attempt.decision_note and not row.not_passed %}
+          <p class="mz-muted">מה נכתב לתלמיד/ה: {{ row.attempt.decision_note }}</p>
+        {% endif %}
+        {% if done == row.attempt.pk|stringformat:"d" %}
+          <div class="mz-alert" role="status">
+            {% if group == "in" %}<p>{{ row.name }} בקבוצה שלכם עכשיו.</p>
+            {% elif group == "consent" %}<p>עוד אין אישור הורים, ולכן {{ row.name }} עוד לא בקבוצה שלכם. אחרי שההורים יאשרו אפשר להכניס מכאן, או שהתלמיד/ה יצטרפו בעצמם.</p>
+            {% elif group == "out" %}<p>{{ row.name }} הוצאו מהתוכנית, ולכן לא נכנסו לקבוצה. להחזרה פונים לצוות התוכנית.</p>
+            {% elif group == "other" %}<p>{{ row.name }} כבר בקבוצה של מוביל/ה אחר/ת.</p>{% endif %}
+            {% if told %}<p>נשלחה ל{{ row.name }} הודעה שעבר/ה את מבחני המיון ונכנס/ה לסיירת.</p>{% endif %}
+            {% if luck %}<p>נשלחה ל{{ row.name }} הודעה שלא עבר/ה את מבחן המיון, עם איחולי הצלחה.</p>{% endif %}
+          </div>
+        {% endif %}
+        {% if row.state == "approved" and not looking %}
+          {% comment %}REQ-M.209 - after approving: into my group, and the message, each on its own.{% endcomment %}
+          <form method="post" action="{% url 'matazim:leader_decide' row.attempt.pk %}" class="mz-entrance-decide">
+            {% csrf_token %}
+            {% if row.in_group %}
+              <p class="mz-muted">בקבוצה שלכם.</p>
+            {% elif row.consent %}
+              <p class="mz-muted">אפשר יהיה להכניס לקבוצה שלכם אחרי אישור ההורים.</p>
+            {% else %}
+              <button type="submit" name="action" value="group" class="mz-btn mz-btn-secondary">הכנסה לקבוצה שלי</button>
+            {% endif %}
+            <button type="submit" name="action" value="tell" class="mz-btn mz-btn-ghost">שליחת הודעה על מעבר לסיירת</button>
+          </form>
+        {% endif %}
+        {% if row.state != "approved" and looking %}
+          {% comment %}REQ-M.214 - the programme team sees the leader's two buttons, and cannot press them.{% endcomment %}
+          <div class="mz-entrance-decide mz-entrance-preview">
+            <button type="button" class="mz-btn mz-btn-primary" disabled>עבר/ה: אישור והכנסה לסיירת</button>
+            {% if not row.not_passed %}<button type="button" class="mz-btn mz-btn-secondary" disabled>לא עבר/ה</button>{% endif %}
+          </div>
+        {% endif %}
+        {% if row.state != "approved" and not looking %}
+          {% comment %}
+            REQ-M.214 - Lital, 2026-10-31 11:29: beside each name, passed or did not
+            pass, and the student is told either way. Two buttons, one decision.
+            Sending back for fixing (REQ-M.182) is the less common third, folded.
+          {% endcomment %}
+          <form method="post" action="{% url 'matazim:leader_decide' row.attempt.pk %}" class="mz-entrance-decide">
+            {% csrf_token %}
+            {% if not row.in_group %}
+              {% if row.consent %}
+                <p class="mz-muted">עוד אין אישור הורים: אפשר לאשר עכשיו, ולהכניס לקבוצה שלכם אחרי שההורים יאשרו.</p>
+              {% else %}
+                <label><input type="checkbox" name="group" value="1" checked> להכניס לקבוצה שלי</label>
+              {% endif %}
+            {% endif %}
+            <label><input type="checkbox" name="tell" value="1" checked> לשלוח לתלמיד/ה הודעה שעבר/ה את מבחני המיון ונכנס/ה לסיירת</label>
+            <p class="mz-entrance-choice">
+              <button type="submit" name="action" value="approve" class="mz-btn mz-btn-primary">עבר/ה: אישור והכנסה לסיירת</button>
+              {% if not row.not_passed %}
+                <button type="submit" name="action" value="not_passed" class="mz-btn mz-btn-secondary">לא עבר/ה: לא לאשר</button>
+              {% endif %}
+            </p>
+            {% if not row.not_passed %}
+              <p class="mz-muted">"לא עבר/ה" שולח לתלמיד/ה הודעה שלא עבר/ה את מבחן המיון לסיירת, עם איחולי הצלחה.</p>
+            {% endif %}
+          </form>
+          <details class="mz-entrance-fix">
+            <summary>או: להחזיר לתיקון, עם הערה מה לשנות</summary>
+            <form method="post" action="{% url 'matazim:leader_decide' row.attempt.pk %}">
+              {% csrf_token %}
+              <label class="mz-field"><span>מה לתקן</span>
+                <textarea name="note" rows="2"></textarea></label>
+              <button type="submit" name="action" value="return" class="mz-btn mz-btn-ghost">החזרה לתיקון</button>
+            </form>
+          </details>
+        {% endif %}
+      </article>
+    {% empty %}
+      <p class="mz-muted">עוד אף אחד לא הגיש את מבחן הכניסה.</p>
+    {% endfor %}
+  </section>
+</div>
+{% endblock %}

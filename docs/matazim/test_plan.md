@@ -31,7 +31,7 @@ rather than kept in a suite of their own.
 | T-F-M.1.5-4 | The page carries no invented figures (no counters until something computes them) | integration | F-M.1.5 | GREEN |
 | T-F-M.1.5-5 | The page shows no student work (no showcase until projects and consent are real) | integration | F-M.1.5 | GREEN |
 | T-F-M.1.5-6 | Photographs degrade to a gradient when the file is absent | integration | F-M.1.5 | GREEN |
-| T-F-M.1.5-7 | The partners section sits above איך זה עובד and shows both marks | integration | F-M.1.5 | GREEN |
+| T-F-M.1.5-7 | The partners section sits above איך זה עובד and shows the partners' marks (the Atid mark off since REQ-M.210) | integration | F-M.1.5 | GREEN |
 | T-F-M.1.6-1 | RULE-1: no מט״צים template links outside `/matazim/` | unit | F-M.1.6 | GREEN |
 | T-F-M.1.6-2 | RULE-2: no מט״צים template extends or includes babook chrome | unit | F-M.1.6 | GREEN |
 | T-F-M.1.6-3 | RULE-3: one version of the truth, no parallel record of learning | unit | F-M.1.6 | GREEN |

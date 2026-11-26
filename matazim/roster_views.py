@@ -49,11 +49,31 @@ def _leader_or_403(request):
 
     An admin is included because they see everyone (REQ-M.22) and because a
     leader who is away must not leave their students unreachable.
+
+    REQ-M.207: a program manager looking as one of her leaders gets that leader,
+    and every write is refused while she looks.
     """
+    from .as_leader import viewed_leader
+
+    if (viewing := viewed_leader(request)) is not None:
+        if request.method == "POST":
+            raise PermissionDenied
+        return viewing
     leader = leader_of(request.user)
     if leader is None and not is_program_manager(request.user):
         raise PermissionDenied
     return leader
+
+
+def _students_for(request, leader):
+    """Whom this page lists: the visible students, narrowed to the leader being
+    looked at when a manager is looking (REQ-M.207). Never wider than visible."""
+    from .as_leader import viewed_leader
+
+    students = visible_students(request.user)
+    if leader is not None and viewed_leader(request) is not None:
+        students = students.filter(leader=leader)
+    return students
 
 
 @login_required(login_url=LOGIN_URL)
@@ -62,7 +82,7 @@ def roster(request):
     leader = _leader_or_403(request)
 
     students = (
-        visible_students(request.user)
+        _students_for(request, leader)
         .select_related("user", "user__profile", "user__matazim_profile", "leader__user")
         .prefetch_related("classes")
     )
@@ -115,8 +135,85 @@ def roster(request):
             classes=StudyClass.objects.filter(leader=leader) if leader else [],
             waiting=Student.objects.filter(pending_leader=leader).count() if leader else 0,
             removed=request.GET.get("removed") == "1",
+            meeting_rows=_student_meeting_rows(request, leader),
         ),
     )
+
+
+def _student_meeting_rows(request, leader):
+    """SPR-M.89, REQ-M.228 - for the leader's form: each meeting, their students, confirmed or not.
+
+    Only a leader's own students (never a manager's whole world), so the form is
+    the size of one leader's group.
+    """
+    from .access import visible_student_meetings
+
+    if leader is None:
+        return []
+    meetings = list(visible_student_meetings(leader.user))
+    if not meetings:
+        return []
+    students = list(
+        _students_for(request, leader).filter(leader=leader)
+        .select_related("user", "user__profile").prefetch_related("meeting_attendance")
+    )
+    rows = []
+    for m in meetings:
+        people = []
+        for s in students:
+            done = any(a.meeting_id == m.pk for a in s.meeting_attendance.all())
+            people.append({"s": s, "confirmed": done})
+        rows.append({
+            "meeting": m,
+            "people": people,
+            "all_confirmed": bool(people) and all(p["confirmed"] for p in people),
+            "confirmed": sum(1 for p in people if p["confirmed"]),
+        })
+    return rows
+
+
+@require_POST
+@login_required(login_url=LOGIN_URL)
+def student_meeting_confirm(request, meeting_id):
+    """SPR-M.89, REQ-M.228 - the leader confirms who took part in a meeting of the year path.
+
+    `student` carries the ticked students; `undo` takes one confirmation back. Only
+    students this person may see are touched (`visible_students`); other ids are
+    ignored, and an undo for somebody else's student is refused.
+    """
+    from .access import visible_student_meetings
+    from .models import StudentAttendance
+
+    _leader_or_403(request)
+    meeting = get_object_or_404(visible_student_meetings(request.user), pk=meeting_id)
+    mine = visible_students(request.user)
+    undo = request.POST.get("undo") or ""
+    if undo.isdigit():
+        person = get_object_or_404(mine, pk=int(undo))
+        StudentAttendance.objects.filter(meeting=meeting, student=person).delete()
+    else:
+        ids = [int(x) for x in request.POST.getlist("student") if x.isdigit()]
+        for person in mine.filter(pk__in=ids):
+            StudentAttendance.objects.get_or_create(
+                meeting=meeting, student=person, defaults={"confirmed_by": request.user},
+            )
+    return redirect(reverse("matazim:roster") + "#mzStudentMeetings")
+
+
+def _test_file(person):
+    """REQ-M.206 - the last file this student handed in for the entrance test.
+
+    The page is reached only through `visible_students`, and the file itself
+    only through `attempt_file`, which asks again who is looking.
+    """
+    from .entrance_review import latest_submitted
+    from .storage import is_picture
+
+    profile = getattr(person.user, "matazim_profile", None)
+    attempt = latest_submitted(profile) if profile is not None else None
+    if attempt is None or not attempt.model_file:
+        return {"test_attempt": None, "test_picture": False}
+    return {"test_attempt": attempt, "test_picture": is_picture(attempt.model_file.name)}
 
 
 def _tests_and_work(students):
@@ -181,12 +278,17 @@ def student(request, student_id):
     """
     leader = _leader_or_403(request)
     person = get_object_or_404(
-        visible_students(request.user).select_related("user", "user__profile"), pk=student_id
+        _students_for(request, leader).select_related("user", "user__profile"), pk=student_id
     )
 
     if request.method == "POST":
         return _student_action(request, leader, person)
 
+    # REQ-M.207 - looking as a leader shows what that leader is shown, so the
+    # buttons and panels are decided for them, not for the manager looking.
+    from .as_leader import viewed_leader
+
+    who = leader.user if viewed_leader(request) is not None else request.user
     state = eligibility(person)
     per_course = cohort_progress([person], REQUIRED_COURSE_SLUGS).get(person.user_id, {})
 
@@ -200,6 +302,10 @@ def student(request, student_id):
         (per_course.get(slug) or {}).get("title", slug) for slug in state.missing_courses
     ]
 
+    # SPR-M.83 (REQ-M.215) - the whole year's path, the one the student sees.
+    from . import track
+    from .path_views import _peak_days
+
     return render(
         request,
         "matazim/student.html",
@@ -207,6 +313,8 @@ def student(request, student_id):
             request,
             "leader",
             person=person,
+            path_steps=track.path_steps(person.user, person, per_course, _peak_days(who)),
+            legend=track.LEGEND,
             eligibility=state,
             # REQ-M.77 — an ineligible student is an explained state, never a
             # missing button, so the page is given what is outstanding and not
@@ -220,7 +328,7 @@ def student(request, student_id):
                 for slug in REQUIRED_COURSE_SLUGS
             ],
             outstanding=outstanding,
-            can_certify=may_certify(request.user, person),
+            can_certify=may_certify(who, person),
             # REQ-M.84, SPR-M.50 — the consent a school collected on paper.
             #
             # `staff_consent` has existed since SPR-M.10 and nothing has ever
@@ -235,7 +343,7 @@ def student(request, student_id):
             # enforces: a leader vouching for a parent they have not spoken to
             # is not consent, it is a leader being helpful, and the two look
             # identical a year later.
-            consent=_consent_panel(request.user, person),
+            consent=_consent_panel(who, person),
             # REQ-M.21 — who moved this student, and when. A log nobody can see
             # answers nobody's question, and the person most likely to be asked
             # is whoever is looking at this page.
@@ -261,7 +369,7 @@ def student(request, student_id):
             # attached to them and nobody else's (REQ-M.22, and Avi 2026-09-16,
             # "מוביל רואה את כל התלמידים הקשורים אליו, לא לפי בית ספר").
             work=(
-                visible_submissions(request.user)
+                visible_submissions(who)
                 .filter(student=person)
                 .prefetch_related("feedback__author__profile")
             ),
@@ -269,7 +377,8 @@ def student(request, student_id):
             chosen=set(person.classes.values_list("pk", flat=True)),
             # REQ-M.204, REQ-M.203 - the screening test, and taking them out.
             test=_tests_and_work([person])[0].get(person.user_id, "none"),
-            can_restore=is_program_manager(request.user),
+            **_test_file(person),
+            can_restore=is_program_manager(who),
         ),
     )
 
@@ -388,8 +497,11 @@ def classes(request):
     from django.db.models import Count, Q
 
     from .access import visible_open_classes, visible_open_members
+    from .as_leader import acting_leader, refuse_writes
 
-    leader = leader_of(request.user)
+    # REQ-M.207 - or the leader a program manager is looking at, read only.
+    refuse_writes(request)
+    leader = acting_leader(request)
     if leader is None and is_program_manager(request.user):
         # An admin has no classes of their own to manage. The roster is what
         # they came for.
@@ -412,15 +524,18 @@ def classes(request):
         if leader is not None
         else StudyClass.objects.none()
     )
+    from .as_leader import viewed_leader
+
+    who = leader.user if viewed_leader(request) is not None else request.user
     owned = (
-        visible_open_classes(request.user)
-        .filter(owner=request.user, archived_at__isnull=True)
+        visible_open_classes(who)
+        .filter(owner=who, archived_at__isnull=True)
         .annotate(n=Count("members", filter=Q(members__ended_at__isnull=True)))
         .order_by("-created_at")
     )
     joined = (
-        visible_open_members(request.user)
-        .filter(user=request.user)
+        visible_open_members(who)
+        .filter(user=who)
         .select_related("open_class", "open_class__owner", "open_class__owner__profile")
     )
     return render(

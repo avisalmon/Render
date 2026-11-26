@@ -312,10 +312,42 @@ def visible_entrance_attempts(user):
             Q(member__user_id__in=owned) | ~Q(member__user_id__in=claimed)
         )
     if leader := leader_of(user):
-        return base.filter(
-            member__user_id__in=Student.objects.filter(leader=leader).values("user_id")
-        )
+        return leader_entrance_attempts(leader)
     return base.none()
+
+
+def leader_schools(leader):
+    """REQ-M.208 - the schools a leader is at: their classes', and their own.
+
+    A leader on day one has no class yet, and the school they chose when they
+    signed up (REQ-M.195) is the only thing that says where they are.
+    """
+    names = set(leader.school_names)
+    profile = MemberProfile.objects.filter(user_id=leader.user_id).select_related("school").first()
+    if profile is not None and profile.school_id:
+        names.add(profile.school.name)
+    return sorted(names)
+
+
+def leader_entrance_attempts(leader):
+    """REQ-M.208, §4.4 - the entrance hand-ins a leader reads and decides.
+
+    Naomi, 2026-10-29: the leaders see everyone who took the entrance test, with
+    the file, and approve them or not. The test comes before joining a leader
+    (C14), so a test-taker is nobody's student yet. A leader reads their own
+    students' hand-ins and those of test-takers who are nobody's and chose the
+    leader's school when signing up. A test-taker from another school, or one who
+    chose no school, stays with the programme team (`visible_entrance_attempts`).
+    """
+    from .models import EntranceAttempt
+
+    own = Student.objects.filter(leader=leader).values("user_id")
+    claimed = Student.objects.filter(leader__isnull=False).values("user_id")
+    return EntranceAttempt.objects.filter(submitted_at__isnull=False).filter(
+        Q(member__user_id__in=own)
+        | (~Q(member__user_id__in=claimed) & Q(member__user__matazim_leader__isnull=True)
+           & Q(member__school__name__in=leader_schools(leader)))
+    )
 
 
 def visible_site_updates(user):
@@ -677,7 +709,141 @@ def visible_course_slugs(user):
     slugs |= set(
         Enrollment.objects.filter(user=user).values_list("course__slug", flat=True)
     )
+    # REQ-M.217 - an approved graduate may go back over every הדרכה of the
+    # programme, for review and practice: the whole live pool.
+    graduate = graduate_of(user)
+    if graduate is not None and graduate.is_approved:
+        slugs |= shelvable_slugs()
     return slugs
+
+
+# ------------------------------------------------------------- בוגרי מטצים
+
+
+def graduate_of(user):
+    """This person's row in the graduates' space, approved or not, or None (REQ-M.216)."""
+    if not getattr(user, "is_authenticated", False):
+        return None
+    from .models import Graduate
+
+    return Graduate.objects.filter(user=user).select_related("leader", "school").first()
+
+
+def visible_graduates(user):
+    """The graduates this person may see. The same shape as `visible_students`.
+
+    Root sees all; a program manager the graduates of their institution's leaders
+    and any with no leader; a leader their own; a graduate themselves.
+    """
+    from .models import Graduate
+
+    if not getattr(user, "is_authenticated", False):
+        return Graduate.objects.none()
+    if user.is_superuser:
+        return Graduate.objects.all()
+    if is_program_manager(user):
+        return Graduate.objects.filter(
+            Q(leader__institution__managers=user) | Q(leader__isnull=True)
+        ).distinct()
+    if leader := leader_of(user):
+        return Graduate.objects.filter(leader=leader)
+    return Graduate.objects.filter(user=user)
+
+
+def visible_practicum_reports(user):
+    """REQ-M.219 - a graduate's reports, reached through the graduate."""
+    from .models import PracticumReport
+
+    if not getattr(user, "is_authenticated", False):
+        return PracticumReport.objects.none()
+    return PracticumReport.objects.filter(graduate__in=visible_graduates(user))
+
+
+def _graduate_world(user):
+    """The institution whose graduate content this person reads."""
+    from .models import Institution
+
+    graduate = graduate_of(user)
+    if graduate is not None and graduate.leader_id:
+        return graduate.leader.institution
+    return institution_of(user) or Institution.default()
+
+
+def _for_graduates(model, user):
+    if not getattr(user, "is_authenticated", False):
+        return model.objects.none()
+    if user.is_superuser:
+        return model.objects.all()
+    world = _graduate_world(user)
+    if world is None:
+        return model.objects.filter(institution__isnull=True)
+    return model.objects.filter(Q(institution=world) | Q(institution__isnull=True))
+
+
+def visible_graduate_dates(user):
+    """REQ-M.220 - the graduates' peak days: their institution's, and the ones for all."""
+    from .models import GraduateDate
+
+    return _for_graduates(GraduateDate, user)
+
+
+def visible_graduate_resources(user):
+    """REQ-M.218 - the content on the graduates' two shelves."""
+    from .models import GraduateResource
+
+    return _for_graduates(GraduateResource, user)
+
+
+def visible_graduate_meetings(user):
+    """REQ-M.226 - the meetings on the graduates' yearly track."""
+    from .models import GraduateMeeting
+
+    return _for_graduates(GraduateMeeting, user)
+
+
+def visible_graduate_attendance(user):
+    """REQ-M.226 - the leader's confirmations, reached through the graduate."""
+    from .models import GraduateAttendance
+
+    if not getattr(user, "is_authenticated", False):
+        return GraduateAttendance.objects.none()
+    return GraduateAttendance.objects.filter(graduate__in=visible_graduates(user))
+
+
+def visible_graduate_course_approvals(user):
+    """REQ-M.227 - the leader's approvals of finished הדרכות, through the graduate."""
+    from .models import GraduateCourseApproval
+
+    if not getattr(user, "is_authenticated", False):
+        return GraduateCourseApproval.objects.none()
+    return GraduateCourseApproval.objects.filter(graduate__in=visible_graduates(user))
+
+
+def visible_student_meetings(user):
+    """REQ-M.228 - the meetings on the first-year students' year path.
+
+    The person's institution's and the ones for everybody; a stranger or somebody
+    with no institution yet sees the ones for everybody and the programme's own.
+    """
+    from .models import Institution, StudentMeeting
+
+    if not getattr(user, "is_authenticated", False):
+        return StudentMeeting.objects.none()
+    if user.is_superuser:
+        return StudentMeeting.objects.all()
+    institution = institution_of(user) or Institution.default()
+    if institution is None:
+        return StudentMeeting.objects.filter(institution__isnull=True)
+    return StudentMeeting.objects.filter(Q(institution=institution) | Q(institution__isnull=True))
+
+
+def visible_student_attendance(user):
+    """REQ-M.228 - the leader's confirmations, reached through the student."""
+    from .models import StudentAttendance
+
+    if not getattr(user, "is_authenticated", False):
+        return StudentAttendance.objects.none()
+    return StudentAttendance.objects.filter(student__in=visible_students(user))
 
 
 def open_slugs():

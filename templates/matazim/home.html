@@ -38,10 +38,13 @@
         ותורמים לקהילה.
       </p>
       <p class="mz-hero-motto">לומדים. מתנסים. מובילים. משפיעים.</p>
-      <div class="mz-hero-cta">
-        <a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:register' %}?next={% url 'matazim:entrance_test' %}">אני רוצה להצטרף</a>
-        <a class="mz-linkbtn" href="{% url 'matazim:login' %}">כבר יש לי חשבון</a>
+      {# REQ-M.222 - Lital, 2026-11-17: one link to the site, and two ways in. #}
+      <div class="mz-hero-cta mz-doors" id="mzDoors">
+        <a class="mz-btn mz-btn-primary mz-btn-lg" id="mzDoorStart" href="{% url 'matazim:register' %}?next={% url 'matazim:entrance_test' %}">כניסה למתחילים את התכנית</a>
+        <a class="mz-btn mz-btn-secondary mz-btn-lg" id="mzHomeGraduates" href="{% url 'matazim:graduates' %}">כניסה לבוגרי מטצים</a>
       </div>
+      <p class="mz-doors-note">בוגרי מטצים: תלמידי כיתה י׳ שסיימו את התכנית ומדריכים בבתי הספר.
+        <a class="mz-linkbtn" href="{% url 'matazim:login' %}">כבר יש לי חשבון</a></p>
     </div>
     <div class="mz-hero-media mz-photo"
          style="background-image:url('/static/matazim/img/hero.webp')"
@@ -61,6 +64,8 @@
     </p>
     <p><a class="mz-linkbtn" href="{% url 'matazim:entrance_test' %}">על מבחן הכניסה</a></p>
   </section>
+
+  {# SPR-M.84's button for the graduates is now the second door at the top (REQ-M.222). #}
 
   <section class="mz-how" aria-labelledby="mzHow">
     <h2 id="mzHow">לאן זה מוביל</h2>
@@ -108,14 +113,12 @@
     </section>
   {% endif %}
 
-  <section class="mz-partners" aria-labelledby="mzPartners">
-    <h2 id="mzPartners">שותפים מרכזיים לעשייה</h2>
-    <div class="mz-partner-row">
-      <img class="mz-logo-wide" src="{% static 'matazim/img/partners/atid.svg' %}" alt="רשת עתיד">
-      <img class="mz-logo-tall" src="{% static 'matazim/img/partners/hemed_logo.png' %}" alt="חמ״ד, חינוך בונה עם">
-      <span class="mz-partner-more">וגופים נוספים נפלאים</span>
-    </div>
-  </section>
+  {% comment %}
+    REQ-M.213: Lital, 2026-10-31: "בשלב זה תוריד את הלוגו", the חמ״ד logo too,
+    after the Atid one (REQ-M.210). With no logo left, a "partners" card would
+    say only "וגופים נוספים נפלאים", so the card is off for now. The logo files
+    and the .mz-partners styles stay for the day it comes back.
+  {% endcomment %}
 
   <p class="mz-home-do mz-home-bottom">
     <a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:register' %}?next={% url 'matazim:entrance_test' %}">אני רוצה להצטרף</a>
@@ -133,9 +136,17 @@
     {% endcomment %}
     {% include "matazim/_year_banner.html" %}
     <h1 class="mz-home-title">{% if certified %}מטצ{% else %}תהליך ההכשרה{% endif %}</h1>
+    {% if tests_leader %}
+      {% comment %}REQ-M.208 - Naomi: a prominent button on the main page, to everyone who took the entrance test.{% endcomment %}
+      <p class="mz-home-do" id="mzLeaderTestsButton">
+        <a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:leader_tests' %}">מבחני הכניסה של התלמידים{% if tests_waiting %} <span class="mz-count">{{ tests_waiting }} מחכים לאישור</span>{% endif %}</a>
+      </p>
+    {% endif %}
     <ul class="mz-tiles">
-      {% if hero.kind == 'staff' and not previewing %}<li><a class="mz-tile mz-tile-role" href="{% url 'matazim:staff_home' %}">ניהול</a></li>{% endif %}
-      {% if hero.kind == 'leader' and not previewing %}<li><a class="mz-tile mz-tile-role" href="{% url 'matazim:leader_home' %}">האזור שלי</a></li>{% endif %}
+      {% if hero.kind == 'staff' and not previewing and not viewing_leader %}<li><a class="mz-tile mz-tile-role" href="{% url 'matazim:staff_home' %}">ניהול</a></li>{% endif %}
+      {% if hero.kind == 'leader' and not previewing or viewing_leader %}<li><a class="mz-tile mz-tile-role" href="{% url 'matazim:leader_home' %}">האזור שלי</a></li>{% endif %}
+      {% if hero.kind == 'staff' and not previewing and not viewing_leader %}<li><a class="mz-tile mz-grad-tile" href="{% url 'matazim:staff_graduates' %}">בוגרי מטצים</a></li>
+      {% elif hero.kind == 'leader' and not previewing and not viewing_leader %}<li><a class="mz-tile mz-grad-tile" href="{% url 'matazim:leader_graduates' %}">הבוגרים שלי</a></li>{% endif %}
       <li><a class="mz-tile" href="{% url 'matazim:courses' %}">ההדרכות</a></li>
       <li><a class="mz-tile" href="{% url 'matazim:my_path' %}">המסלול שלי</a></li>
       <li><a class="mz-tile" href="{% url 'matazim:community' %}">הקהילה</a></li>
@@ -154,6 +165,7 @@
           {% if not is_candidate %}<a class="mz-btn mz-btn-secondary" href="{% url 'matazim:preview' 'member' %}">משויך למוביל</a>{% endif %}
         </p>
       </section>
+      {% if hero.kind == 'staff' and not viewing_leader %}{% include "matazim/_as_leader_entry.html" %}{% endif %}
     {% endif %}
 
   {% elif stage == 'test' %}
@@ -171,6 +183,10 @@
       </form>
     {% endif %}
     <p class="mz-home-do"><a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:entrance_test' %}">להתחיל</a></p>
+    {% if not previewing %}
+      {# SPR-M.84 - a graduate who registered lands here first; their door is one tap away. #}
+      <p class="mz-home-do"><a class="mz-linkbtn" href="{% url 'matazim:graduates' %}">סיימתם את התכנית? בוגרי מטצים</a></p>
+    {% endif %}
 
   {% endif %}
 

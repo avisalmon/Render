@@ -84,6 +84,14 @@ MAILED_KINDS = frozenset(
         Notification.CERTIFIED,
         Notification.JOINED,
         Notification.EVENT,
+        # REQ-M.208 (Naomi, 2026-10-29): "התלמידים כמובן יקבלו הודעה על כך שהם
+        # מאושרים באתר". A student waiting on the entrance test is not inside the
+        # site yet, so the bell alone is a message they never read.
+        Notification.ENTRANCE_APPROVED,
+        Notification.ENTRANCE_RETURNED,
+        # SPR-M.84 - a graduate waiting for their leader, and the leader's yes.
+        Notification.GRADUATE_WAITING,
+        Notification.GRADUATE_APPROVED,
     }
 )
 

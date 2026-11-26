@@ -1,0 +1,111 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  SPR-M.84, REQ-M.216 - the first visit of a graduate. Lital, 2026-11-17: personal
+  details, the school and the leader from a list, and a parent's approval with a
+  signature. The leader then approves them.
+{% endcomment %}
+
+{% block title %}הצטרפות לבוגרי מטצים · מטצים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page mz-page-narrow mz-grad">
+  <div class="mz-page-head">
+    <h1>הצטרפות לבוגרי מטצים</h1>
+    {% if invited %}
+      <p id="mzGradInvited">הגעתם בקישור של {{ leaders.0.name }} לכיתה י. ממלאים פעם אחת, ומיד נכנסים למרחב הבוגרים, בלי לחכות לאישור.</p>
+    {% else %}
+      <p>ממלאים פעם אחת, ואחר כך המורה המוביל/ה מאשר/ת את ההצטרפות.</p>
+    {% endif %}
+  </div>
+
+  {% if error %}<div class="mz-alert" role="alert">{{ error }}</div>{% endif %}
+
+  <form method="post" class="mz-panel mz-grad-form" id="mzGradJoin">
+    {% csrf_token %}
+    <h2>הפרטים שלי</h2>
+    <label class="mz-field"><span>שם מלא</span>
+      <input type="text" name="full_name" maxlength="150" required autocomplete="name" dir="auto"
+             value="{% if posted %}{{ posted.full_name }}{% else %}{{ default_name }}{% endif %}"></label>
+    <label class="mz-field"><span>בית הספר</span>
+      <select name="school" id="mzGradSchool" required>
+        <option value="">בחרו מהרשימה</option>
+        {% for school in schools %}
+          <option value="{{ school.pk }}" data-name="{{ school.name }}"
+            {% if posted %}{% if posted.school == school.pk|stringformat:"d" %} selected{% endif %}{% elif default_school == school.pk %} selected{% endif %}>{{ school.name }}</option>
+        {% endfor %}
+      </select></label>
+    <label class="mz-field"><span>המורה המוביל/ה</span>
+      <select name="leader" id="mzGradLeader" required>
+        <option value="">בחרו מהרשימה</option>
+        {% for row in leaders %}
+          <option value="{{ row.leader.pk }}" data-schools="{{ row.schools|join:'|' }}"
+            {% if invited or posted.leader == row.leader.pk|stringformat:"d" %} selected{% endif %}>{{ row.name }}{% if row.schools %} · {{ row.schools|join:", " }}{% endif %}</option>
+        {% endfor %}
+      </select></label>
+
+    <h2>אישור הורים</h2>
+    <p>מטצים הוא אתר למידה עצמית שבנו מתנדבי אינטל יחד עם רשת החינוך עתיד. הבוגרים לומדים בו, מתכוננים להדרכה ומדווחים על שעות הפרקטיקום. ההורה ממלא/ת שם מלא ואימייל, ומאשר/ת בחתימה.</p>
+    <label class="mz-field"><span>שם מלא של ההורה</span>
+      <input type="text" name="guardian_name" maxlength="150" required dir="auto"
+             value="{% if posted %}{{ posted.guardian_name }}{% else %}{{ default_guardian_name }}{% endif %}"></label>
+    <label class="mz-field"><span>אימייל של ההורה</span>
+      <input type="email" name="guardian_email" required dir="ltr"
+             value="{% if posted %}{{ posted.guardian_email }}{% else %}{{ default_guardian_email }}{% endif %}"></label>
+    <label class="mz-checkline"><input type="checkbox" name="guardian_consent" required> אני ההורה, ואני מאשר/ת את ההצטרפות לבוגרי מטצים.</label>
+    <div class="mz-field">
+      <span id="mzSigLabel">חתימת ההורה (באצבע או בעכבר)</span>
+      <canvas class="mz-grad-sig" id="mzSig" width="600" height="200" role="img" aria-labelledby="mzSigLabel"></canvas>
+      <button type="button" class="mz-btn mz-btn-ghost" id="mzSigClear">ניקוי החתימה</button>
+    </div>
+    <input type="hidden" name="signature" id="mzSigData">
+
+    <button type="submit" class="mz-btn mz-btn-primary mz-btn-lg">שליחה לאישור</button>
+  </form>
+</div>
+
+<script>
+  (function () {
+    // The leaders at the chosen school come first; the rest stay choosable.
+    var school = document.getElementById("mzGradSchool");
+    var leader = document.getElementById("mzGradLeader");
+    function sortLeaders() {
+      var picked = school.options[school.selectedIndex];
+      var name = picked ? picked.getAttribute("data-name") : "";
+      var options = Array.prototype.slice.call(leader.options, 1);
+      options.sort(function (a, b) {
+        var ah = name && (a.getAttribute("data-schools") || "").split("|").indexOf(name) !== -1 ? 0 : 1;
+        var bh = name && (b.getAttribute("data-schools") || "").split("|").indexOf(name) !== -1 ? 0 : 1;
+        return ah - bh || a.text.localeCompare(b.text, "he");
+      });
+      options.forEach(function (o) { leader.appendChild(o); });
+    }
+    school.addEventListener("change", sortLeaders);
+    sortLeaders();
+
+    // The parent's signature, drawn on the canvas and sent as a PNG.
+    var canvas = document.getElementById("mzSig");
+    var data = document.getElementById("mzSigData");
+    var ctx = canvas.getContext("2d");
+    var drawing = false, drawn = false;
+    ctx.lineWidth = 3; ctx.lineCap = "round"; ctx.strokeStyle = "#111";
+    function at(e) {
+      var r = canvas.getBoundingClientRect();
+      return [(e.clientX - r.left) * canvas.width / r.width, (e.clientY - r.top) * canvas.height / r.height];
+    }
+    canvas.addEventListener("pointerdown", function (e) {
+      drawing = true; var p = at(e); ctx.beginPath(); ctx.moveTo(p[0], p[1]);
+      canvas.setPointerCapture(e.pointerId); e.preventDefault();
+    });
+    canvas.addEventListener("pointermove", function (e) {
+      if (!drawing) return; var p = at(e); ctx.lineTo(p[0], p[1]); ctx.stroke(); drawn = true;
+    });
+    function end() { if (drawing) { drawing = false; if (drawn) data.value = canvas.toDataURL("image/png"); } }
+    canvas.addEventListener("pointerup", end);
+    canvas.addEventListener("pointercancel", end);
+    document.getElementById("mzSigClear").addEventListener("click", function () {
+      ctx.clearRect(0, 0, canvas.width, canvas.height); drawn = false; data.value = "";
+    });
+  })();
+</script>
+{% endblock %}

@@ -12,6 +12,8 @@ under test. Reusing both rather than rewriting them is the same call the charter
 makes about the course engine.
 """
 
+from urllib.parse import urlencode
+
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
@@ -289,6 +291,12 @@ def _display_name_of(user):
     return _display_name(user)
 
 
+def _as_leaders(user):
+    from .as_leader import leaders_to_view
+
+    return list(leaders_to_view(user))
+
+
 @login_required(login_url=LOGIN_URL)
 def staff_home(request):
     """REQ-M.69 — one door, so the nav does not grow an item per tool."""
@@ -336,6 +344,8 @@ def staff_home(request):
             year=year_context(request.user),
             patrol=patrol_by_school(visible_students(request.user)),
             dashboard=dashboard,
+            # REQ-M.207 - whom she may look through.
+            as_leaders=_as_leaders(request.user),
             manager_name=_display_name_of(request.user),
             # REQ-M.87 — standing, so nobody has to remember to go looking.
             overdue=overdue_count(),
@@ -497,10 +507,9 @@ def attempt_file(request, attempt_id):
     Anyone else gets a 404 rather than a 403, because confirming that attempt
     number 91 exists is itself something a stranger has no business learning.
     """
-    from django.http import FileResponse
-
-    from .access import is_program_manager, leader_of
+    from .access import is_program_manager, leader_entrance_attempts, leader_of
     from .models import EntranceAttempt, Student
+    from .storage import file_response
 
     attempt = get_object_or_404(EntranceAttempt, pk=attempt_id)
     if not attempt.model_file:
@@ -511,13 +520,17 @@ def attempt_file(request, attempt_id):
 
     if not allowed and (mine := leader_of(request.user)):
         # The same boundary join every other leader screen uses: their students,
-        # and the query cannot reach anyone else's (REQ-M.22).
-        allowed = Student.objects.filter(user_id=owner_id, leader=mine).exists()
+        # and the query cannot reach anyone else's (REQ-M.22). REQ-M.208 adds the
+        # test-takers of their school who are nobody's yet, the ones they decide.
+        allowed = (
+            Student.objects.filter(user_id=owner_id, leader=mine).exists()
+            or leader_entrance_attempts(mine).filter(pk=attempt.pk).exists()
+        )
 
     if not allowed:
         raise Http404("not yours")
 
-    return FileResponse(attempt.model_file.open("rb"), as_attachment=True)
+    return file_response(attempt.model_file, request)
 
 
 @login_required(login_url=LOGIN_URL)
@@ -685,6 +698,148 @@ def staff_entrance(request):
             error=request.GET.get("error", ""),
         ),
     )
+
+
+def leader_entrance_rows(leader):
+    """REQ-M.208 - one row per person, their latest hand-in, waiting ones first."""
+    from . import entrance_review
+    from .access import leader_entrance_attempts
+    from .storage import is_picture
+
+    latest = {}
+    for attempt in (
+        leader_entrance_attempts(leader)
+        .select_related("member__user", "member__user__profile", "member__school")
+        .order_by("member_id", "-number")
+    ):
+        latest.setdefault(attempt.member_id, attempt)
+
+    from .consent import needs_guardian_consent
+    from .models import Student
+
+    own = set(Student.objects.filter(leader=leader).values_list("user_id", flat=True))
+    rows = []
+    for attempt in latest.values():
+        rows.append({
+            "attempt": attempt,
+            "name": _display_name_of(attempt.member.user),
+            "school": attempt.member.school.name if attempt.member.school_id else "",
+            "state": entrance_review.attempt_state(attempt),
+            "not_passed": attempt.decision == EntranceAttempt.RETURNED and attempt.not_passed,
+            "picture": bool(attempt.model_file) and is_picture(attempt.model_file.name),
+            # REQ-M.209 - already in this leader's group, or waiting on a parent.
+            "in_group": attempt.member.user_id in own,
+            "consent": needs_guardian_consent(attempt.member),
+        })
+    rows.sort(key=lambda r: (r["state"] != EntranceAttempt.WAITING, r["name"]))
+    return rows
+
+
+@login_required(login_url=LOGIN_URL)
+def leader_tests(request):
+    """REQ-M.208 - the leader's list of entrance hand-ins, and the decision.
+
+    Naomi, 2026-10-29: "שלמובילים יהיה כפתור בולט בעמוד הראשי ובו הם יוכלו לראות
+    את כל מי שביצע את מבחן הכניסה כולל את הקובץ הסופי שהתלמיד העלאה", beside each
+    one approve or not, and the student is told. A program manager looking as a
+    leader (REQ-M.207) reads it and cannot decide from here.
+    """
+    from .access import leader_schools
+    from .as_leader import acting_leader, viewed_leader
+
+    leader = acting_leader(request)
+    if leader is None:
+        from .access import candidate_of
+
+        if candidate_of(request.user):
+            return redirect("matazim:leader_entrance")
+        raise PermissionDenied
+
+    rows = leader_entrance_rows(leader)
+    return render(
+        request,
+        "matazim/leader_tests.html",
+        shell(
+            request,
+            "leader",
+            leader=leader,
+            rows=rows,
+            waiting=sum(1 for r in rows if r["state"] == EntranceAttempt.WAITING),
+            schools=leader_schools(leader),
+            looking=viewed_leader(request) is not None,
+            error=request.GET.get("error", ""),
+            done=request.GET.get("done", ""),
+            group=request.GET.get("group", ""),
+            told=bool(request.GET.get("told")),
+            luck=bool(request.GET.get("luck")),
+        ),
+    )
+
+
+@require_POST
+@login_required(login_url=LOGIN_URL)
+def leader_decide(request, attempt_id):
+    """REQ-M.208 - a leader approves a test-taker of their school, or does not."""
+    from . import entrance_review
+    from .access import leader_entrance_attempts, leader_of
+    from .as_leader import refuse_writes
+
+    refuse_writes(request)
+    leader = leader_of(request.user)
+    if leader is None:
+        raise PermissionDenied
+
+    attempt = get_object_or_404(
+        leader_entrance_attempts(leader).select_related("member__user"), pk=attempt_id
+    )
+    back = reverse("matazim:leader_tests")
+    action = request.POST.get("action")
+    if action == "return":
+        # REQ-M.211 (Lital, 2026-10-31): the leader may tell a student who did
+        # not pass, with a wish of good luck, instead of "back for fixing".
+        luck = bool(request.POST.get("luck"))
+        try:
+            entrance_review.return_attempt(
+                attempt, request.user, request.POST.get("note"), good_luck=luck
+            )
+        except ValueError:
+            return redirect(f"{back}?error=note#attempt-{attempt.pk}")
+        if luck:
+            return redirect(f"{back}?{urlencode({'done': attempt.pk, 'luck': 1})}#attempt-{attempt.pk}")
+        return redirect(back)
+    if action == "not_passed" or (action == "luck" and attempt.decision == EntranceAttempt.RETURNED):
+        # REQ-M.214 (Lital, 2026-10-31 11:29): beside each name, passed or did
+        # not pass, and either way the student is told. `luck` is SPR-M.80's
+        # name for the same message on a hand-in already not approved.
+        if attempt.decision == EntranceAttempt.APPROVED:
+            return redirect(back)
+        entrance_review.not_passed(attempt, request.user)
+        return redirect(f"{back}?{urlencode({'done': attempt.pk, 'luck': 1})}#attempt-{attempt.pk}")
+    if action == "luck":
+        return redirect(back)
+
+    # REQ-M.209 (Lital, 2026-10-31): approving lets the student into the
+    # patrol, and the leader chooses whether to take them into their own group
+    # and whether to send the message. The last two also stand alone, for a
+    # student approved before.
+    approved = attempt.decision == EntranceAttempt.APPROVED
+    if action == "approve" and not approved:
+        entrance_review.approve(attempt, request.user, tell=False)
+        approved = True
+    if not approved or action not in ("approve", "group", "tell"):
+        return redirect(back)
+
+    said = {"done": attempt.pk}
+    if action == "group" or (action == "approve" and request.POST.get("group")):
+        try:
+            entrance_review.take_into_group(attempt.member, leader, request.user)
+            said["group"] = "in"
+        except ValueError as reason:
+            said["group"] = str(reason)
+    if action == "tell" or (action == "approve" and request.POST.get("tell")):
+        entrance_review.tell_patrol(attempt.member, request.user)
+        said["told"] = 1
+    return redirect(f"{back}?{urlencode(said)}#attempt-{attempt.pk}")
 
 
 @require_POST

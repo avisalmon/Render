@@ -15,14 +15,14 @@
   <title>{% block title %}מטצים · מנהיגות טכנולוגית צעירה{% endblock %}</title>
   <meta name="description" content="{% block meta_description %}תוכנית מטצים: תלמידי חטיבת הביניים לומדים טכנולוגיה, יוצרים, מדריכים ומשפיעים על הקהילה, בשיתוף מתנדבי אינטל.{% endblock %}">
 
-  <link rel="icon" href="{% static 'matazim/logo.png' %}">
+  <link rel="icon" href="{% static 'matazim/matazim_logo.png' %}">
   {% comment %}
     No Google Fonts link. It sent every visitor's IP to Google on every page
     load, before they had agreed to anything, on a site whose visitors are
     fourteen. Rubik is served from our own disk instead: see the @font-face
     block at the top of matazim.css (spec §4.10, REQ-M.83).
   {% endcomment %}
-  <link rel="stylesheet" href="{% static 'matazim/matazim.css' %}?v=2">
+  <link rel="stylesheet" href="{% static 'matazim/matazim.css' %}?v=4">
   {% comment %}
     SPR-M.49 — מצב לילה, decided before the first paint.
 
@@ -73,8 +73,14 @@
   <div class="mz-container mz-header-inner">
 
     <a class="mz-brand" href="{% url 'matazim:home' %}">
-      <img src="{% static 'matazim/logo.png' %}" alt="עתיד שבילים משותפים">
-      <span class="mz-brand-tag">מטצים · מנהיגות טכנולוגית צעירה</span>
+      {% comment %}
+        REQ-M.213: Lital, 2026-10-31, asked that the only logo on the site be
+        the matazim programme's own, in burgundy (the burgundy of the old
+        logo's עתיד). The old עתיד שבילים משותפים logo.png stays in static/.
+        The tag drops its own מטצים, which the logo now says.
+      {% endcomment %}
+      <img src="{% static 'matazim/matazim_logo.png' %}" alt="מטצים">
+      <span class="mz-brand-tag">מנהיגות טכנולוגית צעירה</span>
     </a>
 
     {% comment %}
@@ -114,9 +120,14 @@
         {# Lital, 2026-10-15: "about" on the right, and registration the only other item. #}
         <a href="{% url 'matazim:about' %}" {% if section == 'about' %}class="is-active"{% endif %}>אודות התכנית</a>
         <a href="{% url 'matazim:register' %}?next={% url 'matazim:entrance_test' %}" {% if section == 'register' %}class="is-active"{% endif %}>הרשמה לתכנית</a>
+        {# SPR-M.84: the graduates' button is on the home page and in the footer; this menu stays her two items (2026-10-15). #}
       {% else %}
 
-        {% if learner_stage == 'test' %}
+        {% if is_graduate %}
+          {# SPR-M.84 - a graduate's own menu: their space and their practicum. #}
+          <a href="{% url 'matazim:graduates' %}" id="mzNavGraduates" {% if section == 'graduates' %}class="is-active"{% endif %}>בוגרי מטצים</a>
+          {% if not graduate_waiting %}<a href="{% url 'matazim:graduates_practicum' %}">הפרקטיקום שלי</a>{% endif %}
+        {% elif learner_stage == 'test' %}
           {# REQ-M.191: before the test there is one thing to do. #}
           <a href="{% url 'matazim:entrance_test' %}" class="is-active">מבחן הכניסה</a>
         {% elif learner_stage == 'join' %}
@@ -170,7 +181,7 @@
           <a href="{% url 'matazim:leader_entrance' %}" class="mz-nav-staff{% if section == 'leader' %} is-active{% endif %}">ההרשאה שלי</a>
         {% endif %}
 
-        {% if is_site_staff and not previewing %}
+        {% if is_site_staff and not previewing and not viewing_leader %}
           <a href="{% url 'matazim:pm_leaders' %}" class="mz-nav-staff{% if section == 'staff' %} is-active{% endif %}">המובילים שלי</a>
           {# Her main report, which was a grey one-line link on one screen. #}
           <a href="{% url 'matazim:cohort' %}" {% if section == 'cohort' %}class="is-active"{% endif %}>המחזור</a>
@@ -301,13 +312,20 @@
     {% if not is_candidate %}<a href="{% url 'matazim:preview' 'member' %}"{% if learner_stage == 'member' %} class="is-on"{% endif %}>משויך למוביל</a>{% endif %}
     <a href="{% url 'matazim:preview' 'off' %}{% if is_candidate %}?next={% url 'matazim:leader_entrance' %}{% endif %}" class="mz-preview-off">חזרה לתצוגה שלי</a>
   </div>
+{% elif viewing_leader %}
+  {# REQ-M.207 - a program manager looking as one of her leaders. #}
+  <div class="mz-preview-bar" role="status">
+    <strong>אתם רואים את האתר כמוביל/ה: {{ viewing_leader_name }}.</strong>
+    <span>תצוגה בלבד, שום דבר לא נשמר בשם המוביל/ה.</span>
+    <a href="{% url 'matazim:as_leader' %}?leader=off" class="mz-preview-off">חזרה לתצוגה שלי</a>
+  </div>
 {% endif %}
 
 <main>
   {% block content %}{% endblock %}
 </main>
 
-{% if can_request and not previewing %}
+{% if can_request and not previewing and not viewing_leader %}
   {% comment %}
     The lamp. Avi, 2026-10-15: no more request system. Everything the team asks
     for goes to his Gmail, and the subject carries the word מטצים and matatzim so
@@ -392,6 +410,7 @@
       <a href="{% url 'matazim:community' %}">קהילת מטצים</a>
       <a href="{% url 'matazim:events' %}">ימי שיא</a>
       <a href="{% url 'matazim:leader_entrance' %}">כניסת מובילים</a>
+      <a href="{% url 'matazim:graduates' %}">בוגרי מטצים</a>
     </span>
     <span class="mz-footer-legal">
       <a href="{% url 'matazim:privacy' %}">פרטיות</a>

@@ -402,12 +402,14 @@ def leader_shelf(request):
     """
     from app.models import Course
 
-    from .access import leader_of, shelvable_slugs
+    from .access import shelvable_slugs
+    from .as_leader import acting_leader, refuse_writes
     from .models import LeaderCourse, OfferedCourse
 
-    leader = leader_of(request.user)
+    leader = acting_leader(request)
     if leader is None:
         raise PermissionDenied
+    refuse_writes(request)
 
     allowed = shelvable_slugs()
     offered = [row for row in OfferedCourse.objects.all() if row.slug in allowed]

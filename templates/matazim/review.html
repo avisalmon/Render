@@ -38,9 +38,25 @@
       <p class="mz-muted">לא נכתבו מילים על העבודה.</p>
     {% endif %}
 
+    {% comment %}
+      REQ-M.206 (Lital, 2026-10-28): leaders could not read the file a student
+      handed in. A picture is now on the page itself, and "פתיחת הקובץ" shows a
+      picture or a PDF in the browser; anything else is still a download.
+    {% endcomment %}
+    {% if picture %}
+      <p id="mzWorkPicture">
+        <a href="{% url 'matazim:work_file' submission.pk %}?view=1" target="_blank" rel="noopener">
+          <img src="{% url 'matazim:work_file' submission.pk %}?view=1" alt="{{ submission.title }}"
+               style="max-width: 100%; height: auto; border-radius: 8px;">
+        </a>
+      </p>
+    {% endif %}
+
     <p class="mz-work-links">
       {% if submission.work_file %}
-        <a class="mz-btn mz-btn-secondary" href="{% url 'matazim:work_file' submission.pk %}">הורדת הקובץ</a>
+        <a class="mz-btn mz-btn-secondary" href="{% url 'matazim:work_file' submission.pk %}?view=1"
+           target="_blank" rel="noopener">פתיחת הקובץ</a>
+        <a class="mz-btn mz-btn-ghost" href="{% url 'matazim:work_file' submission.pk %}">הורדת הקובץ</a>
       {% endif %}
       {% if submission.link %}
         {% comment %}

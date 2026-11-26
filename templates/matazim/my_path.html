@@ -67,28 +67,7 @@
   {% endcomment %}
   <section class="mz-panel" id="mzTrainingPath">
     <h2>המסלול שלי בתכנית</h2>
-    <ol class="mz-path" aria-label="המסלול לפי חודשים">
-      {% for step in path_steps %}
-        <li class="mz-path-node is-{{ step.status }}{% if step.is_current %} is-current{% endif %}">
-          {% if step.is_current %}<span class="mz-path-now">המשימה הנוכחית</span>{% endif %}
-          <span class="mz-path-dot" aria-hidden="true">{% if step.status == 'done' %}✓{% else %}{{ forloop.counter }}{% endif %}</span>
-          <span class="mz-path-body">
-            {% if step.where %}
-              <a class="mz-path-title" href="{% if step.where_args %}{% url step.where step.where_args.0 %}{% else %}{% url step.where %}{% endif %}">{{ step.title }}</a>
-            {% else %}
-              <span class="mz-path-title">{{ step.title }}</span>
-            {% endif %}
-            <span class="mz-path-word">{{ step.word }}{% if step.pct and step.status == 'doing' %} {{ step.pct }}%{% endif %}</span>
-            <span class="mz-path-when">{{ step.month }}</span>
-          </span>
-        </li>
-      {% endfor %}
-    </ol>
-    <ul class="mz-legend" aria-label="מקרא">
-      {% for status, word in legend %}
-        <li><span class="mz-legend-dot is-{{ status }}" aria-hidden="true"></span>{{ word }}</li>
-      {% endfor %}
-    </ul>
+    {% include "matazim/_year_path.html" %}
     <p class="mz-path-end"><strong>ובסוף: תעודת מטצ.</strong> <span class="mz-muted">אחרי שהמוביל/ה מאשר/ת, ורק אחרי שסיימתם את כל המסלול.</span></p>
   </section>
 

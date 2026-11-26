@@ -1453,7 +1453,7 @@ Academia360's Epic A ran a ten-minute suite in the background (the real
 import of the reference) while the next sprint went on in the same tree. A
 view was added to `urls.py` before its class existed in `api.py`; Django
 loads the URLconf on the first request, which came after the edit, and 38
-tests failed with an ImportError that was not theirs (PM-96).
+tests failed with an ImportError that was not theirs (PM-98).
 
 **The rule.** While a suite runs, edit nothing it imports or renders: the
 app's code, its templates, its static files. Meanwhile work on docs, on the
@@ -1468,7 +1468,7 @@ mangled a regex into a control byte).
 Academia360's Epic A passed its screen contract at five phone widths and
 the first thing Avi said was that it did not open nicely on his phone: the
 bar wrapped into three ragged rows with the sign-in button alone on one,
-links drifted to the far side of the names, empty boxes left gaps (PM-97).
+links drifted to the far side of the names, empty boxes left gaps (PM-99).
 The contract measured overflow, field sizes, tap targets and contrast; it
 cannot measure ugly.
 
@@ -1486,7 +1486,7 @@ Avi reviews from away, so both are looked at, not only measured.
 Academia360's Epic B put the map's rows into the page with `json.dumps(...)|safe`
 (a `<` in a name would have closed the script tag), built the map on a free
 basemap that had started demanding an API key, and twice mangled a patch by
-sending it through a shell heredoc (PM-98).
+sending it through a shell heredoc (PM-100).
 
 **The rule.** Data rendered into a page goes through the framework's escaping
 helper (`json_script` in Django), never `json.dumps|safe`, and the sprint that
@@ -1500,7 +1500,7 @@ breakout's puzzle text was double-spaced: the template made paragraphs with
 `linebreaks` and the stylesheet kept the blank lines again with
 `white-space: pre-line`. Only the screenshot showed it. The same sprint's
 "every class is defined" sweep failed on element ids, because it matched
-every string with the class prefix in the script (PM-99).
+every string with the class prefix in the script (PM-101).
 
 **The rule.** A text field gets its line breaks from exactly one place, the
 template filter or the stylesheet. A class sweep over a script matches the
@@ -1516,7 +1516,7 @@ in visual order and parsing it proves little. The first run of that test
 failed on a seeded solution that was the single character "2", present in
 every puzzle; the seed was changed to a sentence, not the test loosened.
 B.1 had also added `BREAKOUT_PRIVATE_DIR` without its `.gitignore` line
-(PM-100).
+(PM-102).
 
 **The rule.** A generated document (PDF, printout, export) is built as
 content first and drawn second, and every promise about what it says is a
@@ -1532,7 +1532,7 @@ the radios and boxes of the first choice field, which only the screenshot
 showed; the printable's file was named after an experience the instance
 did not yet know, so it landed in `printables/None/`; and two tests used
 the superuser as "a stranger", who as a curator sees drafts by design
-(PM-101).
+(PM-104).
 
 **The rule.** A model form names a widget for every field whose shape
 differs from its column (one line: `TextInput`). The day a choice field
@@ -1547,7 +1547,7 @@ Academia360's admin overview chose between two relations with
 `{{ a.institution.name|default:a.researcher.name }}`. Django resolves the
 filter's argument first, so a row whose `researcher` is None raised inside
 the template and the page failed; the line had sat in another page since the
-epic before, where no test rendered both shapes of row at once (PM-101).
+epic before, where no test rendered both shapes of row at once (PM-103).
 
 **The rule.** Choose between two relations with an explicit `{% if %}`, never
 with `default`'s argument. A page that lists rows of mixed shapes is tested

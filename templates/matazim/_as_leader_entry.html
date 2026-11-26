@@ -1,0 +1,23 @@
+{% comment %}
+  REQ-M.207 - Naomi, 2026-10-29: "לראות את האתר כמוביל", like "לראות את האתר כתלמיד".
+  A leader's screens are about that leader's students, so she picks which leader.
+  Needs `as_leaders` (as_leader.leaders_to_view).
+{% endcomment %}
+<section class="mz-panel mz-preview-entry" aria-label="לראות כמוביל">
+  <h2>לראות את האתר כמוביל</h2>
+  {% if as_leaders %}
+    <form method="get" action="{% url 'matazim:as_leader' %}" class="mz-home-do">
+      <label class="mz-field"><span>איזה מוביל/ה?</span>
+        <select name="leader" required>
+          {% for one in as_leaders %}
+            <option value="{{ one.pk }}">{{ one.user.profile.display_name|default:one.user.email }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <button type="submit" class="mz-btn mz-btn-secondary">לראות כמוביל/ה</button>
+    </form>
+    <p class="mz-muted mz-small">רואים את האזור, המטצים והכיתות בדיוק כמו המוביל/ה. תצוגה בלבד: שום דבר לא נשמר בשם המוביל/ה.</p>
+  {% else %}
+    <p class="mz-muted">עוד אין מובילים פעילים ומאושרים לראות דרכם.</p>
+  {% endif %}
+</section>

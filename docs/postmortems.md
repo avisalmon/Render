@@ -17,36 +17,7 @@ Newest first.
 
 ---
 
-## PM-101 · 2026-11-26 · Epic C end (Academia360 people): a fallback that walks a null relation
-
-**What happened.** The admin overview listed the public's comments as
-`{{ c.institution.name_he|default:c.researcher.name_he }}`. Django resolves
-a filter's argument before the filter runs, so a comment on an institution
-(whose `researcher` is None) raised `VariableDoesNotExist` and the whole
-admin page failed. The same line sat in `/me/` since Epic B, where no test
-had rendered a comment on an institution and a researcher on one page. The
-sprint's own test caught it (C.5, the seed had one comment); nothing
-reached Avi. Two smaller things: a patch was sent through a shell heredoc
-once more (mistake 75, the same day) and failed on its first backslash,
-and the screenshot seed fed Hebrew through `manage.py shell < file` on
-Windows, which mangled every name until the shots were re-taken.
-
-**Why the process let it.** `default:` reads like a lazy "or"; it is not.
-And the B.5 tests built one comment per target, never both shapes on one
-page.
-
-**Rule.** Choosing between two relations in a template is an explicit
-`{% if %}`, never the argument of `default`, because the argument is
-resolved whether or not it is needed. A page that lists rows of mixed
-shapes is tested with every shape on it at once. Hebrew to a Django shell
-on Windows goes as a script file run with `-X utf8`, or as `shell -c` with
-escapes, never through the shell's stdin.
-
-Here: `templates/academia360/manage/overview.html`, `templates/academia360/me.html`,
-`tests/test_academia360_c4.py`, [building_an_app.md](building_an_app.md) mistake 78
-BKM: FullStackBKM 062c4a2
-
-## PM-101 · 2026-11-26 · breakout B.3 end: a one-line field drawn as a box, radios swallowed by a generic rule, a file named after a parent it did not know
+## PM-104 · 2026-11-26 · breakout B.3 end: a one-line field drawn as a box, radios swallowed by a generic rule, a file named after a parent it did not know
 
 **What happened.** (1) The hint field is a `TextField` in the model, so the
 model form drew it as a textarea; the phone authoring flow failed looking
@@ -79,7 +50,36 @@ Here: `breakout/edit_forms.py` (HintForm widgets, PrintableForm), `breakout/edit
 `tests/test_breakout_b3.py`, [building_an_app.md](building_an_app.md) mistake 78
 BKM: FullStackBKM 963f0fa (mistake 91)
 
-## PM-100 · 2026-11-26 · breakout B.2 end: the kit's promise, tested on the content; a one-letter secret; a missing ignore line
+## PM-103 · 2026-11-26 · Epic C end (Academia360 people): a fallback that walks a null relation
+
+**What happened.** The admin overview listed the public's comments as
+`{{ c.institution.name_he|default:c.researcher.name_he }}`. Django resolves
+a filter's argument before the filter runs, so a comment on an institution
+(whose `researcher` is None) raised `VariableDoesNotExist` and the whole
+admin page failed. The same line sat in `/me/` since Epic B, where no test
+had rendered a comment on an institution and a researcher on one page. The
+sprint's own test caught it (C.5, the seed had one comment); nothing
+reached Avi. Two smaller things: a patch was sent through a shell heredoc
+once more (mistake 75, the same day) and failed on its first backslash,
+and the screenshot seed fed Hebrew through `manage.py shell < file` on
+Windows, which mangled every name until the shots were re-taken.
+
+**Why the process let it.** `default:` reads like a lazy "or"; it is not.
+And the B.5 tests built one comment per target, never both shapes on one
+page.
+
+**Rule.** Choosing between two relations in a template is an explicit
+`{% if %}`, never the argument of `default`, because the argument is
+resolved whether or not it is needed. A page that lists rows of mixed
+shapes is tested with every shape on it at once. Hebrew to a Django shell
+on Windows goes as a script file run with `-X utf8`, or as `shell -c` with
+escapes, never through the shell's stdin.
+
+Here: `templates/academia360/manage/overview.html`, `templates/academia360/me.html`,
+`tests/test_academia360_c4.py`, [building_an_app.md](building_an_app.md) mistake 78
+BKM: FullStackBKM 062c4a2
+
+## PM-102 · 2026-11-26 · breakout B.2 end: the kit's promise, tested on the content; a one-letter secret; a missing ignore line
 
 **What happened.** (1) Spec chapter 4 promises that no solution reaches
 the player pages of the printed kit. The first run of that test failed:
@@ -105,9 +105,9 @@ private-files setting adds its `.gitignore` line the same day.
 Here: `breakout/kit.py` (compose, then render), `tests/test_breakout_b2.py`
 (`leaks()` and the planted-leak test), `breakout/seed_assets/experiences.json`,
 `.gitignore`, [building_an_app.md](building_an_app.md) mistake 77
-BKM: FullStackBKM ec62f9f (mistake 90, which also carries PM-99)
+BKM: FullStackBKM ec62f9f (mistake 90, which also carries PM-101)
 
-## PM-99 · 2026-11-26 · breakout B.1 end: two small things, both caught by the sprint's own checks
+## PM-101 · 2026-11-26 · breakout B.1 end: two small things, both caught by the sprint's own checks
 
 **What happened.** (1) The puzzle text on the experience page came out
 double-spaced: the template already turned blank lines into paragraphs
@@ -129,9 +129,9 @@ did their job on day one, nothing else to report.
 
 Here: `static/breakout/breakout.css`, `tests/test_breakout_b1.py`,
 [building_an_app.md](building_an_app.md) mistake 76
-BKM: FullStackBKM ec62f9f (folded into mistake 90 with PM-100)
+BKM: FullStackBKM ec62f9f (folded into mistake 90 with PM-102)
 
-## PM-98 · 2026-11-26 · Epic B end (Academia360 public site): three small things the sprint should have caught
+## PM-100 · 2026-11-26 · Epic B end (Academia360 public site): three small things the sprint should have caught
 
 **What happened.** (1) The map's rows went into the page as
 `json.dumps(...)|safe`, where a `<` in a name would have closed the script
@@ -159,7 +159,7 @@ exceptions.
 Here: `docs/building_an_app.md` (mistake 75)
 BKM: FullStackBKM 784715b
 
-## PM-97 · 2026-11-26 · "It did not open nicely on the phone": the contract measured, nobody looked
+## PM-99 · 2026-11-26 · "It did not open nicely on the phone": the contract measured, nobody looked
 
 **What happened.** Avi's first word on Academia360's Epic A was that the
 style is right but it did not open nicely on his phone. The app's bar at
@@ -187,7 +187,7 @@ two rows on a phone, its brand and sign-in on the same line).
 Here: `docs/building_an_app.md` (mistake 74), `tests/test_academia360_screens.py`
 BKM: FullStackBKM 178de07
 
-## PM-96 · 2026-11-26 · Editing code while its test run was still going
+## PM-98 · 2026-11-26 · Editing code while its test run was still going
 
 **What happened.** During Academia360's Epic A a long suite (ten minutes:
 the real import of 180 MB of reference files) ran in the background while
@@ -214,6 +214,42 @@ again).
 
 Here: `docs/building_an_app.md` (mistake 73)
 BKM: FullStackBKM 1340936
+## PM-97 · 2026-11-17 · Sprint M.85 end (the mail bot): "only then can they enter" was read loosely
+
+**What happened.** Lital's first graduates mail said the leader approves
+the students who joined. SPR-M.84 let a graduate who was still waiting see
+the welcome text and the peak days, and left the site's other pages open
+to them. Seventeen minutes later she wrote again: the leader approves them
+"ורק כך הם יוכלו להיכנס למערכת", and asked for two clear doors on the
+site, one for graduates and one for those starting. SPR-M.85 closed both.
+
+**Why our process let it happen.** An approval step was built as a status
+("waiting") instead of as a gate. Nothing asked what a waiting person can
+still reach, so the pages outside the new space were never checked.
+
+**Rule.** When someone approves a person in, the approval is a gate:
+before it, the person reaches one page that says what they are waiting
+for, and every other page sends them back to it. Test it from the waiting
+person's side, on the pages outside the new feature too.
+
+Here: this file, REQ-M.222, tests/test_spr_m_85.py
+BKM: deferred - the mail bot may change only the matazim app; Avi's chat carries it to FullStackBKM (bkm_drift lists it)
+
+## PM-96 · 2026-11-17 · Sprint M.84 end (graduates' space, the mail bot): nothing new
+
+**What happened.** The first full run of the matazim suite "failed" in
+seconds with exit code 5: PowerShell passes `tests/test_spr_m_*.py` to
+pytest unexpanded, so nothing was collected. Run through bash it expanded.
+One new test collided with a slug a migration had already seeded; renamed.
+The screenshots showed the new form's dropdowns unstyled (the site styles
+only their width), fixed for the new screens before shipping.
+
+**Rule.** Nothing new: PM-1 already says Windows shells need care, and
+methodology 6 (look at every screen) is what caught the dropdowns. Exit
+code 5 from pytest means "nothing collected", never "passed" or "failed".
+
+Here: this file
+BKM: deferred - covered by PM-1 and methodology 6
 
 ## PM-95 · 2026-11-11 · The shared menu's first train: four failures my run did not cover
 

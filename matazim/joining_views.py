@@ -29,6 +29,7 @@ from django.views.decorators.http import require_POST
 
 from .access import institution_of, is_program_manager, leader_of, visible_leaders
 from .consent import consent_blocker, needs_guardian_consent
+from .direct_views import class_url, graduate_url
 from .history import record_arrival, record_leader_change, set_status
 from .models import Application, Leader, Notification, Student
 from .views import member_profile, shell
@@ -365,7 +366,10 @@ def leader_home(request):
     a later sprint; without this the open door has no exit, because nobody can
     accept anyone.
     """
-    leader = leader_of(request.user)
+    from .as_leader import acting_leader
+
+    # REQ-M.207 - or the leader a program manager is looking at.
+    leader = acting_leader(request)
     if leader is None:
         # SPR-M.44 — a candidate is not a trespasser.
         #
@@ -405,6 +409,9 @@ def leader_home(request):
             # manager sees about it, on the page a leader opens every day.
             dashboard=leader_dashboard(leader),
             join_url=request.build_absolute_uri(f"/matazim/join/{leader.join_code}/"),
+            # SPR-M.91, REQ-M.231 - the two direct links, grade 9 and grade 10.
+            class_link_url=class_url(request, leader),
+            graduate_link_url=graduate_url(request, leader),
             waiting=_waiting_on(leader),
             # REQ-M.124 — work sitting on this leader's desk. A queue nobody is
             # told about is a queue that grows, and the member is waiting on a
@@ -413,8 +420,18 @@ def leader_home(request):
                 _work_waiting(leader).select_related("student__user", "student__user__profile")
             ),
             mine=Student.objects.filter(leader=leader).select_related("user", "user__profile"),
+            # REQ-M.208 - the entrance hand-ins waiting on this leader's yes.
+            tests_waiting=tests_waiting(leader),
         ),
     )
+
+
+def tests_waiting(leader):
+    """REQ-M.208 - how many entrance hand-ins wait on this leader's decision."""
+    from .entrance_views import leader_entrance_rows
+    from .models import EntranceAttempt
+
+    return sum(1 for r in leader_entrance_rows(leader) if r["state"] == EntranceAttempt.WAITING)
 
 
 def _name_of(leader):
@@ -618,8 +635,11 @@ def staff_leader(request, leader_id):
             from .models import new_join_code
 
             leader.join_code = new_join_code()
-            leader.save(update_fields=["join_code"])
-            notice = "הקישור הוחלף. הקישור הקודם כבר לא עובד."
+            # SPR-M.91 - a leaked link is replaced with its siblings.
+            leader.direct_code = new_join_code()
+            leader.graduate_code = new_join_code()
+            leader.save(update_fields=["join_code", "direct_code", "graduate_code"])
+            notice = "הקישורים הוחלפו. הקישורים הקודמים כבר לא עובדים."
         elif action == "deactivate":
             # REQ-M.67 — destroys nothing. They leave the join list and take no
             # new students; everyone they already have stays theirs.
@@ -674,6 +694,9 @@ def staff_leader(request, leader_id):
             leader=leader,
             notice=notice,
             join_url=request.build_absolute_uri(f"/matazim/join/{leader.join_code}/"),
+            class_link_url=class_url(request, leader),
+            graduate_link_url=graduate_url(request, leader),
+            for_staff=True,
             students=Student.objects.filter(leader=leader).count(),
             waiting=Student.objects.filter(pending_leader=leader).count(),
             # REQ-M.98 — somewhere to move somebody to. Her other active

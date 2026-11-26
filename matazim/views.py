@@ -25,6 +25,7 @@ from django.views.decorators.http import require_POST
 from app.models import CourseCertificate, Enrollment, UserProfile
 
 from .content import public_stages
+from .gate import graduate_gated
 from .models import MemberProfile, School, Student
 
 # --- Shared helpers ---------------------------------------------------------
@@ -153,6 +154,11 @@ def _is_member(user):
     # is on their account.
     if is_site_staff(user) or leader_of(user):
         return False
+    # REQ-M.216 - a graduate has their own space and menu, not a pupil's.
+    from .models import Graduate
+
+    if Graduate.objects.filter(user=user).exists():
+        return False
     if Student.objects.filter(user=user).exists():
         return True
     return not candidate_of(user)
@@ -174,6 +180,20 @@ def _unread_notices(user):
     return unread_count(user)
 
 
+def _is_graduate(user):
+    from .models import Graduate
+
+    if not getattr(user, "is_authenticated", False):
+        return False
+    return Graduate.objects.filter(user=user).exists()
+
+
+def _graduate_waiting(user):
+    from .gate import graduate_waiting
+
+    return graduate_waiting(user)
+
+
 def _can_request(user):
     """§4.11 — the program-manager role and root see the lamp."""
     from .access import is_program_manager
@@ -192,6 +212,23 @@ def _preview_stage(request):
     from .gate import preview_stage
 
     return preview_stage(request)
+
+
+def _viewed_leader(request):
+    session = getattr(request, "session", None)
+    if session is None or not session.get("mz_as_leader"):
+        return None
+    from .as_leader import viewed_leader
+
+    return viewed_leader(request)
+
+
+def _leader_name(leader):
+    if leader is None:
+        return ""
+    from .certification import _display_name
+
+    return _display_name(leader.user)
 
 
 def shell(request, section, **extra):
@@ -216,7 +253,11 @@ def shell(request, section, **extra):
         # REQ-M.72 — an invite is named on every page between tapping the link
         # and being eligible to use it, so it never feels lost.
         "invite": _pending_invite(request),
-        "is_leader": _leader_of(request.user),
+        # REQ-M.207 - a manager looking as one of her leaders gets that leader's
+        # menu, and a bar that names them and lets her step out.
+        "viewing_leader": (viewing := _viewed_leader(request)),
+        "viewing_leader_name": _leader_name(viewing),
+        "is_leader": viewing or _leader_of(request.user),
         "student_has_leader": _has_leader(request.user),
         # REQ-M.178 — whether this person's leader asks for the test. False for
         # everybody else, so no page invites a visitor to it.
@@ -242,6 +283,10 @@ def shell(request, section, **extra):
         # REQ-M.84 — why they cannot join yet, in words, on whatever page they
         # are looking at. None when nothing is in the way.
         "consent_blocker": _consent_blocker(member),
+        # REQ-M.216 - a graduate's own menu, and the leader's and team's door to them.
+        "is_graduate": _is_graduate(request.user),
+        # REQ-M.222 - a waiting graduate's menu has only the waiting page.
+        "graduate_waiting": _graduate_waiting(request.user),
     }
     ctx.update(extra)
     return ctx
@@ -269,6 +314,9 @@ def home(request):
     stage = stage_for(request)
     if stage == JOIN:
         return redirect("matazim:join_leader")
+    if stage is None and _is_graduate(request.user) and not _preview_stage(request):
+        # REQ-M.216 - a graduate's home is their own space.
+        return redirect("matazim:graduates")
 
     ctx = {"stage": stage, "hero": hero_state(request)}
     if stage == TEST:
@@ -286,6 +334,20 @@ def home(request):
         student = _student_of(request.user)
         ctx["certified"] = bool(student and student.status == "certified")
         ctx["year"] = year_context(request.user)
+    if stage is None and ctx["hero"]["kind"] == "staff":
+        # REQ-M.207 - beside "לראות את האתר כתלמיד", the leader's view.
+        from .as_leader import leaders_to_view
+
+        ctx["as_leaders"] = list(leaders_to_view(request.user))
+    if stage is None and request.user.is_authenticated and not _preview_stage(request):
+        # REQ-M.208 - a leader's prominent button to the entrance hand-ins.
+        from .as_leader import acting_leader
+
+        if (leader := acting_leader(request)) is not None:
+            from .joining_views import tests_waiting
+
+            ctx["tests_leader"] = True
+            ctx["tests_waiting"] = tests_waiting(leader)
     return render(request, "matazim/home.html", shell(request, "home", **ctx))
 
 
@@ -357,6 +419,8 @@ def _landing_for(user):
         return "matazim:staff_home"
     if leader_of(user):
         return "matazim:leader_home"
+    if _is_graduate(user):
+        return "matazim:graduates"
     if Student.objects.filter(user=user).exists() or member_profile(user).has_passed_entrance_test():
         return "matazim:my_path"
     return "matazim:home"
@@ -532,9 +596,45 @@ def preview(request, stage):
         raise Http404("unknown stage")
     if stage not in preview_stages(request.user):
         raise PermissionDenied
+    from .as_leader import KEY as AS_LEADER_KEY
+
+    # One way of looking at a time (REQ-M.207).
+    request.session.pop(AS_LEADER_KEY, None)
     request.session[PREVIEW_KEY] = stage
     # SPR-M.71: a link can open the test or the path itself, not only the home.
     return redirect(safe_next(request) or "matazim:home")
+
+
+@login_required(login_url="/matazim/login/")
+def as_leader(request):
+    """REQ-M.207 - look at the site as one of your leaders, or stop looking.
+
+    `?leader=<id>` starts, `?leader=off` stops. Only a program manager or root, and
+    only a leader `visible_leaders` reaches; anything else is refused, never
+    silently ignored, so a wrong id is not mistaken for a working view.
+    """
+    from .access import is_program_manager
+    from .as_leader import KEY, leaders_to_view
+    from .gate import PREVIEW_KEY
+
+    if not is_program_manager(request.user):
+        raise PermissionDenied
+    which = (request.GET.get("leader") or request.POST.get("leader") or "").strip()
+    if which == "off":
+        was = request.session.pop(KEY, None)
+        if destination := safe_next(request):
+            return redirect(destination)
+        if was:
+            return redirect("matazim:staff_leader", leader_id=was)
+        return redirect("matazim:staff_home")
+    if not which.isdigit():
+        return redirect("matazim:staff_leaders")
+    leader = leaders_to_view(request.user).filter(pk=int(which)).first()
+    if leader is None:
+        raise PermissionDenied
+    request.session.pop(PREVIEW_KEY, None)
+    request.session[KEY] = leader.pk
+    return redirect(safe_next(request) or "matazim:leader_home")
 
 
 @require_POST
@@ -845,6 +945,7 @@ def _locked_course_cards(request, shown):
     return cards
 
 
+@graduate_gated
 def courses(request):
     """REQ-M.59, REQ-M.12b — the training path, and where this reader is in it.
 

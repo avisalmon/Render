@@ -14,9 +14,11 @@ from . import (
     certificate_views,
     cohort_views,
     community_views,
+    direct_views,
     entrance_views,
     event_views,
     year_views,
+    graduate_views,
     guide_views,
     internal_views,
     invite_views,
@@ -104,10 +106,15 @@ urlpatterns = [
     path("welcome/accept/", views.welcome_accept, name="welcome_accept"),
     # Becoming someone: the invite link, the open door, and the leader's page.
     path("code/", joining_views.enter_code, name="code"),
+    # SPR-M.91, REQ-M.231 - a leader's direct links, grade 9 and grade 10.
+    path("class-link/<str:code>/", direct_views.class_link, name="class_link"),
+    path("graduates/link/<str:code>/", direct_views.graduate_link, name="graduate_link"),
     path("join/<str:code>/", joining_views.join, name="join"),
     path("join-leader/", joining_views.join_leader, name="join_leader"),
     path("school/", views.set_school, name="set_school"),
     path("preview/<str:stage>/", views.preview, name="preview"),
+    # REQ-M.207 - a program manager looks at the site as one of her leaders.
+    path("as-leader/", views.as_leader, name="as_leader"),
     path("joined/", joining_views.joined, name="joined"),
     path("apply/", joining_views.apply, name="apply"),
     path("leaders/", joining_views.leader_entrance, name="leader_entrance"),
@@ -125,11 +132,19 @@ urlpatterns = [
     ),
     path("leader/", joining_views.leader_home, name="leader_home"),
     path("leader/guide/", guide_views.leader_guide, name="leader_guide"),
+    path("leader/tests/", entrance_views.leader_tests, name="leader_tests"),
+    path("leader/tests/<int:attempt_id>/decide/", entrance_views.leader_decide, name="leader_decide"),
     path("leader/test/", joining_views.leader_test_switch, name="leader_test_switch"),
     path("leader/confirm/<int:student_id>/", joining_views.leader_confirm, name="leader_confirm"),
     # The desk, once someone is standing at it (SPR-M.8).
     path("leader/students/", roster_views.roster, name="roster"),
     path("leader/students/<int:student_id>/", roster_views.student, name="student"),
+    # SPR-M.89 - the leader confirms who took part in a meeting of the year path.
+    path(
+        "leader/meeting/<int:meeting_id>/confirm/",
+        roster_views.student_meeting_confirm,
+        name="student_meeting_confirm",
+    ),
     path(
         "leader/students/<int:student_id>/certify/",
         roster_views.certify_student,
@@ -165,6 +180,9 @@ urlpatterns = [
     # REQ-M.33 — the bell.
     path("notices/", notice_views.notices, name="notices"),
     path("my-path/", path_views.my_path, name="my_path"),
+    # SPR-M.90 - the student records they were at a meeting of the year path.
+    path("my-path/meeting/<int:meeting_id>/present/", path_views.my_meeting_present,
+         name="my_meeting_present"),
     # REQ-M.19 — יוצרים: work handed in, and the feedback that is the point.
     # REQ-M.32 — פרקטיקום, the stage the whole programme exists to produce.
     path("my-teaching/", teaching_views.my_teaching, name="my_teaching"),
@@ -191,6 +209,48 @@ urlpatterns = [
     # what one leader offers their own מטצים.
     path("staff/offered/", learn_views.staff_offered, name="staff_offered"),
     path("leader/courses/", learn_views.leader_shelf, name="leader_shelf"),
+    # SPR-M.84 - בוגרי מטצים: the graduates' space, their leader's and the team's views.
+    path("graduates/", graduate_views.graduates, name="graduates"),
+    path("graduates/join/", graduate_views.graduates_join, name="graduates_join"),
+    # SPR-M.89 - the graduates' yearly process, the link in the letter to the leaders.
+    path("graduates/process/", graduate_views.graduates_process, name="graduates_process"),
+    # SPR-M.86 - the team sees the space as an approved graduate.
+    path("graduates/preview/", graduate_views.graduates_preview, name="graduates_preview"),
+    path("graduates/practicum/", graduate_views.graduates_practicum, name="graduates_practicum"),
+    path(
+        "graduates/practicum/<int:report_id>/delete/",
+        graduate_views.practicum_delete,
+        name="practicum_delete",
+    ),
+    path("graduates/kit/", graduate_views.teaching_kit, name="teaching_kit"),
+    # SPR-M.87 - the space as tiles, each opening its own page.
+    path("graduates/courses/", graduate_views.graduates_courses, name="graduates_courses"),
+    path("graduates/teaching/", graduate_views.graduates_teaching, name="graduates_teaching"),
+    path("graduates/ai/", graduate_views.graduates_ai, name="graduates_ai"),
+    path("graduates/ask/", graduate_views.graduates_ask, name="graduates_ask"),
+    path("leader/graduates/", graduate_views.leader_graduates, name="leader_graduates"),
+    path(
+        "graduates/<int:graduate_id>/approve/",
+        graduate_views.graduate_approve,
+        name="graduate_approve",
+    ),
+    path(
+        "graduates/report/<int:report_id>/decide/",
+        graduate_views.report_decide,
+        name="report_decide",
+    ),
+    # SPR-M.88 - the yearly track: the leader confirms meetings and finished הדרכות.
+    path(
+        "graduates/meeting/<int:meeting_id>/confirm/",
+        graduate_views.meeting_confirm,
+        name="meeting_confirm",
+    ),
+    path(
+        "graduates/<int:graduate_id>/course-approve/",
+        graduate_views.course_approve,
+        name="course_approve",
+    ),
+    path("staff/graduates/", graduate_views.staff_graduates, name="staff_graduates"),
     path("profile/", views.profile, name="profile"),
     path("profile/replay-welcome/", views.profile_reset_welcome, name="profile_reset_welcome"),
 ]

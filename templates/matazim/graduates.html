@@ -1,0 +1,118 @@
+{% extends "matazim/base.html" %}
+
+{% comment %}
+  SPR-M.84, REQ-M.216 to REQ-M.220 - בוגרי מטצים. Lital, 2026-11-17.
+  Three readers: somebody who has not joined (the way in), a graduate waiting
+  for their leader, and an approved graduate (the space, in her order).
+{% endcomment %}
+
+{% block title %}בוגרי מטצים · מטצים{% endblock %}
+
+{% block content %}
+<div class="mz-container mz-page{% if not graduate.is_approved %} mz-page-narrow{% endif %} mz-grad" id="mzGraduates">
+
+  {% if not graduate %}
+    <section class="mz-signup-box" aria-labelledby="mzGradIntro">
+      <h1 id="mzGradIntro">בוגרי מטצים</h1>
+      <p>המרחב לתלמידי כיתה י׳ שסיימו את התכנית ועכשיו מתחילים להדריך בבתי הספר.</p>
+      <p><a href="{% url 'matazim:graduates_process' %}" id="mzGradProcessLink">מה מצפה לכם השנה? התהליך השנתי של הבוגרים</a></p>
+      {% if not user.is_authenticated %}
+        <p class="mz-home-do">
+          <a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:register' %}?next={% url 'matazim:graduates_join' %}">נרשמים כאן</a>
+          <a class="mz-btn mz-btn-secondary" href="{% url 'matazim:login' %}?next={% url 'matazim:graduates_join' %}">כבר יש לי חשבון</a>
+        </p>
+      {% elif is_staff_here %}
+        <p class="mz-home-do"><a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:staff_graduates' %}">כל הבוגרים</a></p>
+      {% elif is_leader_here %}
+        <p class="mz-home-do"><a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:leader_graduates' %}">הבוגרים שלי</a></p>
+      {% else %}
+        <p class="mz-home-do"><a class="mz-btn mz-btn-primary mz-btn-lg" href="{% url 'matazim:graduates_join' %}">להצטרפות לבוגרים</a></p>
+      {% endif %}
+      {% if may_see_as_graduate %}
+        <p class="mz-home-do"><a class="mz-btn mz-btn-secondary" id="mzSeeAsGraduate" href="{% url 'matazim:graduates_preview' %}">מה הבוגרים רואים</a></p>
+      {% endif %}
+    </section>
+
+  {% elif not graduate.is_approved %}
+    {# REQ-M.222 - Lital, 2026-11-17: they enter only after the leader approves. Until then, this and nothing else. #}
+    <section class="mz-signup-box" id="mzGradWaiting" aria-labelledby="mzGradWaitingTitle">
+      <h1 id="mzGradWaitingTitle">ההצטרפות מחכה לאישור</h1>
+      <p>הפרטים שלך התקבלו. {% if leader_name %}{{ leader_name }} צריך/ה לאשר את ההצטרפות שלך.{% else %}המורה המוביל/ה צריך/ה לאשר את ההצטרפות שלך.{% endif %}</p>
+      <p>כשזה יקרה תקבלו הודעה, ואז ייפתח המרחב של בוגרי מטצים.</p>
+    </section>
+
+  {% else %}
+    {% if graduate_preview %}
+      {# REQ-M.223 - the team looking at the space as an approved graduate. #}
+      <div class="mz-preview-bar" role="status" id="mzGradPreviewBar">
+        <strong>אתם רואים את המרחב כמו בוגר/ת שהמוביל/ה אישר/ה.</strong>
+        <span>תצוגה בלבד, שום דבר לא נשמר.</span>
+        <a href="{% url 'matazim:graduates' %}" class="mz-preview-off">חזרה לתצוגה שלי</a>
+      </div>
+    {% endif %}
+    <section class="mz-grad-welcome mz-grad-hero" aria-labelledby="mzGradWelcome">
+      <h1 id="mzGradWelcome">{{ welcome_title }}</h1>
+      <p>{{ welcome_text }}</p>
+      <p><a href="{% url 'matazim:graduates_process' %}" id="mzGradProcessLink">התהליך השנתי שלכם ומה אנחנו מצפים מכם</a></p>
+    </section>
+
+    {% comment %}
+      SPR-M.87, REQ-M.224 - Lital, 2026-11-17 21:05: "אני לא אוהבת איך שזה נראה ...
+      בוא נעשה לה גם ריבועים". The space is a grid of squares, like the home page
+      of a student; each square says where you stand and opens its own page.
+      `.mz-gtile-go` stretches over its square, so the whole square is the door.
+    {% endcomment %}
+    <ul class="mz-gtiles" id="mzGradTiles">
+      <li><section class="mz-gtile" id="mzGradCourses">
+        <span class="mz-gtile-icon" aria-hidden="true"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h7a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H2z"/><path d="M22 4h-7a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h8z"/></svg></span>
+        <h2>כל ההדרכות שלי</h2>
+        <p>{% if courses %}{{ courses|length }} הדרכות לחזרה ולתרגול{% if courses_done %}, {{ courses_done }} הושלמו{% endif %}.{% else %}ההדרכות של התכנית יופיעו כאן.{% endif %}</p>
+        <a class="mz-gtile-go" href="{% url 'matazim:graduates_courses' %}">לכל ההדרכות</a>
+      </section></li>
+
+      <li><section class="mz-gtile" id="mzGradPracticum">
+        <span class="mz-gtile-icon" aria-hidden="true"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+        <h2>הפרקטיקום שלי</h2>
+        <p class="mz-gtile-sub">מסלול שנתי של מעורבות אישית: {{ hours.target }} שעות הדרכה.</p>
+        <p>{{ hours.approved }} שעות אושרו מתוך {{ hours.target }}. נותרו {{ hours.left }} שעות להשלמת היעד.{% if hours.waiting %} עוד {{ hours.waiting }} שעות מחכות לאישור.{% endif %}</p>
+        <div class="mz-progress" aria-hidden="true"><span style="width: {{ hours.pct }}%"></span></div>
+        {% if graduate_preview %}<span class="mz-btn mz-btn-primary is-disabled" aria-disabled="true">לדיווח על הדרכה</span>{% else %}<a class="mz-gtile-go" href="{% url 'matazim:graduates_practicum' %}">לדיווח על הדרכה</a>{% endif %}
+      </section></li>
+
+      <li><section class="mz-gtile" id="mzGradTeaching">
+        <span class="mz-gtile-icon" aria-hidden="true"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4M7 9h6M7 12h10"/></svg></span>
+        <h2>איך בונים הדרכה?</h2>
+        <p>תכנון, פתיחה, הסבר, הפעלה, ניהול קבוצה וסיכום, וקיט ההדרכה.</p>
+        <a class="mz-btn mz-btn-primary mz-gtile-kit" id="mzKitButton" href="{% url 'matazim:teaching_kit' %}" target="_blank" rel="noopener">להדרכה טובה, לחצו כאן</a>
+        <a class="mz-gtile-go" href="{% url 'matazim:graduates_teaching' %}">לבניית הדרכה</a>
+      </section></li>
+
+      <li><section class="mz-gtile" id="mzGradAi">
+        <span class="mz-gtile-icon" aria-hidden="true"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="14" height="14" rx="3"/><path d="M9 1v4M15 1v4M9 19v4M15 19v4M1 9h4M1 15h4M19 9h4M19 15h4M10 10h4v4h-4z"/></svg></span>
+        <h2>לומדים AI</h2>
+        <p>תכנים על בינה מלאכותית, ואיך משלבים אותה בהדרכה.{% if ai %} יש כאן תכנים חדשים.{% endif %}</p>
+        <a class="mz-gtile-go" href="{% url 'matazim:graduates_ai' %}">ללמוד AI</a>
+      </section></li>
+
+      <li><section class="mz-gtile" id="mzGradAsk">
+        <span class="mz-gtile-icon" aria-hidden="true"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M10 9.5a2 2 0 1 1 2.7 1.9c-.5.2-.7.6-.7 1.1v.5M12 15.5h.01"/></svg></span>
+        <h2>שואלים את ה AI</h2>
+        <p>בונים שאלה טובה לבינה מלאכותית, שעוזרת להכין הדרכה.</p>
+        <a class="mz-gtile-go" href="{% url 'matazim:graduates_ask' %}">לבנות שאלה</a>
+      </section></li>
+
+      <li><section class="mz-gtile" id="mzGradDates">
+        <span class="mz-gtile-icon" aria-hidden="true"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span>
+        <h2>ימי השיא שלנו</h2>
+        <ul class="mz-grad-dates">
+          {% for d in dates %}
+            <li><strong>{{ d.title }}</strong> <span dir="ltr">{{ d.on|date:"j.n.Y" }}</span></li>
+          {% empty %}
+            <li class="mz-muted">המועדים יפורסמו כאן.</li>
+          {% endfor %}
+        </ul>
+      </section></li>
+    </ul>
+  {% endif %}
+</div>
+{% endblock %}

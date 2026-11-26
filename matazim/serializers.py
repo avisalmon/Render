@@ -34,9 +34,18 @@ from .models import (
     ProgramMilestone,
     School,
     SiteUpdate,
+    StudentAttendance,
+    StudentMeeting,
     Feedback,
+    Graduate,
+    GraduateAttendance,
+    GraduateCourseApproval,
+    GraduateDate,
+    GraduateMeeting,
+    GraduateResource,
     Institution,
     Leader,
+    PracticumReport,
     LeaderCourse,
     LeaderInvite,
     MatazCertificate,
@@ -531,3 +540,98 @@ class OpenClassMemberSerializer(serializers.ModelSerializer):
 
     def get_last_active(self, obj):
         return self._lens(obj)["last_active"]
+
+
+# ------------------------------------------------------------- בוגרי מטצים (SPR-M.84)
+
+
+class GraduateSerializer(serializers.ModelSerializer):
+    """Read-only. Joining needs a parent's drawn signature, which only the page
+    collects; the signature itself is never handed out here, only whether it exists."""
+
+    has_signature = serializers.BooleanField(read_only=True)
+    is_approved = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = Graduate
+        fields = [
+            "id", "full_name", "school", "leader", "guardian_name", "guardian_signed_at",
+            "has_signature", "is_approved", "approved_at", "created_at",
+        ]
+        read_only_fields = fields
+
+
+class PracticumReportSerializer(serializers.ModelSerializer):
+    """REQ-M.219. The decision is the leader's, through the actions, never a field."""
+
+    class Meta:
+        model = PracticumReport
+        fields = [
+            "id", "graduate", "happened_on", "place", "topic", "hours", "insight",
+            "status", "decision_note", "decided_at", "created_at",
+        ]
+        read_only_fields = ["id", "graduate", "status", "decision_note", "decided_at", "created_at"]
+
+    def validate_hours(self, value):
+        if value <= 0 or value > 12 or (value * 2) != (value * 2).to_integral_value():
+            raise serializers.ValidationError("מספר השעות הוא בין חצי שעה ל-12, בחצאי שעה.")
+        return value
+
+
+class GraduateDateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GraduateDate
+        fields = ["id", "institution", "title", "on"]
+        read_only_fields = ["id", "institution"]
+
+
+class GraduateResourceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GraduateResource
+        fields = ["id", "institution", "section", "title", "about", "link", "created_at"]
+        read_only_fields = ["id", "institution", "created_at"]
+
+
+class GraduateMeetingSerializer(serializers.ModelSerializer):
+    """SPR-M.88, REQ-M.226."""
+
+    class Meta:
+        model = GraduateMeeting
+        fields = ["id", "institution", "number", "title", "on"]
+        read_only_fields = ["id", "institution"]
+
+
+class GraduateAttendanceSerializer(serializers.ModelSerializer):
+    """SPR-M.88, REQ-M.226. The leader writes; who confirmed and when is the server's."""
+
+    class Meta:
+        model = GraduateAttendance
+        fields = ["id", "meeting", "graduate", "confirmed_at"]
+        read_only_fields = ["id", "confirmed_at"]
+
+
+class GraduateCourseApprovalSerializer(serializers.ModelSerializer):
+    """SPR-M.88, REQ-M.227."""
+
+    class Meta:
+        model = GraduateCourseApproval
+        fields = ["id", "graduate", "course_slug", "approved_at"]
+        read_only_fields = ["id", "approved_at"]
+
+
+class StudentMeetingSerializer(serializers.ModelSerializer):
+    """SPR-M.89, REQ-M.228."""
+
+    class Meta:
+        model = StudentMeeting
+        fields = ["id", "institution", "number", "title", "on"]
+        read_only_fields = ["id", "institution"]
+
+
+class StudentAttendanceSerializer(serializers.ModelSerializer):
+    """SPR-M.89, REQ-M.228. The leader writes; who confirmed and when is the server's."""
+
+    class Meta:
+        model = StudentAttendance
+        fields = ["id", "meeting", "student", "confirmed_at"]
+        read_only_fields = ["id", "confirmed_at"]

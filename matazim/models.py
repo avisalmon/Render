@@ -117,6 +117,17 @@ class MemberProfile(models.Model):
         null=True, blank=True, verbose_name="עבר את מבחן הכניסה"
     )
 
+    # SPR-M.91 (REQ-M.231) - let in without the test, by their leader's direct
+    # link for grade 9. Kept apart from `entrance_test_passed_at` so nobody can
+    # read "passed the test" about somebody who never took it.
+    entrance_waived_at = models.DateTimeField(
+        null=True, blank=True, verbose_name="צורף/ה בלי מבחן כניסה"
+    )
+    entrance_waived_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
+        verbose_name="צורף/ה בלי מבחן על ידי",
+    )
+
     # The program-manager role lived here as a flag from SPR-M.6 to SPR-M.40,
     # renamed from `is_admin` on 2026-09-11 (spec §4.3) because "admin" pointed
     # at root in conversation and at the program manager on screen. It is
@@ -165,7 +176,8 @@ class MemberProfile(models.Model):
         return f"{self.user.email or self.user.username} · מטצים"
 
     def has_passed_entrance_test(self):
-        return self.entrance_test_passed_at is not None
+        """Through the entrance: passed it, or let in without it by a leader (REQ-M.231)."""
+        return self.entrance_test_passed_at is not None or self.entrance_waived_at is not None
 
     def has_accepted_welcome(self):
         return self.welcome_accepted_at is not None
@@ -261,6 +273,9 @@ class EntranceAttempt(models.Model):
     # A return carries words (the same rule as REQ-M.123): "returned" alone tells
     # a fourteen-year-old they failed and not what to change.
     decision_note = models.TextField(blank=True, default="", verbose_name="מה לתקן")
+    # REQ-M.214 - a return that means "did not pass", told with a wish of good
+    # luck, as against "back for fixing". Still RETURNED: the student may try again.
+    not_passed = models.BooleanField(default=False, verbose_name="לא עבר/ה את המיון")
 
     class Meta:
         ordering = ["number"]
@@ -311,6 +326,19 @@ class Leader(models.Model):
         default=new_join_code,
         db_index=True,
         verbose_name="קוד הצטרפות",
+    )
+
+    # SPR-M.91 (REQ-M.231) - Naomi, 2026-11-19: a leader may bring students into
+    # their class without the entrance test, by a link for grade 9 and another
+    # for grade 10. Each its own secret, so the ordinary join link above (which
+    # still asks for the test first) cannot be turned into either by editing it.
+    direct_code = models.CharField(
+        max_length=32, unique=True, default=new_join_code, db_index=True,
+        verbose_name="קוד קישור ישיר לכיתה ט",
+    )
+    graduate_code = models.CharField(
+        max_length=32, unique=True, default=new_join_code, db_index=True,
+        verbose_name="קוד קישור ישיר לכיתה י",
     )
 
     # REQ-M.67 — deactivating destroys nothing. They leave the join list, take
@@ -1023,6 +1051,10 @@ class Notification(models.Model):
     ENTRANCE_APPROVED = "entrance_approved"
     ENTRANCE_RETURNED = "entrance_returned"
     SITE_UPDATE = "site_update"
+    GRADUATE_WAITING = "graduate_waiting"
+    GRADUATE_APPROVED = "graduate_approved"
+    PRACTICUM_WAITING = "practicum_waiting"
+    PRACTICUM_DECIDED = "practicum_decided"
     KIND_CHOICES = [
         (FEEDBACK, "משוב חדש"),
         (WORK_APPROVED, "עבודה אושרה"),
@@ -1035,6 +1067,10 @@ class Notification(models.Model):
         (ENTRANCE_APPROVED, "מבחן הכניסה אושר"),
         (ENTRANCE_RETURNED, "מבחן הכניסה הוחזר"),
         (SITE_UPDATE, "עדכון באתר"),
+        (GRADUATE_WAITING, "בוגר/ת מחכה לאישור"),
+        (GRADUATE_APPROVED, "ההצטרפות לבוגרים אושרה"),
+        (PRACTICUM_WAITING, "דיווח פרקטיקום מחכה"),
+        (PRACTICUM_DECIDED, "דיווח פרקטיקום נבדק"),
     ]
 
     user = models.ForeignKey(
@@ -1569,3 +1605,283 @@ class SiteUpdate(models.Model):
 
     def __str__(self):
         return self.title
+
+
+# --------------------------------------------------------------- בוגרי מטצים
+#
+# REQ-M.216 to REQ-M.220, SPR-M.84. Lital, 2026-11-17: tenth-graders who finished
+# the programme last year and now teach in the schools get their own space. They
+# are not learners at a stage (gate.py): they register, choose their school and
+# leader, a parent signs, and the leader approves them. Then they review the
+# הדרכות, read the teaching kit, report practicum hours towards 120, and see the
+# two peak days.
+
+
+class Graduate(models.Model):
+    """A graduate of the programme, in the space for graduates (REQ-M.216).
+
+    Approved is derived from `approved_at`, never a status beside it. The parent's
+    signature is drawn on the screen and kept as a small PNG (a data URL); it is
+    a parent's consent for a minor, so only the graduate's leader and the
+    programme team see it, and the API never hands it out.
+    """
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="matazim_graduate")
+    full_name = models.CharField(max_length=150, verbose_name="שם מלא")
+    school = models.ForeignKey(
+        "School", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="graduates", verbose_name="בית ספר",
+    )
+    leader = models.ForeignKey(
+        "Leader", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="graduates", verbose_name="מוביל/ה",
+    )
+    guardian_name = models.CharField(max_length=150, verbose_name="שם ההורה")
+    guardian_email = models.EmailField(verbose_name="אימייל של ההורה")
+    guardian_signature = models.TextField(verbose_name="חתימת ההורה")
+    guardian_signed_at = models.DateTimeField(verbose_name="ההורה חתם/ה בתאריך")
+    approved_at = models.DateTimeField(null=True, blank=True, verbose_name="אושר/ה בתאריך")
+    approved_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+",
+        verbose_name="אושר/ה על ידי",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["full_name"]
+        verbose_name = "בוגר/ת מטצים"
+        verbose_name_plural = "בוגרי מטצים"
+
+    def __str__(self):
+        return self.full_name
+
+    @property
+    def is_approved(self):
+        return self.approved_at is not None
+
+    @property
+    def has_signature(self):
+        return bool(self.guardian_signature)
+
+
+class PracticumReport(models.Model):
+    """One teaching session a graduate reports towards the year's 120 hours (REQ-M.219).
+
+    Her five fields: the date, the place, the topic, the hours and a short
+    insight. Each report goes to the graduate's leader, who approves it or sends
+    it back with a word; only approved hours count towards the target.
+    """
+
+    WAITING, APPROVED, RETURNED = "waiting", "approved", "returned"
+    STATUS_CHOICES = [
+        (WAITING, "מחכה לאישור"),
+        (APPROVED, "אושר"),
+        (RETURNED, "הוחזר לתיקון"),
+    ]
+
+    graduate = models.ForeignKey(Graduate, on_delete=models.CASCADE, related_name="reports")
+    happened_on = models.DateField(verbose_name="תאריך הפעילות")
+    place = models.CharField(max_length=200, verbose_name="מקום ההדרכה")
+    topic = models.CharField(max_length=200, verbose_name="נושא ההדרכה")
+    hours = models.DecimalField(max_digits=4, decimal_places=1, verbose_name="מספר השעות")
+    insight = models.TextField(blank=True, default="", verbose_name="תובנה מהמפגש")
+    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default=WAITING, db_index=True)
+    decision_note = models.CharField(max_length=300, blank=True, default="", verbose_name="הערת המוביל/ה")
+    decided_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    decided_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-happened_on", "-created_at"]
+        verbose_name = "דיווח פרקטיקום"
+        verbose_name_plural = "דיווחי פרקטיקום"
+
+    def __str__(self):
+        return f"{self.graduate} · {self.happened_on} · {self.hours}"
+
+
+class GraduateDate(models.Model):
+    """A date every graduate must attend, ימי השיא שלנו (REQ-M.220).
+
+    Seeded once with her two dates; the programme team edits them on
+    `/matazim/staff/graduates/`. No institution means it is for everybody.
+    """
+
+    institution = models.ForeignKey(
+        "Institution", on_delete=models.CASCADE, null=True, blank=True,
+        related_name="graduate_dates", verbose_name="מוסד",
+    )
+    title = models.CharField(max_length=120, verbose_name="מה")
+    on = models.DateField(verbose_name="תאריך")
+
+    class Meta:
+        ordering = ["on"]
+        verbose_name = "יום שיא לבוגרים"
+        verbose_name_plural = "ימי שיא לבוגרים"
+
+    def __str__(self):
+        return f"{self.title} {self.on}"
+
+
+class GraduateResource(models.Model):
+    """One item of content in the graduates' space (REQ-M.218).
+
+    Two shelves: לומדים AI, and איך מעבירים שיעור. The team adds a title, a few
+    words and a link; nothing here needs a deploy.
+    """
+
+    AI, TEACHING = "ai", "teaching"
+    SECTION_CHOICES = [(AI, "לומדים AI"), (TEACHING, "איך מעבירים שיעור")]
+
+    institution = models.ForeignKey(
+        "Institution", on_delete=models.CASCADE, null=True, blank=True,
+        related_name="graduate_resources", verbose_name="מוסד",
+    )
+    section = models.CharField(max_length=12, choices=SECTION_CHOICES, verbose_name="איפה")
+    title = models.CharField(max_length=160, verbose_name="כותרת")
+    about = models.TextField(blank=True, default="", verbose_name="כמה מילים")
+    link = models.URLField(blank=True, default="", verbose_name="קישור")
+    added_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["section", "created_at"]
+        verbose_name = "תוכן לבוגרים"
+        verbose_name_plural = "תכנים לבוגרים"
+
+    def __str__(self):
+        return self.title
+
+
+# SPR-M.88 - the graduates' yearly track (REQ-M.226, REQ-M.227). Lital, 18.11:
+# "תוסיף במסלול השנתי מפגש 1 – היכרות עם התכנית – חשוב שהמוביל יאשר שכלל
+# התלמידים לקחו חלק המוביל תמיד צריך לאשר לאורך כל הדרך וגם בהדרכות".
+
+
+class GraduateMeeting(models.Model):
+    """One meeting on the graduates' yearly track (REQ-M.226).
+
+    Seeded once with מפגש 1, היכרות עם התכנית; the programme team adds the next
+    ones on `/matazim/staff/graduates/`. No institution means it is for everybody.
+    """
+
+    institution = models.ForeignKey(
+        "Institution", on_delete=models.CASCADE, null=True, blank=True,
+        related_name="graduate_meetings", verbose_name="מוסד",
+    )
+    number = models.PositiveSmallIntegerField(verbose_name="מספר המפגש")
+    title = models.CharField(max_length=120, verbose_name="נושא המפגש")
+    on = models.DateField(null=True, blank=True, verbose_name="תאריך")
+
+    class Meta:
+        ordering = ["number", "pk"]
+        verbose_name = "מפגש במסלול הבוגרים"
+        verbose_name_plural = "מפגשים במסלול הבוגרים"
+
+    def __str__(self):
+        return f"מפגש {self.number}: {self.title}"
+
+
+class GraduateAttendance(models.Model):
+    """The leader confirms that a graduate took part in a meeting (REQ-M.226).
+
+    A row is the confirmation itself: no row, not confirmed.
+    """
+
+    meeting = models.ForeignKey(GraduateMeeting, on_delete=models.CASCADE, related_name="attendance")
+    graduate = models.ForeignKey(Graduate, on_delete=models.CASCADE, related_name="attendance")
+    confirmed_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    confirmed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["meeting", "graduate"], name="mz_grad_attendance_once"),
+        ]
+        verbose_name = "נוכחות במפגש בוגרים"
+        verbose_name_plural = "נוכחות במפגשי בוגרים"
+
+    def __str__(self):
+        return f"{self.graduate} · {self.meeting}"
+
+
+class GraduateCourseApproval(models.Model):
+    """The leader approves a הדרכה a graduate finished (REQ-M.227).
+
+    A row is the approval: no row, waiting for the leader.
+    """
+
+    graduate = models.ForeignKey(Graduate, on_delete=models.CASCADE, related_name="course_approvals")
+    course_slug = models.SlugField(max_length=200, verbose_name="הדרכה")
+    approved_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    approved_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["graduate", "course_slug"], name="mz_grad_course_once"),
+        ]
+        verbose_name = "אישור הדרכה לבוגר/ת"
+        verbose_name_plural = "אישורי הדרכות לבוגרים"
+
+    def __str__(self):
+        return f"{self.graduate} · {self.course_slug}"
+
+
+# SPR-M.89 - the first-year students' year path gets the same מפגש 1 (REQ-M.228).
+# Lital, 18.11, 12:29: "אני נכנסת ללינק של התלמידים של כיתה ט ולא רואה שבמסלול השנתי
+# מופיע מפגש 1". Her mail of 11:45 asked that the leader confirms everybody took part.
+
+
+class StudentMeeting(models.Model):
+    """A meeting on the first-year students' year path (REQ-M.228).
+
+    Seeded once with מפגש 1, היכרות עם התכנית. Shown first on the path, before the
+    הדרכות. No institution means it is for everybody.
+    """
+
+    institution = models.ForeignKey(
+        "Institution", on_delete=models.CASCADE, null=True, blank=True,
+        related_name="student_meetings", verbose_name="מוסד",
+    )
+    number = models.PositiveSmallIntegerField(verbose_name="מספר המפגש")
+    title = models.CharField(max_length=120, verbose_name="נושא המפגש")
+    on = models.DateField(null=True, blank=True, verbose_name="תאריך")
+
+    class Meta:
+        ordering = ["number", "pk"]
+        verbose_name = "מפגש במסלול התלמידים"
+        verbose_name_plural = "מפגשים במסלול התלמידים"
+
+    def __str__(self):
+        return f"מפגש {self.number}: {self.title}"
+
+
+class StudentAttendance(models.Model):
+    """The leader confirms that a student took part in a meeting (REQ-M.228).
+
+    A row is the confirmation itself: no row, not confirmed.
+    """
+
+    meeting = models.ForeignKey(StudentMeeting, on_delete=models.CASCADE, related_name="attendance")
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="meeting_attendance")
+    confirmed_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    confirmed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["meeting", "student"], name="mz_student_attendance_once"),
+        ]
+        verbose_name = "נוכחות במפגש תלמידים"
+        verbose_name_plural = "נוכחות במפגשי תלמידים"
+
+    def __str__(self):
+        return f"{self.student} · {self.meeting}"

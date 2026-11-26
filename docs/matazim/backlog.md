@@ -5037,3 +5037,413 @@ none is configured. And `history.set_status` takes `from_leader`, so taking a st
 out stays one door (the guard of SPR-M.18).
 
 **Tests.** `tests/test_spr_m_74.py`.
+
+## SPR-M.75: A leader opens the file a student handed in  `DONE 2026-10-28`
+
+Lital's mail of 28.10, 18:37 (spec C33): "תלמידים מעלים תוצרים לאתר ומובילי התכנית לא
+קוראים את הקובץ שמעלים". Run under Avi's standing rule of 2026-10-16.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.75.1 | The student's page: the last screening test file, a picture shown, open and download | REQ-M.206 | DONE |
+| F-M.75.2 | The review page: a handed-in picture shown, "פתיחת הקובץ" beside the download | REQ-M.206 | DONE |
+| F-M.75.3 | `storage.file_response`: `?view=1` shows pictures and PDF inline, everything else downloads | REQ-M.206 | DONE |
+| F-M.75.4 | `may_read`: the student's current leader may open work handed to an earlier leader | REQ-M.206 | DONE |
+
+**What was found.** SPR-M.74 put the screening test's state on the student's page and
+left out the file behind it, so a leader saw "מחכה לצוות" and had nothing to open; only
+the programme team's page linked the file. A hand-in's file was a download only, which on
+a phone is a picture that lands in the downloads folder and is never seen. The mail had a
+screenshot the bot cannot open, so it asked which screen she meant.
+
+**What the bot did not do.** Let a leader approve the screening test (still the team's,
+C8, asked on 26.10), or let any leader open files of students who are not theirs.
+
+**Tests.** `tests/test_spr_m_75.py`.
+
+## SPR-M.76: A program manager sees the site as one of her leaders  `DONE 2026-10-29`
+
+Naomi's mail of 29.10, 09:44 (spec C34): "לראות את האתר כמוביל", like "לראות את האתר
+כתלמיד", so that she and Lital see the site from every place in the programme. Run under
+Avi's standing rule of 2026-10-16.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.76.1 | `matazim/as_leader.py`: `leaders_to_view`, `viewed_leader`, `acting_leader`, `refuse_writes` | REQ-M.207 | DONE |
+| F-M.76.2 | `/matazim/as-leader/?leader=<id>` starts, `?leader=off` stops and returns to that leader's page | REQ-M.207 | DONE |
+| F-M.76.3 | האזור שלי, המטצים שלי, a student's page, הכיתות, the guide and the shelf use the viewed leader; writes refused | REQ-M.207 | DONE |
+| F-M.76.4 | The leader's menu and a bar naming the leader; the entry on the staff home, the home page and each leader's page | REQ-M.207 | DONE |
+
+**How it was read.** A leader's screens are all about that leader's own students, so
+"as a leader" means as one leader in particular. She picks one of her own. Nothing new is
+shown to her: she already sees those students on the staff pages.
+
+**What the bot did not do.** Let her act in a leader's name: approving, returning work,
+taking a student out or adding a class from inside the view is refused, since that would
+look like the leader did it. She still does those as herself on the staff pages.
+
+**Tests.** `tests/test_spr_m_76.py`.
+
+## SPR-M.77: A leader sees who took the entrance test, and approves them or not  `DONE 2026-10-29`
+
+Naomi's mail of 29.10, 10:49 (spec C35): a prominent button for leaders on the main page,
+everyone who took the entrance test with the file they uploaded, and beside each one approve
+for the site or not; the students are told. Run under Avi's standing rule of 2026-10-16.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.77.1 | `access.leader_schools`, `access.leader_entrance_attempts`; `visible_entrance_attempts` uses it for a leader | REQ-M.208 | DONE |
+| F-M.77.2 | `/matazim/leader/tests/` (`leader_tests`) and `/matazim/leader/tests/<id>/decide/` (`leader_decide`), template `leader_tests.html` | REQ-M.208 | DONE |
+| F-M.77.3 | The button `mzLeaderTestsButton` with the count waiting, on the home page and on האזור שלי | REQ-M.208 | DONE |
+| F-M.77.4 | `attempt_file` opens for a leader whose test-taker it is | REQ-M.208 | DONE |
+| F-M.77.5 | `ENTRANCE_APPROVED` and `ENTRANCE_RETURNED` are mailed, not only a bell | REQ-M.208 | DONE |
+
+**How it was read.** Test first, then a leader (C14): somebody who took the test is nobody's
+student yet, so "all who took the test" for a leader means those who chose the leader's school
+when they signed up, plus the leader's own students. A leader's schools are their classes' and
+the school they chose themselves. This answers the question C30 asked back.
+
+**What the bot did not do.** Show a leader test-takers from other schools, or those who chose no
+school: they stay on the programme team's screen. Attach an approved student to the leader who
+approved them: the student still chooses a leader after approval, as C14 says.
+
+**Tests.** `tests/test_spr_m_77.py`.
+
+## SPR-M.78: A leader takes an approved student into the patrol and their own group  `DONE 2026-10-31`
+
+Lital's mail of 31.10, 07:49 (spec C36): once a student has uploaded the entrance test, the
+leader approves and takes them into the patrol, the student is told they passed the screening
+and entered the patrol (and sending it is the leader's option), and the leader can put the
+student in their own group. Run under Avi's standing rule of 2026-10-16.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.78.1 | `entrance_review.tell_patrol` and `take_into_group`; `approve(..., tell=False)` for the leader's path | REQ-M.209 | DONE |
+| F-M.78.2 | `leader_decide`: `approve` with the `group` and `tell` boxes, and `group` and `tell` alone once approved | REQ-M.209 | DONE |
+| F-M.78.3 | `leader_tests.html`: `אישור והכנסה לסיירת`, the two ticked boxes, the two buttons on an approved row, and what happened, in words | REQ-M.209 | DONE |
+
+**How it was read.** The patrol is the school's students who have a leader (REQ-M.187), so
+"into the patrol" and "into the leader's group" are one act: the student becomes this
+leader's. The group is the leader, not one of their classes. SPR-M.77 left joining to the
+student (C14); that door stays, and the leader's is beside it.
+
+**What the bot did not do.** Take in a minor without a parent's consent (the leader approves
+now, and takes them in after it), bring back a student who was taken out, or move another
+leader's student. A message is not sent on approving unless the box is ticked.
+
+**Asked back.** Whether "the group" should be one of the leader's classes rather than the
+leader. The mail's picture was a Render 502 page: the site was down for a moment when she
+wrote, and was up when the bot looked.
+
+**Tests.** `tests/test_spr_m_78.py`; `tests/test_spr_m_77.py` follows the new button and the
+optional message.
+
+## SPR-M.79: The Atid network logo comes off the partners section  `DONE 2026-10-31`
+
+Lital's mail of 31.10, 08:21 (spec C37): take off the logo of רשת החינוך עתיד and, for now,
+leave only Intel's. Run under Avi's standing rule of 2026-10-16.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.79.1 | `home.html` and `about.html`: the partners row without `atid.svg` | REQ-M.210 | DONE |
+
+**How it was read.** "The Atid logo" is the network's mark in שותפים מרכזיים לעשייה. The
+site's own logo at the top says עתיד שבילים משותפים, the programme's name, and stays.
+
+**What the bot did not do.** Add an Intel logo. There never was one: it was left out on
+purpose, because a company mark claims company sponsorship and the programme has Intel
+volunteers. That is Avi's decision, and he was asked. The חמ״ד logo was not removed either,
+since she named only Atid's.
+
+**Asked back.** Whether חמ״ד should come off too ("רק לוגו של אינטל"), and whether she meant
+the logo at the top.
+
+**Tests.** `tests/test_spr_m_79.py`; `tests/test_spr_m_1.py` now expects the Atid mark gone.
+
+## SPR-M.80: A good-luck message for a student who did not pass, and the parents' note  `DONE 2026-10-31`
+
+Two mails from Lital of 31.10 (spec C38, C39): an option to send a student who did not pass
+the screening a message wishing them lots of luck; and the parents' consent should make clear
+this is a self-learning site where students learn by themselves, and all a parent enters is a
+full name and an email. Run under Avi's standing rule of 2026-10-16.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.80.1 | `entrance_review.tell_good_luck`, and `return_attempt(..., good_luck=True)` with the note optional | REQ-M.211 | DONE |
+| F-M.80.2 | `leader_decide`: `return` with `luck`, and `luck` alone on a returned hand-in | REQ-M.211 | DONE |
+| F-M.80.3 | `leader_tests.html`: the unticked box, the button on a returned row, and what was sent, in words | REQ-M.211 | DONE |
+| F-M.80.4 | `register.html`: the note to parents, and שם מלא on the name field | REQ-M.212 | DONE |
+
+**How it was read.** "Did not pass" is `לא לאשר` with a different message: the hand-in is
+returned as before (the student may still try again), but the student hears a wish, not
+"back for fixing". The box is not ticked by default, since most returns are "fix this".
+"Approving the parents" is the parents' part of the sign-up page, the one place a parent's
+details are asked.
+
+**What the bot did not do.** Write "אתר של חברת אינטל": the site says it is not an official
+Intel site (`_welcome.html`) and names Intel volunteers, so it says "שבנו מתנדבי אינטל",
+and Avi was asked.
+
+**Tests.** `tests/test_spr_m_80.py`.
+
+## SPR-M.81: The only logo is the matazim programme's, in burgundy  `DONE 2026-10-31`
+
+Lital's mail of 31.10, 09:41 (spec C40), answering the two questions SPR-M.79 asked: "בשלב זה
+תוריד את הלוגו מה שתכניס זה רק את הלוגו של תכנית מטצים תעשה איתה בצבע בורגונדי". Run under
+Avi's standing rule of 2026-10-16.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.81.1 | `static/matazim/matazim_logo.png`: מטצים in Rubik (our own `rubik-hebrew.woff2`, weight 800), burgundy `#880234`, transparent | REQ-M.213 | DONE |
+| F-M.81.2 | `base.html`: header logo and favicon are the wordmark, alt `מטצים`; the tag reads `מנהיגות טכנולוגית צעירה` | REQ-M.213 | DONE |
+| F-M.81.3 | `home.html`, `about.html`: the חמ״ד logo off, and the partners card with it | REQ-M.213 | DONE |
+
+**How it was read.** Her two sentences answer the bot's two questions: "remove the logo" is
+yes to taking חמ״ד off too, and "what you put in is only the matazim logo, in burgundy" answers
+"what goes in place of the logo at the top". The burgundy is the one already in the old logo
+(the word עתיד), so it matches the site. With no logo left, a card titled שותפים מרכזיים
+לעשייה would hold only "וגופים נוספים נפלאים", so the card is off for now.
+
+**How the logo was made.** There was no matazim logo file, so the bot drew the word with
+Pillow once (no Raqm on this machine, so the letters were laid out right to left by hand) and
+committed the PNG. The old `logo.png`, `partners/` and the CSS stay for the day they come back.
+
+**What the bot did not do.** Add an Intel logo (still Avi's call, see SPR-M.79), or change the
+words that name רשת עתיד and מתנדבי אינטל as partners.
+
+**Asked back.** Whether she has a designed מטצים logo to use instead of the bot's wordmark, and
+whether the partners card should come back with words only.
+
+**Tests.** `tests/test_spr_m_81.py`; `tests/test_spr_m_79.py` and `tests/test_spr_m_1.py` no
+longer expect the partners card or the old logo.
+
+## SPR-M.82: Beside each name, passed or did not pass, and the student is told  `DONE 2026-10-31`
+
+Two mails from Lital of 31.10 (spec C41). 11:06: "לא תיקנת כלום ... מה בקשר לכל העדכונים שביקשתי
+בנוגע למבחן המיון ואישור של המוביל את התלמיד או אי אישור", with a picture of a Render "502 Bad
+Gateway" page. 11:29: "ליד כל שם של תלמיד יכול המוביל לאשר לנבחרת או להחליט שלא אישר (מי שלא
+אישר תשלח הודעה לתלמיד שלא עבר לסיירת התלמידים של מטצים) שמי שכן עבר יישלח הודעה שכן עבר".
+Run under Avi's standing rule of 2026-10-16.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.82.1 | `EntranceAttempt.not_passed` (migration 0047); set by a good-luck return, cleared by approving or a fix return | REQ-M.214 | DONE |
+| F-M.82.2 | `entrance_review.not_passed`, and `leader_decide` action `not_passed`; `GOOD_LUCK_TEXT` in her words, "לסיירת התלמידים של מטצים" | REQ-M.214 | DONE |
+| F-M.82.3 | `leader_tests.html`: `עבר/ה` and `לא עבר/ה` side by side, the fix note folded, the row tag `לא עבר/ה, נשלחה הודעה` | REQ-M.214 | DONE |
+| F-M.82.4 | `leader_tests.html`: looking as a leader shows the two buttons disabled, and says only the leader can press them | REQ-M.214 | DONE |
+
+**How it was read.** Everything she asked for was on the site after SPR-M.78 and SPR-M.80, but
+she could not find it. Her picture shows the site down at 11:06, while the 10:56 deploy was
+restarting it. And "did not pass" was an unticked box under a "what to fix" field, beside a button
+called `לא לאשר`, which reads as "send back for fixing". By rule 48 (the control follows the shape
+of the decision), the decision is one of two, passed or not, so it is two buttons, each with its
+message. "Back for fixing" is a third, less common case and folds under them. A program manager
+looking as a leader used to see no buttons at all, so a check by the programme team showed nothing
+to approve with. Now they see the leader's buttons, greyed.
+
+**What the bot did not do.** Change the programme team's own screen (`/matazim/staff/entrance/`),
+where approving and returning work as before.
+
+**Tests.** `tests/test_spr_m_82.py`; `tests/test_spr_m_80.py` now looks for the button, not the box.
+
+
+## SPR-M.83: The leader sees the student's whole year  `DONE 2026-11-10`
+
+A mail from Lital of 10.11, 21:33 (spec C42): "נכנסתי למובילה עפיפה וראיתי שכאשר היא נכנסת
+להתקדמות של תלמיד היא לא רואה את כל המסלול השנתי". Run under Avi's standing rule of 2026-10-16.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.83.1 | `track.path_steps` is her new list: 2 Scratch, peak day at Intel, 2 Tinkercad, 2 electives, the good-instruction day, 2 practicums, the closing day; course steps read `N מתוך 2`, electives beyond two read `ועוד N לבחירה` | REQ-M.215 | DONE |
+| F-M.83.2 | `templates/matazim/_year_path.html`, shared by `my_path.html` and `student.html`; `for_leader` drops the links and says `השלב הנוכחי` | REQ-M.215 | DONE |
+| F-M.83.3 | `roster_views.student` hands the page the student's path; `<section id="mzStudentPath">` first on the page | REQ-M.215 | DONE |
+| F-M.83.4 | Migration 0048: the seeded winter row says Tinkercad instead of Python, only if the team has not edited it | REQ-M.215 | DONE |
+
+**How it was read.** The leader's page about a student showed the two Scratch הדרכות and the
+certification conditions, nothing of the year. The student's own page had the year, but as she
+wrote it on 15.10, with Python after Scratch. Her new list is the programme now, so the one
+function both pages read changed, and the leader's page reads it too. "דנה הדרכה טוב" is read as
+the good-instruction day. Months for the electives are not in her mail, so the step says
+`לאורך השנה`; the bot asked her.
+
+**Tests.** `tests/test_spr_m_83.py`; `tests/test_spr_m_69.py` now expects her new order.
+
+## SPR-M.84: בוגרי מטצים, a space for last year's graduates  `DONE 2026-11-17`
+
+A mail from Lital of 17.11, 18:28 (spec C43), with the teaching kit attached: "יש להוסיף באתר
+כפתור בשם ״בוגרי מטצים״, המיועד לתלמידי כיתה י׳ שסיימו את התכנית וכעת מתחילים להדריך בבתי
+הספר". Run under Avi's standing rule of 2026-10-16.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.84.1 | Models `Graduate`, `PracticumReport`, `GraduateDate`, `GraduateResource` (migration 0049); four notification kinds; the two dates seeded once (0050) | REQ-M.216 to REQ-M.221 | DONE |
+| F-M.84.2 | The button: logged-out menu, logged-out home, the test-stage home, the footer; `/matazim/graduates/` for a visitor, a waiting graduate and an approved one | REQ-M.216 | DONE |
+| F-M.84.3 | `/matazim/graduates/join/`: full name, school, leader, parent's name, email, consent and a drawn signature; a graduate has no learner stage | REQ-M.216 | DONE |
+| F-M.84.4 | The space: her welcome, כל ההדרכות שלי, לומדים AI, איך מעבירים שיעור? with the kit (`/matazim/graduates/kit/`), הפרקטיקום שלי, ימי השיא שלנו | REQ-M.217 to REQ-M.220 | DONE |
+| F-M.84.5 | `/matazim/graduates/practicum/`: report, approved of 120, left, waiting; delete before approval | REQ-M.219 | DONE |
+| F-M.84.6 | `/matazim/leader/graduates/` and `/matazim/staff/graduates/` (by school and leader; dates and content edited there) | REQ-M.221 | DONE |
+| F-M.84.7 | API: `graduates`, `practicum-reports`, `graduate-dates`, `graduate-resources` | Rule 6 | DONE |
+
+**How it was read.** A graduate is a new kind of person here: not a learner at a stage (so never sent
+to this year's entrance test), not a leader. They register like anybody (with the parent's details
+the sign-up already asks for a minor), and then fill her form once. "Personal details" was kept to a
+full name: the less a site holds about a minor the better, and she was asked what else she needs. The
+parent's signature is drawn on the phone and kept as a small picture that only the leader and the team
+see; the API says only whether it exists. "All my courses" is every live הדרכה of the programme, since
+the graduates finished last year on paper and have no record here. Her text says קורסים and has a dash
+and an emoji; the site says הדרכות, a colon and no emoji. The kit is the PDF she attached, kept in the
+app (`matazim/files/`) and opened only for graduates, leaders and the team: the exception to "content
+is edited in the app", written down here; replacing it means sending the new file. AI and teaching
+content start empty and are the team's to fill on the management screen.
+
+**Tests.** `tests/test_spr_m_84.py`, with a phone test (360px) that draws the signature and signs up.
+
+## SPR-M.85: Two doors, and a graduate enters only once approved  `DONE 2026-11-17`
+
+A second mail from Lital of 17.11, 18:45 (spec C44), seventeen minutes after C43: the tenth-graders
+get a link to the site; on it there is a way in for the graduates and a way in for whoever starts
+the programme, as until now; they give their details and choose a leader, the leader approves them,
+"ורק כך הם יוכלו להיכנס למערכת". Run under Avi's standing rule of 2026-10-16.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.85.1 | The logged-out home's hero: two doors, `כניסה למתחילים את התכנית` and `כניסה לבוגרי מטצים`, with a line saying who the graduates are | REQ-M.222 | DONE |
+| F-M.85.2 | A waiting graduate sees only the waiting note; the site's pages (`entrance_gated`, and `graduate_gated` on ההדרכות, המסלול שלי, the community) send them back to it; their menu has no practicum | REQ-M.222 | DONE |
+
+**How it was read.** Most of the mail was already built by SPR-M.84 an hour earlier (details, school
+and leader, the leader's approval). What was new: the two doors at the very top, side by side, so the
+one link serves both kinds of student; and "only so can they enter", which SPR-M.84 had read loosely
+(a waiting graduate saw the welcome and the dates). Now nothing opens before the approval.
+
+**Tests.** `tests/test_spr_m_85.py`; one test of SPR-M.84 changed with the rule (the waiting page).
+
+## SPR-M.86: The team sees the graduates' space as a graduate  `DONE 2026-11-17`
+
+A mail from Lital of 17.11, 19:42 (spec C45), after SPR-M.85 went live: "תשלח לי לינק איך התלמיד
+רואה את האתר ברגע שנכנס". Run under Avi's standing rule of 2026-10-16.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.86.1 | `/matazim/graduates/preview/`: the approved graduate's space, read only, with a bar and a way back; nothing is made | REQ-M.223 | DONE |
+| F-M.86.2 | "מה הבוגרים רואים" on the graduates' page (team and leaders), the team's graduates page and the leader's | REQ-M.223 | DONE |
+
+**How it was read.** The reply is mostly links: the site itself in a private window shows the two
+doors, and the existing student preview (REQ-M.198) shows the first-year entrance. What she could not
+see at all was the graduates' space, since it opens only after a leader approves a real graduate, so
+that view was built. The practicum form stays closed in the view, since a report needs a graduate.
+
+**Tests.** `tests/test_spr_m_86.py`.
+
+
+## SPR-M.87: The graduates' space as squares  `DONE 2026-11-17`
+
+A mail from Lital of 17.11, 21:05 (spec C46), after SPR-M.86: she does not like how the graduates'
+space looks and asks for squares, all the הדרכות, the yearly 120 hour track, how to build a הדרכה with
+the kit, and something for asking questions with AI. Run under Avi's standing rule of 2026-10-16.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.87.1 | Six squares under the welcome, the whole square a link, the page wide instead of narrow | REQ-M.224 | DONE |
+| F-M.87.2 | `/matazim/graduates/courses/`: the programme's הדרכות as cards with cover and ring | REQ-M.224 | DONE |
+| F-M.87.3 | `/matazim/graduates/teaching/` (kit, six steps, shelf) and `/matazim/graduates/ai/` (shelf) | REQ-M.224 | DONE |
+| F-M.87.4 | `/matazim/graduates/ask/`: a question builder, in the browser only | REQ-M.225 | DONE |
+| F-M.87.5 | The same pages in the team's preview, with the bar and a way back | REQ-M.224 | DONE |
+
+**How it was read.** "ריבועים עם הדרכות" is read as the student home's squares for the space and the
+course cards for the הדרכות. "שאילת שאלות עם AI" is read as a tool that helps a graduate ask an AI a
+good question about a הדרכה; it builds the question on the page and sends nothing, so no child's words
+leave the site through us. A chat with an AI inside the site would need Avi (cost, keys, safety), so it
+was asked back. New הדרכות made for the graduates she asked of Avi, and they were passed on to him.
+
+**Tests.** `tests/test_spr_m_87.py`; three assertions of `tests/test_spr_m_84.py` follow the new order
+and names.
+
+
+## SPR-M.88: The graduates' yearly track, confirmed by the leader  `DONE 2026-11-18`
+
+Two mails from Lital of 18.11, 11:44 and 11:45 (spec C47, C48), in the graduates' thread. The first
+asks for the link to hand the tenth-grade graduates: answered with `https://babook.co.il/matazim/graduates/`,
+nothing to build. The second: "תוסיף במסלול השנתי מפגש 1 – היכרות עם התכנית – חשוב שהמוביל יאשר
+שכלל התלמידים לקחו חלק המוביל תמדי צריך לאשר לאורך כל הדרך וגם בהדרכות". Run under Avi's standing
+rule of 2026-10-16.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.88.1 | Models `GraduateMeeting`, `GraduateAttendance`, `GraduateCourseApproval` (migration 0051); מפגש 1, היכרות עם התכנית seeded once (0052) | REQ-M.226, REQ-M.227 | DONE |
+| F-M.88.2 | `#mzGradTrack` on the graduate's practicum page: each meeting confirmed or waiting | REQ-M.226 | DONE |
+| F-M.88.3 | `#mzGradMeetings` on the leader's graduates page: everybody ticked, one button confirms, a confirmation can be undone | REQ-M.226 | DONE |
+| F-M.88.4 | A finished הדרכה waits for `אישור ההדרכה` on the leader's card; the graduate's card says waiting or approved | REQ-M.227 | DONE |
+| F-M.88.5 | The team adds and deletes meetings on `/matazim/staff/graduates/` and sees how many were confirmed | REQ-M.226 | DONE |
+| F-M.88.6 | API: `graduate-meetings`, `graduate-attendance`, `graduate-course-approvals` | Rule 6 | DONE |
+
+**How it was read.** "המסלול השנתי" in this thread is the graduates' yearly track (the bot's last reply
+called the practicum that), so the meeting went there, not on the first-year students' year path; she
+was asked. "שכלל התלמידים לקחו חלק" became one form per meeting with everybody ticked, so confirming a
+whole group is one click and leaving someone out is unticking them. "לאורך כל הדרך" is every meeting
+the team adds after it; "וגם בהדרכות" is the leader's approval of each הדרכה a graduate finished. The
+practicum hours were already approved by the leader (SPR-M.84). Whether a meeting counts towards the
+120 hours is not in her mail, so it does not, and she was asked.
+
+**Tests.** `tests/test_spr_m_88.py`.
+
+
+## SPR-M.89: מפגש 1 on the students' path, and the graduates' yearly process  `DONE 2026-11-18`
+
+Two mails from Lital of 18.11, 12:29 and 12:32 (spec C49, C50), in the graduates' thread. Run under
+Avi's standing rule of 2026-10-16.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.89.1 | Models `StudentMeeting`, `StudentAttendance` (migration 0053); מפגש 1, היכרות עם התכנית seeded once (0054) | REQ-M.228 | DONE |
+| F-M.89.2 | The meetings come first on the students' year path, confirmed or waiting | REQ-M.228 | DONE |
+| F-M.89.3 | `#mzStudentMeetings` on `/matazim/leader/students/`: everybody ticked, one button, undo | REQ-M.228 | DONE |
+| F-M.89.4 | API: `student-meetings`, `student-attendance` | Rule 6 | DONE |
+| F-M.89.5 | `/matazim/graduates/process/`, open to anybody, linked from the graduates' pages | REQ-M.229 | DONE |
+
+**How it was read.** 12:29 answers the bot's question of SPR-M.88: she meant the grade 9 students'
+path too, so מפגש 1 went there, with the same leader confirmation her 11:45 mail asked for. It is a
+step of its own before the הדרכות and does not change who may be certified. 12:32 asks to refine the
+letter and add a link to an explanation of the process: the page holds the explanation, and the
+refined letter, with the link, went back to her in the reply. The letter's date (15.7.2027) was
+left out and asked about.
+
+**Tests.** `tests/test_spr_m_89.py`; the step counts of `tests/test_spr_m_56.py` and `tests/test_spr_m_69.py`
+now include מפגש 1 (`tests/test_spr_m_83.py` builds an institution of its own, which has no meeting).
+
+## SPR-M.90: the student records being at מפגש 1  `DONE 2026-11-18`
+
+A mail from Lital of 18.11, 13:27 (spec C51), in the graduates' thread. Run under Avi's standing
+rule of 2026-10-16.
+
+| F-ID | Feature | Traces | Status |
+|---|---|---|---|
+| F-M.90.1 | The meetings on the students' year path read `הנוכחות נרשמה` or `עוד לא נרשמה נוכחות`, no more waiting for the leader | REQ-M.230 | DONE |
+| F-M.90.2 | `הייתי במפגש` and `ביטול הרישום` on the member's own path; POST `/matazim/my-path/meeting/<id>/present/` | REQ-M.230 | DONE |
+| F-M.90.3 | API `student-attendance`: a student writes their own row, nobody else's | REQ-M.230 | DONE |
+| F-M.90.4 | The leader's panel on `/matazim/leader/students/` reads `נוכחות במפגשים`: who recorded, and recording for someone who forgot | REQ-M.230 | DONE |
+
+**How it was read.** Her mail answers the bot's reply about the students' path, the one that said
+`מחכה לאישור המוביל/ה`, so the change is there. The leader keeps the panel, now to see who recorded
+and to help, not to approve. The graduates' track has the same wording (SPR-M.88, her own earlier
+request) and was left as it is; she was asked. No model change: a row is the record, and
+`confirmed_by` says who wrote it.
+
+**Tests.** `tests/test_spr_m_90.py`; `tests/test_spr_m_89.py` now reads the new words.
+## SPR-M.91: a leader brings students in without the test, grade 9 and grade 10  `DONE 2026-11-19`
+
+Naomi, by mail, 2026-11-19 09:35 (C52, REQ-M.231): every leader can bring students
+into their class without the entrance test, with a link for grade 9 and one for
+grade 10, sent from the leader's page.
+
+- `Leader.direct_code` and `Leader.graduate_code`, each its own secret (migration
+  0055 fills one per existing leader); `MemberProfile.entrance_waived_at`/`_by`,
+  so a waiver is never read as a pass. `has_passed_entrance_test` is true for either.
+- `/matazim/class-link/<code>/` (grade 9): signed out, names the leader and offers an
+  account; signed in, one button joins the leader now. A minor still goes through
+  the parent's consent first when that gate is on, then the ordinary link carries on.
+- `/matazim/graduates/link/<code>/` (grade 10): straight to the graduates' form with
+  the leader fixed; approved on sending, the parent's signature still required.
+- "צירוף תלמידים לכיתה, בלי מבחן כניסה" on `/matazim/leader/` and on the team's
+  `/matazim/staff/leaders/<id>/`; replacing the join link replaces both. The year
+  path shows the test as "צורף/ה בלי מבחן".
+- Tests: `tests/test_spr_m_91.py`.

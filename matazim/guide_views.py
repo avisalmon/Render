@@ -22,7 +22,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect, render
 
-from .access import candidate_of, is_program_manager, leader_of
+from .access import candidate_of, is_program_manager
 from .views import shell
 
 LOGIN_URL = "/matazim/login/"
@@ -37,7 +37,9 @@ def leader_guide(request):
     outright, and everyone else is turned away. A tutorial for a role is not
     a preview of the role for somebody who does not hold it yet.
     """
-    if leader_of(request.user) is None:
+    from .as_leader import acting_leader
+
+    if acting_leader(request) is None:
         if candidate_of(request.user):
             return redirect("matazim:leader_entrance")
         raise PermissionDenied

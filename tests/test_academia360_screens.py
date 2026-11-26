@@ -278,7 +278,7 @@ def _check(page, name, width, problems):
     if page.evaluate("document.documentElement.scrollWidth") > width:
         problems.append(f"{name}@{width}: page wider than the screen")
     if width < 700:
-        # PM-97: on a phone the bar is two tidy rows at most (brand and sign-in
+        # PM-99: on a phone the bar is two tidy rows at most (brand and sign-in
         # on one line, the tabs under them), never a ragged stack.
         bar = page.evaluate(BAR_JS)
         if bar["height"] > 110 or abs(bar["brand_top"] - bar["account_top"]) > 8:

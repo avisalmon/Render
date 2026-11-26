@@ -3026,6 +3026,13 @@ a.mz-path-title:hover { color: var(--mz-link); }
 .mz-entrance-row[data-state="waiting"] { border-inline-start: 4px solid var(--mz-action); padding-inline-start: 12px; }
 .mz-entrance-decide { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; margin-top: 10px; }
 .mz-entrance-decide .mz-field { flex: 1 1 260px; }
+/* REQ-M.214 - passed or did not pass, side by side; fixing folds under them. */
+.mz-entrance-choice { display: flex; flex-wrap: wrap; gap: 10px; flex-basis: 100%; margin: 0; }
+.mz-entrance-preview button[disabled] { opacity: .6; cursor: not-allowed; }
+.mz-entrance-fix { margin-top: 10px; }
+.mz-entrance-fix summary { cursor: pointer; color: var(--mz-muted); }
+.mz-entrance-fix form { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; margin-top: 8px; }
+.mz-entrance-fix .mz-field { flex: 1 1 260px; }
 
 /* ---------------------------------------- stages and updates (SPR-M.65) */
 .mz-course-stage {
@@ -3165,3 +3172,95 @@ button.mz-lamp { border: 0; font: inherit; cursor: pointer; }
 .mz-preview-bar a.is-on { font-weight: 800; text-decoration: none; border-bottom: 2px solid var(--mz-accent); }
 .mz-preview-entry { margin-top: 28px; }
 .mz-preview-off { font-weight: 700; }
+
+/* ------------------------------------------ בוגרי מטצים (SPR-M.84, Lital 2026-11-17) */
+.mz-grad .mz-panel { margin-top: 18px; }
+.mz-grad-welcome { margin-top: 8px; }
+.mz-grad-dates, .mz-grad-list, .mz-grad-hours, .mz-grad-cards { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 10px; }
+.mz-grad-dates li { display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline; font-size: 1.1rem; }
+.mz-grad-list li { min-width: 0; overflow-wrap: anywhere; }
+.mz-grad-list li p { margin: 4px 0 0; }
+.mz-grad-hours li { min-width: 0; }
+.mz-grad-form { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.mz-grad-form input, .mz-grad-form select, .mz-grad-form textarea { font-size: 16px; min-width: 0; max-width: 100%; }
+.mz-grad-sig {
+  display: block; width: 100%; max-width: 600px; height: auto; aspect-ratio: 3 / 1;
+  background: #fff; border: 2px dashed var(--mz-line); border-radius: var(--mz-radius-sm);
+  touch-action: none; cursor: crosshair;
+}
+.mz-grad-sig-img { display: block; max-width: 100%; height: auto; background: #fff; border-radius: var(--mz-radius-sm); }
+.mz-grad-card {
+  display: grid; gap: 8px; min-width: 0; padding: 16px;
+  border: 1px solid var(--mz-line); border-radius: var(--mz-radius-sm); background: var(--mz-card);
+}
+.mz-grad-report { display: grid; gap: 6px; min-width: 0; padding: 10px 0; border-top: 1px solid var(--mz-line); }
+.mz-grad-report p { margin: 0; overflow-wrap: anywhere; }
+.mz-grad-decide { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+.mz-grad-decide .mz-field { flex: 1 1 12rem; min-width: 0; }
+.mz-grad-more summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; }
+.mz-grad-form select {
+  width: 100%; min-height: 48px; padding: 11px 14px;
+  border: 1px solid var(--mz-line); border-radius: var(--mz-radius-sm);
+  background: var(--mz-card); color: var(--mz-ink); font: inherit; font-size: 16px;
+}
+.mz-grad-tile { border-color: var(--mz-action); color: var(--mz-action-text, var(--mz-link)); }
+
+/* ---------------------------------------------------- two doors (SPR-M.85, REQ-M.222)
+ * Lital, 2026-11-17: one link to the site, two ways in: those starting the
+ * programme, and last year's graduates. */
+.mz-doors { margin-top: 4px; }
+.mz-doors-note { margin: 12px 0 0; font-size: 0.95rem; color: var(--mz-muted, inherit); }
+.mz-doors-note .mz-linkbtn { margin-inline-start: 8px; }
+
+/* SPR-M.86, REQ-M.223 - the practicum button in the team's look at the graduates' space: shown, does nothing. */
+.mz-btn[aria-disabled="true"] { opacity: .55; cursor: not-allowed; pointer-events: none; }
+#mzGradPreviewBar { margin-bottom: 1rem; border-radius: 12px; }
+
+/* ------------------------------------------ the graduates' squares (SPR-M.87, REQ-M.224)
+ * Lital, 2026-11-17 21:05: "בוא נעשה לה גם ריבועים". Six squares; the whole
+ * square is the door (`.mz-gtile-go` stretches over it), the kit button sits above. */
+.mz-grad-hero {
+  margin-top: 8px; padding: 26px 28px; border-radius: var(--mz-radius);
+  background: linear-gradient(135deg, var(--mz-accent-soft), var(--mz-action-soft));
+}
+.mz-grad-hero h1 { margin: 0 0 8px; }
+.mz-grad-hero p { margin: 0; max-width: 62ch; font-size: 1.05rem; }
+.mz-gtiles {
+  list-style: none; margin: 24px 0 0; padding: 0; display: grid; gap: 18px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
+}
+.mz-gtiles > li { display: flex; min-width: 0; }
+.mz-gtile {
+  position: relative; display: flex; flex-direction: column; gap: 8px; width: 100%; min-width: 0;
+  min-height: 230px; padding: 22px; border-radius: var(--mz-radius);
+  background: var(--mz-card); border: 2px solid var(--mz-line); box-shadow: var(--mz-shadow);
+  transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.mz-gtile:hover, .mz-gtile:focus-within { transform: translateY(-2px); border-color: var(--mz-action); box-shadow: var(--mz-shadow-lift); }
+.mz-gtile h2 { margin: 0; font-size: 1.35rem; }
+.mz-gtile p { margin: 0; overflow-wrap: anywhere; }
+.mz-gtile .mz-grad-dates { margin-top: 4px; }
+.mz-gtile-sub { font-weight: 700; color: var(--mz-link); }
+.mz-gtile-icon {
+  display: inline-grid; place-items: center; width: 56px; height: 56px; border-radius: 16px;
+  background: var(--mz-action-soft); color: var(--mz-link);
+}
+.mz-gtile-go {
+  margin-top: auto; font-weight: 700; color: var(--mz-link); text-decoration: none;
+  min-height: 44px; display: inline-flex; align-items: center;
+}
+.mz-gtile-go::after { content: ""; position: absolute; inset: 0; border-radius: var(--mz-radius); }
+.mz-gtile-go:focus-visible { outline: none; }
+.mz-gtile-go:focus-visible::after { outline: 3px solid var(--mz-action); outline-offset: 3px; }
+.mz-gtile-kit, .mz-gtile .mz-btn { position: relative; z-index: 1; align-self: flex-start; }
+.mz-grad-back { margin: 4px 0 12px; }
+.mz-grad-back a { font-weight: 700; min-height: 44px; display: inline-flex; align-items: center; }
+.mz-grad-steps { margin: 16px 0 0; padding-inline-start: 1.4em; display: grid; gap: 8px; }
+.mz-grad-steps li { overflow-wrap: anywhere; }
+#mzAskText { width: 100%; max-width: 100%; font: inherit; font-size: 16px; padding: 12px; border: 1px solid var(--mz-line); border-radius: var(--mz-radius-sm); background: var(--mz-card); color: var(--mz-ink); }
+
+/* SPR-M.88 - the graduates' yearly track: a meeting, and the leader's ticks. */
+.mz-grad-meeting { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+div.mz-grad-meeting { display: block; margin-block-end: 18px; }
+.mz-grad-tick { display: flex; align-items: center; gap: 8px; min-height: 44px; }
+.mz-grad-tick input { inline-size: 22px; block-size: 22px; }
