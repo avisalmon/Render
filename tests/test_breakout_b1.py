@@ -321,13 +321,32 @@ def test_the_api_is_browsable_and_lists_every_model(seeded, dana):
                              "materials", "material-requests", "likes", "comments", "runs", "downloads", "reports", "profiles"}
 
 
+def _curator(user):
+    """For now only curators write (Avi, 2026-11-26); the tests that write
+    make their teacher one."""
+    profile = access.profile_for(user)
+    profile.is_curator = True
+    profile.save()
+    return user
+
+
 def test_the_api_sets_the_author_from_the_session_and_ignores_the_payload(seeded, dana, yossi):
     """Methodology 4: the serializer's read-only field and perform_create both
     hold this; the test passes a foreign author and checks who owns the row."""
+    _curator(dana)
     r = _as(dana).post("/breakout/api/experiences/", {"title": "חדר של דנה", "slug": "dana-room", "author": yossi.pk, "is_flagship": True, "version": 9})
     assert r.status_code == 201, r.content
     exp = Experience.objects.get(slug="dana-room")
     assert exp.author == dana and exp.is_flagship is False and exp.version == 1 and exp.status == Experience.DRAFT
+
+
+def test_a_plain_teacher_cannot_start_an_experience_for_now(seeded, yossi):
+    """Avi, 2026-11-26: only he puts up challenges until the app looks right."""
+    r = _as(yossi).post("/breakout/api/experiences/", {"title": "חדר של יוסי", "slug": "yossi-room"})
+    assert r.status_code == 403 and not Experience.objects.filter(slug="yossi-room").exists()
+    assert _as(yossi).get("/breakout/new/").status_code == 404
+    assert "כתיבת חוויה" not in _as(yossi).get("/breakout/").content.decode()
+    assert "כתיבת חוויה" in _as(seeded.author).get("/breakout/").content.decode()  # the superuser is a curator
 
 
 def test_only_the_author_writes_an_experience_and_its_children(seeded, dana, yossi):
@@ -350,7 +369,7 @@ def test_only_the_author_writes_an_experience_and_its_children(seeded, dana, yos
 
 
 def test_a_published_edit_bumps_the_version_and_the_first_publish_dates_it(dana):
-    c = _as(dana)
+    c = _as(_curator(dana))
     c.post("/breakout/api/experiences/", {"title": "חדר", "slug": "room"})
     r = c.patch("/breakout/api/experiences/room/", {"status": "published"}, content_type="application/json")
     exp = Experience.objects.get(slug="room")

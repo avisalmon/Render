@@ -211,7 +211,9 @@ Each print is recorded as a Download row with the group count.
 
 ## 5. Writing an experience
 
-Any signed-in teacher writes. The editor is a sequence of screens, each a
+Any signed-in teacher writes, eventually. **For now (Avi, 2026-11-26) only
+Avi puts up challenges**: writing is gated to curators in `access.may_write`,
+and opening it to every teacher is that one line. The editor is a sequence of screens, each a
 real object a person can add, edit, delete and reorder (methodology: "every
 item is a real object"):
 

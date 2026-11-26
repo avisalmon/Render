@@ -6,7 +6,7 @@
     <h1 class="br-h1">הספרייה</h1>
     <p class="br-intro">חוויות חדר בריחה שבנויות מדפים, מספריים וציוד משרדי. בוחרים חוויה, מדפיסים את הערכה, ומריצים עם הקבוצה. בלי מסכים.</p>
   </div>
-  <a class="br-btn br-pagehead-action" href="{% url 'breakout:new' %}">כתיבת חוויה</a>
+  {% if can_write %}<a class="br-btn br-pagehead-action" href="{% url 'breakout:new' %}">כתיבת חוויה</a>{% endif %}
 </section>
 
 <details class="br-filterbox" id="br-filters">

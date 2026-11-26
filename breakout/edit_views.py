@@ -93,8 +93,11 @@ def checklist(exp):
 @access.signed_in
 @ensure_csrf_cookie
 def new(request):
-    """A new experience starts from its About form and is a draft at once."""
+    """A new experience starts from its About form and is a draft at once.
+    For now only Avi writes (`access.may_write`; his decision 2026-11-26)."""
     access.profile_for(request.user)
+    if not access.may_write(request.user):
+        raise Http404
     form = AboutForm(request.POST or None, request.FILES or None)
     if request.method == "POST" and form.is_valid():
         exp = form.save(commit=False)

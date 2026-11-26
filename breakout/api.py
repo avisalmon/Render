@@ -94,6 +94,8 @@ class ExperienceViewSet(viewsets.ModelViewSet):
         return access.visible_experiences(self.request.user).select_related("author").prefetch_related("subjects")
 
     def perform_create(self, serializer):
+        if not access.may_write(self.request.user):
+            raise PermissionDenied("כרגע רק האוצרים כותבים חוויות.")
         serializer.save(author=self.request.user)
 
     def perform_update(self, serializer):

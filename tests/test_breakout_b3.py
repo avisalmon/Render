@@ -45,7 +45,15 @@ def avi(db):
 
 @pytest.fixture
 def dana(db):
-    return User.objects.create_user("dana", "dana@example.com", PASSWORD, first_name="דנה")
+    """A writing teacher. For now only curators write (Avi, 2026-11-26), so
+    dana is made one; yossi stays a plain reader."""
+    from breakout import access
+
+    user = User.objects.create_user("dana", "dana@example.com", PASSWORD, first_name="דנה")
+    profile = access.profile_for(user)
+    profile.is_curator = True
+    profile.save()
+    return user
 
 
 @pytest.fixture
@@ -450,9 +458,9 @@ def test_the_forms_validate_the_ranges_a_classroom_has(seeded, dana):
     assert 'type="radio" name="difficulty"' in html and 'type="checkbox" name="subjects"' in html
 
 
-def test_two_experiences_with_the_same_title_get_different_slugs(dana, yossi):
+def test_two_experiences_with_the_same_title_get_different_slugs(dana, avi):
     a = _draft(_as(dana))
-    b = _draft(_as(yossi))
+    b = _draft(_as(avi))  # two writers (both curators), one title
     assert a.slug == "hvdah-mhatyd" and b.slug == "hvdah-mhatyd-2"
 
 

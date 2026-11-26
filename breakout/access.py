@@ -33,6 +33,13 @@ def is_curator(user):
     return Profile.objects.filter(user=user, is_curator=True).exists()
 
 
+def may_write(user):
+    """Who may start a new experience. Avi, 2026-11-26: "only I put up
+    challenges" for now, so writing is the curators'; opening it to every
+    teacher (spec 5 as first written) is one line here, when he says so."""
+    return is_curator(user)
+
+
 def may_edit(user, experience):
     return bool(getattr(user, "is_authenticated", False) and experience.author_id == user.pk)
 
