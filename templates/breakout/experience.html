@@ -19,7 +19,9 @@
       {% for s in exp.subjects.all %}<li class="br-chip--subject">{{ s.name }}</li>{% endfor %}
     </ul>
     <p class="br-byline" dir="auto">מאת {{ exp.author.breakout_profile.name|default:exp.author.first_name }} · גרסה {{ exp.version }} · {{ exp.n_runs }} הרצות · {{ exp.n_likes }} לייקים</p>
+    {% if may_edit %}<p><a class="br-btn br-btn--quiet" href="{% url 'breakout:edit' exp.slug %}">עריכה</a></p>{% endif %}
   </div>
+  {% if exp.cover %}<img class="br-cover" src="{% url 'breakout:cover_file' exp.slug %}" alt="">{% endif %}
   <form class="br-kitform br-pagehead-action" method="get" action="{% url 'breakout:kit' exp.slug %}" id="br-kitform">
     <label class="br-field br-field--inline"><span>כמה קבוצות?</span><input type="number" name="groups" id="br-kit-groups" min="1" max="{{ max_groups }}" value="{{ default_groups }}" inputmode="numeric" data-sync="br-groups"></label>
     <button type="submit" class="br-btn br-btn--main">הדפסת הערכה (PDF)</button>

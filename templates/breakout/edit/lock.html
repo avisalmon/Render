@@ -1,0 +1,26 @@
+{% extends "breakout/base.html" %}
+{% block title %}המנעול הסופי · {{ exp.title }} · חדרי בריחה מנייר{% endblock %}
+{% block content %}
+<p class="br-back"><a href="{% url 'breakout:edit' exp.slug %}">→ סקירה ופרסום</a></p>
+<section class="br-pagehead br-pagehead--exp">
+  <div>
+    <h1 class="br-h1" dir="auto">{{ exp.title }}</h1>
+    <p class="br-lede">איך החוויה נגמרת: מה הקבוצה פותחת, איך הקוד מתחבר ממה שהתחנות תרמו, ומה כתוב בפנים.</p>
+  </div>
+</section>
+{% include "breakout/edit/_steps.html" %}
+<article class="br-sheet">
+  <form method="post" class="br-form" novalidate>
+    {% csrf_token %}
+    {% include "breakout/edit/_field.html" with field=form.description %}
+    {% include "breakout/edit/_field.html" with field=form.code_rule %}
+    {% include "breakout/edit/_field.html" with field=form.final_code %}
+    {% include "breakout/edit/_field.html" with field=form.final_message %}
+    {% include "breakout/edit/_field.html" with field=form.setup_notes %}
+    <div class="br-actions">
+      <button type="submit" class="br-btn br-btn--main">שמירה והלאה לסקירה</button>
+      <a class="br-btn br-btn--quiet" href="{% url 'breakout:edit' exp.slug %}">ביטול</a>
+    </div>
+  </form>
+</article>
+{% endblock %}

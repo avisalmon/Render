@@ -61,6 +61,13 @@
     groups.addEventListener("change", scale);
   }
 
+  // ---- the editor: a destructive form asks first ----
+  document.querySelectorAll("form[data-confirm]").forEach(function (form) {
+    form.addEventListener("submit", function (ev) {
+      if (!window.confirm(form.dataset.confirm)) ev.preventDefault();
+    });
+  });
+
   // The kit form and the shopping list ask the same question; answering one
   // answers the other (data-sync names the twin).
   document.querySelectorAll("input[data-sync]").forEach(function (el) {

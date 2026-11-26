@@ -1,8 +1,9 @@
 # Breakout room app: spec
 
 > **Status: data model approved 2026-11-26; spec in chapters 1 to 13;
-> B.1 (skeleton, library, experience page, API, flagship seed) and B.2
-> (the printed kit) built in dev 2026-11-26, not yet shipped.** Working name for the
+> B.1 (skeleton, library, experience page, API, flagship seed), B.2
+> (the printed kit) and B.3 (the editor) built in dev 2026-11-26, not yet
+> shipped.** Working name for the
 > app, the URL and this folder: `breakout`. Avi may rename it.
 > Data model: [data_model.md](data_model.md). Process:
 > [building_an_app.md](../building_an_app.md).

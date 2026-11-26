@@ -1,0 +1,15 @@
+{% comment %}One form field in the app's look. Boxes and radios are drawn one per line with a 44px row (methodology 25, 48).{% endcomment %}
+{% if field.field.widget.input_type == 'checkbox' and field.field.choices or field.field.widget.input_type == 'radio' %}
+  <fieldset class="br-field br-choices">
+    <legend>{{ field.label }}</legend>
+    {% for w in field %}<label class="br-check">{{ w.tag }} <span>{{ w.choice_label }}</span></label>{% endfor %}
+    {% for e in field.errors %}<small class="br-error">{{ e }}</small>{% endfor %}
+  </fieldset>
+{% elif field.field.widget.input_type == 'checkbox' %}
+  <label class="br-check">{{ field }} <span>{{ field.label }}</span></label>
+  {% for e in field.errors %}<small class="br-error">{{ e }}</small>{% endfor %}
+{% else %}
+  <label class="br-field" for="{{ field.id_for_label }}"><span>{{ field.label }}{% if field.field.required %} <b class="br-req" aria-hidden="true">*</b>{% endif %}</span>{{ field }}
+    {% if field.help_text %}<small class="br-muted">{{ field.help_text }}</small>{% endif %}
+    {% for e in field.errors %}<small class="br-error">{{ e }}</small>{% endfor %}</label>
+{% endif %}

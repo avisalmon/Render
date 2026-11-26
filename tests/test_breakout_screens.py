@@ -143,6 +143,7 @@ def _open(browser, live_server, who, path, width):
 
 
 def _screens(flagship, second):
+    station = flagship.stations.order_by("order").first()
     return [
         ("login", None, "/breakout/login/"),
         ("signup", None, "/breakout/signup/"),
@@ -150,6 +151,15 @@ def _screens(flagship, second):
         ("experience", "dana", f"/breakout/x/{flagship.slug}/"),
         ("experience-thin", "dana", f"/breakout/x/{second.slug}/"),
         ("not-found", "dana", "/breakout/no-such-page/"),
+        # The editor (B.3), as the flagship's author.
+        ("edit-new", "avi", "/breakout/new/"),
+        ("edit-hub", "avi", f"/breakout/x/{flagship.slug}/edit/"),
+        ("edit-about", "avi", f"/breakout/x/{flagship.slug}/edit/about/"),
+        ("edit-story", "avi", f"/breakout/x/{flagship.slug}/edit/story/"),
+        ("edit-stations", "avi", f"/breakout/x/{flagship.slug}/edit/stations/"),
+        ("edit-station", "avi", f"/breakout/x/{flagship.slug}/edit/stations/{station.pk}/"),
+        ("edit-lock", "avi", f"/breakout/x/{flagship.slug}/edit/lock/"),
+        ("edit-hub-thin", "dana", f"/breakout/x/{second.slug}/edit/"),
     ]
 
 
@@ -168,7 +178,7 @@ def test_every_screen_holds_on_every_phone_a_tablet_and_a_desktop(browser, live_
                 for word in ALARM:
                     if re.search(rf"\b{re.escape(word)}\b", text):
                         problems.append(f"{name}@{width}: says {word!r}")
-                if name == "experience":
+                if name == "experience" or name.startswith("edit-"):
                     # Open every fold and station so the checks see the whole page.
                     page.evaluate("document.querySelectorAll('details').forEach(d => d.open = true)")
                 for label, js, arg in (("past the edge", OVERFLOW_JS, width), ("fields under 16px", SMALL_FIELDS_JS, None),
@@ -235,5 +245,73 @@ def test_on_a_phone_a_teacher_finds_the_experience_and_reads_a_solution(browser,
         assert download.url.endswith(f"/breakout/x/{flagship.slug}/kit/?groups=3")
         from breakout.models import Download
         assert list(Download.objects.values_list("groups", flat=True)) == [3]
+    finally:
+        context.close()
+
+
+def test_on_a_phone_a_teacher_writes_an_experience_and_publishes_it(browser, live_server):
+    """The author's job on a phone (mistake 27, B.3): about, story, a station
+    with its puzzle, solution, hint and material, the lock, publish, and the
+    new experience is on the library."""
+    from breakout.models import Experience, Material
+
+    build_world()
+    context, page = _open(browser, live_server, "dana", "/breakout/", 390)
+    try:
+        page.click("a.br-pagehead-action")
+        page.wait_for_load_state("networkidle")
+        assert page.url.endswith("/breakout/new/")
+        page.fill('input[name="title"]', "צופן הפסנתר")
+        page.fill('input[name="tagline"]', "הקבוצה מנגנת את הקוד")
+        page.select_option('select[name="audience_from"]', "7")
+        page.select_option('select[name="audience_to"]', "9")
+        page.check('input[name="difficulty"][value="easy"]')
+        page.click("form.br-form button[type=submit]")
+        page.wait_for_load_state("networkidle")
+        exp = Experience.objects.get(title="צופן הפסנתר")
+        assert page.url.endswith(f"/breakout/x/{exp.slug}/edit/story/")
+        page.fill('textarea[name="story"]', "הפסנתר של בית הספר שכח את המנגינה.")
+        page.click("form.br-form button[type=submit]")
+        page.wait_for_load_state("networkidle")
+        assert page.url.endswith("/edit/stations/")
+        page.fill('input[name="name"]', "הקלידים")
+        page.click("form.br-addrow button[type=submit]")
+        page.wait_for_load_state("networkidle")
+        assert "/edit/stations/" in page.url and page.url.rstrip("/").split("/")[-1].isdigit()
+        page.fill('textarea[name="puzzle_text"]', "כל קליד הוא אות. נגנו: 3 1 4")
+        page.fill('textarea[name="solution"]', "גאד (הספרה 3)")
+        page.click("#br-station-form button[type=submit]")
+        page.wait_for_load_state("networkidle")
+        page.click("a.br-row-title")
+        page.wait_for_load_state("networkidle")
+        page.fill('#br-hints input[name="text"]', "הקליד הלבן הראשון הוא א")
+        page.click("#br-hints form.br-addrow button[type=submit]")
+        page.wait_for_load_state("networkidle")
+        assert page.locator("#br-hints .br-row").count() == 1
+        paper = Material.objects.get(name="דף A4")
+        page.select_option('#br-materials select[name="material"]', str(paper.pk))
+        page.fill('#br-materials input[name="quantity"]', "1")
+        page.click("#br-materials form.br-addrow button[type=submit]")
+        page.wait_for_load_state("networkidle")
+        assert page.locator("#br-materials .br-row").count() == 1
+        page.goto(f"{live_server.url}/breakout/x/{exp.slug}/edit/lock/", wait_until="networkidle")
+        page.fill('input[name="final_code"]', "3")
+        page.click("form.br-form button[type=submit]")
+        page.wait_for_load_state("networkidle")
+        assert page.url.endswith(f"/breakout/x/{exp.slug}/edit/")
+        assert page.locator(".br-checklist .br-missing").count() == 0
+        page.click("form[action$='/edit/publish/'] button")
+        page.wait_for_load_state("networkidle")
+        assert page.url.endswith(f"/breakout/x/{exp.slug}/")
+        assert Experience.objects.get(pk=exp.pk).status == Experience.PUBLISHED
+        page.goto(f"{live_server.url}/breakout/", wait_until="networkidle")
+        titles = page.evaluate("[...document.querySelectorAll('.br-card .br-card-title a')].map(a => a.textContent.trim())")
+        assert "צופן הפסנתר" in titles
+    except Exception:
+        # Where the flow broke, for the person reading the failure (mistake 6).
+        SHOTS.mkdir(parents=True, exist_ok=True)
+        page.screenshot(path=str(SHOTS / "authoring-failed.png"), full_page=True)
+        print("authoring flow failed at", page.url)
+        raise
     finally:
         context.close()

@@ -1524,6 +1524,23 @@ test on the content. A secret that must stay off a page is at least a word.
 The sprint that adds a private-files setting adds the folder to
 `.gitignore` the same day, not when the first upload arrives.
 
+### 78. A control is declared by the shape of the answer; a generic input rule stops at the boxes; a file knows its parent before it is named
+
+breakout's editor drew the one-line hint as a textarea because the model
+column is a `TextField`; the stylesheet's rule for text inputs also sized
+the radios and boxes of the first choice field, which only the screenshot
+showed; the printable's file was named after an experience the instance
+did not yet know, so it landed in `printables/None/`; and two tests used
+the superuser as "a stranger", who as a curator sees drafts by design
+(PM-101).
+
+**The rule.** A model form names a widget for every field whose shape
+differs from its column (one line: `TextInput`). The day a choice field
+appears, the generic input rule is scoped away from radios and boxes and
+the page runs the phone screenshot. A file named after its parent is saved
+through a form whose instance already carries the parent. The test's
+stranger is a plain account, never the superuser.
+
 ### 78. A template fallback is resolved whether or not it is needed
 
 Academia360's admin overview chose between two relations with

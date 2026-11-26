@@ -1,0 +1,41 @@
+{% extends "breakout/base.html" %}
+{% block title %}{% if is_new %}חוויה חדשה{% else %}אודות · {{ exp.title }}{% endif %} · חדרי בריחה מנייר{% endblock %}
+{% block content %}
+<p class="br-back"><a href="{% if is_new %}{% url 'breakout:home' %}{% else %}{% url 'breakout:edit' exp.slug %}{% endif %}">→ {% if is_new %}הספרייה{% else %}סקירה ופרסום{% endif %}</a></p>
+<section class="br-pagehead br-pagehead--exp">
+  <div>
+    <h1 class="br-h1" dir="auto">{% if is_new %}חוויה חדשה{% else %}{{ exp.title }}{% endif %}</h1>
+    <p class="br-lede">{% if is_new %}מתחילים מהעובדות היבשות. הכל אפשר לשנות אחר כך, והחוויה נשארת טיוטה שרק אתם רואים עד שתפרסמו.{% else %}העובדות היבשות: למי, כמה זמן, איזו רמה.{% endif %}</p>
+  </div>
+</section>
+{% include "breakout/edit/_steps.html" %}
+<article class="br-sheet">
+  <form method="post" enctype="multipart/form-data" class="br-form" novalidate>
+    {% csrf_token %}
+    {% for e in form.non_field_errors %}<p class="br-error">{{ e }}</p>{% endfor %}
+    {% include "breakout/edit/_field.html" with field=form.title %}
+    {% include "breakout/edit/_field.html" with field=form.tagline %}
+    <div class="br-grid2">
+      {% include "breakout/edit/_field.html" with field=form.audience_from %}
+      {% include "breakout/edit/_field.html" with field=form.audience_to %}
+      {% include "breakout/edit/_field.html" with field=form.group_size_min %}
+      {% include "breakout/edit/_field.html" with field=form.group_size_max %}
+      {% include "breakout/edit/_field.html" with field=form.duration_minutes %}
+      {% include "breakout/edit/_field.html" with field=form.prep_minutes %}
+    </div>
+    {% include "breakout/edit/_field.html" with field=form.difficulty %}
+    {% include "breakout/edit/_field.html" with field=form.subjects %}
+    <div class="br-upload">
+      {% include "breakout/edit/_field.html" with field=form.cover %}
+      {% if exp and exp.cover %}
+        <p class="br-small br-muted">יש תמונת שער. <img class="br-cover-thumb" src="{% url 'breakout:cover_file' exp.slug %}" alt="תמונת השער הנוכחית"></p>
+        {% include "breakout/edit/_field.html" with field=form.remove_cover %}
+      {% endif %}
+    </div>
+    <div class="br-actions">
+      <button type="submit" class="br-btn br-btn--main">{% if is_new %}פתיחת טיוטה{% else %}שמירה{% endif %}</button>
+      {% if not is_new %}<a class="br-btn br-btn--quiet" href="{% url 'breakout:edit' exp.slug %}">ביטול</a>{% endif %}
+    </div>
+  </form>
+</article>
+{% endblock %}

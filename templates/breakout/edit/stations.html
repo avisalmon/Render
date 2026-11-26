@@ -1,0 +1,47 @@
+{% extends "breakout/base.html" %}
+{% block title %}התחנות · {{ exp.title }} · חדרי בריחה מנייר{% endblock %}
+{% block content %}
+<p class="br-back"><a href="{% url 'breakout:edit' exp.slug %}">→ סקירה ופרסום</a></p>
+<section class="br-pagehead br-pagehead--exp">
+  <div>
+    <h1 class="br-h1" dir="auto">{{ exp.title }}</h1>
+    <p class="br-lede">שרשרת התחנות, בסדר שהקבוצה עוברת אותן. מוסיפים תחנה בשם, ואז פותחים אותה לחידה, לפתרון, לרמזים ולחומרים.</p>
+  </div>
+</section>
+{% include "breakout/edit/_steps.html" %}
+
+<article class="br-sheet">
+  <h2 class="br-h2">התחנות ({{ stations|length }})</h2>
+  {% if stations %}
+    <ol class="br-rows" id="br-station-rows">
+      {% for s in stations %}
+        <li class="br-row">
+          <span class="br-station-num" aria-hidden="true">{{ s.order }}</span>
+          <div class="br-row-main">
+            <a class="br-row-title" href="{% url 'breakout:edit_station' exp.slug s.pk %}" dir="auto">{{ s.name }}</a>
+            <span class="br-row-meta">{{ s.get_mechanic_display }} · {{ s.estimated_minutes }} דק׳ · {{ s.hints.all|length }} רמזים · {{ s.materials.all|length }} חומרים{% if s.printables.all %} · {{ s.printables.all|length }} דפים{% endif %}{% if not s.puzzle_text or not s.solution %} · <b class="br-warn">חסר {% if not s.puzzle_text %}חידה{% endif %}{% if not s.puzzle_text and not s.solution %} ו{% endif %}{% if not s.solution %}פתרון{% endif %}</b>{% endif %}</span>
+          </div>
+          <div class="br-row-actions">
+            <form method="post" action="{% url 'breakout:station_move' exp.slug s.pk %}">{% csrf_token %}<input type="hidden" name="dir" value="up"><button type="submit" class="br-iconbtn" aria-label="להעלות את {{ s.name }}" {% if forloop.first %}disabled{% endif %}>↑</button></form>
+            <form method="post" action="{% url 'breakout:station_move' exp.slug s.pk %}">{% csrf_token %}<input type="hidden" name="dir" value="down"><button type="submit" class="br-iconbtn" aria-label="להוריד את {{ s.name }}" {% if forloop.last %}disabled{% endif %}>↓</button></form>
+            <form method="post" action="{% url 'breakout:station_delete' exp.slug s.pk %}" data-confirm="למחוק את התחנה &quot;{{ s.name }}&quot; על כל הרמזים והחומרים שלה?">{% csrf_token %}<button type="submit" class="br-iconbtn br-iconbtn--danger" aria-label="למחוק את {{ s.name }}">✕</button></form>
+          </div>
+        </li>
+      {% endfor %}
+    </ol>
+  {% else %}
+    <p class="br-empty">עוד אין תחנות. הראשונה מתחילה למטה.</p>
+  {% endif %}
+
+  <form method="post" class="br-form br-addrow" novalidate>
+    {% csrf_token %}
+    {% include "breakout/edit/_field.html" with field=form.name %}
+    <button type="submit" class="br-btn br-btn--main">הוספת תחנה</button>
+  </form>
+</article>
+
+<div class="br-actions">
+  <a class="br-btn" href="{% url 'breakout:edit_lock' exp.slug %}">הלאה למנעול הסופי</a>
+  <a class="br-btn br-btn--quiet" href="{% url 'breakout:edit' exp.slug %}">סקירה ופרסום</a>
+</div>
+{% endblock %}

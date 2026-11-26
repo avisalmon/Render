@@ -46,6 +46,39 @@ Here: `templates/academia360/manage/overview.html`, `templates/academia360/me.ht
 `tests/test_academia360_c4.py`, [building_an_app.md](building_an_app.md) mistake 78
 BKM: FullStackBKM 062c4a2
 
+## PM-101 · 2026-11-26 · breakout B.3 end: a one-line field drawn as a box, radios swallowed by a generic rule, a file named after a parent it did not know
+
+**What happened.** (1) The hint field is a `TextField` in the model, so the
+model form drew it as a textarea; the phone authoring flow failed looking
+for a one-line input, which is what a hint is. (2) The stylesheet's
+`.br-field input` rule (16px, 44px tall, full width) also hit the radios
+and boxes inside a choice fieldset, which came out as 44px circles with the
+label pushed to the far side. Every measured check passed; the screenshot
+showed it. (3) The printable's `upload_to` names the file after its
+experience, and the form saved the file before the view had set the
+experience, so the first upload landed in `printables/None/`. (4) Two tests
+used the seed's author (a superuser, hence a curator) as "a stranger" and
+were surprised that he could see a draft.
+
+**Why the process let it.** Model forms are convenient and silent about
+shape; the generic field rule was written for text fields when the app had
+no other kind; the upload path was copied from a sibling whose instance
+always knew its parent; the test fixtures name a superuser `avi` and it is
+the handiest account.
+
+**Rule.** A form control is declared by the shape of the answer (a hint is
+one line: `TextInput`), not by the column type. A generic input rule is
+scoped away from boxes and radios the day the first choice field appears,
+and a choice field runs the phone screenshot the same day. A file named
+after its parent is saved through a form whose instance already carries the
+parent (`ModelForm(..., instance=Model(parent=...))`). The test's stranger
+is a plain account; the superuser is a curator and sees drafts by design.
+
+Here: `breakout/edit_forms.py` (HintForm widgets, PrintableForm), `breakout/edit_views.py`
+(`printable_add`), `static/breakout/breakout.css` (the `.br-choices` line),
+`tests/test_breakout_b3.py`, [building_an_app.md](building_an_app.md) mistake 78
+BKM: FullStackBKM 963f0fa (mistake 91)
+
 ## PM-100 · 2026-11-26 · breakout B.2 end: the kit's promise, tested on the content; a one-letter secret; a missing ignore line
 
 **What happened.** (1) Spec chapter 4 promises that no solution reaches
