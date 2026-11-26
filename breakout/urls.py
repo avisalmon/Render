@@ -20,4 +20,5 @@ urlpatterns = [
     path("files/<int:pk>/", views.printable_file, name="printable_file"),
     path("api/", include(router.urls)),
     path("x/<slug:slug>/", views.experience, name="experience"),
+    path("x/<slug:slug>/kit/", views.kit_pdf, name="kit"),
 ]

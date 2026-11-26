@@ -223,5 +223,17 @@ def test_on_a_phone_a_teacher_finds_the_experience_and_reads_a_solution(browser,
         page.dispatch_event("#br-groups", "input")
         cards = page.evaluate("[...document.querySelectorAll('#br-shopping tr')].find(tr => tr.textContent.includes('כרטיסיות')).querySelector('.br-qty').textContent")
         assert cards == "48"
+        # One number for one question (B.2): the kit form followed the shopping list.
+        assert page.input_value("#br-kit-groups") == "6"
+        page.fill("#br-kit-groups", "3")
+        page.dispatch_event("#br-kit-groups", "input")
+        assert page.input_value("#br-groups") == "3"
+        with page.expect_download() as waiting:
+            page.click("#br-kitform button[type=submit]")
+        download = waiting.value
+        assert download.suggested_filename.endswith(".pdf")
+        assert download.url.endswith(f"/breakout/x/{flagship.slug}/kit/?groups=3")
+        from breakout.models import Download
+        assert list(Download.objects.values_list("groups", flat=True)) == [3]
     finally:
         context.close()

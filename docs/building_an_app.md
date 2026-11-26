@@ -1494,8 +1494,7 @@ adds it greps `|safe` and `mark_safe` before its own tests. A third-party
 endpoint is opened in the browser or fetched before code depends on it. A
 patch with a backslash in it goes through the file editor, never a heredoc.
 
-
-### 73. Line breaks come from one place; a class sweep reads the calls, not the strings
+### 76. Line breaks come from one place; a class sweep reads the calls, not the strings
 
 breakout's puzzle text was double-spaced: the template made paragraphs with
 `linebreaks` and the stylesheet kept the blank lines again with
@@ -1507,6 +1506,23 @@ every string with the class prefix in the script (PM-99).
 template filter or the stylesheet. A class sweep over a script matches the
 calls that apply a class (`classList.add/remove/toggle`), never every
 string that starts with the prefix.
+
+### 77. Compose a document before you draw it; a secret is at least a word; ignore the private folder the day you name it
+
+breakout's printed kit promises that no solution reaches the player pages.
+The kit is composed into text blocks first (`breakout/kit.py: compose`) and
+drawn second, so the promise is tested on the blocks: the PDF holds Hebrew
+in visual order and parsing it proves little. The first run of that test
+failed on a seeded solution that was the single character "2", present in
+every puzzle; the seed was changed to a sentence, not the test loosened.
+B.1 had also added `BREAKOUT_PRIVATE_DIR` without its `.gitignore` line
+(PM-100).
+
+**The rule.** A generated document (PDF, printout, export) is built as
+content first and drawn second, and every promise about what it says is a
+test on the content. A secret that must stay off a page is at least a word.
+The sprint that adds a private-files setting adds the folder to
+`.gitignore` the same day, not when the first upload arrives.
 
 ### 78. A template fallback is resolved whether or not it is needed
 

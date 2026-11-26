@@ -20,7 +20,11 @@
     </ul>
     <p class="br-byline" dir="auto">מאת {{ exp.author.breakout_profile.name|default:exp.author.first_name }} · גרסה {{ exp.version }} · {{ exp.n_runs }} הרצות · {{ exp.n_likes }} לייקים</p>
   </div>
-  <span class="br-btn br-btn--main br-pagehead-action" aria-disabled="true" title="הדפסת הערכה מגיעה בספרינט B.2">הדפסת הערכה: בקרוב</span>
+  <form class="br-kitform br-pagehead-action" method="get" action="{% url 'breakout:kit' exp.slug %}" id="br-kitform">
+    <label class="br-field br-field--inline"><span>כמה קבוצות?</span><input type="number" name="groups" id="br-kit-groups" min="1" max="{{ max_groups }}" value="{{ default_groups }}" inputmode="numeric" data-sync="br-groups"></label>
+    <button type="submit" class="br-btn br-btn--main">הדפסת הערכה (PDF)</button>
+    <p class="br-small br-muted">מדריך למורה, דף לכל תחנה לכל קבוצה, והדפים המצורפים. קובץ A4 אחד.</p>
+  </form>
 </section>
 
 <details class="br-fold" open>
@@ -79,12 +83,12 @@
 <details class="br-fold">
   <summary><span class="br-fold-title">רשימת קניות</span><span class="br-fold-value">{{ shopping|length }} פריטים, לקבוצה אחת</span></summary>
   <div class="br-fold-body">
-    <label class="br-field br-field--inline"><span>כמה קבוצות?</span><input type="number" id="br-groups" min="1" max="30" value="1" inputmode="numeric"></label>
+    <label class="br-field br-field--inline"><span>כמה קבוצות?</span><input type="number" id="br-groups" min="1" max="{{ max_groups }}" value="{{ default_groups }}" inputmode="numeric" data-sync="br-kit-groups"></label>
     <table class="br-table" id="br-shopping">
       <thead><tr><th>חומר</th><th>כמות</th><th>בשימוש בתחנות</th></tr></thead>
       <tbody>
         {% for row in shopping %}
-          <tr><td>{{ row.material.name }}</td><td><span class="br-qty" data-per-group="{{ row.quantity }}">{{ row.quantity|floatformat:"-2" }}</span> {{ row.material.unit }}</td><td dir="auto">{{ row.stations|join:", " }}</td></tr>
+          <tr><td>{{ row.material.name }}</td><td><span class="br-qty" data-per-group="{{ row.quantity }}">{{ row.total|floatformat:"-2" }}</span> {{ row.material.unit }}</td><td dir="auto">{{ row.stations|join:", " }}</td></tr>
         {% empty %}
           <tr><td colspan="3">עוד לא נרשמו חומרים.</td></tr>
         {% endfor %}

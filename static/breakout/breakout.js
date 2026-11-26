@@ -45,7 +45,7 @@
     });
   }
 
-  // ---- the shopping list ----
+  // ---- the shopping list, and the kit's "how many groups" (one number) ----
   var groups = document.getElementById("br-groups");
   if (groups) {
     var qtys = document.querySelectorAll("#br-shopping .br-qty");
@@ -60,4 +60,17 @@
     groups.addEventListener("input", scale);
     groups.addEventListener("change", scale);
   }
+
+  // The kit form and the shopping list ask the same question; answering one
+  // answers the other (data-sync names the twin).
+  document.querySelectorAll("input[data-sync]").forEach(function (el) {
+    var twin = document.getElementById(el.dataset.sync);
+    if (!twin) return;
+    el.addEventListener("input", function () {
+      if (twin.value !== el.value) {
+        twin.value = el.value;
+        twin.dispatchEvent(new Event("input"));
+      }
+    });
+  });
 })();

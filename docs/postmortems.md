@@ -46,6 +46,34 @@ Here: `templates/academia360/manage/overview.html`, `templates/academia360/me.ht
 `tests/test_academia360_c4.py`, [building_an_app.md](building_an_app.md) mistake 78
 BKM: FullStackBKM 062c4a2
 
+## PM-100 · 2026-11-26 · breakout B.2 end: the kit's promise, tested on the content; a one-letter secret; a missing ignore line
+
+**What happened.** (1) Spec chapter 4 promises that no solution reaches
+the player pages of the printed kit. The first run of that test failed:
+station 2's seeded solution was the single character "2", which is in any
+puzzle text ("ב-2"). The content was wrong, not the test: a teacher-facing
+solution is a sentence, so the seed now says "Z יוצא 1 פעמיים (הספרה 2)".
+(2) `breakout_private/` was not in `.gitignore` after B.1, which added the
+setting; nothing had been uploaded yet, so nothing leaked, but the first
+test upload would have landed in the tree.
+
+**Why the process let it.** The seed was written for the screen, where a
+short solution reads fine under a "למורה" heading; nothing had yet asked
+the content to be provably absent from somewhere. The private-dir setting
+was copied from a sibling app without its ignore line.
+
+**Rule.** A generated document is composed into text blocks first and drawn
+second, and every promise about what it says is tested on the blocks (the
+PDF holds visually reordered Hebrew, so parsing it proves little). A secret
+that must stay off a page is at least a word; a one-character secret fails
+the test on purpose and the content is fixed. The sprint that adds a
+private-files setting adds its `.gitignore` line the same day.
+
+Here: `breakout/kit.py` (compose, then render), `tests/test_breakout_b2.py`
+(`leaks()` and the planted-leak test), `breakout/seed_assets/experiences.json`,
+`.gitignore`, [building_an_app.md](building_an_app.md) mistake 77
+BKM: FullStackBKM ec62f9f (mistake 90, which also carries PM-99)
+
 ## PM-99 · 2026-11-26 · breakout B.1 end: two small things, both caught by the sprint's own checks
 
 **What happened.** (1) The puzzle text on the experience page came out
@@ -67,8 +95,8 @@ the seed-twice test, the API ownership tests and the screen contract all
 did their job on day one, nothing else to report.
 
 Here: `static/breakout/breakout.css`, `tests/test_breakout_b1.py`,
-[building_an_app.md](building_an_app.md) mistake 73
-BKM: deferred - too small to generalise on its own; goes to FullStackBKM with the next lesson about rendered text
+[building_an_app.md](building_an_app.md) mistake 76
+BKM: FullStackBKM ec62f9f (folded into mistake 90 with PM-100)
 
 ## PM-98 · 2026-11-26 · Epic B end (Academia360 public site): three small things the sprint should have caught
 

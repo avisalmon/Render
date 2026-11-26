@@ -71,3 +71,5 @@ vendor/openscad.AppImage
 docs/academia360/reference/*
 !docs/academia360/reference/README.md
 academia360_private/
+# breakout: the authors' uploaded printables; on Render they live on the disk.
+breakout_private/

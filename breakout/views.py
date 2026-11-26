@@ -1,18 +1,16 @@
-"""breakout's screens for B.1: the library and one experience, read-only
-(spec chapters 2 and 3). The editor (B.3), the kit (B.2), the community
-(B.4) and the curator's desk (B.5) come in their own sprints.
+"""breakout's screens: the library and one experience, read-only (spec
+chapters 2 and 3), and the printed kit (chapter 4). The editor (B.3), the
+community (B.4) and the curator's desk (B.5) come in their own sprints.
 """
 
-from collections import OrderedDict
-from decimal import Decimal
-
 from django.db.models import Count, Exists, OuterRef, Q
-from django.http import FileResponse, Http404
+from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, render
+from django.utils.http import content_disposition_header
 from django.views.decorators.csrf import ensure_csrf_cookie
 
-from . import access
-from .models import Experience, Like, Printable, Subject, hebrew_grade
+from . import access, kit
+from .models import Download, Experience, Like, Printable, Subject, hebrew_grade
 
 DIFFICULTY_LABELS = dict(Experience.DIFFICULTIES)
 
@@ -47,17 +45,13 @@ def home(request):
     })
 
 
-def _shopping_list(stations):
-    """Every material the experience needs, grouped, for one group."""
-    rows = OrderedDict()
-    for station in stations:
-        for use in station.materials.all():
-            key = use.material_id
-            if key not in rows:
-                rows[key] = {"material": use.material, "quantity": Decimal(0), "stations": []}
-            rows[key]["quantity"] += use.quantity
-            rows[key]["stations"].append(station.name)
-    return list(rows.values())
+def _shopping_list(stations, groups):
+    """Every material the experience needs, grouped: per group and for the
+    default number of groups, the same rows the kit prints (kit.shopping_rows)."""
+    rows = kit.shopping_rows(stations)
+    for row in rows:
+        row["total"] = row["quantity"] * groups
+    return rows
 
 
 @access.signed_in
@@ -75,15 +69,31 @@ def experience(request, slug):
         "exp": exp,
         "stations": stations,
         "final_lock": final_lock,
-        "shopping": _shopping_list(stations),
+        "shopping": _shopping_list(stations, kit.DEFAULT_GROUPS),
         "total_minutes": total_minutes,
         "printables": exp.printables.filter(station__isnull=True),
         "may_edit": access.may_edit(request.user, exp),
         "is_curator": access.is_curator(request.user),
+        "default_groups": kit.DEFAULT_GROUPS,
+        "max_groups": kit.MAX_GROUPS,
         "difficulty_label": DIFFICULTY_LABELS.get(exp.difficulty, exp.difficulty),
         "runs": exp.runs.filter(Q(is_public=True) | Q(user=request.user)).select_related("user")[:20],
         "comments": exp.comments.filter(is_hidden=False).select_related("author")[:50],
     })
+
+
+@access.signed_in
+def kit_pdf(request, slug):
+    """"Print the kit" (spec 4): one question, how many groups, then one A4
+    PDF built from the rows, and a Download row that remembers the count."""
+    exp = get_object_or_404(access.visible_experiences(request.user).select_related("author", "author__breakout_profile"), slug=slug)
+    groups = kit.groups_from(request.GET.get("groups"))
+    pdf = kit.compose(exp, groups).pdf()
+    Download.objects.create(experience=exp, user=request.user, groups=groups)
+    response = HttpResponse(pdf, content_type="application/pdf")
+    response["Content-Disposition"] = content_disposition_header(True, kit.filename_for(exp, groups))
+    response["X-Content-Type-Options"] = "nosniff"
+    return response
 
 
 @access.signed_in
