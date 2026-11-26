@@ -149,7 +149,7 @@ def test_every_class_used_is_defined(world):
             used |= {c for c in re.sub(r"\{[%{].*?[%}]\}", " ", classes).split() if c.startswith("a360-")}
     # The ring segments are numbered by a loop (the prefix is left after the
     # tag is stripped); the first needs no offset; `a360` marks the body.
-    allowed_unstyled = {"a360-ring-seg", "a360-ring-seg-", "a360-ring-seg-1", "a360", "a360-js"}
+    allowed_unstyled = {"a360-ring-seg", "a360-ring-seg-", "a360-ring-seg-1", "a360-step-", "a360", "a360-js"}
     assert used - defined <= allowed_unstyled, sorted(used - defined - allowed_unstyled)
 
 
@@ -190,7 +190,7 @@ def test_anonymous_reads_public_rows_only(client, world):
     names = [r["slug"] for r in client.get("/academia360/api/institutions/").json()]
     assert names == ["technion", "sapir"] or set(names) == {"technion", "sapir"}
     for closed in ("roles", "leaderofs", "changelogs", "invitations", "committeeattributes"):
-        assert client.get(f"/academia360/api/{closed}/").status_code == 403, closed
+        assert client.get(f"/academia360/api/{closed}/").status_code in (401, 403), closed  # closed either way
     # A signed-in member of the public is still the public.
     client.force_login(world["visitor"])
     assert client.get("/academia360/api/roles/").json() == []

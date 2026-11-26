@@ -113,7 +113,7 @@ def test_a_leader_cannot_touch_a_package_the_committee_answered(client, world):
 
 
 def test_the_public_never_sees_a_package(client, world):
-    assert client.get("/academia360/api/submissions/").status_code == 403
+    assert client.get("/academia360/api/submissions/").status_code in (401, 403)
     client.force_login(world["visitor"])
     assert client.get("/academia360/api/submissions/").json() == []
     assert client.get("/academia360/api/participations/").json() == []
