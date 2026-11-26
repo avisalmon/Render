@@ -1,0 +1,19 @@
+{
+  "institution": "המכללה האקדמית לדוגמה",
+  "institution_en": "Example Academic College",
+  "snapshot_date": "2025-10-01",
+  "overview": {"founded": 1990, "unique_identity": "מכללה לדוגמה, לצורך הבדיקות בלבד."},
+  "enrollment": {"by_level": {"undergrad": 1200, "masters": 150}, "trend": [{"year": 2020, "total": 1100}, {"year": 2024, "total": 1350}]},
+  "faculty": {"total": 90},
+  "programs": [
+    {"unit": "בית הספר להנדסה", "name": "הנדסת תוכנה"},
+    {"unit": "בית הספר להנדסה", "name": "הנדסת חשמל"},
+    {"unit": "בית הספר לניהול", "name": "מנהל עסקים"}
+  ],
+  "research": {
+    "centers": [{"name": "מרכז לדוגמה", "founded": 2015, "focus": "בינה מלאכותית"}],
+    "top_professors": [{"name": "פרופ' דוגמה ראשונה", "unit": "בית הספר להנדסה", "areas": ["למידת מכונה"], "h_index": 40, "citations": 5000, "profiles": {"scholar": "https://scholar.example/1"}}]
+  },
+  "ai": {"top_researchers": [{"name": "Dr. Second Example", "focus": "Computer vision", "h_index": "~20", "type": "applied"}]},
+  "collaborations": {"industry": ["חברה לדוגמה"], "academic": ["אוניברסיטת הדוגמה"]}
+}

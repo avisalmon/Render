@@ -1,0 +1,56 @@
+{% extends "academia360/base.html" %}
+{% block title %}המוסדות · אקדמיה 360°{% endblock %}
+{% block head %}{% if pins %}<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" crossorigin="anonymous">{% endif %}{% endblock %}
+{% block content %}
+<section class="a360-band">
+  <div class="a360-wrap">
+    <h1 class="a360-h1 a360-h1-page">המוסדות</h1>
+    <p class="a360-lede a360-mute a360-narrow">כל המוסדות המתוקצבים על ידי ות״ת, על המפה וברשימה, לפי סוג ואזור. כל שם פותח את עמוד המוסד. באפור: מוסדות שלא ניגשו למחזור הזה. אפשר גם <a href="{% url 'academia360:compare' %}">להשוות שניים או שלושה</a>.</p>
+    <form method="get" class="a360-filter a360-filter-tools" role="search">
+      <div class="a360-search">
+        <label class="a360-select"><span class="a360-sr">אזור</span>
+          <select name="region" onchange="this.form.requestSubmit ? this.form.requestSubmit() : this.form.submit()">
+            <option value="">כל הארץ</option>
+            {% for k, label, on in regions %}<option value="{{ k }}" {% if on %}selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+        </label>
+        <label class="a360-search-field"><span class="a360-sr">חיפוש מוסד</span>
+          <input type="search" name="q" value="{{ q }}" placeholder="שם מוסד או עיר">
+        </label>
+        {% if kind %}<input type="hidden" name="kind" value="{{ kind }}">{% endif %}
+        <button type="submit" class="a360-pill a360-pill-dark">חיפוש</button>
+        {% if pins %}<button type="button" class="a360-pill a360-pill-line a360-map-toggle" id="a360-map-toggle" aria-controls="a360-map" aria-expanded="false">המפה</button>{% endif %}
+      </div>
+      {# On a phone the kinds fold behind their summary (mistake 84); a360.js closes it when no kind is chosen. On the desktop the summary hides and the chips stand open. #}
+      <details class="a360-tools" open data-active="{% if kind %}1{% endif %}">
+        <summary class="a360-chip">סוג מוסד{% for k, label, on in kinds %}{% if on %}: {{ label }}{% endif %}{% endfor %}</summary>
+        <div class="a360-chips">
+          <a href="{% url 'academia360:institutions' %}{% if region or q %}?{% if region %}region={{ region }}{% endif %}{% if region and q %}&{% endif %}{% if q %}q={{ q|urlencode }}{% endif %}{% endif %}" class="a360-chip {% if not kind %}a360-chip-on{% endif %}">הכול</a>
+          {% for k, label, on in kinds %}<a href="?kind={{ k }}{% if region %}&region={{ region }}{% endif %}{% if q %}&q={{ q|urlencode }}{% endif %}" class="a360-chip {% if on %}a360-chip-on{% endif %}">{{ label }}</a>{% endfor %}
+        </div>
+      </details>
+    </form>
+
+    <div class="a360-mapgrid{% if pins %} a360-has-map{% endif %}">
+      <div class="a360-inst-groups">
+        {% for label, rows in groups %}
+        <div class="a360-inst-group">
+          <div class="a360-inst-head">{{ label }} <span class="a360-mute a360-small">· {{ rows|length }}</span></div>
+          {% for i in rows %}<a href="{% url 'academia360:institution' i.slug %}" {% if not i.applied %}class="a360-out"{% endif %} data-slug="{{ i.slug }}"><span dir="auto">{{ i.name_he }}</span>{% if i.city %} <small class="a360-mute">· {{ i.city }}</small>{% endif %}</a>{% endfor %}
+        </div>
+        {% empty %}
+        <p class="a360-mute">{% if q or kind or region %}לא נמצא מוסד שמתאים. <a href="{% url 'academia360:institutions' %}">כל המוסדות</a>{% else %}עוד אין מוסדות במערכת.{% endif %}</p>
+        {% endfor %}
+      </div>
+      {% if pins %}
+      <div class="a360-map-col">
+        <div id="a360-map" class="a360-map" role="region" aria-label="מפת המוסדות"></div>
+        <div class="a360-map-key a360-small a360-mute"><span><i style="background:#1E7C88"></i>אוניברסיטה</span><span><i style="background:#F6C21A"></i>מכללה אקדמית</span><span><i style="background:#EE6B67"></i>מכללה לחינוך</span><span><i style="background:#8FC457"></i>מכון מחקר</span><span><i style="background:#B7BABA"></i>לא ניגש</span></div>
+      </div>
+      {% endif %}
+    </div>
+    {{ pins|json_script:"a360-map-data" }}
+  </div>
+</section>
+{% if pins %}<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" crossorigin="anonymous" defer></script>{% endif %}
+{% endblock %}

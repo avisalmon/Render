@@ -1,0 +1,52 @@
+{% extends "academia360/base.html" %}
+{% block title %}{{ r.name_he }} · אקדמיה 360°{% endblock %}
+{% block content %}
+<section class="a360-hero a360-hero-inst">
+  <svg class="a360-arc a360-arc-tr" aria-hidden="true" viewBox="0 0 560 560"><circle cx="280" cy="280" r="210" fill="none" stroke="#EEF6E3" stroke-width="90" stroke-dasharray="900 500" stroke-linecap="round" transform="rotate(140 280 280)"/></svg>
+  <div class="a360-wrap a360-rel">
+    <nav class="a360-crumbs" aria-label="מיקום"><a href="{% url 'academia360:home' %}">הבית</a><span>›</span><a href="{% url 'academia360:researchers' %}">החוקרים</a><span>›</span><a href="{% url 'academia360:institution' r.institution.slug %}" dir="auto">{{ r.institution.short_name_he|default:r.institution.name_he }}</a><span>›</span><span dir="auto">{{ r.name_he }}</span></nav>
+    <div class="a360-hero-in a360-hero-in-inst">
+      <div class="a360-hero-text">
+        <div class="a360-tags">
+          <span class="a360-tag a360-tag-teal" dir="auto">{{ r.institution.short_name_he|default:r.institution.name_he }}</span>
+          {% if r.unit %}<span class="a360-tag a360-tag-line" dir="auto">{{ r.unit.name }}</span>{% endif %}
+          {% if not r.verified %}<span class="a360-tag a360-tag-line">טרם אומת</span>{% endif %}
+        </div>
+        <h1 class="a360-h1" dir="auto">{% if r.title %}{{ r.title }} {% endif %}{{ r.name_he }}</h1>
+        {% if r.name_en %}<div class="a360-mute a360-sub" dir="ltr">{{ r.name_en }}</div>{% endif %}
+        {% if r.areas %}<p class="a360-lede a360-narrow" dir="auto">{{ r.areas }}</p>{% endif %}
+        {% if r.focus %}<p class="a360-prose a360-narrow" dir="auto">{{ r.focus }}</p>{% endif %}
+        {% if r.bio %}<div class="a360-prose a360-narrow" dir="auto">{{ r.bio|linebreaks }}</div>{% endif %}
+        {% if links %}
+        <div class="a360-actions">
+          {% for l in links %}<a href="{{ l.url }}" rel="noopener" class="a360-pill a360-pill-line">{{ l.get_kind_display }}</a>{% endfor %}
+        </div>
+        {% endif %}
+      </div>
+      <div class="a360-card a360-pad a360-prog-box">
+        <b>מדדים, עם התאריך שבו נקראו</b>
+        {% if metrics %}
+        <div class="a360-rows">
+          {% for m in metrics %}<div class="a360-row a360-row-tight"><span>{{ m.label }}</span><span class="a360-num">{% if m.approximate %}≈{% endif %}{{ m.value }}</span><span class="a360-mute a360-small">{% if m.as_of %}{{ m.as_of|date:"m.Y" }}{% endif %}{% if m.source %} · {{ m.source }}{% endif %}</span></div>{% endfor %}
+        </div>
+        {% else %}
+        <p class="a360-mute a360-small">עוד לא נקראו מדדים לחוקר הזה. כשייקראו, יופיעו כאן עם התאריך והמקור.</p>
+        {% endif %}
+        <p class="a360-src">המדדים נלקחים מפרופילים ציבוריים ומתעדכנים מדי פעם; המספר המדויק נמצא בפרופיל עצמו.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% if colleagues %}
+<section class="a360-band a360-band-white">
+  <div class="a360-wrap">
+    <div class="a360-head-row"><h2 class="a360-h2">עוד חוקרים ב{{ r.institution.short_name_he|default:r.institution.name_he }}</h2><a class="a360-mute a360-small a360-link-sm" href="{% url 'academia360:institution' r.institution.slug %}#r">לעמוד המוסד</a></div>
+    <div class="a360-rows">
+      {% for c in colleagues %}<div class="a360-row a360-row-tight"><a href="{% url 'academia360:researcher' c.slug %}" dir="auto">{% if c.title %}{{ c.title }} {% endif %}{{ c.name_he }}</a><span class="a360-mute a360-small" dir="auto">{{ c.areas|truncatechars:60 }}</span></div>{% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+{% include "academia360/_talk.html" %}
+{% endblock %}

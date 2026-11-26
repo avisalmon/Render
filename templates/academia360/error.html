@@ -1,0 +1,14 @@
+{% extends "academia360/base.html" %}
+{% block title %}{{ status }} · אקדמיה 360°{% endblock %}
+{% block content %}
+<section class="a360-band">
+  <div class="a360-wrap a360-door-wrap">
+    <div class="a360-card a360-pad-lg">
+      <div class="a360-kicker">{{ status }}</div>
+      <h1 class="a360-h1 a360-h1-page">{{ title }}</h1>
+      <p class="a360-lede a360-mute">{{ text }}</p>
+      <p><a class="a360-pill a360-pill-dark" href="{% url 'academia360:home' %}">לדף הבית</a></p>
+    </div>
+  </div>
+</section>
+{% endblock %}

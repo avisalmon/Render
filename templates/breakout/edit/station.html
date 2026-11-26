@@ -1,0 +1,124 @@
+{% extends "breakout/base.html" %}
+{% block title %}תחנה {{ station.order }}: {{ station.name }} · {{ exp.title }} · חדרי בריחה מנייר{% endblock %}
+{% block content %}
+<p class="br-back"><a href="{% url 'breakout:edit_stations' exp.slug %}">→ כל התחנות</a></p>
+<section class="br-pagehead br-pagehead--exp">
+  <div>
+    <h1 class="br-h1"><span class="br-station-num" aria-hidden="true">{{ station.order }}</span> <span dir="auto">{{ station.name }}</span></h1>
+    <p class="br-lede" dir="auto">{{ exp.title }}</p>
+  </div>
+</section>
+{% include "breakout/edit/_steps.html" %}
+
+<article class="br-sheet">
+  <h2 class="br-h2">התחנה</h2>
+  <form method="post" class="br-form" novalidate id="br-station-form">
+    {% csrf_token %}
+    {% include "breakout/edit/_field.html" with field=form.name %}
+    <div class="br-grid2">
+      {% include "breakout/edit/_field.html" with field=form.mechanic %}
+      {% include "breakout/edit/_field.html" with field=form.estimated_minutes %}
+    </div>
+    <h3 class="br-h3">מה מודפס לשחקנים</h3>
+    {% include "breakout/edit/_field.html" with field=form.story_text %}
+    {% include "breakout/edit/_field.html" with field=form.puzzle_text %}
+    <h3 class="br-h3">למורה בלבד <span class="br-teacher-only">(לא מגיע לדפי השחקנים)</span></h3>
+    {% include "breakout/edit/_field.html" with field=form.solution %}
+    {% include "breakout/edit/_field.html" with field=form.solution_explained %}
+    {% include "breakout/edit/_field.html" with field=form.contribution %}
+    {% include "breakout/edit/_field.html" with field=form.setup_notes %}
+    <div class="br-actions">
+      <button type="submit" class="br-btn br-btn--main">שמירת התחנה</button>
+      <a class="br-btn br-btn--quiet" href="{% url 'breakout:edit_stations' exp.slug %}">חזרה לתחנות</a>
+    </div>
+  </form>
+</article>
+
+<article class="br-sheet" id="br-hints">
+  <h2 class="br-h2">רמזים, מהעדין לברור ({{ station.hints.all|length }})</h2>
+  {% if station.hints.all %}
+    <ol class="br-rows">
+      {% for h in station.hints.all %}
+        <li class="br-row">
+          <span class="br-station-num br-station-num--small" aria-hidden="true">{{ h.order }}</span>
+          <div class="br-row-main"><span class="br-row-title" dir="auto">{{ h.text }}</span></div>
+          <div class="br-row-actions">
+            <form method="post" action="{% url 'breakout:hint_move' exp.slug station.pk h.pk %}">{% csrf_token %}<input type="hidden" name="dir" value="up"><button type="submit" class="br-iconbtn" aria-label="להעלות רמז {{ h.order }}" {% if forloop.first %}disabled{% endif %}>↑</button></form>
+            <form method="post" action="{% url 'breakout:hint_move' exp.slug station.pk h.pk %}">{% csrf_token %}<input type="hidden" name="dir" value="down"><button type="submit" class="br-iconbtn" aria-label="להוריד רמז {{ h.order }}" {% if forloop.last %}disabled{% endif %}>↓</button></form>
+            <form method="post" action="{% url 'breakout:hint_delete' exp.slug station.pk h.pk %}" data-confirm="למחוק את הרמז?">{% csrf_token %}<button type="submit" class="br-iconbtn br-iconbtn--danger" aria-label="למחוק רמז {{ h.order }}">✕</button></form>
+          </div>
+        </li>
+      {% endfor %}
+    </ol>
+  {% else %}
+    <p class="br-muted">עוד אין רמזים. שניים-שלושה מספיקים: הראשון רק מכוון, האחרון כמעט אומר.</p>
+  {% endif %}
+  <form method="post" action="{% url 'breakout:hint_add' exp.slug station.pk %}" class="br-form br-addrow" novalidate>
+    {% csrf_token %}
+    {% include "breakout/edit/_field.html" with field=hint_form.text %}
+    <button type="submit" class="br-btn">הוספת רמז</button>
+  </form>
+</article>
+
+<article class="br-sheet" id="br-materials">
+  <h2 class="br-h2">חומרים לתחנה, לקבוצה אחת ({{ station.materials.all|length }})</h2>
+  {% if station.materials.all %}
+    <ul class="br-rows">
+      {% for m in station.materials.all %}
+        <li class="br-row">
+          <div class="br-row-main"><span class="br-row-title">{{ m.material.name }} × {{ m.quantity|floatformat:"-2" }} {{ m.material.unit }}</span>{% if m.note %}<span class="br-row-meta" dir="auto">{{ m.note }}</span>{% endif %}</div>
+          <div class="br-row-actions">
+            <form method="post" action="{% url 'breakout:material_delete' exp.slug station.pk m.pk %}" data-confirm="להסיר את {{ m.material.name }} מהתחנה?">{% csrf_token %}<button type="submit" class="br-iconbtn br-iconbtn--danger" aria-label="להסיר את {{ m.material.name }}">✕</button></form>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="br-muted">עוד אין חומרים. הכל מהקטלוג: נייר, כלי כתיבה, מספריים, הדברה. זה גבול הז'אנר.</p>
+  {% endif %}
+  <form method="post" action="{% url 'breakout:material_add' exp.slug station.pk %}" class="br-form br-addrow br-addrow--wide" novalidate>
+    {% csrf_token %}
+    {% include "breakout/edit/_field.html" with field=material_form.material %}
+    {% include "breakout/edit/_field.html" with field=material_form.quantity %}
+    {% include "breakout/edit/_field.html" with field=material_form.note %}
+    <button type="submit" class="br-btn">הוספת חומר</button>
+  </form>
+  <details class="br-fold br-fold--inner">
+    <summary><span class="br-fold-title">חומר שלא בקטלוג?</span><span class="br-fold-value">בקשה לאוצרים</span></summary>
+    <div class="br-fold-body">
+      <p class="br-small br-muted">הקטלוג שומר על גבול הז'אנר. אם חסר משהו זול ומשרדי, בקשו, ובינתיים כתבו אותו בהערה של חומר קיים.</p>
+      {% if open_requests %}<p class="br-small">ממתינות לאוצר: {% for r in open_requests %}<span class="br-tag br-tag--draft" dir="auto">{{ r.name }}</span> {% endfor %}</p>{% endif %}
+      <form method="post" action="{% url 'breakout:material_request' exp.slug station.pk %}" class="br-form" novalidate>
+        {% csrf_token %}
+        {% include "breakout/edit/_field.html" with field=request_form.name %}
+        {% include "breakout/edit/_field.html" with field=request_form.why %}
+        <button type="submit" class="br-btn br-btn--quiet">שליחת בקשה</button>
+      </form>
+    </div>
+  </details>
+</article>
+
+<article class="br-sheet" id="br-printables">
+  <h2 class="br-h2">דפים מצורפים ({{ station.printables.all|length }})</h2>
+  <p class="br-small br-muted">דף גזירה, תמונה או עמוד מוכן להדפסה. תמונה (PNG/JPG) נכנסת לערכה המודפסת בעמוד שלם; PDF מוצע להורדה מעמוד החוויה.</p>
+  {% if station.printables.all %}
+    <ul class="br-rows">
+      {% for p in station.printables.all %}
+        <li class="br-row">
+          <div class="br-row-main"><a class="br-row-title" href="{% url 'breakout:printable_file' p.pk %}" dir="auto">{{ p.title }}</a><span class="br-row-meta">{{ p.get_kind_display }}{% if p.width_px %} · {{ p.width_px }}×{{ p.height_px }}{% else %} · {{ p.page_count }} עמודים{% endif %}</span></div>
+          <div class="br-row-actions">
+            <form method="post" action="{% url 'breakout:printable_delete' exp.slug station.pk p.pk %}" data-confirm="למחוק את הדף &quot;{{ p.title }}&quot;?">{% csrf_token %}<button type="submit" class="br-iconbtn br-iconbtn--danger" aria-label="למחוק את {{ p.title }}">✕</button></form>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+  <form method="post" action="{% url 'breakout:printable_add' exp.slug station.pk %}" enctype="multipart/form-data" class="br-form br-addrow br-addrow--wide br-upload" novalidate>
+    {% csrf_token %}
+    {% include "breakout/edit/_field.html" with field=printable_form.title %}
+    {% include "breakout/edit/_field.html" with field=printable_form.kind %}
+    {% include "breakout/edit/_field.html" with field=printable_form.file %}
+    <button type="submit" class="br-btn">צירוף הדף</button>
+  </form>
+</article>
+{% endblock %}

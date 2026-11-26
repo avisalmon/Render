@@ -76,6 +76,11 @@ urlpatterns = [
     path("bkm/", include("bkm.urls", namespace="bkm")),
     # design3d is its own product (docs/design3d/spec.md): 3D design through a chat.
     path("design3d/", include("design3d.urls", namespace="design3d")),
+    # Academia360 (docs/academia360): ות״ת's program, the institutions, the
+    # committee. Its own frame; shares only the login.
+    path("academia360/", include("academia360.urls", namespace="academia360")),
+    # breakout (docs/breakout): paper escape rooms for teachers. Own frame; shares only the login.
+    path("breakout/", include("breakout.urls", namespace="breakout")),
     path("blackjack/", include("blackjack.urls", namespace="blackjack")),
     # improv is private (docs/improv/spec.md ch. 7): its gate is in the middleware.
     path("improv/", include("improv.urls", namespace="improv")),

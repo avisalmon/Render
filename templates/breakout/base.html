@@ -1,0 +1,45 @@
+{% load static %}<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{% block title %}חדרי בריחה מנייר{% endblock %}</title>
+  <meta name="description" content="{% block description %}חוויות חדר בריחה שבנויות מדפים, מספריים וציוד משרדי. בוחרים, מדפיסים ומריצים עם הקבוצה, או מפרסמים חוויה משלכם.{% endblock %}">
+  <meta name="theme-color" content="#2a2420">
+  {% comment %}
+    Rule 3: breakout's own frame. Nothing from babook's base or menu, and no
+    link out of /breakout/. The look is the material itself: kraft paper,
+    marker ink, a sticky note here and there.
+  {% endcomment %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&family=Secular+One&display=swap">
+  <link rel="stylesheet" href="{% static 'breakout/breakout.css' %}">
+</head>
+<body class="br" data-signed-in="{% if user.is_authenticated %}1{% endif %}">
+  <header class="br-bar">
+    <a class="br-brand" href="{% url 'breakout:home' %}"><span class="br-brand-mark" aria-hidden="true"></span>חדרי בריחה מנייר</a>
+    <nav class="br-nav" aria-label="ניווט">
+      <a href="{% url 'breakout:home' %}" {% if section == 'home' %}aria-current="page"{% endif %}>הספרייה</a>
+    </nav>
+    <div class="br-account">
+      {% if user.is_authenticated %}
+        <span class="br-who" dir="auto">{{ user.first_name|default:user.username }}</span>
+        <form method="post" action="{% url 'breakout:logout' %}">{% csrf_token %}<button type="submit" class="br-link">יציאה</button></form>
+      {% else %}
+        <a class="br-link" href="{% url 'breakout:login' %}?next={{ request.get_full_path|urlencode }}" id="br-sign-in">כניסה</a>
+      {% endif %}
+    </div>
+  </header>
+
+  <main class="br-main">
+    {% if messages %}
+      <div class="br-flash" role="status">{% for m in messages %}<p>{{ m }}</p>{% endfor %}</div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="br-foot"><span>{% block footer %}חוויות חדר בריחה מדפים, מספריים וציוד משרדי. למורים, לקבוצות, בלי מסכים.{% endblock %}</span></footer>
+  <script src="{% static 'breakout/breakout.js' %}" defer></script>
+</body>
+</html>

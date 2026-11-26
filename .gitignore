@@ -66,3 +66,10 @@ vendor/openscad/
 vendor/openscad-win/
 vendor/openscad-win-2021/
 vendor/openscad.AppImage
+
+# Academia360 reference material: confidential committee documents and a local key file, never committed
+docs/academia360/reference/*
+!docs/academia360/reference/README.md
+academia360_private/
+# breakout: the authors' uploaded printables; on Render they live on the disk.
+breakout_private/

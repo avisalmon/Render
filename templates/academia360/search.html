@@ -1,0 +1,30 @@
+{% extends "academia360/base.html" %}
+{% block title %}חיפוש{% if q %}: {{ q }}{% endif %} · אקדמיה 360°{% endblock %}
+{% block content %}
+<section class="a360-band">
+  <div class="a360-wrap">
+    <h1 class="a360-h1 a360-h1-page">חיפוש</h1>
+    <form method="get" class="a360-filter" role="search">
+      <label class="a360-search"><span class="a360-sr">מה לחפש</span>
+        <input type="search" name="q" value="{{ q }}" placeholder="מוסד, חוקר, תכנית לימודים, מילה מההנחיות" autofocus>
+        <button type="submit" class="a360-pill a360-pill-dark">חיפוש</button>
+      </label>
+    </form>
+    {% if q %}
+      {% if total %}
+        <p class="a360-mute">{{ total }} תוצאות ל"{{ q }}"</p>
+        <nav class="a360-found" aria-label="לפי סוג">{% for key, label, n in found %}<a class="a360-chip" href="#f-{{ key }}">{{ label }} <span class="a360-mute">· {{ n }}</span></a>{% endfor %}</nav>
+        {% if results.institutions %}<h2 class="a360-h2" id="f-institutions">מוסדות</h2><div class="a360-rows">{% for i in results.institutions %}<div class="a360-row a360-row-tight"><a href="{% url 'academia360:institution' i.slug %}" dir="auto">{{ i.name_he }}</a><span class="a360-mute a360-small">{{ i.get_kind_display }}{% if i.city %} · {{ i.city }}{% endif %}</span></div>{% endfor %}</div>{% endif %}
+        {% if results.researchers %}<h2 class="a360-h2" id="f-researchers">חוקרים</h2><div class="a360-rows">{% for r in results.researchers %}<div class="a360-row a360-row-tight"><a href="{% url 'academia360:researcher' r.slug %}" dir="auto">{{ r.title }} {{ r.name_he }}</a><span class="a360-mute a360-small" dir="auto"><a href="{% url 'academia360:institution' r.institution.slug %}">{{ r.institution.name }}</a>{% if r.areas %} · {{ r.areas|truncatechars:50 }}{% endif %}</span></div>{% endfor %}</div>{% endif %}
+        {% if results.programs %}<h2 class="a360-h2" id="f-programs">תכניות לימוד</h2><div class="a360-rows">{% for p in results.programs %}<div class="a360-row a360-row-tight"><a href="{% url 'academia360:institution' p.institution.slug %}" dir="auto">{{ p.name }}</a><span class="a360-mute a360-small" dir="auto">{{ p.institution.name }}</span></div>{% endfor %}</div>{% endif %}
+        {% if results.criteria %}<h2 class="a360-h2" id="f-criteria">תחומי הבדיקה</h2><div class="a360-rows">{% for c in results.criteria %}<div class="a360-row a360-row-tight"><a href="{% url 'academia360:program' %}#lens" dir="auto">{{ c.name }}</a><span class="a360-mute a360-small" dir="auto">{{ c.description|truncatechars:80 }}</span></div>{% endfor %}</div>{% endif %}
+        {% if results.guidelines %}<h2 class="a360-h2" id="f-guidelines">בהנחיות התכנית</h2><div class="a360-rows">{% for g in results.guidelines %}<div class="a360-row a360-row-tight"><a href="{% url 'academia360:program' %}#sec-{{ g.order|add:1 }}" dir="auto">{{ g.title }}</a><span class="a360-mute a360-small">בעמוד התכנית</span></div>{% endfor %}</div>{% endif %}
+      {% elif short %}
+        <p class="a360-mute">לפחות שתי אותיות, בבקשה.</p>
+      {% else %}
+        <p class="a360-mute">לא נמצא דבר ל"{{ q }}". נסו שם קצר יותר, או <a href="{% url 'academia360:institutions' %}">עברו על רשימת המוסדות</a>.</p>
+      {% endif %}
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "academia360/base.html" %}
+{% block title %}בקשה להצטרף · אקדמיה 360°{% endblock %}
+{% block content %}
+<section class="a360-band">
+  <div class="a360-wrap a360-two">
+    <div>
+      <h1 class="a360-h1 a360-h1-page">בקשה להצטרף</h1>
+      <p class="a360-lede a360-mute">הציבור לא צריך תפקיד כדי לקרוא, להגיב ולהציע תיקונים. תפקיד צריך מי שמוביל את התכנית במוסד, או מי שבוועדה. מנהל המערכת מאשר, ואתם מקבלים מייל.</p>
+      {% if roles_line %}<p class="a360-small"><b>התפקיד שלכם היום:</b> <span dir="auto">{{ roles_line }}</span></p>{% endif %}
+      {% if mine %}
+      <h2 class="a360-h3" style="margin-top:22px">הבקשות שלי</h2>
+      <div class="a360-rows">
+        {% for r in mine %}
+        <div class="a360-row a360-row-tight">
+          <div class="a360-row-main"><b>{{ r.get_role_kind_display }}</b>{% if r.institution %} <span class="a360-mute">· {{ r.institution.short_name_he|default:r.institution.name_he }}</span>{% endif %}<div class="a360-src">{{ r.created_at|date:"d.m.Y" }}{% if r.decision_note %} · <span dir="auto">{{ r.decision_note }}</span>{% endif %}</div></div>
+          <span class="a360-status a360-status-{{ r.status }}">{{ r.get_status_display }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    <div class="a360-card a360-pad-lg">
+      <form method="post" class="a360-form a360-join" id="a360-join">
+        {% csrf_token %}
+        <fieldset class="a360-choice">
+          <legend>מה התפקיד?</legend>
+          {% for value, label in kinds %}
+          <label class="a360-radio"><input type="radio" name="kind" value="{{ value }}" {% if form.kind == value %}checked{% endif %} required><span>{{ label }}</span></label>
+          {% endfor %}
+        </fieldset>
+        <div class="a360-field a360-join-leader" data-for="leader">
+          <label for="j-inst"><span>המוסד</span></label>
+          <select name="institution" id="j-inst">
+            <option value="">בחרו מוסד</option>
+            {% for i in institutions %}<option value="{{ i.slug }}" {% if i.slug == form.institution %}selected{% endif %}>{{ i.name_he }}</option>{% endfor %}
+          </select>
+        </div>
+        <label class="a360-field a360-join-leader" data-for="leader"><span>התפקיד שלכם במוסד</span><input name="title" value="{{ form.title }}" maxlength="160" placeholder="למשל: סגנית נשיא לעניינים אקדמיים" dir="auto"></label>
+        <label class="a360-field"><span>כמה מילים: מי אתם ולמה</span><textarea name="message" maxlength="2000" dir="auto" placeholder="{% if form.kind == 'committee' %}מי אתם, ומי שלח אתכם לכאן{% else %}מה אתם עושים במוסד, ואיך אפשר לוודא זאת{% endif %}">{{ form.message }}</textarea></label>
+        <p class="a360-small a360-mute">הבקשה נשלחת למנהל המערכת עם הכתובת שלכם, {{ user.email }}.</p>
+        <button type="submit" class="a360-pill a360-pill-dark">לשלוח את הבקשה</button>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

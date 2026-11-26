@@ -1,0 +1,43 @@
+{% extends "academia360/base.html" %}
+{% block title %}השוואה · אקדמיה 360°{% endblock %}
+{% block content %}
+<section class="a360-band">
+  <div class="a360-wrap">
+    <h1 class="a360-h1 a360-h1-page">שניים או שלושה מוסדות, זה לצד זה</h1>
+    <p class="a360-lede a360-mute a360-narrow">עובדות ציבוריות בלבד: מה המוסד, מה גודלו לפי המספרים שפרסם, ומה מצבו באקדמיה 360. כל מספר עם השנה שלו.</p>
+    <form method="get" class="a360-filter a360-compare-pick" role="search">
+      <div class="a360-search">
+        {% for name, chosen in slots %}
+        <label class="a360-select"><span class="a360-sr">מוסד {{ forloop.counter }}</span>
+          <select name="{{ name }}">
+            <option value="">{% if forloop.counter == 3 %}שלישי, אם רוצים{% else %}מוסד {{ forloop.counter }}{% endif %}</option>
+            {% for i in all_institutions %}<option value="{{ i.slug }}" {% if i.slug == chosen %}selected{% endif %}>{{ i.short_name_he|default:i.name_he }}</option>{% endfor %}
+          </select>
+        </label>
+        {% endfor %}
+        <button type="submit" class="a360-pill a360-pill-dark">להשוות</button>
+      </div>
+    </form>
+
+    {% if columns|length >= 2 %}
+    <div class="a360-compare-wrap">
+      <table class="a360-compare" style="--cols: {{ columns|length }}">
+        <thead>
+          <tr><th scope="col"><span class="a360-sr">העובדה</span></th>{% for c in columns %}<th scope="col"><a href="{% url 'academia360:institution' c.inst.slug %}" dir="auto">{{ c.inst.short_name_he|default:c.inst.name_he }}</a><div class="a360-mute a360-small">{{ c.inst.get_kind_display }}{% if c.inst.city %} · {{ c.inst.city }}{% endif %}</div></th>{% endfor %}</tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr><th scope="row">{{ row.label }}</th>{% for cell in row.cells %}<td dir="auto">{% if cell.value %}{% if cell.num %}<span class="a360-num">{{ cell.value }}</span>{% else %}{{ cell.value }}{% endif %}{% if cell.note %} <span class="a360-mute a360-small">{{ cell.note }}</span>{% endif %}{% else %}<span class="a360-mute">·</span>{% endif %}</td>{% endfor %}</tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="a360-src">מה שאינו ידוע מסומן בנקודה; המספרים נלקחים ממה שהמוסד פרסם, והשנה לצדם. דבר מהחומרים שהוגשו לוועדה אינו כאן.</p>
+    {% elif columns|length == 1 %}
+    <p class="a360-mute">נבחר מוסד אחד. בחרו עוד אחד כדי להשוות.</p>
+    {% else %}
+    <p class="a360-mute">בחרו שניים או שלושה מוסדות למעלה, או התחילו מ<a href="{% url 'academia360:institutions' %}">רשימת המוסדות</a>.</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

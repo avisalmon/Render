@@ -1,0 +1,48 @@
+{% extends "breakout/base.html" %}
+{% block title %}סקירה ופרסום · {{ exp.title }} · חדרי בריחה מנייר{% endblock %}
+{% block content %}
+<p class="br-back"><a href="{% url 'breakout:experience' exp.slug %}">→ העמוד כפי שמורה רואה אותו</a></p>
+<section class="br-pagehead br-pagehead--exp">
+  <div>
+    <span class="br-tag br-tag--{{ exp.status }}">{{ exp.get_status_display }}{% if exp.hidden_reason %}: {{ exp.hidden_reason }}{% endif %}</span>
+    <h1 class="br-h1" dir="auto">{{ exp.title }}</h1>
+    <p class="br-lede" dir="auto">{{ exp.tagline|default:"עוד אין משפט שמסביר את החוויה." }}</p>
+    <p class="br-byline">גרסה {{ exp.version }}{% if exp.published_at %} · פורסם {{ exp.published_at|date:"d.m.Y" }}{% endif %} · עודכן {{ exp.updated_at|date:"d.m.Y H:i" }}</p>
+  </div>
+  <div class="br-pagehead-action br-publish">
+    {% if exp.status == 'published' %}
+      <form method="post" action="{% url 'breakout:publish' exp.slug %}">{% csrf_token %}<button type="submit" class="br-btn br-btn--main" {% if not can_publish %}disabled{% endif %}>פרסום הגרסה המעודכנת</button></form>
+      <form method="post" action="{% url 'breakout:unpublish' exp.slug %}" data-confirm="להסיר את החוויה מהספרייה? היא תחזור להיות טיוטה שרק אתם רואים.">{% csrf_token %}<button type="submit" class="br-btn br-btn--quiet">הסרה מהספרייה</button></form>
+    {% elif exp.status == 'hidden' %}
+      <p class="br-small br-muted">אוצר הסתיר את החוויה. תקנו לפי הסיבה; אוצר יחזיר אותה.</p>
+    {% else %}
+      <form method="post" action="{% url 'breakout:publish' exp.slug %}">{% csrf_token %}<button type="submit" class="br-btn br-btn--main" {% if not can_publish %}disabled{% endif %}>פרסום לספרייה</button></form>
+      <form method="post" action="{% url 'breakout:delete' exp.slug %}" data-confirm="למחוק את הטיוטה &quot;{{ exp.title }}&quot; לגמרי? אין דרך חזרה.">{% csrf_token %}<button type="submit" class="br-btn br-btn--quiet br-btn--danger">מחיקת הטיוטה</button></form>
+    {% endif %}
+  </div>
+</section>
+{% include "breakout/edit/_steps.html" %}
+
+<div class="br-twocol">
+  <article class="br-sheet">
+    <h2 class="br-h2">מה יש ומה חסר</h2>
+    <ul class="br-checklist">
+      {% for i in items %}
+        <li class="{% if i.ok %}br-ok{% elif i.blocking %}br-missing{% else %}br-advice{% endif %}"><span class="br-checkmark" aria-hidden="true">{% if i.ok %}✓{% elif i.blocking %}✕{% else %}·{% endif %}</span> <span dir="auto">{{ i.text }}</span>{% if not i.ok and i.blocking %} <b class="br-small">(חובה לפרסום)</b>{% endif %}</li>
+      {% endfor %}
+    </ul>
+    {% if not can_publish %}<p class="br-small br-muted">הפרסום נפתח כשכל סעיפי החובה מסומנים.</p>{% endif %}
+  </article>
+
+  <article class="br-sheet">
+    <h2 class="br-h2">החלקים</h2>
+    <ul class="br-parts">
+      <li><a href="{% url 'breakout:edit_about' exp.slug %}">אודות</a><span class="br-muted">{{ exp.grades }} · {{ exp.duration_minutes }} דק׳ · {{ exp.get_difficulty_display }}</span></li>
+      <li><a href="{% url 'breakout:edit_story' exp.slug %}">הסיפור</a><span class="br-muted">{% if exp.story %}{{ exp.story|truncatechars:60 }}{% else %}ריק{% endif %}</span></li>
+      <li><a href="{% url 'breakout:edit_stations' exp.slug %}">התחנות</a><span class="br-muted">{% if stations %}{% for s in stations %}{{ s.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% else %}אין עדיין{% endif %}</span></li>
+      <li><a href="{% url 'breakout:edit_lock' exp.slug %}">המנעול הסופי</a><span class="br-muted">{% if lock and lock.final_code %}הקוד: <span dir="ltr">{{ lock.final_code }}</span>{% else %}אין עדיין{% endif %}</span></li>
+    </ul>
+    <p class="br-small br-muted">פרסום הוא מיידי. עריכה אחרי הפרסום מעדכנת את החוויה במקום ומעלה את מספר הגרסה, שמודפס בתחתית הערכה.</p>
+  </article>
+</div>
+{% endblock %}

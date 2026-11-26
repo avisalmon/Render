@@ -1,0 +1,65 @@
+{% extends "academia360/base.html" %}{% load a360 %}
+{% block title %}ניהול · אקדמיה 360°{% endblock %}
+{% block content %}
+<section class="a360-band a360-room">
+  <div class="a360-wrap">
+    <h1 class="a360-h1 a360-h1-page">ניהול</h1>
+    <p class="a360-lede a360-narrow">{{ n.people }} אנשים עם תפקיד: {{ n.admins }} מנהלים, {{ n.committee }} חברי ועדה{% if n.chairs %} ({{ n.chairs }} יו״ר){% endif %}, {{ n.leaders }} מובילים ב־{{ n.led }} מוסדות. {{ n.applied }} מתוך {{ n.institutions }} המוסדות הגישו לתכנית.</p>
+    <p class="a360-actions"><a class="a360-pill a360-pill-dark" href="{% url 'academia360:manage_people' %}">אנשים ותפקידים{% if n.open_requests %} · {{ n.open_requests }} בתור{% endif %}</a><a class="a360-pill a360-pill-line" href="{% url 'academia360:api-root' %}">ה־API</a></p>
+
+    <div class="a360-room-grid">
+      <div>
+        <h2 class="a360-h2 a360-room-h2">מה מחכה למישהו</h2>
+        <div class="a360-rows">
+          <div class="a360-row"><div class="a360-row-main"><a href="{% url 'academia360:manage_people' %}#queue">בקשות להצטרף</a> שמחכות למנהל</div><span class="a360-num">{{ n.open_requests }}</span></div>
+          <div class="a360-row"><div class="a360-row-main">הצעות תיקון מהציבור שמחכות ליו״ר או למנהל</div><span class="a360-num">{{ n.open_corrections }}</span></div>
+          <div class="a360-row"><div class="a360-row-main">הגשות שאף סוקר עוד לא פתח</div><span class="a360-num">{{ n.unreviewed }}</span></div>
+          <div class="a360-row"><div class="a360-row-main"><a href="{% url 'academia360:manage_people' %}#invite">הזמנות</a> שעוד לא נוצלו</div><span class="a360-num">{{ n.invitations_open }}</span></div>
+        </div>
+        {% if open_requests %}
+        <h3 class="a360-h3 a360-room-h3">בתור</h3>
+        <div class="a360-rows">{% for r in open_requests %}<div class="a360-row a360-row-tight"><div class="a360-row-main"><b dir="auto">{{ r.user|a360_name }}</b> <span class="a360-mute">· {{ r.get_role_kind_display }}{% if r.institution %} ב{{ r.institution.short_name_he|default:r.institution.name_he }}{% endif %}</span></div><span class="a360-src">{{ r.created_at|date:"d.m.Y" }}</span></div>{% endfor %}</div>
+        {% endif %}
+        {% if open_corrections %}
+        <h3 class="a360-h3 a360-room-h3">הצעות תיקון פתוחות</h3>
+        <div class="a360-rows">{% for c in open_corrections %}<div class="a360-row a360-row-tight"><div class="a360-row-main">{% if c.url %}<a href="{{ c.url }}#talk" dir="auto">{{ c.about }}</a>{% else %}<span dir="auto">{{ c.about }}</span>{% endif %} <span class="a360-mute">· {{ c.field|default:"אחר" }}</span><div class="a360-small" dir="auto"><span class="a360-mute">מוצע:</span> {{ c.proposed_value|truncatechars:80 }}</div></div><span class="a360-src">{{ c.created_at|date:"d.m.Y" }}</span></div>{% endfor %}</div>
+        {% endif %}
+        {% if unreviewed %}
+        <h3 class="a360-h3 a360-room-h3">הגשות בלי סקירה</h3>
+        <div class="a360-rows">{% for s in unreviewed %}<div class="a360-row a360-row-tight"><div class="a360-row-main"><a href="{% url 'academia360:institution' s.participation.institution.slug %}" dir="auto">{{ s.participation.institution.name_he }}</a> <span class="a360-mute">· {{ s.get_kind_display }} · {{ s.get_status_display }}</span></div><span class="a360-src">{{ s.created_at|date:"d.m.Y" }}</span></div>{% endfor %}</div>
+        {% endif %}
+
+        <h2 class="a360-h2 a360-room-h2">המוסדות בתכנית</h2>
+        <p>{% for label, count in by_status %}{{ count }} {{ label }}{% if not forloop.last %}, {% endif %}{% endfor %}.</p>
+        {% if without_leader %}
+        <p class="a360-small a360-mute">{{ without_leader|length }} מוסדות שהגישו ועוד אין להם מוביל מקושר:</p>
+        <p class="a360-small a360-wrap-names">{% for i in without_leader %}<a href="{% url 'academia360:institution' i.slug %}" class="a360-link-sm" dir="auto">{{ i.short_name_he|default:i.name_he }}</a>{% if not forloop.last %}<span class="a360-mute"> · </span>{% endif %}{% endfor %}</p>
+        {% else %}<p class="a360-small a360-mute">לכל מוסד שהגיש יש מוביל מקושר.</p>{% endif %}
+      </div>
+
+      <div>
+        <h2 class="a360-h2 a360-room-h2">מה הציבור שלח השבוע</h2>
+        <p>{{ n.comments_week }} תגובות, {{ n.likes_week }} לייקים, {{ n.changes_week }} שינויים ביומן.</p>
+        <div class="a360-rows">
+          {% for c in comments %}
+          <div class="a360-row a360-comment-row{% if c.hidden %} a360-hidden-row{% endif %}">
+            <div class="a360-row-main"><b dir="auto">{{ c.author|a360_name }}</b> <span class="a360-mute">על <a href="{% if c.institution %}{% url 'academia360:institution' c.institution.slug %}{% else %}{% url 'academia360:researcher' c.researcher.slug %}{% endif %}#talk" dir="auto">{% if c.institution %}{{ c.institution.name_he }}{% else %}{{ c.researcher.name_he }}{% endif %}</a></span><div class="a360-small" dir="auto">{{ c.body|truncatechars:160 }}</div><div class="a360-src">{{ c.created_at|date:"d.m.Y H:i" }}{% if c.hidden %} · מוסתרת{% endif %}</div></div>
+            <form method="post" action="{% url 'academia360:manage_act' %}">{% csrf_token %}<input type="hidden" name="comment" value="{{ c.pk }}"><input type="hidden" name="next" value="{% url 'academia360:manage' %}">{% if c.hidden %}<button class="a360-pill a360-pill-line a360-pill-sm" name="action" value="unhide">להציג</button>{% else %}<button class="a360-pill a360-pill-line a360-pill-sm" name="action" value="hide">להסתיר</button>{% endif %}</form>
+          </div>
+          {% empty %}<p class="a360-mute">עוד אין תגובות.</p>{% endfor %}
+        </div>
+
+        <h2 class="a360-h2 a360-room-h2">מה הסוכן עשה לאחרונה</h2>
+        <div class="a360-rows">
+          {% for r in runs %}
+          <div class="a360-row a360-row-tight"><div class="a360-row-main"><b dir="auto">{{ r.purpose }}</b><div class="a360-small a360-mute">{{ r.rows_touched }} שורות{% if r.finished_at %} · הסתיים{% else %} · פתוח{% endif %}</div></div><span class="a360-src">{{ r.started_at|date:"d.m.Y H:i" }}</span></div>
+          {% empty %}<p class="a360-mute">הסוכן עוד לא עבד כאן.</p>{% endfor %}
+        </div>
+
+        <h2 class="a360-h2 a360-room-h2">AI היום</h2>
+        <p>{% if spend_calls %}{{ spend_calls }} קריאות, <span class="a360-num">${{ spend_usd|floatformat:2 }}</span>{% else %}אף קריאה היום; העוזרים נבנים באפיקים G ו־H{% endif %}. <span class="a360-src" style="display:inline">נכון ל־{{ today|date:"d.m.Y" }}</span></p>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

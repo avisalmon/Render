@@ -1,0 +1,49 @@
+{% extends "academia360/base.html" %}
+{% block title %}החוקרים · אקדמיה 360°{% endblock %}
+{% block content %}
+<section class="a360-band">
+  <div class="a360-wrap">
+    <h1 class="a360-h1 a360-h1-page">מי חוקר מה</h1>
+    <p class="a360-lede a360-mute a360-narrow">{{ total }} חוקרות וחוקרים מובילים ב־{{ institution_count }} מוסדות, לפי תחום. כל שם פותח עמוד עם המדדים המאומתים, תאריך הקריאה שלהם וקישורים לפרופילים.</p>
+    <form method="get" class="a360-filter a360-filter-tools" role="search">
+      <div class="a360-search">
+        <label class="a360-select"><span class="a360-sr">מוסד</span>
+          <select name="inst" onchange="this.form.requestSubmit ? this.form.requestSubmit() : this.form.submit()">
+            <option value="">כל המוסדות</option>
+            {% for i in institutions %}<option value="{{ i.slug }}" {% if i.slug == inst %}selected{% endif %}>{{ i.short_name_he|default:i.name_he }}</option>{% endfor %}
+          </select>
+        </label>
+        <label class="a360-search-field"><span class="a360-sr">חיפוש חוקר או תחום</span>
+          <input type="search" name="q" value="{{ q }}" placeholder="שם או תחום מחקר">
+        </label>
+        <button type="submit" class="a360-pill a360-pill-dark">חיפוש</button>
+      </div>
+      <details class="a360-tools" open data-active="{% if area %}1{% endif %}">
+        <summary class="a360-chip">תחומים{% if area %}: {{ area }}{% endif %}</summary>
+        <div class="a360-chips">
+          <a href="{% url 'academia360:researchers' %}{% if inst %}?inst={{ inst }}{% endif %}" class="a360-chip {% if not area %}a360-chip-on{% endif %}">הכול</a>
+          {% for word, n in areas %}<a href="?area={{ word|urlencode }}{% if inst %}&inst={{ inst }}{% endif %}" class="a360-chip {% if word == area %}a360-chip-on{% endif %}">{{ word }} <span class="a360-mute">· {{ n }}</span></a>{% endfor %}
+        </div>
+      </details>
+    </form>
+
+    <div class="a360-people">
+      {% for group in groups %}
+      <div class="a360-people-group">
+        <h2 class="a360-h3"><a href="{% url 'academia360:institution' group.institution.slug %}#r" dir="auto">{{ group.institution.name_he }}</a> <span class="a360-mute a360-small">· {{ group.rows|length }}</span></h2>
+        <div class="a360-rows">
+          {% for r in group.rows %}
+          <div class="a360-row a360-row-tight">
+            <div class="a360-row-main"><a href="{% url 'academia360:researcher' r.slug %}" dir="auto"><b>{% if r.title %}{{ r.title }} {% endif %}{{ r.name_he }}</b></a><div class="a360-mute a360-small" dir="auto">{% if r.unit %}{{ r.unit.name }}{% if r.areas %} · {% endif %}{% endif %}{{ r.areas }}</div></div>
+            {% if r.h_index %}<div class="a360-row-end a360-small">h-index <span class="a360-num">{% if r.h_index.approximate %}≈{% endif %}{{ r.h_index.value }}</span></div>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% empty %}
+      <p class="a360-mute">{% if q or area or inst %}לא נמצא חוקר שמתאים. <a href="{% url 'academia360:researchers' %}">כל החוקרים</a>{% else %}עוד אין חוקרים במערכת.{% endif %}</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,95 @@
+{% extends "academia360/base.html" %}
+{% block title %}התכנית · אקדמיה 360°{% endblock %}
+{% block content %}
+<section class="a360-hero a360-hero-inst">
+  <svg class="a360-arc a360-arc-tr" aria-hidden="true" viewBox="0 0 560 560"><circle cx="280" cy="280" r="210" fill="none" stroke="#E7F5F7" stroke-width="90" stroke-dasharray="900 500" stroke-linecap="round" transform="rotate(140 280 280)"/></svg>
+  <div class="a360-wrap a360-rel">
+    <nav class="a360-crumbs" aria-label="מיקום"><a href="{% url 'academia360:home' %}">הבית</a><span>›</span><span>התכנית</span></nav>
+    <div class="a360-hero-in a360-hero-in-inst">
+      <div class="a360-hero-text">
+        <div class="a360-kicker">תכנית ות״ת ומל״ג{% if program.year_from %} · {{ program.year_from }} עד {{ program.year_to }}{% endif %}</div>
+        <h1 class="a360-h1">{{ program.name|default:"אקדמיה 360" }}: שינוי עומק בתואר הראשון</h1>
+        <p class="a360-lede a360-narrow">{{ program.description }}</p>
+        <p class="a360-mute a360-narrow">{% if program.total_budget_nis %}<span class="a360-num">{{ budget_m }}</span> מיליון ₪ לארבע שנים, {% endif %}פתוחה לכל מוסד שות״ת מתקצבת. כל מוסד שניגש הגיש תכנית ארבע־שנתית, והוועדה קראה אותה דרך {{ criteria|length }} תחומי בדיקה, שחמישה מהם הם המבט הראשי.</p>
+        <div class="a360-actions">
+          <a href="#guidelines" class="a360-pill a360-pill-dark">ההנחיות, סעיף אחר סעיף</a>
+          <a href="#kpis" class="a360-pill a360-pill-line">המדדים</a>
+          {% if program.official_url %}<a href="{{ program.official_url }}" rel="noopener" class="a360-pill a360-pill-line">ההחלטה באתר מל״ג</a>{% endif %}
+        </div>
+      </div>
+      <div class="a360-card a360-pad a360-prog-box">
+        <b>איפה התכנית עומדת</b>
+        <div class="a360-rows">
+          {% for when, what, state in timeline %}<div class="a360-row a360-row-tight"><span>{{ when }}</span><span class="{% if state == 'now' %}a360-b{% else %}a360-mute{% endif %}">{{ what }}</span></div>{% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="lens" class="a360-band a360-band-white">
+  <div class="a360-wrap a360-two">
+    <div>
+      <h2 class="a360-h2">איך הוועדה קוראת כל תכנית</h2>
+      <p class="a360-lede a360-mute">{{ criteria|length }} תחומי בדיקה, באותו סדר לכל מוסד. החמישה הצבועים הם הטבעת של אקדמיה 360: המבט שחוזר בכל דיון, בכל מכתב ובכל דוח.</p>
+    </div>
+    <ol class="a360-domains">
+      {% for c in criteria %}
+      <li class="a360-domain{% if c.colour %} a360-domain-head{% endif %}" style="--a360-domain:{{ c.colour|default:'#D9DCDC' }}">
+        <span class="a360-domain-n">{{ forloop.counter }}</span>
+        <div><b>{{ c.name }}</b>{% if c.description %}<div class="a360-mute a360-small" dir="auto">{{ c.description }}</div>{% endif %}</div>
+      </li>
+      {% endfor %}
+    </ol>
+  </div>
+</section>
+
+{% if sections %}
+<section id="guidelines" class="a360-band">
+  <div class="a360-wrap">
+    <div class="a360-head-row"><h2 class="a360-h2">ההנחיות, סעיף אחר סעיף</h2><span class="a360-mute a360-small">{{ sections|length }} סעיפים, מתוך מסמך ההנחיות של ות״ת</span></div>
+    <div class="a360-docs">
+      <nav class="a360-toc" aria-label="סעיפי ההנחיות">
+        {% for s in sections %}<a href="#{{ s.anchor }}" dir="auto">{{ s.title }}</a>{% endfor %}
+      </nav>
+      <div class="a360-doc">
+        {% for s in sections %}
+        <details class="a360-sec" id="{{ s.anchor }}" {% if forloop.first %}open{% endif %}>
+          <summary><span class="a360-sec-n">{{ forloop.counter }}</span><span dir="auto">{{ s.short }}</span></summary>
+          <div class="a360-md" dir="auto">{{ s.html }}</div>
+        </details>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if kpis %}
+<section id="kpis" class="a360-band a360-band-white">
+  <div class="a360-wrap a360-two">
+    <div>
+      <h2 class="a360-h2">המדדים שות״ת קבעה לכולם</h2>
+      <p class="a360-lede a360-mute">{{ kpis|length }} מדדי חובה, זהים לכל מוסד, עם מצב נוכחי וצפי לכל שנה. לצדם כל מוסד מוסיף שניים עד ארבעה מדדים משלו, לפי התכנית שלו. המדדים המוסדיים נשארים בין המוסד לוועדה.</p>
+    </div>
+    <ol class="a360-kpis">
+      {% for k in kpis %}<li><b dir="auto">{{ k.name }}</b>{% if k.how_measured %}<span class="a360-mute" dir="auto">{{ k.how_measured }}</span>{% endif %}{% if k.explanation %}<span class="a360-mute a360-small" dir="auto">{{ k.explanation }}</span>{% endif %}</li>{% endfor %}
+    </ol>
+  </div>
+</section>
+{% endif %}
+
+<section class="a360-band">
+  <svg class="a360-arc a360-arc-bl" aria-hidden="true" viewBox="0 0 420 420"><circle cx="210" cy="210" r="150" fill="none" stroke="#FCE7E6" stroke-width="54" stroke-dasharray="420 600" stroke-linecap="round" transform="rotate(200 210 210)"/></svg>
+  <div class="a360-wrap a360-rel a360-two">
+    <div>
+      <h2 class="a360-h2">המקורות הרשמיים</h2>
+      <p class="a360-lede a360-mute">האתר הזה מסכם; המקור הוא מל״ג וות״ת. מה שכתוב כאן נבדק מולם, וכל תיקון מתקבל בברכה.</p>
+    </div>
+    <div class="a360-rows">
+      {% if program.official_url %}<div class="a360-row"><a href="{{ program.official_url }}" rel="noopener">החלטת ות״ת על תכנית אקדמיה 360</a><span class="a360-mute a360-small">אתר המועצה להשכלה גבוהה</span></div>{% endif %}
+      <div class="a360-row"><a href="{% url 'academia360:institutions' %}">המוסדות שניגשו ומה כל אחד פרסם</a><span class="a360-mute a360-small">באתר הזה</span></div>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,41 @@
+{
+  "institutions": [
+    {
+      "id": 1,
+      "nameHe": "המכללה האקדמית לדוגמה",
+      "nameEn": "Example Academic College",
+      "type": "academic_college",
+      "location": "באר שבע",
+      "website": "https://example.ac.il",
+      "proposalSubmitted": true,
+      "proposalFolder": "documents/proposals/לדוגמה",
+      "proposalFiles": ["תכנית לדוגמה.pdf", "נספח א מדדי הצלחה לדוגמה.pdf"],
+      "responseFile": "documents/responses/לדוגמה.pdf",
+      "submissionDate": "2024-12",
+      "responseDate": "2025-03",
+      "contactPerson": {"name": "ד\"ר פלונית אלמונית", "email": null, "phone": null, "role": "סגנית נשיא"},
+      "programAlignment": {
+        "summary": "סיכום לדוגמה של התכנית.",
+        "criteria": {"innovation": "חדשנות לדוגמה.", "employability": "תעסוקתיות לדוגמה."},
+        "strengths": ["חוזקה לדוגמה"],
+        "challenges": ["אתגר לדוגמה"]
+      }
+    },
+    {
+      "id": 2,
+      "nameHe": "אוניברסיטת הדוגמה",
+      "nameEn": "Example University",
+      "type": "university",
+      "location": "עיר אחרת",
+      "website": "https://example-u.ac.il",
+      "proposalSubmitted": false,
+      "proposalFolder": null,
+      "proposalFiles": [],
+      "responseFile": null,
+      "submissionDate": null,
+      "responseDate": null,
+      "contactPerson": {"name": null, "email": null, "phone": null}
+    }
+  ],
+  "metadata": {"lastUpdated": "2025-02-11", "totalInstitutions": 2, "note": "synthetic fixture for tests"}
+}

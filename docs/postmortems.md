@@ -17,6 +17,203 @@ Newest first.
 
 ---
 
+## PM-104 · 2026-11-26 · breakout B.3 end: a one-line field drawn as a box, radios swallowed by a generic rule, a file named after a parent it did not know
+
+**What happened.** (1) The hint field is a `TextField` in the model, so the
+model form drew it as a textarea; the phone authoring flow failed looking
+for a one-line input, which is what a hint is. (2) The stylesheet's
+`.br-field input` rule (16px, 44px tall, full width) also hit the radios
+and boxes inside a choice fieldset, which came out as 44px circles with the
+label pushed to the far side. Every measured check passed; the screenshot
+showed it. (3) The printable's `upload_to` names the file after its
+experience, and the form saved the file before the view had set the
+experience, so the first upload landed in `printables/None/`. (4) Two tests
+used the seed's author (a superuser, hence a curator) as "a stranger" and
+were surprised that he could see a draft.
+
+**Why the process let it.** Model forms are convenient and silent about
+shape; the generic field rule was written for text fields when the app had
+no other kind; the upload path was copied from a sibling whose instance
+always knew its parent; the test fixtures name a superuser `avi` and it is
+the handiest account.
+
+**Rule.** A form control is declared by the shape of the answer (a hint is
+one line: `TextInput`), not by the column type. A generic input rule is
+scoped away from boxes and radios the day the first choice field appears,
+and a choice field runs the phone screenshot the same day. A file named
+after its parent is saved through a form whose instance already carries the
+parent (`ModelForm(..., instance=Model(parent=...))`). The test's stranger
+is a plain account; the superuser is a curator and sees drafts by design.
+
+Here: `breakout/edit_forms.py` (HintForm widgets, PrintableForm), `breakout/edit_views.py`
+(`printable_add`), `static/breakout/breakout.css` (the `.br-choices` line),
+`tests/test_breakout_b3.py`, [building_an_app.md](building_an_app.md) mistake 78
+BKM: FullStackBKM 963f0fa (mistake 91)
+
+## PM-103 · 2026-11-26 · Epic C end (Academia360 people): a fallback that walks a null relation
+
+**What happened.** The admin overview listed the public's comments as
+`{{ c.institution.name_he|default:c.researcher.name_he }}`. Django resolves
+a filter's argument before the filter runs, so a comment on an institution
+(whose `researcher` is None) raised `VariableDoesNotExist` and the whole
+admin page failed. The same line sat in `/me/` since Epic B, where no test
+had rendered a comment on an institution and a researcher on one page. The
+sprint's own test caught it (C.5, the seed had one comment); nothing
+reached Avi. Two smaller things: a patch was sent through a shell heredoc
+once more (mistake 75, the same day) and failed on its first backslash,
+and the screenshot seed fed Hebrew through `manage.py shell < file` on
+Windows, which mangled every name until the shots were re-taken.
+
+**Why the process let it.** `default:` reads like a lazy "or"; it is not.
+And the B.5 tests built one comment per target, never both shapes on one
+page.
+
+**Rule.** Choosing between two relations in a template is an explicit
+`{% if %}`, never the argument of `default`, because the argument is
+resolved whether or not it is needed. A page that lists rows of mixed
+shapes is tested with every shape on it at once. Hebrew to a Django shell
+on Windows goes as a script file run with `-X utf8`, or as `shell -c` with
+escapes, never through the shell's stdin.
+
+Here: `templates/academia360/manage/overview.html`, `templates/academia360/me.html`,
+`tests/test_academia360_c4.py`, [building_an_app.md](building_an_app.md) mistake 78
+BKM: FullStackBKM 062c4a2
+
+## PM-102 · 2026-11-26 · breakout B.2 end: the kit's promise, tested on the content; a one-letter secret; a missing ignore line
+
+**What happened.** (1) Spec chapter 4 promises that no solution reaches
+the player pages of the printed kit. The first run of that test failed:
+station 2's seeded solution was the single character "2", which is in any
+puzzle text ("ב-2"). The content was wrong, not the test: a teacher-facing
+solution is a sentence, so the seed now says "Z יוצא 1 פעמיים (הספרה 2)".
+(2) `breakout_private/` was not in `.gitignore` after B.1, which added the
+setting; nothing had been uploaded yet, so nothing leaked, but the first
+test upload would have landed in the tree.
+
+**Why the process let it.** The seed was written for the screen, where a
+short solution reads fine under a "למורה" heading; nothing had yet asked
+the content to be provably absent from somewhere. The private-dir setting
+was copied from a sibling app without its ignore line.
+
+**Rule.** A generated document is composed into text blocks first and drawn
+second, and every promise about what it says is tested on the blocks (the
+PDF holds visually reordered Hebrew, so parsing it proves little). A secret
+that must stay off a page is at least a word; a one-character secret fails
+the test on purpose and the content is fixed. The sprint that adds a
+private-files setting adds its `.gitignore` line the same day.
+
+Here: `breakout/kit.py` (compose, then render), `tests/test_breakout_b2.py`
+(`leaks()` and the planted-leak test), `breakout/seed_assets/experiences.json`,
+`.gitignore`, [building_an_app.md](building_an_app.md) mistake 77
+BKM: FullStackBKM ec62f9f (mistake 90, which also carries PM-101)
+
+## PM-101 · 2026-11-26 · breakout B.1 end: two small things, both caught by the sprint's own checks
+
+**What happened.** (1) The puzzle text on the experience page came out
+double-spaced: the template already turned blank lines into paragraphs
+(`linebreaks`) and the stylesheet kept them again (`white-space: pre-line`).
+Every test passed; the screenshot showed it (mistake 6, once more). (2) The
+"every class is defined" sweep counted every `"br-..."` string in the
+script, so element ids (`br-q`, `br-grade`) failed it as missing classes.
+
+**Why the process let it.** Two mechanisms for one job, added in different
+files an hour apart. The sweep was copied from an app whose script has no
+ids.
+
+**Rule.** A text field gets its line breaks from exactly one place, the
+template filter or the stylesheet, never both. A class sweep over a script
+matches the calls that apply a class (`classList.add/remove/toggle`), not
+every string that starts with the prefix. Otherwise: the kickoff sequence,
+the seed-twice test, the API ownership tests and the screen contract all
+did their job on day one, nothing else to report.
+
+Here: `static/breakout/breakout.css`, `tests/test_breakout_b1.py`,
+[building_an_app.md](building_an_app.md) mistake 76
+BKM: FullStackBKM ec62f9f (folded into mistake 90 with PM-102)
+
+## PM-100 · 2026-11-26 · Epic B end (Academia360 public site): three small things the sprint should have caught
+
+**What happened.** (1) The map's rows went into the page as
+`json.dumps(...)|safe`, where a `<` in a name would have closed the script
+tag; the security sweep found it at the epic's end, though mistake 51 says
+the sprint that creates the subject runs its item. (2) The map was built on
+CARTO's free basemap, which now answers "API KEY REQUIRED" across every
+tile; it was only seen in the first screenshot. (3) Two code patches went
+through a shell heredoc into Python again: `
+` inside a string became a
+real line break and `2` became a control byte; mistakes 22 and 73 both
+say not to.
+
+**Why the process let it.** The sweep is a list run "before saying secure"
+and I ran it once, at the end. A third-party URL was copied from memory,
+not opened first. The heredoc habit returns whenever a patch has several
+anchors and the editor feels slower.
+
+**Rule.** The sprint that renders data into a page uses the framework's
+escaping helper (`json_script`), never `json.dumps|safe`, and greps `|safe`
+before its own tests run. A third-party endpoint (tiles, fonts, a CDN
+file) is opened in the browser, or fetched, before any code depends on it.
+And a patch that contains a backslash goes through the file editor, no
+exceptions.
+
+Here: `docs/building_an_app.md` (mistake 75)
+BKM: FullStackBKM 784715b
+
+## PM-99 · 2026-11-26 · "It did not open nicely on the phone": the contract measured, nobody looked
+
+**What happened.** Avi's first word on Academia360's Epic A was that the
+style is right but it did not open nicely on his phone. The app's bar at
+phone width wrapped into three ragged rows (brand and tabs, then the
+sign-in button alone, a fifth of the screen), researcher links floated to
+the far side of the name, and an empty link box left a gap under every
+name. The screen contract had passed at five phone widths: it measured
+overflow, 16px fields, 44px targets, labels and contrast, and none of those
+was broken. The phone screenshots it wrote were looked at once, at one
+width, after the fact.
+
+**Why the process let it.** The contract checks what can be measured
+without taste; layout that is merely ugly passes it. The rule "desktop
+first, phone very good" had no step that makes someone look at a full
+phone page before the epic review.
+
+**Rule.** Before any screen is called done: a full-page screenshot on a
+real phone profile (a narrow one, 320 or 375, and a common one, 390 or
+412), opened and read top to bottom, looking for wrapped bars, controls
+that drifted to the far side, empty boxes and lonely buttons; the same on
+the desktop. And every layout flaw found that way becomes a measurable
+line in the screen contract, so it cannot return (here: the bar is at most
+two rows on a phone, its brand and sign-in on the same line).
+
+Here: `docs/building_an_app.md` (mistake 74), `tests/test_academia360_screens.py`
+BKM: FullStackBKM 178de07
+
+## PM-98 · 2026-11-26 · Editing code while its test run was still going
+
+**What happened.** During Academia360's Epic A a long suite (ten minutes:
+the real import of 180 MB of reference files) ran in the background while
+I kept building the next sprint in the same tree. I added a view to
+`urls.py` before its class existed in `api.py`; Django loads the URLconf
+on the first request, which came after the edit, so 38 tests failed with
+an ImportError that had nothing to do with them. The run had to be
+repeated. The same morning, two patch scripts written as shell heredocs
+mangled escapes (a line break inside a string, a regex backreference
+turned into a control byte), which PM-1 had already warned about.
+
+**Why the process let it.** "Run the sprint's tests" said nothing about
+what the tree may do while they run, and a background run invites
+working on. PM-1's rule was known and skipped because the patch looked
+small.
+
+**Rule.** A test run owns the tree it reads: while a suite runs, edit no
+file that suite imports or renders (the app's code, templates, static).
+Work meanwhile on docs, on the next sprint's new files that nothing
+imports yet, or on another app. If a file it reads has to change, stop
+the run first and start it again after. And a multi-line code patch is
+written with the file editor, never through a shell heredoc (PM-1,
+again).
+
+Here: `docs/building_an_app.md` (mistake 73)
+BKM: FullStackBKM 1340936
 ## PM-97 · 2026-11-17 · Sprint M.85 end (the mail bot): "only then can they enter" was read loosely
 
 **What happened.** Lital's first graduates mail said the leader approves

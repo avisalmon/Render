@@ -1,0 +1,16 @@
+{% comment %}The editor's steps (spec 5). `step` names the current one; a new experience has no links yet.{% endcomment %}
+<nav class="br-steps" aria-label="שלבי הכתיבה">
+  <ol>
+    {% for key, label in steps %}
+      <li class="{% if key == step %}br-steps-now{% endif %}">
+        {% if exp and key != step %}
+          {% if key == 'about' %}<a href="{% url 'breakout:edit_about' exp.slug %}">{{ label }}</a>
+          {% elif key == 'story' %}<a href="{% url 'breakout:edit_story' exp.slug %}">{{ label }}</a>
+          {% elif key == 'stations' %}<a href="{% url 'breakout:edit_stations' exp.slug %}">{{ label }}</a>
+          {% elif key == 'lock' %}<a href="{% url 'breakout:edit_lock' exp.slug %}">{{ label }}</a>
+          {% else %}<a href="{% url 'breakout:edit' exp.slug %}">{{ label }}</a>{% endif %}
+        {% else %}<span aria-current="{% if key == step %}step{% else %}false{% endif %}">{{ label }}</span>{% endif %}
+      </li>
+    {% endfor %}
+  </ol>
+</nav>

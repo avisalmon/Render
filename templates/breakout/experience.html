@@ -1,0 +1,129 @@
+{% extends "breakout/base.html" %}
+{% block title %}{{ exp.title }} · חדרי בריחה מנייר{% endblock %}
+{% block description %}{{ exp.tagline }}{% endblock %}
+{% block content %}
+<p class="br-back"><a href="{% url 'breakout:home' %}">→ הספרייה</a></p>
+
+<section class="br-pagehead br-pagehead--exp">
+  <div>
+    {% if exp.is_flagship %}<span class="br-flag">חוויית דגל</span>{% endif %}
+    {% if exp.status != 'published' %}<span class="br-tag br-tag--{{ exp.status }}">{{ exp.get_status_display }}{% if exp.hidden_reason %}: {{ exp.hidden_reason }}{% endif %}</span>{% endif %}
+    <h1 class="br-h1" dir="auto">{{ exp.title }}</h1>
+    <p class="br-lede" dir="auto">{{ exp.tagline }}</p>
+    <ul class="br-chips br-chips--big">
+      <li>{{ exp.grades }}</li>
+      <li>קבוצות של {{ exp.group_size_min }}-{{ exp.group_size_max }}</li>
+      <li>{{ exp.duration_minutes }} דק׳ משחק</li>
+      <li>{{ exp.prep_minutes }} דק׳ הכנה</li>
+      <li>{{ difficulty_label }}</li>
+      {% for s in exp.subjects.all %}<li class="br-chip--subject">{{ s.name }}</li>{% endfor %}
+    </ul>
+    <p class="br-byline" dir="auto">מאת {{ exp.author.breakout_profile.name|default:exp.author.first_name }} · גרסה {{ exp.version }} · {{ exp.n_runs }} הרצות · {{ exp.n_likes }} לייקים</p>
+    {% if may_edit %}<p><a class="br-btn br-btn--quiet" href="{% url 'breakout:edit' exp.slug %}">עריכה</a></p>{% endif %}
+  </div>
+  {% if exp.cover %}<img class="br-cover" src="{% url 'breakout:cover_file' exp.slug %}" alt="">{% endif %}
+  <form class="br-kitform br-pagehead-action" method="get" action="{% url 'breakout:kit' exp.slug %}" id="br-kitform">
+    <label class="br-field br-field--inline"><span>כמה קבוצות?</span><input type="number" name="groups" id="br-kit-groups" min="1" max="{{ max_groups }}" value="{{ default_groups }}" inputmode="numeric" data-sync="br-groups"></label>
+    <button type="submit" class="br-btn br-btn--main">הדפסת הערכה (PDF)</button>
+    <p class="br-small br-muted">מדריך למורה, דף לכל תחנה לכל קבוצה, והדפים המצורפים. קובץ A4 אחד.</p>
+  </form>
+</section>
+
+<details class="br-fold" open>
+  <summary><span class="br-fold-title">הסיפור</span><span class="br-fold-value">מה שהמורה מקריא לקבוצה</span></summary>
+  <div class="br-fold-body br-prose" dir="auto">{{ exp.story|linebreaks }}</div>
+</details>
+
+<details class="br-fold" open>
+  <summary><span class="br-fold-title">שרשרת התחנות</span><span class="br-fold-value">{{ stations|length }} תחנות, כ-{{ total_minutes }} דקות</span></summary>
+  <div class="br-fold-body">
+    <ol class="br-chain">
+      {% for s in stations %}
+        <li class="br-station">
+          <details class="br-station-fold">
+            <summary>
+              <span class="br-station-num" aria-hidden="true">{{ s.order }}</span>
+              <span class="br-station-name" dir="auto">{{ s.name }}</span>
+              <span class="br-station-meta">{{ s.get_mechanic_display }} · {{ s.estimated_minutes }} דק׳{% if s.contribution %} · תורמת: <span dir="auto">{{ s.contribution }}</span>{% endif %}</span>
+            </summary>
+            <div class="br-station-body">
+              {% if s.story_text %}<h3 class="br-h3">מה הקבוצה קוראת</h3><div class="br-prose br-kids" dir="auto">{{ s.story_text|linebreaks }}</div>{% endif %}
+              {% if s.puzzle_text %}<h3 class="br-h3">החידה</h3><div class="br-prose br-kids br-puzzle" dir="auto">{{ s.puzzle_text|linebreaks }}</div>{% endif %}
+              <h3 class="br-h3">הפתרון <span class="br-teacher-only">(למורה)</span></h3>
+              <p class="br-solution" dir="auto">{{ s.solution }}</p>
+              {% if s.solution_explained %}<div class="br-prose" dir="auto">{{ s.solution_explained|linebreaks }}</div>{% endif %}
+              {% if s.hints.all %}
+                <h3 class="br-h3">רמזים, מהעדין לברור</h3>
+                <ol class="br-hints">{% for h in s.hints.all %}<li dir="auto">{{ h.text }}</li>{% endfor %}</ol>
+              {% endif %}
+              {% if s.materials.all %}
+                <h3 class="br-h3">חומרים לתחנה</h3>
+                <ul class="br-materials">{% for m in s.materials.all %}<li><b>{{ m.material.name }}</b> × {{ m.quantity|floatformat:"-2" }} {{ m.material.unit }}{% if m.note %} <span class="br-muted" dir="auto">({{ m.note }})</span>{% endif %}</li>{% endfor %}</ul>
+              {% endif %}
+              {% if s.setup_notes %}<h3 class="br-h3">איך מכינים</h3><div class="br-prose" dir="auto">{{ s.setup_notes|linebreaks }}</div>{% endif %}
+              {% for p in s.printables.all %}<p><a class="br-btn br-btn--quiet" href="{% url 'breakout:printable_file' p.pk %}">{{ p.get_kind_display }}: <span dir="auto">{{ p.title }}</span></a></p>{% endfor %}
+            </div>
+          </details>
+        </li>
+      {% endfor %}
+    </ol>
+  </div>
+</details>
+
+{% if final_lock %}
+<details class="br-fold">
+  <summary><span class="br-fold-title">המנעול הסופי</span><span class="br-fold-value">{% if final_lock.final_code %}הקוד: <span class="br-code" dir="ltr">{{ final_lock.final_code }}</span>{% else %}איך החוויה נגמרת{% endif %}</span></summary>
+  <div class="br-fold-body">
+    {% if final_lock.description %}<h3 class="br-h3">מה הקבוצה רואה</h3><div class="br-prose br-kids" dir="auto">{{ final_lock.description|linebreaks }}</div>{% endif %}
+    {% if final_lock.code_rule %}<h3 class="br-h3">איך הקוד מתרכב <span class="br-teacher-only">(למורה)</span></h3><div class="br-prose" dir="auto">{{ final_lock.code_rule|linebreaks }}</div>{% endif %}
+    {% if final_lock.final_message %}<h3 class="br-h3">ההודעה שבפנים</h3><div class="br-prose br-kids" dir="auto">{{ final_lock.final_message|linebreaks }}</div>{% endif %}
+    {% if final_lock.setup_notes %}<h3 class="br-h3">איך מכינים</h3><div class="br-prose" dir="auto">{{ final_lock.setup_notes|linebreaks }}</div>{% endif %}
+  </div>
+</details>
+{% endif %}
+
+<details class="br-fold">
+  <summary><span class="br-fold-title">רשימת קניות</span><span class="br-fold-value">{{ shopping|length }} פריטים, לקבוצה אחת</span></summary>
+  <div class="br-fold-body">
+    <label class="br-field br-field--inline"><span>כמה קבוצות?</span><input type="number" id="br-groups" min="1" max="{{ max_groups }}" value="{{ default_groups }}" inputmode="numeric" data-sync="br-kit-groups"></label>
+    <table class="br-table" id="br-shopping">
+      <thead><tr><th>חומר</th><th>כמות</th><th>בשימוש בתחנות</th></tr></thead>
+      <tbody>
+        {% for row in shopping %}
+          <tr><td>{{ row.material.name }}</td><td><span class="br-qty" data-per-group="{{ row.quantity }}">{{ row.total|floatformat:"-2" }}</span> {{ row.material.unit }}</td><td dir="auto">{{ row.stations|join:", " }}</td></tr>
+        {% empty %}
+          <tr><td colspan="3">עוד לא נרשמו חומרים.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p class="br-muted br-small">הכל נקנה בזול בחנות צרכי משרד או נמצא בבית הספר. זה גבול הז'אנר.</p>
+  </div>
+</details>
+
+<details class="br-fold">
+  <summary><span class="br-fold-title">הכנה</span><span class="br-fold-value">{{ exp.prep_minutes }} דקות{% if printables %} · {{ printables|length }} דפים מצורפים{% endif %}</span></summary>
+  <div class="br-fold-body">
+    {% if exp.teacher_notes %}<div class="br-prose" dir="auto">{{ exp.teacher_notes|linebreaks }}</div>{% else %}<p class="br-muted">אין הערות הכנה.</p>{% endif %}
+    {% for p in printables %}<p><a class="br-btn br-btn--quiet" href="{% url 'breakout:printable_file' p.pk %}">{{ p.get_kind_display }}: <span dir="auto">{{ p.title }}</span></a></p>{% endfor %}
+  </div>
+</details>
+
+<details class="br-fold">
+  <summary><span class="br-fold-title">הרצות ותגובות</span><span class="br-fold-value">{{ exp.n_runs }} הרצות · {{ exp.n_comments }} תגובות</span></summary>
+  <div class="br-fold-body">
+    {% if runs %}
+      <ul class="br-runs">
+        {% for r in runs %}
+          <li><b>{{ r.ran_on|date:"d.m.Y" }}</b> · {{ r.group_count }} קבוצות, {{ r.kids_count }} תלמידים{% if r.actual_minutes %}, {{ r.actual_minutes }} דק׳{% endif %} · דירוג {{ r.rating }}/5
+            {% if r.what_worked %}<div class="br-prose" dir="auto">{{ r.what_worked|linebreaks }}</div>{% endif %}
+            {% if r.what_to_change %}<div class="br-prose br-muted" dir="auto">{{ r.what_to_change|linebreaks }}</div>{% endif %}</li>
+        {% endfor %}
+      </ul>
+    {% else %}<p class="br-muted">עוד לא דיווחו על הרצה.</p>{% endif %}
+    {% if comments %}
+      <ul class="br-comments">{% for c in comments %}<li><b dir="auto">{{ c.author.breakout_profile.name|default:c.author.first_name }}</b> <span class="br-small br-muted">{{ c.created_at|date:"d.m.Y" }}</span><div dir="auto">{{ c.text|linebreaksbr }}</div></li>{% endfor %}</ul>
+    {% endif %}
+    <p class="br-muted br-small">לייק, תגובה ודיווח הרצה מגיעים בספרינט B.4.</p>
+  </div>
+</details>
+{% endblock %}

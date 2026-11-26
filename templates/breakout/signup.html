@@ -1,0 +1,20 @@
+{% extends "breakout/base.html" %}
+{% block title %}הרשמה · חדרי בריחה מנייר{% endblock %}
+{% block content %}
+<section class="br-door">
+  <article class="br-paper">
+    <h1 class="br-h1">הרשמה</h1>
+    <p class="br-muted">חשבון אחד לכל babook. החשבון עובד מיד.</p>
+    <form method="post" class="br-form">
+      {% csrf_token %}
+      {% for field in form %}
+        <label class="br-field" for="{{ field.id_for_label }}"><span>{{ field.label }}</span>{{ field }}
+          {% for e in field.errors %}<small class="br-error">{{ e }}</small>{% endfor %}</label>
+      {% endfor %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <button type="submit" class="br-btn br-btn--main">הרשמה</button>
+    </form>
+    <p class="br-small">יש כבר חשבון? <a href="{% url 'breakout:login' %}">כניסה</a></p>
+  </article>
+</section>
+{% endblock %}

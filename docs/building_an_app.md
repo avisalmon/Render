@@ -170,6 +170,15 @@ next one starts; this is not a checklist to rush through in one pass.
 4. **Then the full spec, in high-level chapters.** Once the data model is
    approved, write the spec properly: what the app will be able to do,
    chapter by chapter, at a high level.
+4b. **Then the design, before any screen is coded (Avi, 2026-11-26).** A
+   few distinct look-and-feel directions, each as a mockup of the same two
+   or three key screens in `docs/<app>/design/` (sensorlab's `*.dc.html`
+   canvas is the pattern), shown to Avi; one is chosen and the rules that
+   survive the mockup (palette, type, grid, components, RTL rules) go into
+   the spec's design chapter. The bar: it must look like a professional
+   site made by people who make such sites, never like a generated one.
+   Said on Academia360, where it was missing from this list although
+   sensorlab had already done it.
 5. **Then the normal flow.** Backlog, sprints, test-driven development,
    everything else already established in this file and in
    [the_manager.md](the_manager.md), scaled to the size of the app (see
@@ -1437,3 +1446,111 @@ paid model stays off (PM-87).
 device does for free and what a sibling app already decided on the same
 question; that decision stands unless the owner says otherwise. A paid
 path, if kept, is a fallback behind a switch that is off.
+
+### 73. A test run owns the tree it reads
+
+Academia360's Epic A ran a ten-minute suite in the background (the real
+import of the reference) while the next sprint went on in the same tree. A
+view was added to `urls.py` before its class existed in `api.py`; Django
+loads the URLconf on the first request, which came after the edit, and 38
+tests failed with an ImportError that was not theirs (PM-98).
+
+**The rule.** While a suite runs, edit nothing it imports or renders: the
+app's code, its templates, its static files. Meanwhile work on docs, on the
+next sprint's new files that nothing imports yet, or on another app. If a
+file it reads must change, stop the run and start it again after. And a
+multi-line code patch is made with the file editor, never a shell heredoc
+(PM-1 said so; it was skipped because the patch looked small, and it
+mangled a regex into a control byte).
+
+### 74. Look at the phone page before calling a screen done; make what you find measurable
+
+Academia360's Epic A passed its screen contract at five phone widths and
+the first thing Avi said was that it did not open nicely on his phone: the
+bar wrapped into three ragged rows with the sign-in button alone on one,
+links drifted to the far side of the names, empty boxes left gaps (PM-99).
+The contract measured overflow, field sizes, tap targets and contrast; it
+cannot measure ugly.
+
+**The rule.** Before a screen is done: a full-page screenshot on a real
+phone profile at a narrow width (320 or 375) and a common one (390 or 412),
+and one on the desktop, opened and read top to bottom for wrapped bars,
+controls that drifted away from their text, empty boxes and lonely buttons.
+Every flaw found that way is turned into a line in the screen contract (the
+bar is at most two rows on a phone; brand and sign-in share a line), so the
+same flaw cannot come back unseen. Desktop is the priority; the phone is how
+Avi reviews from away, so both are looked at, not only measured.
+
+### 75. Escape through the framework, open the third-party URL first, and no backslash through a heredoc
+
+Academia360's Epic B put the map's rows into the page with `json.dumps(...)|safe`
+(a `<` in a name would have closed the script tag), built the map on a free
+basemap that had started demanding an API key, and twice mangled a patch by
+sending it through a shell heredoc (PM-100).
+
+**The rule.** Data rendered into a page goes through the framework's escaping
+helper (`json_script` in Django), never `json.dumps|safe`, and the sprint that
+adds it greps `|safe` and `mark_safe` before its own tests. A third-party
+endpoint is opened in the browser or fetched before code depends on it. A
+patch with a backslash in it goes through the file editor, never a heredoc.
+
+### 76. Line breaks come from one place; a class sweep reads the calls, not the strings
+
+breakout's puzzle text was double-spaced: the template made paragraphs with
+`linebreaks` and the stylesheet kept the blank lines again with
+`white-space: pre-line`. Only the screenshot showed it. The same sprint's
+"every class is defined" sweep failed on element ids, because it matched
+every string with the class prefix in the script (PM-101).
+
+**The rule.** A text field gets its line breaks from exactly one place, the
+template filter or the stylesheet. A class sweep over a script matches the
+calls that apply a class (`classList.add/remove/toggle`), never every
+string that starts with the prefix.
+
+### 77. Compose a document before you draw it; a secret is at least a word; ignore the private folder the day you name it
+
+breakout's printed kit promises that no solution reaches the player pages.
+The kit is composed into text blocks first (`breakout/kit.py: compose`) and
+drawn second, so the promise is tested on the blocks: the PDF holds Hebrew
+in visual order and parsing it proves little. The first run of that test
+failed on a seeded solution that was the single character "2", present in
+every puzzle; the seed was changed to a sentence, not the test loosened.
+B.1 had also added `BREAKOUT_PRIVATE_DIR` without its `.gitignore` line
+(PM-102).
+
+**The rule.** A generated document (PDF, printout, export) is built as
+content first and drawn second, and every promise about what it says is a
+test on the content. A secret that must stay off a page is at least a word.
+The sprint that adds a private-files setting adds the folder to
+`.gitignore` the same day, not when the first upload arrives.
+
+### 78. A control is declared by the shape of the answer; a generic input rule stops at the boxes; a file knows its parent before it is named
+
+breakout's editor drew the one-line hint as a textarea because the model
+column is a `TextField`; the stylesheet's rule for text inputs also sized
+the radios and boxes of the first choice field, which only the screenshot
+showed; the printable's file was named after an experience the instance
+did not yet know, so it landed in `printables/None/`; and two tests used
+the superuser as "a stranger", who as a curator sees drafts by design
+(PM-104).
+
+**The rule.** A model form names a widget for every field whose shape
+differs from its column (one line: `TextInput`). The day a choice field
+appears, the generic input rule is scoped away from radios and boxes and
+the page runs the phone screenshot. A file named after its parent is saved
+through a form whose instance already carries the parent. The test's
+stranger is a plain account, never the superuser.
+
+### 78. A template fallback is resolved whether or not it is needed
+
+Academia360's admin overview chose between two relations with
+`{{ a.institution.name|default:a.researcher.name }}`. Django resolves the
+filter's argument first, so a row whose `researcher` is None raised inside
+the template and the page failed; the line had sat in another page since the
+epic before, where no test rendered both shapes of row at once (PM-103).
+
+**The rule.** Choose between two relations with an explicit `{% if %}`, never
+with `default`'s argument. A page that lists rows of mixed shapes is tested
+with every shape on it at once. And Hebrew into a Django shell on Windows
+goes as a script file run with `-X utf8` or as `shell -c` with escapes, never
+through the shell's stdin, which mangles it.

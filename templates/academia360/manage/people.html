@@ -1,0 +1,126 @@
+{% extends "academia360/base.html" %}{% load a360 %}
+{% block title %}אנשים · ניהול · אקדמיה 360°{% endblock %}
+{% block content %}
+<section class="a360-band a360-room">
+  <div class="a360-wrap">
+    <nav class="a360-crumbs" aria-label="מיקום"><a href="{% url 'academia360:manage' %}">ניהול</a><span>·</span><span>אנשים</span></nav>
+    <h1 class="a360-h1 a360-h1-page">אנשים ותפקידים</h1>
+    <p class="a360-lede a360-mute a360-narrow">{{ counts.people }} אנשים עם תפקיד: {{ admins|length }} מנהלים, {{ committee|length }} חברי ועדה, {{ counts.leaders }} מובילים ב־{{ leaders|length }} מוסדות. כל פעולה כאן עוברת בפונקציה אחת שרושמת, מתעדת ושולחת מייל, והמסך אומר אם המייל יצא.</p>
+
+    <h2 class="a360-h2 a360-room-h2" id="queue">בתור <span class="a360-mute a360-small">· {{ queue|length }}</span></h2>
+    {% for r in queue %}
+    <div class="a360-card a360-queue-item">
+      <div class="a360-queue-main">
+        <b dir="auto">{{ r.user|a360_name }}</b>{% if r.user|a360_has_name %} <span class="a360-mute a360-small">{{ r.user.email }}</span>{% endif %}
+        <div>מבקש/ת: <b>{{ r.get_role_kind_display }}</b>{% if r.institution %} ב{{ r.institution.name_he }}{% endif %}{% if r.title %} · <span dir="auto">{{ r.title }}</span>{% endif %}</div>
+        {% if r.message %}<p class="a360-queue-msg" dir="auto">{{ r.message }}</p>{% endif %}
+        <div class="a360-src">{{ r.created_at|date:"d.m.Y H:i" }}</div>
+      </div>
+      <form method="post" action="{% url 'academia360:manage_act' %}" class="a360-queue-form">
+        {% csrf_token %}<input type="hidden" name="request" value="{{ r.pk }}">
+        <label class="a360-field a360-field-grow"><span>מילה לשולח (בדחייה)</span><input name="note" maxlength="300" dir="auto"></label>
+        <button type="submit" name="action" value="approve" class="a360-pill a360-pill-dark">לאשר</button>
+        <button type="submit" name="action" value="decline" class="a360-pill a360-pill-line">לדחות</button>
+      </form>
+    </div>
+    {% empty %}
+    <p class="a360-mute">אין בקשות פתוחות.</p>
+    {% endfor %}
+
+    <div class="a360-room-grid">
+      <div>
+        <h2 class="a360-h2 a360-room-h2" id="committee">הוועדה <span class="a360-mute a360-small">· {{ committee|length }}</span></h2>
+        <div class="a360-rows">
+          {% for c in committee %}
+          <div class="a360-row a360-person">
+            <div class="a360-row-main">
+              <b dir="auto">{{ c.user|a360_name }}</b>{% if c.chair %} <span class="a360-tag a360-tag-teal">יו״ר</span>{% endif %}
+              <div class="a360-small a360-mute">{% if c.user|a360_has_name %}{{ c.user.email }}{% endif %}{% if c.reviews %}{% if c.user|a360_has_name %} · {% endif %}סוקר/ת: {% for i in c.reviews %}{{ i.short_name_he|default:i.name_he }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}</div>
+            </div>
+            <details class="a360-acts"><summary class="a360-chip">פעולות</summary>
+              <div class="a360-acts-in">
+                <form method="post" action="{% url 'academia360:manage_act' %}">{% csrf_token %}<input type="hidden" name="email" value="{{ c.user.email }}">
+                  {% if c.chair %}<button class="a360-pill a360-pill-line a360-pill-sm" name="action" value="unchair">להסיר יו״ר</button>{% else %}<button class="a360-pill a360-pill-line a360-pill-sm" name="action" value="chair">לסמן יו״ר</button>{% endif %}
+                  <button class="a360-pill a360-pill-line a360-pill-sm" name="action" value="revoke">להסיר מהוועדה</button><input type="hidden" name="kind" value="committee">
+                </form>
+                <form method="post" action="{% url 'academia360:manage_act' %}" class="a360-acts-row">{% csrf_token %}<input type="hidden" name="email" value="{{ c.user.email }}">
+                  <label class="a360-field a360-field-grow"><span class="a360-sr">מוסד לסקירה</span><select name="institution" required><option value="">סוקר/ת של...</option>{% for i in institutions %}<option value="{{ i.pk }}">{{ i.short_name_he|default:i.name_he }}</option>{% endfor %}</select></label>
+                  <button class="a360-pill a360-pill-line a360-pill-sm" name="action" value="reviewer">לשייך</button>
+                  <button class="a360-pill a360-pill-line a360-pill-sm" name="action" value="unreviewer">להסיר</button>
+                </form>
+              </div>
+            </details>
+          </div>
+          {% empty %}<p class="a360-mute">עוד אין חברי ועדה.</p>{% endfor %}
+        </div>
+
+        <h2 class="a360-h2 a360-room-h2" id="admins">מנהלי המערכת <span class="a360-mute a360-small">· {{ admins|length }}</span></h2>
+        <div class="a360-rows">
+          {% for u in admins %}<div class="a360-row a360-row-tight"><div class="a360-row-main"><b dir="auto">{{ u|a360_name }}</b>{% if u|a360_has_name %} <span class="a360-small a360-mute">{{ u.email }}</span>{% endif %}</div>{% if u != user and not u.is_superuser %}<form method="post" action="{% url 'academia360:manage_act' %}">{% csrf_token %}<input type="hidden" name="email" value="{{ u.email }}"><input type="hidden" name="kind" value="admin"><button class="a360-pill a360-pill-line a360-pill-sm" name="action" value="revoke">להסיר</button></form>{% endif %}</div>{% endfor %}
+        </div>
+      </div>
+
+      <div>
+        <h2 class="a360-h2 a360-room-h2" id="leaders">מובילי התכנית במוסדות <span class="a360-mute a360-small">· {{ counts.leaders }}</span></h2>
+        {% for inst, rows in leaders.items %}
+        <h3 class="a360-h3 a360-room-h3"><a href="{% url 'academia360:institution' inst.slug %}" dir="auto">{{ inst.name_he }}</a></h3>
+        <div class="a360-rows">
+          {% for lead in rows %}
+          <div class="a360-row a360-row-tight">
+            <div class="a360-row-main"><b dir="auto">{{ lead.user|a360_name }}</b>{% if lead.title %} <span class="a360-mute" dir="auto">· {{ lead.title }}</span>{% endif %}{% if lead.user|a360_has_name %}<div class="a360-small a360-mute">{{ lead.user.email }}</div>{% endif %}</div>
+            <form method="post" action="{% url 'academia360:manage_act' %}">{% csrf_token %}<input type="hidden" name="email" value="{{ lead.user.email }}"><input type="hidden" name="kind" value="leader"><input type="hidden" name="institution" value="{{ inst.pk }}"><button class="a360-pill a360-pill-line a360-pill-sm" name="action" value="revoke">להסיר</button></form>
+          </div>
+          {% endfor %}
+        </div>
+        {% empty %}<p class="a360-mute">עוד אין מובילים מקושרים.</p>{% endfor %}
+      </div>
+    </div>
+
+    <div class="a360-room-grid">
+      <div class="a360-card a360-pad-lg">
+        <h2 class="a360-h3" id="grant">לתת תפקיד לחשבון קיים</h2>
+        <form method="post" action="{% url 'academia360:manage_act' %}" class="a360-form a360-form-tight">
+          {% csrf_token %}<input type="hidden" name="action" value="grant">
+          <label class="a360-field"><span>אימייל של החשבון</span><input type="email" name="email" required></label>
+          <label class="a360-field"><span>התפקיד</span><select name="kind">{% for v, l in role_kinds %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></label>
+          <label class="a360-field"><span>המוסד (למוביל)</span><select name="institution"><option value="">בלי מוסד</option>{% for i in institutions %}<option value="{{ i.pk }}">{{ i.name_he }}</option>{% endfor %}</select></label>
+          <label class="a360-field"><span>התפקיד במוסד (למוביל)</span><input name="title" maxlength="160" dir="auto"></label>
+          <button type="submit" class="a360-pill a360-pill-dark">לתת</button>
+        </form>
+      </div>
+      <div class="a360-card a360-pad-lg">
+        <h2 class="a360-h3" id="invite">להזמין מישהו בלי חשבון</h2>
+        <p class="a360-small a360-mute">מייל עם קישור חד־פעמי, תקף 14 ימים. אם לכתובת כבר יש חשבון, התפקיד ניתן ישר.</p>
+        <form method="post" action="{% url 'academia360:manage_act' %}" class="a360-form a360-form-tight">
+          {% csrf_token %}<input type="hidden" name="action" value="invite">
+          <label class="a360-field"><span>אימייל</span><input type="email" name="email" required></label>
+          <label class="a360-field"><span>התפקיד</span><select name="kind">{% for v, l in role_kinds %}<option value="{{ v }}">{{ l }}</option>{% endfor %}</select></label>
+          <label class="a360-field"><span>המוסד (למוביל)</span><select name="institution"><option value="">בלי מוסד</option>{% for i in institutions %}<option value="{{ i.pk }}">{{ i.name_he }}</option>{% endfor %}</select></label>
+          <label class="a360-field"><span>התפקיד במוסד (למוביל)</span><input name="title" maxlength="160" dir="auto"></label>
+          <button type="submit" class="a360-pill a360-pill-dark">להזמין</button>
+        </form>
+        {% if invitations %}
+        <h3 class="a360-h3 a360-room-h3">הזמנות פתוחות</h3>
+        <div class="a360-rows">
+          {% for inv in invitations %}
+          <div class="a360-row a360-row-tight">
+            <div class="a360-row-main"><b class="a360-num" style="font-weight:600">{{ inv.email }}</b> <span class="a360-mute a360-small">· {{ inv.get_role_kind_display }}{% if inv.institution %} ב{{ inv.institution.short_name_he|default:inv.institution.name_he }}{% endif %}</span><div class="a360-src">{% if inv.sent_at %}נשלחה {{ inv.sent_at|date:"d.m.Y" }}{% else %}המייל לא יצא{% endif %}{% if inv.state == 'expired' %} · פגה{% endif %}</div></div>
+            <form method="post" action="{% url 'academia360:manage_act' %}">{% csrf_token %}<input type="hidden" name="invitation" value="{{ inv.pk }}"><button class="a360-pill a360-pill-line a360-pill-sm" name="action" value="resend">לשלוח שוב</button></form>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if decided %}
+    <h2 class="a360-h2 a360-room-h2" id="decided">הוכרעו לאחרונה</h2>
+    <div class="a360-rows">
+      {% for r in decided %}
+      <div class="a360-row a360-row-tight"><div class="a360-row-main"><b dir="auto">{{ r.user|a360_name }}</b> <span class="a360-mute">· {{ r.get_role_kind_display }}{% if r.institution %} ב{{ r.institution.short_name_he|default:r.institution.name_he }}{% endif %}</span>{% if r.decision_note %}<div class="a360-small a360-mute" dir="auto">{{ r.decision_note }}</div>{% endif %}</div><div class="a360-row-end"><span class="a360-status a360-status-{{ r.status }}">{{ r.get_status_display }}</span><div class="a360-src">{{ r.decided_at|date:"d.m.Y" }}</div></div></div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}
