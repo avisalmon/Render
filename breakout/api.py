@@ -103,7 +103,7 @@ class ExperienceViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         if not access.may_write(self.request.user):
-            raise PermissionDenied("כרגע רק האוצרים כותבים אתגרים.")
+            raise PermissionDenied("כתיבת אתגרים פתוחה ליוצרים ולאוצרים בלבד.")
         serializer.save(author=self.request.user)
 
     def perform_update(self, serializer):
@@ -374,8 +374,8 @@ class ReportViewSet(MineOrCurator):
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ["id", "user", "display_name", "school", "is_curator", "joined_at"]
-        read_only_fields = ["user", "is_curator", "joined_at"]
+        fields = ["id", "user", "display_name", "school", "is_teacher", "is_creator", "is_curator", "joined_at"]
+        read_only_fields = ["user", "is_teacher", "is_creator", "is_curator", "joined_at"]
 
 
 class ProfileViewSet(viewsets.ModelViewSet):

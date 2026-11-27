@@ -17,6 +17,38 @@ Newest first.
 
 ---
 
+## PM-114 · 2026-11-27 · breakout B.5.1: the teachers' door opened with one level, and the owner asked for two the next morning
+
+**What happened.** B.5 built the teachers' door in an evening: a person
+asks, a curator approves, the whole site opens. Hours later Avi asked
+for the same door with two levels, a teacher who views and prints and a
+teacher who also creates challenges, because the next epic (AI
+generation) is for the second kind only. The door had to be reopened:
+a flag, a migration, two approve buttons, promote and demote, the API's
+read of the level. Small, but a second sprint on a screen that was a
+day old.
+
+**Why the process let it.** The door was designed as a yes/no question
+("may this person come in?") because that was the sentence Avi said. The
+approver's side was never asked: what does the approver hand out with the
+approval, and will every approved person get the same? The backlog already
+held the answer (B.6 is for "authorised users", a smaller set than
+"teachers"), and nobody read the two sentences together.
+
+**Rule.** When a gate is built where one person approves others, ask at
+design time what the approver hands out with the approval: which rights,
+how many levels, and whether a level changes later. Read the next epic's
+audience against the gate's audience before the gate ships. The level is
+chosen on the approval screen, in the same click, and can be changed on
+the same screen later; a yes/no door with a second screen for rights costs
+the approver a second visit per person.
+
+- Here: `docs/building_an_app.md` (mistake 89), `docs/breakout/spec.md`
+  (chapters 5, 7, 9), `breakout/access.py` (`is_creator`, `may_write`).
+- BKM: FullStackBKM (mistake 101)
+
+---
+
 ## PM-113 · 2026-11-27 · Academia360 Epic P: the first import read 24 generated pages by their class names and lost most of what they said
 
 **What happened.** Avi asked that everything his October 2025 research

@@ -1712,3 +1712,19 @@ that pins known rows exactly, and the builder reads a few parsed rows next
 to their source before landing them. An import fills only what is empty, so
 a better reading can run over a worse one. Idempotence proves nothing about
 coverage.
+
+### 89. A gate hands out rights, so ask the approver what they hand out
+
+breakout's teachers' door went up as a yes/no question (may this person
+come in?) and the owner asked the next morning for two levels behind it,
+view-and-print and create, because the next epic was for the second kind
+only. The backlog already said so; the gate and the epic were never read
+together (PM-114).
+
+**The rule.** When one person approves others, ask at design time what the
+approver hands out with the approval: which rights, how many levels, and
+whether a level changes later. Read the next epic's audience against the
+gate's audience before the gate ships. The level is chosen on the approval
+screen in the same click and changed on the same screen later; a yes/no
+door with rights on a second screen costs the approver a second visit per
+person.
