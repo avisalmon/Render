@@ -71,7 +71,7 @@ def checklist(exp):
     def add(ok, blocking, text_):
         items.append({"ok": ok, "blocking": blocking, "text": text_})
 
-    add(bool(exp.tagline), False, "משפט שמסביר את החוויה")
+    add(bool(exp.tagline), False, "משפט שמסביר את האתגר")
     add(bool(exp.story), False, "סיפור פתיחה")
     add(bool(exp.subjects.exists()), False, "לפחות תחום אחד")
     add(bool(stations), True, "לפחות תחנה אחת")
@@ -93,8 +93,11 @@ def checklist(exp):
 @access.signed_in
 @ensure_csrf_cookie
 def new(request):
-    """A new experience starts from its About form and is a draft at once."""
+    """A new experience starts from its About form and is a draft at once.
+    For now only Avi writes (`access.may_write`; his decision 2026-11-26)."""
     access.profile_for(request.user)
+    if not access.may_write(request.user):
+        raise Http404
     form = AboutForm(request.POST or None, request.FILES or None)
     if request.method == "POST" and form.is_valid():
         exp = form.save(commit=False)
@@ -103,7 +106,7 @@ def new(request):
         exp.slug = text.slug_for(exp.title, lambda s: Experience.objects.filter(slug=s).exists())
         exp.save()
         form.save_m2m()
-        messages.success(request, "החוויה נפתחה כטיוטה. רק אתם רואים אותה עד הפרסום.")
+        messages.success(request, "האתגר נפתח כטיוטה. רק אתם רואים אותו עד הפרסום.")
         return redirect("breakout:edit_story", exp.slug)
     return render(request, "breakout/edit/about.html", _ctx(None, "about", form=form, is_new=True))
 
@@ -366,7 +369,7 @@ def publish(request, slug):
         messages.error(request, "אי אפשר לפרסם עדיין: ראו את הרשימה.")
         return redirect("breakout:edit", exp.slug)
     if exp.status == Experience.HIDDEN:
-        messages.error(request, "החוויה הוסתרה על ידי אוצר; רק אוצר מחזיר אותה.")
+        messages.error(request, "האתגר הוסתר על ידי אוצר; רק אוצר מחזיר אותו.")
         return redirect("breakout:edit", exp.slug)
     was = exp.status
     exp.status = Experience.PUBLISHED
@@ -374,7 +377,7 @@ def publish(request, slug):
     if was == Experience.PUBLISHED:
         exp.version += 1
     exp.save(update_fields=["status", "published_at", "version", "updated_at"])
-    messages.success(request, "פורסם. החוויה בספרייה.")
+    messages.success(request, "פורסם. האתגר בספרייה.")
     return redirect("breakout:experience", exp.slug)
 
 
@@ -385,7 +388,7 @@ def unpublish(request, slug):
     if exp.status == Experience.PUBLISHED:
         exp.status = Experience.DRAFT
         exp.save(update_fields=["status", "updated_at"])
-        messages.success(request, "הוסר מהספרייה. החוויה טיוטה שוב.")
+        messages.success(request, "הוסר מהספרייה. האתגר טיוטה שוב.")
     return redirect("breakout:edit", exp.slug)
 
 

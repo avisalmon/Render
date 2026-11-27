@@ -15,7 +15,6 @@ never touches staff, superuser or password of an existing account.
 
 from dataclasses import dataclass, field
 
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models as dj_models
 from django.db import transaction
@@ -24,7 +23,15 @@ from django.utils import timezone
 from django.utils.crypto import get_random_string
 
 from . import mail
-from .models import ChangeLog, CommitteeAttribute, Institution, Invitation, LeaderOf, Program, Role, RoleRequest
+from .models import (
+    ChangeLog,
+    CommitteeAttribute,
+    Invitation,
+    LeaderOf,
+    Program,
+    Role,
+    RoleRequest,
+)
 
 INVITATION_DAYS = 14
 

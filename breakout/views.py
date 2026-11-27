@@ -39,6 +39,7 @@ def home(request):
         "section": "home",
         "experiences": published.order_by("-is_flagship", "-n_runs", "-published_at"),
         "mine": mine,
+        "can_write": access.may_write(request.user),
         "subjects": Subject.objects.all(),
         "difficulties": Experience.DIFFICULTIES,
         "grades": [(n, hebrew_grade(n)) for n in range(4, 13)],

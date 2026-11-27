@@ -14,7 +14,7 @@ from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth import get_user_model
-from django.db.models import Count, Q, Sum
+from django.db.models import Count, Sum
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -35,10 +35,10 @@ from .models import (
     Like,
     Participation,
     PublicComment,
-    Review,
     Role,
     RoleRequest,
     Submission,
+    SubmittedFile,
 )
 
 User = get_user_model()
@@ -211,6 +211,8 @@ def overview(request):
               "changes_week": ChangeLog.objects.filter(created_at__gte=week_ago).count(),
               "open_requests": open_requests.count(), "open_corrections": CorrectionProposal.objects.filter(status="open").count(),
               "unreviewed": unreviewed.count(),
+              "files_without_text": SubmittedFile.objects.filter(extracted_at__isnull=True).count(),
+              "files": SubmittedFile.objects.count(),
               "invitations_open": Invitation.objects.filter(accepted_at__isnull=True).count()},
         "without_leader": without_leader, "by_status": [(k, v) for k, v in by_status.items() if v],
         "unreviewed": list(unreviewed[:8]), "open_requests": list(open_requests[:8]),

@@ -6,15 +6,15 @@
   <div>
     <span class="br-tag br-tag--{{ exp.status }}">{{ exp.get_status_display }}{% if exp.hidden_reason %}: {{ exp.hidden_reason }}{% endif %}</span>
     <h1 class="br-h1" dir="auto">{{ exp.title }}</h1>
-    <p class="br-lede" dir="auto">{{ exp.tagline|default:"עוד אין משפט שמסביר את החוויה." }}</p>
+    <p class="br-lede" dir="auto">{{ exp.tagline|default:"עוד אין משפט שמסביר את האתגר." }}</p>
     <p class="br-byline">גרסה {{ exp.version }}{% if exp.published_at %} · פורסם {{ exp.published_at|date:"d.m.Y" }}{% endif %} · עודכן {{ exp.updated_at|date:"d.m.Y H:i" }}</p>
   </div>
   <div class="br-pagehead-action br-publish">
     {% if exp.status == 'published' %}
       <form method="post" action="{% url 'breakout:publish' exp.slug %}">{% csrf_token %}<button type="submit" class="br-btn br-btn--main" {% if not can_publish %}disabled{% endif %}>פרסום הגרסה המעודכנת</button></form>
-      <form method="post" action="{% url 'breakout:unpublish' exp.slug %}" data-confirm="להסיר את החוויה מהספרייה? היא תחזור להיות טיוטה שרק אתם רואים.">{% csrf_token %}<button type="submit" class="br-btn br-btn--quiet">הסרה מהספרייה</button></form>
+      <form method="post" action="{% url 'breakout:unpublish' exp.slug %}" data-confirm="להסיר את האתגר מהספרייה? הוא יחזור להיות טיוטה שרק אתם רואים.">{% csrf_token %}<button type="submit" class="br-btn br-btn--quiet">הסרה מהספרייה</button></form>
     {% elif exp.status == 'hidden' %}
-      <p class="br-small br-muted">אוצר הסתיר את החוויה. תקנו לפי הסיבה; אוצר יחזיר אותה.</p>
+      <p class="br-small br-muted">אוצר הסתיר את האתגר. תקנו לפי הסיבה; אוצר יחזיר אותה.</p>
     {% else %}
       <form method="post" action="{% url 'breakout:publish' exp.slug %}">{% csrf_token %}<button type="submit" class="br-btn br-btn--main" {% if not can_publish %}disabled{% endif %}>פרסום לספרייה</button></form>
       <form method="post" action="{% url 'breakout:delete' exp.slug %}" data-confirm="למחוק את הטיוטה &quot;{{ exp.title }}&quot; לגמרי? אין דרך חזרה.">{% csrf_token %}<button type="submit" class="br-btn br-btn--quiet br-btn--danger">מחיקת הטיוטה</button></form>
@@ -42,7 +42,7 @@
       <li><a href="{% url 'breakout:edit_stations' exp.slug %}">התחנות</a><span class="br-muted">{% if stations %}{% for s in stations %}{{ s.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% else %}אין עדיין{% endif %}</span></li>
       <li><a href="{% url 'breakout:edit_lock' exp.slug %}">המנעול הסופי</a><span class="br-muted">{% if lock and lock.final_code %}הקוד: <span dir="ltr">{{ lock.final_code }}</span>{% else %}אין עדיין{% endif %}</span></li>
     </ul>
-    <p class="br-small br-muted">פרסום הוא מיידי. עריכה אחרי הפרסום מעדכנת את החוויה במקום ומעלה את מספר הגרסה, שמודפס בתחתית הערכה.</p>
+    <p class="br-small br-muted">פרסום הוא מיידי. עריכה אחרי הפרסום מעדכנת את האתגר במקום ומעלה את מספר הגרסה, שמודפס בתחתית הערכה.</p>
   </article>
 </div>
 {% endblock %}

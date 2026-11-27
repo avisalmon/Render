@@ -31,4 +31,4 @@ def permission_denied(request, exception=None):
         from django.views import defaults
 
         return defaults.permission_denied(request, exception)
-    return render(request, "breakout/error.html", {"code": 403, "title": "זה לא שלכם", "text": "רק מי שכתב את החוויה יכול לערוך אותה."}, status=403)
+    return render(request, "breakout/error.html", {"code": 403, "title": "זה לא שלכם", "text": "רק מי שכתב את האתגר יכול לערוך אותו."}, status=403)

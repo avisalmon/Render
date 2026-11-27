@@ -1,9 +1,9 @@
 """Epic C: an invitation remembers who redeemed it (ownership first,
 methodology 55) and carries the leader's title to show."""
 
+import django.db.models.deletion
 from django.conf import settings
 from django.db import migrations, models
-import django.db.models.deletion
 
 
 class Migration(migrations.Migration):

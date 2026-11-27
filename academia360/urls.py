@@ -3,8 +3,16 @@
 from django.urls import include, path
 from rest_framework import permissions, routers
 
-from . import auth_views, doors, manage, talk, views
-from .api import ROUTES, InviteView, ReplicateFileView, ReplicateView, RequestDecideView, RoleGrantView
+from . import auth_views, committee, doors, manage, talk, views
+from .api import (
+    ROUTES,
+    ExtractView,
+    InviteView,
+    ReplicateFileView,
+    ReplicateView,
+    RequestDecideView,
+    RoleGrantView,
+)
 
 app_name = "academia360"
 
@@ -46,7 +54,15 @@ urlpatterns = [
     path("researchers/<str:slug>/", views.researcher, name="researcher"),
     path("institutions/<str:slug>/", views.institution, name="institution"),
     path("files/<int:pk>/", views.submitted_file, name="submitted_file"),
+    path("files/<int:pk>/text/", committee.file_text, name="file_text"),
     path("letters/<int:pk>/file/", views.letter_file, name="letter_file"),
+    # the committee's room (D2)
+    path("committee/", committee.board, name="committee"),
+    path("committee/review/<int:pk>/", committee.review, name="committee_review"),
+    path("committee/review/<int:pk>/<int:review_pk>/", committee.review_of, name="committee_review_of"),
+    path("committee/analysis/<int:pk>/", committee.analysis, name="committee_analysis"),
+    path("committee/<str:slug>/", committee.file, name="committee_file"),
+    path("api/admin/extract/", ExtractView.as_view(), name="api_extract"),
     # Before the router, whose `roles/<pk>/` would otherwise swallow "grant".
     path("api/roles/grant/", RoleGrantView.as_view(), name="api_roles_grant"),
     path("api/admin/requests/<int:pk>/decide/", RequestDecideView.as_view(), name="api_request_decide"),

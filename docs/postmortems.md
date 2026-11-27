@@ -17,6 +17,63 @@ Newest first.
 
 ---
 
+## PM-106 · 2026-11-26 · Epic D2 end (Academia360 committee room): five small things, all caught before Avi
+
+**What happened.** (1) The API's change logger read DRF's `query_params`;
+called from a page view with Django's plain request it crashed every review
+and analysis page (the D2.4 tests found it on their first run). (2) A KPI
+value formatted with `:g` kept the Decimal's exponent and read "12.00"
+(D2.2's test). (3) A visually hidden `<legend>` inside the radios' fieldset
+sat outside the page at every width and made the phone page 32px wider
+(the contract and the first dev screenshot, 444px wide on a 412px phone).
+(4) After the fix the dev server, started with `--noreload`, kept serving
+the old template, so the second round of screenshots still showed the bug;
+it was noticed only because the picture's width had not changed. (5) The
+board marked a reviewer of an already-answered institution as "waiting",
+because the waiting rule had no state condition (D2.1's test).
+
+**Why the process let it.** A helper written for the API was reused by a
+page without a page test; a format spec was trusted for a type it does not
+suit; an accessibility idiom was carried from spans to a legend; a
+screenshot was trusted because it was taken, not because it showed the new
+thing; a "waits for me" rule was written from the person's side only.
+
+**Rule.** A helper shared by pages and the API reads only what both request
+types carry (`request.GET`, `request.headers`) and one page test drives it.
+Numbers for people come from a normalized Decimal. A hidden group label is
+an `aria-label` on the group, never a visually hidden legend. A screenshot
+proves itself: the server was started after the last edit, and the picture
+shows something only the new code has. A "waiting for you" rule names the
+states in which the thing can still wait.
+
+Here: `academia360/api.py: actor_of`, `committee.py: _kpi_table` and the board,
+`templates/academia360/committee/review.html`, [building_an_app.md](building_an_app.md) mistake 81
+BKM: FullStackBKM a4bc52c
+
+## PM-105 · 2026-11-26 · Academia360 ships (Epics A, B, C): the secret was set, the service never saw it
+
+**What happened.** After the train pushed, the agent token was written to
+Render's environment through its API. A memory note from the summer said
+that change redeploys the service by itself. It did not: the process kept
+its old environment and answered "bad token". The one-request probe run
+before the data replication caught it; a deploy was started through the API,
+the probe passed, and only then did 1919 rows and 108 files travel. Nothing
+reached Avi. The ship itself rode another chat's train (PM-13: any train
+carries any ready commit) after that chat merged origin/main in the shared
+tree; the merge renumbered the day's post-mortems and left two entries
+numbered mistake 78 in the methodology, fixed here (79, 80).
+
+**Why the process let it.** A note about a platform's side effects was
+trusted as a fact about today instead of being checked by one request.
+
+**Rule.** After setting a secret or a variable on the host, send one request
+that needs it and read the answer before any step depends on it. A note
+about a host's side effects is a hint to verify, not a step to skip; a note
+that proves wrong is corrected the same hour.
+
+Here: the memory note on the Render API corrected, [building_an_app.md](building_an_app.md) mistake 80
+BKM: FullStackBKM 5fc5d3d
+
 ## PM-104 · 2026-11-26 · breakout B.3 end: a one-line field drawn as a box, radios swallowed by a generic rule, a file named after a parent it did not know
 
 **What happened.** (1) The hint field is a `TextField` in the model, so the
@@ -76,7 +133,7 @@ on Windows goes as a script file run with `-X utf8`, or as `shell -c` with
 escapes, never through the shell's stdin.
 
 Here: `templates/academia360/manage/overview.html`, `templates/academia360/me.html`,
-`tests/test_academia360_c4.py`, [building_an_app.md](building_an_app.md) mistake 78
+`tests/test_academia360_c4.py`, [building_an_app.md](building_an_app.md) mistake 79
 BKM: FullStackBKM 062c4a2
 
 ## PM-102 · 2026-11-26 · breakout B.2 end: the kit's promise, tested on the content; a one-letter secret; a missing ignore line

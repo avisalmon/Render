@@ -114,6 +114,11 @@ def build_world():
 
     avi = User.objects.create_superuser("avi", "avi@example.com", PASSWORD, first_name="אבי")
     dana = User.objects.create_user("dana", "dana@example.com", PASSWORD, first_name="דנה")
+    from breakout import access
+
+    profile = access.profile_for(dana)  # a writing teacher: for now only curators write (Avi, 2026-11-26)
+    profile.is_curator = True
+    profile.save()
     call_command("seed_breakout", verbosity=0)
     flagship = Experience.objects.get(slug="hamachshev-shenichba")
     Run.objects.create(experience=flagship, user=dana, group_count=5, kids_count=28, actual_minutes=50, rating=5, what_worked="הבאג היה הלהיט")

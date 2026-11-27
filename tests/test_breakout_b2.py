@@ -251,7 +251,7 @@ def test_a_teacher_page_is_one_copy_and_a_non_image_is_explained_not_embedded(se
     p.file.save("track.pdf", ContentFile(b"%PDF-1.4 not really"))
     made = kit.compose(seeded, 5)
     cover = made.part(kit.PRINTABLES).text()
-    assert "לכל החוויה · עותק אחד" in cover
+    assert "לכל האתגר · עותק אחד" in cover
     assert "אינו תמונה" in cover
     pdf = made.pdf()
     assert pdf.startswith(b"%PDF-") and b"/Subtype /Image" not in pdf

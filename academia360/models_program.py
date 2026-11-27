@@ -202,9 +202,16 @@ class SubmittedFile(Row):
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
                                     related_name="a360_uploads")
     extracted_text = models.TextField(blank=True)
+    extracted_at = models.DateTimeField(null=True, blank=True, help_text="When the text was last read out of the file")
+    extraction_note = models.CharField(max_length=200, blank=True,
+                                       help_text="What the extraction found: pages, sheets, no text, unsupported, an error")
 
     def __str__(self):
         return self.original_name
+
+    @property
+    def extension(self):
+        return (self.original_name or self.file.name or "").rsplit(".", 1)[-1].lower() if "." in (self.original_name or self.file.name or "") else ""
 
 
 class ContactPerson(Row):

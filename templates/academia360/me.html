@@ -1,4 +1,4 @@
-{% extends "academia360/base.html" %}
+{% extends "academia360/base.html" %}{% load a360 %}
 {% block title %}שלי · אקדמיה 360°{% endblock %}
 {% block content %}
 <section class="a360-band">
@@ -8,7 +8,7 @@
     <div class="a360-card a360-pad-lg a360-me-role" id="role">
       {% if roles_line %}
         <p class="a360-me-role-line"><b>התפקיד שלכם:</b> <span dir="auto">{{ roles_line }}</span></p>
-        <p class="a360-small a360-mute">מרחב העבודה של התפקיד נפתח באפיקים הבאים; עד אז הכול כאן ציבורי.</p>
+        {% a360_is_committee user as is_committee %}{% if is_committee %}<p class="a360-small"><a class="a360-link-sm" href="{% url 'academia360:committee' %}">לחדר הוועדה: לוח הזרימה והתיקים</a></p>{% else %}<p class="a360-small a360-mute">מרחב העבודה של מובילי התכנית נפתח באפיקים הבאים; עד אז הכול כאן ציבורי.</p>{% endif %}
       {% else %}
         <p class="a360-me-role-line"><b>בלי תפקיד.</b> הציבור קורא, מגיב ומציע תיקונים בלי תפקיד. מי שמוביל את התכנית במוסד, או בוועדה, <a href="{% url 'academia360:join' %}">מבקש להצטרף</a>.</p>
       {% endif %}

@@ -1,0 +1,122 @@
+{% extends "academia360/base.html" %}{% load a360 %}
+{% block title %}{{ inst.name }} · התיק · הוועדה · אקדמיה 360°{% endblock %}
+{% block content %}
+<section class="a360-band a360-room">
+  <div class="a360-wrap">
+    <nav class="a360-crumbs" aria-label="מיקום"><a href="{% url 'academia360:committee' %}">הוועדה</a><span>·</span><a href="{% url 'academia360:committee' %}">לוח הזרימה</a><span>·</span><span dir="auto">{{ inst.name }}</span></nav>
+    <h1 class="a360-h1 a360-h1-page" dir="auto">{{ inst.name_he }}</h1>
+    <p class="a360-lede a360-narrow">{{ inst.get_kind_display }}{% if inst.city %} · {{ inst.city }}{% endif %} · <a href="{% url 'academia360:institution' inst.slug %}">העמוד הציבורי</a>.
+      {% if part %}{% if part.applied %}הגיש למחזור{% if part.first_submitted_at %} ב־<span class="a360-num">{{ part.first_submitted_at|date:"m.Y" }}</span>{% endif %}; המצב: <b>{{ part.get_status_display }}</b>.{% else %}לא ניגש למחזור הזה.{% endif %}{% else %}אין שורת השתתפות למוסד הזה.{% endif %}</p>
+
+    <div class="a360-room-grid">
+      <div>
+        <h2 class="a360-h2 a360-room-h2" id="part">ההשתתפות</h2>
+        <div class="a360-rows">
+          {% if part %}
+          <div class="a360-row a360-row-tight"><span>מצב</span><span class="a360-b">{{ part.get_status_display }}</span></div>
+          {% if part.lead_title %}<div class="a360-row a360-row-tight"><span>הובלה במוסד</span><span class="a360-b" dir="auto">{{ part.lead_title }}</span></div>{% endif %}
+          {% if target %}<div class="a360-row a360-row-tight"><span>בסיס ה־20%</span><span class="a360-b">{{ target.get_basis_display }}{% if target.total_programs %} · <span class="a360-num">{{ target.total_programs }}</span> תכניות{% endif %}{% if target.total_undergrads %} · <span class="a360-num">{{ target.total_undergrads }}</span> סטודנטים{% endif %}</span></div>{% else %}<div class="a360-row a360-row-tight"><span>בסיס ה־20%</span><span class="a360-mute">לא חולץ</span></div>{% endif %}
+          {% if part.committee_notes %}<div class="a360-row a360-row-tight"><span>הערות הוועדה</span><span dir="auto">{{ part.committee_notes }}</span></div>{% endif %}
+          {% endif %}
+          {% if allocation %}
+          <div class="a360-row a360-row-tight"><span>הקצאה</span><span class="a360-b">{% if allocation.allocation_thousands_nis %}<span class="a360-num" dir="ltr">{{ allocation.allocation_thousands_nis }}</span> אלף ₪{% else %}<span class="a360-mute">לא נרשמה</span>{% endif %}</span></div>
+          <div class="a360-row a360-row-tight"><span>סטודנטים לתואר ראשון (תשפ״ד)</span><span class="a360-num">{{ allocation.undergrad_students|default:"—" }}</span></div>
+          <div class="a360-row a360-row-tight"><span>תכניות מאושרות</span><span class="a360-num">{{ allocation.approved_programs|default:"—" }}</span></div>
+          {% if allocation.notes %}<div class="a360-row a360-row-tight"><span>הערות</span><span dir="auto">{{ allocation.notes }}</span></div>{% endif %}
+          {% else %}
+          <div class="a360-row a360-row-tight"><span>הקצאה</span><span class="a360-mute">אין שורה בגיליון המעקב</span></div>
+          {% endif %}
+        </div>
+        <p class="a360-src">מקור: גיליון המעקב של הוועדה והגשת המוסד.</p>
+      </div>
+      <div>
+        <h2 class="a360-h2 a360-room-h2" id="people">אנשים</h2>
+        <div class="a360-rows">
+          {% for c in contacts %}<div class="a360-row a360-row-tight"><div class="a360-row-main"><b dir="auto">{{ c.name }}</b>{% if c.is_primary %} <span class="a360-tag a360-tag-teal">איש קשר ראשי</span>{% endif %}{% if c.title %}<div class="a360-small a360-mute" dir="auto">{{ c.title }}</div>{% endif %}</div><div class="a360-row-end a360-small">{% if c.email %}<a href="mailto:{{ c.email }}" dir="ltr">{{ c.email }}</a>{% endif %}{% if c.phone %}<div class="a360-num" dir="ltr">{{ c.phone }}</div>{% endif %}</div></div>{% empty %}<div class="a360-row a360-row-tight"><span class="a360-mute">אנשי הקשר של ההגשה לא חולצו.</span></div>{% endfor %}
+          {% for l in leaders %}<div class="a360-row a360-row-tight"><div class="a360-row-main"><b dir="auto">{{ l.user|a360_name }}</b> <span class="a360-tag a360-tag-line">מוביל/ת באתר</span>{% if l.title %}<div class="a360-small a360-mute" dir="auto">{{ l.title }}</div>{% endif %}</div></div>{% endfor %}
+          <div class="a360-row a360-row-tight"><span>סוקרים</span><span class="a360-b">{% for u in reviewers %}<span dir="auto">{{ u|a360_name }}</span>{% if not forloop.last %}, {% endif %}{% empty %}<span class="a360-mute">לא הוקצו</span>{% endfor %}</span></div>
+        </div>
+      </div>
+    </div>
+
+    {% for s in subs %}
+    <h2 class="a360-h2 a360-room-h2" id="sub-{{ s.pk }}">{{ s.get_kind_display }}{% if s.academic_year %} · {{ s.academic_year.hebrew_name }}{% endif %} <span class="a360-mute a360-small">· {{ s.get_status_display }}{% if s.submitted_at %} · הוגשה <span class="a360-num">{{ s.submitted_at|date:"d.m.Y" }}</span>{% endif %}</span></h2>
+    {% if s.cover_note %}<p class="a360-narrow" dir="auto">{{ s.cover_note }}</p>{% endif %}
+
+    <div class="a360-room-grid">
+      <div>
+        <h3 class="a360-h3 a360-room-h3">הקבצים · {{ s.file_rows|length }}</h3>
+        <div class="a360-rows">
+          {% for f in s.file_rows %}
+          <div class="a360-row a360-file-row">
+            <div class="a360-row-main"><b dir="auto">{{ f.original_name }}</b><div class="a360-src">{{ f.get_kind_display }}{% if f.size %} · <span class="a360-num">{{ f.size|filesizeformat }}</span>{% endif %}{% if f.extraction_note %} · {{ f.extraction_note }}{% elif not f.extracted_at %} · הטקסט עוד לא חולץ{% endif %}</div></div>
+            <div class="a360-file-acts"><a class="a360-tag a360-tag-teal" href="{% url 'academia360:submitted_file' f.pk %}" target="_blank" rel="noopener">לפתוח</a><a class="a360-tag a360-tag-line" href="{% url 'academia360:submitted_file' f.pk %}?download=1">להוריד</a>{% if f.extracted_text %}<a class="a360-tag a360-tag-line" href="{% url 'academia360:file_text' f.pk %}">הטקסט</a>{% endif %}</div>
+          </div>
+          {% empty %}<div class="a360-row a360-row-tight"><span class="a360-mute">אין קבצים בהגשה הזאת.</span></div>{% endfor %}
+        </div>
+
+        <h3 class="a360-h3 a360-room-h3">מה חולץ מההגשה</h3>
+        {% if not s.has_extracts %}<p class="a360-mute a360-small">החלקים המובנים (דמות הבוגר, תו התקן, תכניות לעדכון, רכיבי התכנית, ניהול, תקציב) עוד לא חולצו מהקבצים; הם מתמלאים בייבוא או במרחב של המוביל.</p>{% endif %}
+        {% if s.graduate %}<h4 class="a360-h4">דמות הבוגר</h4><p class="a360-small" dir="auto">{{ s.graduate.text }}</p>{% if s.graduate.skills.all %}<div class="a360-tags">{% for k in s.graduate.skills.all %}<span class="a360-tag a360-tag-line" dir="auto">{{ k.name }}</span>{% endfor %}</div>{% endif %}{% endif %}
+        {% if s.standard_row %}<h4 class="a360-h4">תו התקן</h4><p class="a360-small" dir="auto">{{ s.standard_row.description }}</p>{% if s.standard_row.minimum_bar %}<p class="a360-small" dir="auto"><span class="a360-mute">רף מינימום:</span> {{ s.standard_row.minimum_bar }}</p>{% endif %}{% endif %}
+        {% if s.plan_rows %}<h4 class="a360-h4">תכניות לימוד לעדכון · {{ s.plan_rows|length }}</h4><div class="a360-rows">{% for p in s.plan_rows %}<div class="a360-row a360-row-tight"><span dir="auto">{{ p.study_program.name }}</span><span class="a360-small">{{ p.get_status_display }}{% if p.planned_year %} · {{ p.planned_year.hebrew_name }}{% endif %}</span></div>{% endfor %}</div>{% endif %}
+        {% for c, comps in s.component_groups %}<h4 class="a360-h4">{% if c %}{{ c.name }}{% else %}רכיבים כלליים{% endif %}</h4><div class="a360-rows">{% for comp in comps %}<div class="a360-row a360-row-tight"><div class="a360-row-main"><b dir="auto">{{ comp.title }}</b>{% if comp.description %}<div class="a360-small" dir="auto">{{ comp.description }}</div>{% endif %}</div></div>{% endfor %}</div>{% endfor %}
+        {% if s.governance_row %}<h4 class="a360-h4">ניהול התכנית במוסד</h4><p class="a360-small" dir="auto">{% if s.governance_row.lead_name %}<b>{{ s.governance_row.lead_name }}</b>{% if s.governance_row.lead_title %}, {{ s.governance_row.lead_title }}{% endif %}. {% endif %}{{ s.governance_row.description|default:s.governance_row.steering_body }}</p>{% endif %}
+        {% if s.budget_rows %}<h4 class="a360-h4">תקציב</h4><div class="a360-rows">{% for b in s.budget_rows %}<div class="a360-row a360-row-tight"><span>{{ b.get_category_display }}{% if b.academic_year %} · {{ b.academic_year.hebrew_name }}{% endif %} · {{ b.get_kind_display }}</span><span class="a360-num" dir="ltr">{{ b.amount_nis|floatformat:0 }} ₪</span></div>{% endfor %}</div>{% endif %}
+        {% if s.commitment_rows %}<h4 class="a360-h4">התחייבויות</h4><div class="a360-rows">{% for c in s.commitment_rows %}<div class="a360-row a360-row-tight"><span>{{ c.get_kind_display }}{% if c.signed_by %} · <span dir="auto">{{ c.signed_by }}</span>{% endif %}</span><span class="a360-small">{% if c.amount_nis %}<span class="a360-num" dir="ltr">{{ c.amount_nis|floatformat:0 }} ₪</span>{% endif %}{% if c.file %} · <a href="{% url 'academia360:submitted_file' c.file.pk %}">הקובץ</a>{% endif %}</span></div>{% endfor %}</div>{% endif %}
+        {% if s.community %}<h4 class="a360-h4">חלק הקהילה בתקציב</h4><p class="a360-small"><span class="a360-num" dir="ltr">{{ s.community.percent|default:"—" }}%</span> מול הדרישה של 15%.</p>{% endif %}
+      </div>
+
+      <div>
+        <h3 class="a360-h3 a360-room-h3" id="analysis-{{ s.pk }}">הניתוח <span class="a360-state a360-state-{{ s.analysis_state }}">{{ analysis_states|a360_get:s.analysis_state }}</span></h3>
+        {% if s.analysis_row %}
+          {% if s.analysis_row.summary %}<p class="a360-small" dir="auto">{{ s.analysis_row.summary }}</p>{% endif %}
+          {% for c, by_kind in s.blocks %}{% if by_kind.finding or by_kind.strength or by_kind.challenge %}
+          <h4 class="a360-h4">{% if c %}{{ c.name }}{% else %}כללי{% endif %}</h4>
+          <ul class="a360-findings">{% for f in by_kind.finding %}<li dir="auto">{{ f.text }}</li>{% endfor %}{% for f in by_kind.strength %}<li class="a360-finding-strength" dir="auto"><span class="a360-finding-k">חוזקה</span> {{ f.text }}</li>{% endfor %}{% for f in by_kind.challenge %}<li class="a360-finding-challenge" dir="auto"><span class="a360-finding-k">אתגר</span> {{ f.text }}</li>{% endfor %}</ul>
+          {% endif %}{% endfor %}
+          <p class="a360-src">{% if s.analysis_row.author %}נכתב על ידי <span dir="auto">{{ s.analysis_row.author|a360_name }}</span> · {% endif %}עודכן <span class="a360-num">{{ s.analysis_row.updated_at|date:"d.m.Y" }}</span>{% if s.analysis_row.drafted_by_ai %} · טיוטה של ה־AI, טרם אושרה{% endif %}</p>
+          <p><a class="a360-pill a360-pill-line a360-pill-sm" href="{% url 'academia360:committee_analysis' s.pk %}">לערוך את הניתוח</a></p>
+        {% else %}
+          <p class="a360-mute a360-small">אין ניתוח להגשה הזאת.</p>
+          <p><a class="a360-pill a360-pill-dark a360-pill-sm" href="{% url 'academia360:committee_analysis' s.pk %}">לכתוב ניתוח</a></p>
+        {% endif %}
+
+        <h3 class="a360-h3 a360-room-h3">הסקירות · {{ s.review_rows|length }}</h3>
+        <div class="a360-rows">
+          {% for r in s.review_rows %}
+          <div class="a360-row a360-row-tight"><div class="a360-row-main"><b dir="auto">{{ r.reviewer|a360_name }}</b>{% if r == s.my_review %} <span class="a360-mute">(שלי)</span>{% endif %}<div class="a360-src">{{ r.get_status_display }} · <span class="a360-num">{{ r.answered }}/{{ r.total }}</span> שאלות סומנו{% if r.done_at %} · הושלמה <span class="a360-num">{{ r.done_at|date:"d.m.Y" }}</span>{% endif %}</div></div>{% if r == s.my_review %}<a class="a360-tag a360-tag-teal" href="{% url 'academia360:committee_review' s.pk %}">לפתוח</a>{% elif r.visible %}<a class="a360-tag a360-tag-line" href="{% url 'academia360:committee_review_of' s.pk r.pk %}">לקרוא</a>{% else %}<span class="a360-small a360-mute">נפתחת אחרי שלך</span>{% endif %}</div>
+          {% empty %}<div class="a360-row a360-row-tight"><span class="a360-mute">אף אחד עוד לא פתח סקירה.</span></div>{% endfor %}
+        </div>
+        {% if not s.my_review %}<p><a class="a360-pill a360-pill-dark a360-pill-sm" href="{% url 'academia360:committee_review' s.pk %}">לפתוח את הסקירה שלי</a></p>{% endif %}
+
+        <h3 class="a360-h3 a360-room-h3">ההחלטה והמכתב</h3>
+        <div class="a360-rows">
+          <div class="a360-row a360-row-tight"><span>החלטה</span><span class="a360-b">{% if s.decision_row %}{{ s.decision_row.get_outcome_display }}{% if s.decision_row.approved_amount_nis %} · <span class="a360-num" dir="ltr">{{ s.decision_row.approved_amount_nis|floatformat:0 }} ₪</span>{% endif %}{% else %}<span class="a360-mute">אין עדיין</span>{% endif %}</span></div>
+          <div class="a360-row a360-row-tight"><span>המכתב</span><span class="a360-b">{% if s.letter_row %}{% if s.letter_row.sent_at %}נשלח <span class="a360-num">{{ s.letter_row.sent_at|date:"d.m.Y" }}</span>{% else %}טיוטה{% endif %}{% if s.letter_row.file %} · <a href="{% url 'academia360:letter_file' s.letter_row.pk %}" target="_blank" rel="noopener">הקובץ</a>{% endif %}{% else %}<span class="a360-mute">אין</span>{% endif %}</span></div>
+          {% if s.letter_row.addressee_name %}<div class="a360-row a360-row-tight"><span>נמען</span><span dir="auto">{{ s.letter_row.addressee_name }}{% if s.letter_row.addressee_title %}, {{ s.letter_row.addressee_title }}{% endif %}</span></div>{% endif %}
+        </div>
+        {% for sec in s.letter_sections %}<h4 class="a360-h4">{% if sec.template %}{{ sec.template.title }}{% else %}{{ sec.get_kind_display }}{% endif %}</h4><p class="a360-small a360-letter-text" dir="auto">{{ sec.text }}</p>{% endfor %}
+      </div>
+    </div>
+    {% empty %}
+    <p class="a360-mute">אין הגשות בתיק.</p>
+    {% endfor %}
+
+    {% if kpis.any %}
+    <h2 class="a360-h2 a360-room-h2" id="kpis">מדדי ההצלחה</h2>
+    <div class="a360-kpi-wrap">
+      <table class="a360-kpi">
+        <thead><tr><th>מדד</th>{% for y in kpis.years %}<th class="a360-num">{{ y.hebrew_name }}</th>{% endfor %}</tr></thead>
+        <tbody>
+        {% for row in kpis.rows %}{% if row.has %}
+          <tr><th scope="row" dir="auto">{{ row.kpi.name }}{% if row.kpi.is_mandatory %} <span class="a360-tag a360-tag-line">ות״ת</span>{% endif %}</th>{% for cell in row.cells %}<td data-l="{{ kpis.years|a360_at:forloop.counter0 }}">{% if cell %}{% if cell.baseline %}<span class="a360-num" dir="ltr">{{ cell.baseline }}</span> <span class="a360-mute a360-small">מצב</span>{% endif %}{% if cell.forecast %} <span class="a360-num" dir="ltr">{{ cell.forecast }}</span> <span class="a360-mute a360-small">צפי</span>{% endif %}{% if cell.actual %} <b class="a360-num" dir="ltr">{{ cell.actual }}</b> <span class="a360-mute a360-small">בפועל</span>{% endif %}{% else %}<span class="a360-mute">·</span>{% endif %}</td>{% endfor %}</tr>
+        {% endif %}{% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="a360-src">מקור: נספח א׳ של ההגשה; מצב = מצב נוכחי בעת ההגשה, צפי = יעד שהמוסד קבע, בפועל = מה שדווח.</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

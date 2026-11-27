@@ -149,7 +149,8 @@ def test_every_class_used_is_defined(world):
             used |= {c for c in re.sub(r"\{[%{].*?[%}]\}", " ", classes).split() if c.startswith("a360-")}
     # The ring segments are numbered by a loop (the prefix is left after the
     # tag is stripped); the first needs no offset; `a360` marks the body.
-    allowed_unstyled = {"a360-ring-seg", "a360-ring-seg-", "a360-ring-seg-1", "a360-step-", "a360-status-", "a360", "a360-js"}
+    allowed_unstyled = {"a360-ring-seg", "a360-ring-seg-", "a360-ring-seg-1", "a360-step-", "a360-status-", "a360", "a360-js",
+                            "a360-state-", "a360-state-letter-", "a360-state-mark-"}  # D2: state pills built by a loop
     assert used - defined <= allowed_unstyled, sorted(used - defined - allowed_unstyled)
 
 

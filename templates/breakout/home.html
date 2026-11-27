@@ -4,9 +4,9 @@
 <section class="br-pagehead">
   <div>
     <h1 class="br-h1">הספרייה</h1>
-    <p class="br-intro">חוויות חדר בריחה שבנויות מדפים, מספריים וציוד משרדי. בוחרים חוויה, מדפיסים את הערכה, ומריצים עם הקבוצה. בלי מסכים.</p>
+    <p class="br-intro">אתגרי חדר בריחה שבנויים מדפים, מספריים וציוד משרדי. בוחרים אתגר, מדפיסים את הערכה, ומריצים עם הקבוצה. בלי מסכים.</p>
   </div>
-  <a class="br-btn br-pagehead-action" href="{% url 'breakout:new' %}">כתיבת חוויה</a>
+  {% if can_write %}<a class="br-btn br-pagehead-action" href="{% url 'breakout:new' %}">כתיבת אתגר</a>{% endif %}
 </section>
 
 <details class="br-filterbox" id="br-filters">
@@ -28,7 +28,7 @@
         <option value="">כל הכיתות</option>
         {% for n, letter in grades %}<option value="{{ n }}">כיתה {{ letter }}</option>{% endfor %}
       </select></label>
-    <label class="br-check"><input type="checkbox" id="br-has-runs"> רק חוויות שכבר הורצו</label>
+    <label class="br-check"><input type="checkbox" id="br-has-runs"> רק אתגרים שכבר הורצו</label>
   </div>
 </details>
 
@@ -50,7 +50,7 @@
              data-subjects="{% for s in e.subjects.all %}{{ s.slug }} {% endfor %}"
              data-difficulty="{{ e.difficulty }}" data-from="{{ e.audience_from }}" data-to="{{ e.audience_to }}"
              data-runs="{{ e.n_runs }}">
-      {% if e.is_flagship %}<span class="br-flag">חוויית דגל</span>{% endif %}
+      {% if e.is_flagship %}<span class="br-flag">אתגר דגל</span>{% endif %}
       <h2 class="br-card-title"><a href="{% url 'breakout:experience' e.slug %}" dir="auto">{{ e.title }}</a></h2>
       <p class="br-card-tagline" dir="auto">{{ e.tagline }}</p>
       <ul class="br-chips">
@@ -66,8 +66,8 @@
       </p>
     </article>
   {% empty %}
-    <p class="br-empty">עוד אין חוויות בספרייה. הראשונה בדרך.</p>
+    <p class="br-empty">עוד אין אתגרים בספרייה. הראשון בדרך.</p>
   {% endfor %}
 </section>
-<p class="br-empty br-hidden" id="br-no-match">שום חוויה לא מתאימה לסינון הזה.</p>
+<p class="br-empty br-hidden" id="br-no-match">שום אתגר לא מתאים לסינון הזה.</p>
 {% endblock %}
