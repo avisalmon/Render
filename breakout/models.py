@@ -74,6 +74,14 @@ class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="breakout_profile")
     display_name = models.CharField(max_length=80, blank=True)
     school = models.CharField(max_length=120, blank=True)
+    # The teachers' door (B.5, Avi 2026-11-27: "the site is closed to
+    # students"): a person asks once, a curator approves once.
+    teaches = models.CharField(max_length=120, blank=True)
+    ask_note = models.TextField(blank=True)
+    asked_at = models.DateTimeField(null=True, blank=True)
+    is_teacher = models.BooleanField(default=False)
+    teacher_since = models.DateTimeField(null=True, blank=True)
+    teacher_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
     is_curator = models.BooleanField(default=False)
     curator_since = models.DateTimeField(null=True, blank=True)
     curator_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
@@ -315,6 +323,14 @@ class Printable(models.Model):
     def for_players(self):
         return self.kind != "teacher_page"
 
+    PLAIN, CARD = "plain", "card"
+
+    @property
+    def paper(self):
+        """What the teacher loads in the printer: a cut-out sheet is card,
+        everything else plain paper. The print sets (kit) split on this."""
+        return self.CARD if self.kind == "cut_out" else self.PLAIN
+
 
 # --------------------------------------------------------------- community
 
@@ -365,6 +381,9 @@ class Download(models.Model):
     experience = models.ForeignKey(Experience, on_delete=models.CASCADE, related_name="downloads")
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="breakout_downloads")
     groups = models.PositiveSmallIntegerField(default=1)
+    # Which print this was: the whole kit, or one set (kit.PLAIN, kit.CARD,
+    # kit.TEACHER) printed once and copied at the printer (B.5).
+    part = models.CharField(max_length=10, default="kit")
     created_at = models.DateTimeField(default=timezone.now)
 
 

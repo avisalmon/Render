@@ -1,0 +1,48 @@
+{% extends "breakout/base.html" %}
+{% block title %}מורים · חדרי בריחה מנייר{% endblock %}
+{% block content %}
+<p class="br-back"><a href="{% url 'breakout:home' %}">→ הספרייה</a></p>
+<section class="br-pagehead">
+  <div>
+    <h1 class="br-h1">מורים</h1>
+    <p class="br-lede">מי מחכה בדלת, ומי כבר בפנים. אישור פותח את כל האתר לאותו אדם.</p>
+  </div>
+</section>
+
+<section class="br-step" aria-labelledby="br-pending-title">
+  <h2 class="br-h2" id="br-pending-title">מחכים לאישור <span class="br-muted">({{ pending|length }})</span></h2>
+  {% if pending %}
+    <ul class="br-people" id="br-pending">
+      {% for p in pending %}
+        <li class="br-person">
+          <span class="br-person-name" dir="auto">{{ p.name }} <span class="br-muted br-small" dir="ltr">{{ p.user.email }}</span></span>
+          <span class="br-person-meta" dir="auto">{{ p.school }} · {{ p.teaches }}{% if p.ask_note %} · {{ p.ask_note }}{% endif %}</span>
+          <span class="br-person-meta">ביקש/ה ב-{{ p.asked_at|date:"d.m.Y H:i" }}</span>
+          <div class="br-person-actions">
+            <form method="post" action="{% url 'breakout:teacher_decide' p.pk %}">{% csrf_token %}<input type="hidden" name="action" value="approve"><button type="submit" class="br-btn br-btn--main">אישור</button></form>
+            <form method="post" action="{% url 'breakout:teacher_decide' p.pk %}" data-confirm="לדחות את הבקשה של {{ p.name }}?">{% csrf_token %}<input type="hidden" name="action" value="decline"><button type="submit" class="br-btn br-btn--quiet">דחייה</button></form>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="br-muted">אף אחד לא מחכה.</p>
+  {% endif %}
+</section>
+
+<section class="br-step" aria-labelledby="br-approved-title">
+  <h2 class="br-h2" id="br-approved-title">בפנים <span class="br-muted">({{ approved|length }})</span></h2>
+  {% if approved %}
+    <ul class="br-people" id="br-approved">
+      {% for p in approved %}
+        <li class="br-person">
+          <span class="br-person-name" dir="auto">{{ p.name }} <span class="br-muted br-small" dir="ltr">{{ p.user.email }}</span></span>
+          <span class="br-person-meta" dir="auto">{{ p.school }}{% if p.teaches %} · {{ p.teaches }}{% endif %} · אושר/ה ב-{{ p.teacher_since|date:"d.m.Y" }}{% if p.teacher_by %} על ידי {{ p.teacher_by.first_name|default:p.teacher_by.username }}{% endif %}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="br-muted">עוד לא אושר אף מורה. האוצרים נכנסים בלי אישור.</p>
+  {% endif %}
+</section>
+{% endblock %}

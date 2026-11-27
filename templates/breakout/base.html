@@ -1,4 +1,4 @@
-{% load static %}<!doctype html>
+{% load static breakout_tags %}<!doctype html>
 <html lang="he" dir="rtl">
 <head>
   <meta charset="utf-8">
@@ -21,6 +21,7 @@
     <a class="br-brand" href="{% url 'breakout:home' %}"><span class="br-brand-mark" aria-hidden="true"></span>חדרי בריחה מנייר</a>
     <nav class="br-nav" aria-label="ניווט">
       <a href="{% url 'breakout:home' %}" {% if section == 'home' %}aria-current="page"{% endif %}>הספרייה</a>
+      {% pending_teacher_count user as waiting_count %}{% if waiting_count is not None %}<a href="{% url 'breakout:teachers' %}" {% if section == 'teachers' %}aria-current="page"{% endif %}>מורים{% if waiting_count %} <span class="br-nav-count">{{ waiting_count }}</span>{% endif %}</a>{% endif %}
     </nav>
     <div class="br-account">
       {% if user.is_authenticated %}

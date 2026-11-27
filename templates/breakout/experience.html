@@ -22,11 +22,10 @@
     {% if may_edit %}<p><a class="br-btn br-btn--quiet" href="{% url 'breakout:edit' exp.slug %}">עריכה</a></p>{% endif %}
   </div>
   {% if exp.cover %}<img class="br-cover" src="{% url 'breakout:cover_file' exp.slug %}" alt="">{% endif %}
-  <form class="br-kitform br-pagehead-action" method="get" action="{% url 'breakout:kit' exp.slug %}" id="br-kitform">
-    <label class="br-field br-field--inline"><span>כמה קבוצות?</span><input type="number" name="groups" id="br-kit-groups" min="1" max="{{ max_groups }}" value="{{ default_groups }}" inputmode="numeric" data-sync="br-groups"></label>
-    <button type="submit" class="br-btn br-btn--main">הדפסת הערכה (PDF)</button>
-    <p class="br-small br-muted">מדריך למורה, דף לכל תחנה לכל קבוצה, והדפים המצורפים. קובץ A4 אחד.</p>
-  </form>
+  <div class="br-kitform br-pagehead-action">
+    <a class="br-btn br-btn--main" id="br-prep-link" href="{% url 'breakout:prep' exp.slug %}">להכנה ולהדפסה</a>
+    <p class="br-small br-muted">קונים, מדפיסים, מריצים. שלושה צעדים בעמוד אחד.</p>
+  </div>
 </section>
 
 <details class="br-fold" open>
@@ -83,32 +82,6 @@
 {% endif %}
 
 <details class="br-fold">
-  <summary><span class="br-fold-title">רשימת קניות</span><span class="br-fold-value">{{ shopping|length }} פריטים, לקבוצה אחת</span></summary>
-  <div class="br-fold-body">
-    <label class="br-field br-field--inline"><span>כמה קבוצות?</span><input type="number" id="br-groups" min="1" max="{{ max_groups }}" value="{{ default_groups }}" inputmode="numeric" data-sync="br-kit-groups"></label>
-    <table class="br-table" id="br-shopping">
-      <thead><tr><th>חומר</th><th>כמות</th><th>בשימוש בתחנות</th></tr></thead>
-      <tbody>
-        {% for row in shopping %}
-          <tr><td>{{ row.material.name }}</td><td><span class="br-qty" data-per-group="{{ row.quantity }}">{{ row.total|floatformat:"-2" }}</span> {{ row.material.unit }}</td><td dir="auto">{{ row.stations|join:", " }}</td></tr>
-        {% empty %}
-          <tr><td colspan="3">עוד לא נרשמו חומרים.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    <p class="br-muted br-small">הכל נקנה בזול בחנות צרכי משרד או נמצא בבית הספר. זה גבול הז'אנר.</p>
-  </div>
-</details>
-
-<details class="br-fold">
-  <summary><span class="br-fold-title">הכנה</span><span class="br-fold-value">{{ exp.prep_minutes }} דקות{% if printables %} · {{ printables|length }} דפים מצורפים{% endif %}</span></summary>
-  <div class="br-fold-body">
-    {% if exp.teacher_notes %}<div class="br-prose" dir="auto">{{ exp.teacher_notes|linebreaks }}</div>{% else %}<p class="br-muted">אין הערות הכנה.</p>{% endif %}
-    {% for p in printables %}<p><a class="br-btn br-btn--quiet" href="{% url 'breakout:printable_file' p.pk %}">{{ p.get_kind_display }}: <span dir="auto">{{ p.title }}</span></a></p>{% endfor %}
-  </div>
-</details>
-
-<details class="br-fold">
   <summary><span class="br-fold-title">הרצות ותגובות</span><span class="br-fold-value">{{ exp.n_runs }} הרצות · {{ exp.n_comments }} תגובות</span></summary>
   <div class="br-fold-body">
     {% if runs %}
@@ -123,7 +96,7 @@
     {% if comments %}
       <ul class="br-comments">{% for c in comments %}<li><b dir="auto">{{ c.author.breakout_profile.name|default:c.author.first_name }}</b> <span class="br-small br-muted">{{ c.created_at|date:"d.m.Y" }}</span><div dir="auto">{{ c.text|linebreaksbr }}</div></li>{% endfor %}</ul>
     {% endif %}
-    <p class="br-muted br-small">לייק, תגובה ודיווח הרצה מגיעים בספרינט B.4.</p>
+    <p class="br-muted br-small">לייק, תגובה ודיווח הרצה מגיעים בהמשך.</p>
   </div>
 </details>
 {% endblock %}

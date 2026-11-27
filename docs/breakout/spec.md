@@ -3,7 +3,8 @@
 > **Status: data model approved 2026-11-26; spec in chapters 1 to 13;
 > B.1 (skeleton, library, experience page, API, flagship seed), B.2
 > (the printed kit) and B.3 (the editor) built in dev 2026-11-26 and live
-> that evening; B.4 (the hands-on flagship, generated sheets) built in dev 2026-11-27, not yet
+> that evening; B.4 (the hands-on flagship, generated sheets) shipped 2026-11-27 (T1127-103925);
+> B.5 (the prep page, two prints by paper, the teachers' door) built in dev 2026-11-27, not yet
 > shipped.** Working name for the
 > app, the URL and this folder: `breakout`. Avi may rename it.
 > Data model: [data_model.md](data_model.md). Process:
@@ -171,10 +172,10 @@ most run, most liked. Search is a client-side match over the rendered cards
 
 ## 3. One experience, as a teacher reads it
 
-The experience page is written for a teacher deciding whether to run it and
-then preparing it. It opens with what the thing is and one main action:
-**"הדפיסו את הערכה"** (chapter 4). Below, folded sections with their value
-showing (mistake 28):
+The experience page is written for a teacher deciding whether to run it.
+It opens with what the thing is and one main action: **"להכנה ולהדפסה"**,
+which leads to the prep page (chapter 4). Below, folded sections with their
+value showing (mistake 28):
 
 1. **The story** the teacher reads to the group.
 2. **The chain**: the stations in order, each with its name, mechanic,
@@ -182,16 +183,41 @@ showing (mistake 28):
    shows the kids' text, the puzzle, the solution and its explanation, the
    hints in order, the materials with quantities, and the setup notes.
 3. **The final lock**: how the code is built, the code, the message inside.
-4. **Materials**: the whole shopping list, grouped, with a "for N groups"
-   control that scales it.
-5. **Preparation**: prep time, teacher notes, attached printables.
-6. **Runs** other teachers reported (chapter 6), **comments**, likes.
+4. **Runs** other teachers reported (chapter 6), **comments**, likes.
+
+The shopping list and the preparation notes moved to the prep page in B.5
+(Avi, 2026-11-27, reviewing as a teacher: "it needs to be very simple; not
+so many stages"), so the experience page reads and the prep page prepares.
 
 Everything typed by a person renders with `dir="auto"` (mistake 30) and any
 text that may carry markup goes through the sanitizer before `|safe`
 (mistake 50).
 
 ## 4. The kit
+
+**The prep page (B.5).** `/x/<slug>/prep/` is one page with three steps,
+in the order a teacher works:
+
+1. **Buy.** The number of groups is asked once, here, and nowhere else. The
+   shopping list scales with it and has a tick box per row.
+2. **Print.** Two prints, each ONE group's set, opened in the browser so the
+   teacher says "4 copies" in the print window (a printer cannot change
+   paper in the middle of a job, and nobody wants to download four of
+   everything): **the group's pages** on plain paper (each station's page
+   followed by its guide sheets) and **the cut-out sheets** on card
+   (160 to 200 g). The paper is the printable's kind (`Printable.paper`:
+   `cut_out` is card, everything else plain). Each card says the paper, the
+   number of pages and the copies, which follow the groups number. A third,
+   quiet link opens **the teacher's guide** once (solutions, hints, code,
+   the scaled shopping list). "No card? print on plain and glue to a box."
+   A fold, "one sheet alone", lists every sheet with its paper for the
+   teacher whose wheel got torn. Every print is a `Download` row with its
+   `part` and the groups number.
+3. **Run.** What to do on the day, the code for the teacher, the teacher
+   notes, and the setup notes per station in a fold.
+
+The whole kit as one file (below) is still built and served at
+`/x/<slug>/kit/`, with no button since B.5.
 
 "Print the kit" asks one question, how many groups, and produces one A4 PDF
 with three parts, built from the rows every time (data model, principle 2):
@@ -287,6 +313,13 @@ republishing. A curator never edits another person's text.
 Making a teacher a curator is a tick on their Profile in the curator's desk
 (not in /admin/), recorded with who did it.
 
+**The teachers' page (B.5, the desk's first corner).** `/curators/teachers/`
+lists who asked to come in (name, email, school, what they teach, their
+note, when) with approve and decline, and who is in; the nav shows the
+curators a count of people waiting. Approving records who and when and opens
+the whole site to that person at once; declining clears the ask so they may
+ask again. Curators only; anyone else gets a 404.
+
 ## 8. Look, language, device
 
 Hebrew only, RTL, the app's own base template, header and footer (Rule 3).
@@ -301,6 +334,19 @@ when Avi makes it official: one line in `mysite/more_on_babook.py`, the menu
 in its base template, and its page in the shared test.
 
 ## 9. Access and safety
+
+**The site is for teachers (B.5; Avi, 2026-11-27: "students have no access
+to the site, and that is that").** The solutions, hints and codes are on the
+pages, so being signed in is not enough. A signed-in person who is not an
+approved teacher is sent from every page, file and API route to one page,
+`/welcome/`: "the site is for teachers, tell us about yourself" (school,
+what they teach, a note), stored on their Profile with `asked_at`. A curator
+approves them (chapter 7); `Profile.is_teacher`, `teacher_since`,
+`teacher_by`. A curator is a teacher; a superuser is a curator. A new sign-up
+lands on `/welcome/`. All of this is one decorator (`access.signed_in`) and
+one DRF permission (`IsTeacher`), so the screens and the API cannot drift.
+The challenge's answers stay static (Avi: no per-teacher randomisation, so a
+teacher can reuse printed sheets); the door is what keeps them from kids.
 
 Every page except sign-in requires a signed-in babook user; the sign-in and
 sign-up pages are rendered in the app's own look against the shared `User`
@@ -347,5 +393,10 @@ the train ships it when Avi says so.
 
 ## 13. Later, by Avi's decision only
 
-A writing helper for teachers (AI) with its own cap; share links for kits
-without an account; a versions table; an English UI.
+**Decided 2026-11-27: next is AI generation of challenges (B.6)**, for
+authorised teachers, drafting a full experience into the editor, with its
+own cap and log; its chapter is written with Avi before it is built.
+
+Still later: share links for kits without an account; a versions table; an
+English UI. Declined 2026-11-27: randomising the codes per teacher (static
+answers let a teacher reuse the printed sheets).

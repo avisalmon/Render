@@ -42,6 +42,14 @@ from .models import (
 # ------------------------------------------------------------ permissions
 
 
+class IsTeacher(permissions.BasePermission):
+    """The API stands behind the same teachers' door as the screens (access
+    9): a stranger and a signed-in non-teacher both get 403."""
+
+    def has_permission(self, request, view):
+        return access.is_teacher(request.user)
+
+
 class ReadAnyWriteAuthor(permissions.BasePermission):
     """Read what is visible; write only your own. `owner_of(obj)` names the
     user id a viewset compares against."""
@@ -84,7 +92,7 @@ class ExperienceSerializer(serializers.ModelSerializer):
 
 class ExperienceViewSet(viewsets.ModelViewSet):
     serializer_class = ExperienceSerializer
-    permission_classes = [permissions.IsAuthenticated, ReadAnyWriteAuthor]
+    permission_classes = [IsTeacher, ReadAnyWriteAuthor]
     lookup_field = "slug"
 
     def owner_of(self, obj):
@@ -114,7 +122,7 @@ class ChildOfExperience(viewsets.ModelViewSet):
     """A row that belongs to an experience: readable with it, writable by
     its author. `experience_of(obj)` finds the experience."""
 
-    permission_classes = [permissions.IsAuthenticated, ReadAnyWriteAuthor]
+    permission_classes = [IsTeacher, ReadAnyWriteAuthor]
     experience_lookup = "experience"
 
     def owner_of(self, obj):
@@ -225,7 +233,7 @@ class SubjectSerializer(serializers.ModelSerializer):
 class SubjectViewSet(viewsets.ModelViewSet):
     serializer_class = SubjectSerializer
     queryset = Subject.objects.all()
-    permission_classes = [permissions.IsAuthenticated, ReadAnyWriteCurator]
+    permission_classes = [IsTeacher, ReadAnyWriteCurator]
 
 
 class MaterialSerializer(serializers.ModelSerializer):
@@ -237,7 +245,7 @@ class MaterialSerializer(serializers.ModelSerializer):
 class MaterialViewSet(viewsets.ModelViewSet):
     serializer_class = MaterialSerializer
     queryset = Material.objects.all()
-    permission_classes = [permissions.IsAuthenticated, ReadAnyWriteCurator]
+    permission_classes = [IsTeacher, ReadAnyWriteCurator]
 
 
 class MaterialRequestSerializer(serializers.ModelSerializer):
@@ -254,7 +262,7 @@ class MineOrCurator(viewsets.ModelViewSet):
     """Rows a person makes about an experience: anyone signed in creates,
     the maker edits and deletes. `owner_field` names the maker."""
 
-    permission_classes = [permissions.IsAuthenticated, ReadAnyWriteAuthor]
+    permission_classes = [IsTeacher, ReadAnyWriteAuthor]
     owner_field = "user"
 
     def owner_of(self, obj):
@@ -372,7 +380,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 class ProfileViewSet(viewsets.ModelViewSet):
     serializer_class = ProfileSerializer
-    permission_classes = [permissions.IsAuthenticated, ReadAnyWriteAuthor]
+    permission_classes = [IsTeacher, ReadAnyWriteAuthor]
     http_method_names = ["get", "put", "patch", "head", "options"]
 
     def owner_of(self, obj):

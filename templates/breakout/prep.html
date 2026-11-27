@@ -1,0 +1,84 @@
+{% extends "breakout/base.html" %}
+{% block title %}הכנה · {{ exp.title }} · חדרי בריחה מנייר{% endblock %}
+{% block description %}קונים, מדפיסים, מריצים: הכנת האתגר {{ exp.title }} בשלושה צעדים.{% endblock %}
+{% block content %}
+<p class="br-back"><a href="{% url 'breakout:experience' exp.slug %}">→ <span dir="auto">{{ exp.title }}</span></a></p>
+
+<section class="br-pagehead">
+  <div>
+    <h1 class="br-h1">הכנה: <span dir="auto">{{ exp.title }}</span></h1>
+    <p class="br-lede">שלושה צעדים: קונים, מדפיסים, מריצים. כ-{{ exp.prep_minutes }} דקות הכנה, {{ exp.duration_minutes }} דקות משחק.</p>
+  </div>
+</section>
+
+<section class="br-step" id="br-step-buy" aria-labelledby="br-buy-title">
+  <h2 class="br-step-title" id="br-buy-title"><span class="br-step-num" aria-hidden="true">1</span>קונים</h2>
+  <p class="br-step-lede">מספר הקבוצות נשאל פעם אחת, כאן. הוא קובע את הכמויות וגם את מספר העותקים בהדפסה.</p>
+  <label class="br-field br-field--inline"><span>כמה קבוצות?</span><input type="number" id="br-groups" min="1" max="{{ max_groups }}" value="{{ default_groups }}" inputmode="numeric"></label>
+  <table class="br-table" id="br-shopping">
+    <thead><tr><th>חומר</th><th>כמות</th><th>בשימוש בתחנות</th></tr></thead>
+    <tbody>
+      {% for row in shopping %}
+        <tr><td><label class="br-tick"><input type="checkbox"> <span>{{ row.material.name }}</span></label></td><td><span class="br-qty" data-per-group="{{ row.quantity }}">{{ row.total|floatformat:"-2" }}</span> {{ row.material.unit }}</td><td dir="auto">{{ row.stations|join:", " }}</td></tr>
+      {% empty %}
+        <tr><td colspan="3">עוד לא נרשמו חומרים.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="br-muted br-small">הכל נקנה בזול בחנות צרכי משרד או נמצא בבית הספר. זה גבול הז'אנר.</p>
+</section>
+
+<section class="br-step" id="br-step-print" aria-labelledby="br-print-title">
+  <h2 class="br-step-title" id="br-print-title"><span class="br-step-num" aria-hidden="true">2</span>מדפיסים</h2>
+  <p class="br-step-lede">שתי הדפסות, כל אחת סט אחד לקבוצה אחת. את מספר העותקים בוחרים בחלון ההדפסה של המדפסת, כי מדפסת לא מחליפה נייר באמצע עבודה.</p>
+  <div class="br-prints">
+    {% for p in prints %}{% if p.key != teacher %}
+      <article class="br-print {% if p.key == card %}br-print--card{% else %}br-print--plain{% endif %}">
+        <h3>{{ p.title }}</h3>
+        <p class="br-print-paper">{{ p.paper }}</p>
+        <p class="br-print-count">{{ p.pages }} דפים · <b class="br-copies">{{ default_groups }}</b> עותקים ({{ p.copies }})</p>
+        <a class="br-btn br-btn--main" id="br-print-{{ p.key }}" data-groups-link href="{{ p.url }}?groups={{ default_groups }}" target="_blank" rel="noopener">פתיחה להדפסה (PDF)</a>
+      </article>
+    {% endif %}{% endfor %}
+  </div>
+  <p class="br-small br-muted">אין בריסטול? מדפיסים את דפי הגזירה על נייר רגיל ומדביקים על קרטון של קופסה. גלגל הפענוח והמנעול הם הדפים שחשוב שיהיו קשיחים.</p>
+  {% for p in prints %}{% if p.key == teacher %}
+    <p><a class="br-btn br-btn--quiet" id="br-print-{{ p.key }}" data-groups-link href="{{ p.url }}?groups={{ default_groups }}" target="_blank" rel="noopener">{{ p.title }} (PDF, {{ p.copies }})</a> <span class="br-small br-muted">הפתרונות, הרמזים, הקוד ורשימת הקניות. לא מחלקים לקבוצות.</span></p>
+  {% endif %}{% endfor %}
+  {% if sheets or teacher_pages %}
+  <details class="br-fold br-fold--inner">
+    <summary><span class="br-fold-title">דף אחד בלבד</span><span class="br-fold-value">נהרס גלגל? מדפיסים רק אותו</span></summary>
+    <div class="br-fold-body">
+      <ul class="br-sheets">
+        {% for p in sheets %}
+          <li><a href="{% url 'breakout:printable_file' p.pk %}" target="_blank" rel="noopener"><span dir="auto">{{ p.title }}</span></a><span class="br-small br-muted">{% if p.station %}תחנה {{ p.station.order }}{% else %}המנעול{% endif %} · {{ p.get_kind_display }}</span><span class="br-paper-tag{% if p.paper == card %} br-paper-tag--card{% endif %}">{% if p.paper == card %}בריסטול{% else %}נייר רגיל{% endif %}</span></li>
+        {% endfor %}
+        {% for p in teacher_pages %}
+          <li><a href="{% url 'breakout:printable_file' p.pk %}" target="_blank" rel="noopener"><span dir="auto">{{ p.title }}</span></a><span class="br-small br-muted">{{ p.get_kind_display }}{% if p.station %} · תחנה {{ p.station.order }}{% endif %}</span><span class="br-paper-tag">למורה</span></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </details>
+  {% endif %}
+</section>
+
+<section class="br-step" id="br-step-run" aria-labelledby="br-run-title">
+  <h2 class="br-step-title" id="br-run-title"><span class="br-step-num" aria-hidden="true">3</span>מריצים</h2>
+  <ol class="br-runlist">
+    <li>מקריאים את הסיפור לכל הכיתה (בעמוד האתגר, או במדריך למורה).</li>
+    <li>כל קבוצה מקבלת את דפי הקבוצה, את דפי הגזירה, ואת הכלים שלה מרשימת הקניות.</li>
+    <li>הקבוצה בונה ופותרת תחנה אחרי תחנה; הפתרונות והרמזים אצלכם, בעמוד האתגר.</li>
+    {% if final_lock and final_lock.final_code %}<li>הקוד למנעול הסופי: <span class="br-code" dir="ltr">{{ final_lock.final_code }}</span> <span class="br-teacher-only">(למורה)</span></li>{% endif %}
+  </ol>
+  {% if exp.teacher_notes %}<h3 class="br-h3">הערות למורה</h3><div class="br-prose" dir="auto">{{ exp.teacher_notes|linebreaks }}</div>{% endif %}
+  {% if setup_stations or final_lock.setup_notes %}
+  <details class="br-fold br-fold--inner">
+    <summary><span class="br-fold-title">איך מכינים כל תחנה</span><span class="br-fold-value">{{ setup_stations|length }} תחנות{% if final_lock.setup_notes %} והמנעול{% endif %}</span></summary>
+    <div class="br-fold-body">
+      {% for s in setup_stations %}<h3 class="br-h3">תחנה {{ s.order }}: <span dir="auto">{{ s.name }}</span></h3><div class="br-prose" dir="auto">{{ s.setup_notes|linebreaks }}</div>{% endfor %}
+      {% if final_lock.setup_notes %}<h3 class="br-h3">המנעול הסופי</h3><div class="br-prose" dir="auto">{{ final_lock.setup_notes|linebreaks }}</div>{% endif %}
+    </div>
+  </details>
+  {% endif %}
+</section>
+{% endblock %}

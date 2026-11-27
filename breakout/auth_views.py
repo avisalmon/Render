@@ -40,5 +40,5 @@ def signup(request):
     if request.method == "POST" and form.is_valid():
         user = form.save()
         auth_login(request, user, backend="django.contrib.auth.backends.ModelBackend")
-        return redirect(safe_next(request))
+        return redirect("breakout:welcome")  # a new account is not a teacher yet (spec 9)
     return render(request, "breakout/signup.html", {"form": form, "next": safe_next(request, default="")})

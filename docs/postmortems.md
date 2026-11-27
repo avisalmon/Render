@@ -17,6 +17,43 @@ Newest first.
 
 ---
 
+## PM-112 · 2026-11-27 · breakout B.4 review: the teacher's job was never walked as the teacher
+
+**What happened.** B.4 shipped with every sheet exact and every test
+green, and Avi's first look as a teacher found the product hard to use:
+the kit was one PDF that mixed plain paper with card and multiplied
+itself by the number of groups, so a teacher could not load card for the
+cut-outs, nor say "4 copies" at the printer; the one question, "how many
+groups", was asked in two places; the experience page had seven folds
+and no order of work; and the solutions were on pages any signed-in
+person, a student included, could open. None of this was a bug. Every
+piece worked as specified, and the specification had been written from
+the data outward (what the rows hold, what the PDF contains), not from
+the teacher's day inward (buy, load paper, print copies, run).
+
+**Why the process let it.** The screen contract and the phone journey
+test check that screens hold and that a flow completes; nothing asked
+whether the flow is the one a real person has. "Print the kit" was the
+spec's own phrase and the sprint built exactly that. The role gate was
+"signed in", inherited from the site, never questioned against who the
+pages are for. And a printer's physical constraint (one paper per job)
+never entered a spec written at a desk.
+
+**Rule.** Before a screen for a role ships, walk its job as that role,
+start to finish, with the physical world in it: what they hold, what
+machine they use, what it can and cannot do, who else is in the room. One
+question is asked once. A document people print is split the way the
+printer needs it (by paper, by copies), not the way the data is grouped.
+And "who may see this" is asked per page against the people it is for,
+not inherited from the site's sign-in.
+
+- Here: `docs/building_an_app.md` (mistake 87), `docs/breakout/spec.md`
+  (chapters 3, 4, 7, 9), `breakout/kit.py` (`compose_set`),
+  `breakout/access.py` (`signed_in` is the teachers' door).
+- BKM: FullStackBKM (mistake 100)
+
+---
+
 ## PM-111 · 2026-11-27 · Academia360 Epic E ship: a "newest first" test that passed on the PC and failed on the train
 
 **What happened.** Avi said "Push". The train (T1127-102056) ran the full
