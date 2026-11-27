@@ -82,6 +82,12 @@ class Profile(models.Model):
     is_teacher = models.BooleanField(default=False)
     teacher_since = models.DateTimeField(null=True, blank=True)
     teacher_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    # Two levels past the door (B.5.1, Avi 2026-11-27): a teacher views,
+    # prepares and prints; a creator also writes challenges (by hand, and
+    # with AI from B.6). A curator decides, at approval or any time after.
+    is_creator = models.BooleanField(default=False)
+    creator_since = models.DateTimeField(null=True, blank=True)
+    creator_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
     is_curator = models.BooleanField(default=False)
     curator_since = models.DateTimeField(null=True, blank=True)
     curator_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")

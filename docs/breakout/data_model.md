@@ -32,7 +32,7 @@ Four things shape everything here:
 ## 0. The map
 
 ```text
-User ──1 Profile                       (display name, curator flag)
+User ──1 Profile                       (display name; teacher, creator, curator flags)
 
 Experience ──* Station ──* Hint
                        ──* StationMaterial ──1 Material
@@ -56,11 +56,13 @@ Experience / Comment ──* Report        (flag content for a curator)
 
 | Model | What it is | Main fields |
 | --- | --- | --- |
-| **Profile** | The app's own one-to-one to the site's shared `User`. Created on a person's first visit. Never adds fields to `User` | user, display_name (what other teachers see; defaults to the first name), school (free text), is_curator, joined_at; the teachers' door (B.5): teaches, ask_note, asked_at (the ask), is_teacher, teacher_since, teacher_by (the approval) |
+| **Profile** | The app's own one-to-one to the site's shared `User`. Created on a person's first visit. Never adds fields to `User` | user, display_name (what other teachers see; defaults to the first name), school (free text), is_curator, joined_at; the teachers' door (B.5): teaches, ask_note, asked_at (the ask), is_teacher, teacher_since, teacher_by (the approval); the level (B.5.1): is_creator, creator_since, creator_by |
 
-Who can do what is decided by two facts: `request.user == experience.author`
-and `profile.is_curator`. A superuser is a curator (so the site admin is not
-locked out; written here on purpose).
+Who can do what is decided by three flags and one fact: `is_teacher` opens
+the door, `is_creator` opens writing, `is_curator` opens curation and the
+teachers' page, and `request.user == experience.author` opens editing. A
+curator is a teacher and a creator; a superuser is a curator (so the site
+admin is not locked out; written here on purpose).
 
 ---
 

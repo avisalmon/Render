@@ -17,6 +17,74 @@ Newest first.
 
 ---
 
+## PM-115 · 2026-11-27 · Academia360 I.1: a bulk landing of researched people broke a page address, and research agents guessed where they should have stopped
+
+**What happened.** Avi asked to fill the 12 empty institutions by public
+research, rich and correct. Twelve research agents wrote one sourced JSON
+file each; a loader landed 1,616 rows in dev. Rendering every new page
+afterwards found a 500: one professor is listed at two colleges, and the
+researcher page resolves by slug alone while slugs were unique only per
+institution. The review of the files also found an agent's own count of
+names in a directory stored as a faculty headcount, a year given to an
+undated number, timeline years inferred from page dates, a vague prize line
+and a ranking that matches no known table. And the agents shared one free
+API's daily budget, so the later ones ran dry.
+
+**Why the process let it.** The uniqueness rule (`unique_together`
+institution + slug) was written for the table, not for the URL that reads
+it; no test made two people with the same name at two places. The research
+brief said "no URL, no fact" but an agent under pressure to be rich fills a
+field with something near a fact; nothing checked the files before landing
+except the loader's type checks. Parallel agents were planned as
+independent, but they share the machine's network quota.
+
+**Rule.** (a) The field a URL resolves by is unique over the URL's whole
+scope, enforced where rows are created, and after any bulk landing the
+builder renders every new row's page. (b) Agent research lands only after a
+review pass that reads every number, year and prize against its source line
+and drops what was counted, inferred or vague; the loader fills only empty
+fields, so a dropped value stays a visible gap. (c) Plan shared quotas
+before fanning out: a free API is one budget for all agents on one network,
+so give one agent the API job or schedule a backfill after the reset.
+
+- Here: `docs/building_an_app.md` (mistake 90), `academia360/research_load.py`,
+  `academia360/reread.py`, `tests/test_academia360_i1.py`.
+- BKM: dbe5d21 (mistake 102)
+
+---
+
+## PM-114 · 2026-11-27 · breakout B.5.1: the teachers' door opened with one level, and the owner asked for two the next morning
+
+**What happened.** B.5 built the teachers' door in an evening: a person
+asks, a curator approves, the whole site opens. Hours later Avi asked
+for the same door with two levels, a teacher who views and prints and a
+teacher who also creates challenges, because the next epic (AI
+generation) is for the second kind only. The door had to be reopened:
+a flag, a migration, two approve buttons, promote and demote, the API's
+read of the level. Small, but a second sprint on a screen that was a
+day old.
+
+**Why the process let it.** The door was designed as a yes/no question
+("may this person come in?") because that was the sentence Avi said. The
+approver's side was never asked: what does the approver hand out with the
+approval, and will every approved person get the same? The backlog already
+held the answer (B.6 is for "authorised users", a smaller set than
+"teachers"), and nobody read the two sentences together.
+
+**Rule.** When a gate is built where one person approves others, ask at
+design time what the approver hands out with the approval: which rights,
+how many levels, and whether a level changes later. Read the next epic's
+audience against the gate's audience before the gate ships. The level is
+chosen on the approval screen, in the same click, and can be changed on
+the same screen later; a yes/no door with a second screen for rights costs
+the approver a second visit per person.
+
+- Here: `docs/building_an_app.md` (mistake 89), `docs/breakout/spec.md`
+  (chapters 5, 7, 9), `breakout/access.py` (`is_creator`, `may_write`).
+- BKM: FullStackBKM (mistake 101)
+
+---
+
 ## PM-113 · 2026-11-27 · Academia360 Epic P: the first import read 24 generated pages by their class names and lost most of what they said
 
 **What happened.** Avi asked that everything his October 2025 research

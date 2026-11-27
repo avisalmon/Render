@@ -20,7 +20,7 @@
         {% if thin %}<p class="a360-mute a360-narrow">על {{ r.name_he }} יש כאן בינתיים רק את השורות שלמעלה. כשייאסף עוד, הוא יופיע כאן עם המקור והתאריך שלו.</p>{% endif %}
         {% if links %}
         <div class="a360-actions">
-          {% for l in links %}<a href="{{ l.url }}" rel="noopener" class="a360-pill a360-pill-line">{{ l.get_kind_display }}</a>{% endfor %}
+          {% for l in links %}<a href="{{ l.url }}" rel="noopener" class="a360-pill a360-pill-line">{% if "openalex.org" in l.url %}OpenAlex{% else %}{{ l.get_kind_display }}{% endif %}</a>{% endfor %}
         </div>
         {% endif %}
       </div>

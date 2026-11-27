@@ -102,6 +102,8 @@
     <ul class="a360-prizes">
       {% for d in prized %}<li><span class="a360-prize-kind">{{ d.get_kind_display }}</span> <span dir="auto">{% if d.researcher %}<a href="{% url 'academia360:researcher' d.researcher.slug %}">{% if d.researcher.title %}{{ d.researcher.title }} {% endif %}{{ d.researcher.name_he }}</a>{% if d.year %}, {% endif %}{% endif %}{% if d.year %}{{ d.year }}{% endif %}{% if d.title and d.title != d.get_kind_display %} <span class="a360-mute">· {{ d.title }}</span>{% endif %}</span></li>{% endfor %}
     </ul>
+    {% if prized_more %}<details class="a360-fold"><summary>עוד {{ prized_more|length }} פרסים</summary>
+    <ul class="a360-prizes">{% for d in prized_more %}<li><span class="a360-prize-kind">{{ d.get_kind_display }}</span> <span dir="auto">{% if d.researcher %}<a href="{% url 'academia360:researcher' d.researcher.slug %}">{% if d.researcher.title %}{{ d.researcher.title }} {% endif %}{{ d.researcher.name_he }}</a>{% if d.year %}, {% endif %}{% endif %}{% if d.year %}{{ d.year }}{% endif %}{% if d.title and d.title != d.get_kind_display %} <span class="a360-mute">· {{ d.title }}</span>{% endif %}</span></li>{% endfor %}</ul></details>{% endif %}
     {% endif %}
     {% if researchers %}
     <div class="a360-people">

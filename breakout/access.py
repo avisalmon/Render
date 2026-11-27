@@ -5,9 +5,11 @@ The whole app is behind the shared sign-in, and behind one more door: the
 site is for teachers (Avi, 2026-11-27: "students have no access to the
 site, and that is that"), so a signed-in person who is not yet an approved
 teacher sees one page, /breakout/welcome/, where they tell us about
-themselves; a curator approves them once. Beyond that, two facts decide
-everything: is this person the author of the experience, and is their
-Profile a curator. A superuser is a curator (so the site admin is not
+themselves; a curator approves them once, as a viewer or as a creator
+(B.5.1, Avi 2026-11-27: "which teacher may only view and download, and
+which may create"), and may move them between the two at any time. Beyond
+that, two facts decide everything: is this person the author of the
+experience, and is their Profile a curator. A superuser is a curator (so the site admin is not
 locked out of their own app; spec chapter 7 names this exception), and a
 curator is a teacher.
 """
@@ -50,16 +52,36 @@ def is_teacher(user):
     return Profile.objects.filter(user=user).filter(Q(is_teacher=True) | Q(is_curator=True)).exists()
 
 
+def is_creator(user):
+    """May write challenges: approved as a creator, or a curator (a superuser too)."""
+    if not getattr(user, "is_authenticated", False):
+        return False
+    if user.is_superuser:
+        return True
+    return Profile.objects.filter(user=user).filter(Q(is_creator=True) | Q(is_curator=True)).exists()
+
+
 def pending_teachers():
     """Who asked and waits, oldest first: the curator's queue."""
     return Profile.objects.filter(asked_at__isnull=False, is_teacher=False, is_curator=False).select_related("user").order_by("asked_at")
 
 
-def approve_teacher(profile, by):
+def approve_teacher(profile, by, creator=False):
+    """Through the door, as a viewer (the default) or as a creator too."""
     profile.is_teacher = True
     profile.teacher_since = timezone.now()
     profile.teacher_by = by
     profile.save(update_fields=["is_teacher", "teacher_since", "teacher_by"])
+    if creator:
+        set_creator(profile, by, True)
+
+
+def set_creator(profile, by, on):
+    """Promote a teacher to creator, or back to viewer; who and when is kept."""
+    profile.is_creator = bool(on)
+    profile.creator_since = timezone.now() if on else None
+    profile.creator_by = by if on else None
+    profile.save(update_fields=["is_creator", "creator_since", "creator_by"])
 
 
 def decline_teacher(profile):
@@ -69,10 +91,11 @@ def decline_teacher(profile):
 
 
 def may_write(user):
-    """Who may start a new experience. Avi, 2026-11-26: "only I put up
-    challenges" for now, so writing is the curators'; opening it to every
-    teacher (spec 5 as first written) is one line here, when he says so."""
-    return is_curator(user)
+    """Who may start a new experience: creators and curators (B.5.1). Avi,
+    2026-11-26: "only I put up challenges"; 2026-11-27: two kinds of teacher,
+    one who views and prints and one who also creates. B.6's AI generation
+    serves the same people, through this same question."""
+    return is_creator(user)
 
 
 def may_edit(user, experience):

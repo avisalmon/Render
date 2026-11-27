@@ -163,7 +163,7 @@ def teachers(request):
     return render(request, "breakout/teachers.html", {
         "section": "teachers",
         "pending": access.pending_teachers(),
-        "approved": Profile.objects.filter(is_teacher=True).select_related("user", "teacher_by").order_by("-teacher_since"),
+        "approved": Profile.objects.filter(is_teacher=True).select_related("user", "teacher_by", "creator_by").order_by("-is_creator", "-teacher_since"),
     })
 
 
@@ -173,9 +173,15 @@ def teacher_decide(request, pk):
     if not access.is_curator(request.user):
         raise Http404
     profile = get_object_or_404(Profile, pk=pk)
-    if request.POST.get("action") == "approve":
-        access.approve_teacher(profile, request.user)
-        messages.success(request, f"{profile.name} בפנים.")
+    action = request.POST.get("action")
+    if action in ("approve", "approve_creator"):
+        access.approve_teacher(profile, request.user, creator=action == "approve_creator")
+        messages.success(request, f"{profile.name} בפנים, " + ("וגם יוצר/ת אתגרים." if action == "approve_creator" else "לצפייה והדפסה."))
+    elif action in ("promote", "demote"):
+        if not profile.is_teacher:
+            raise Http404
+        access.set_creator(profile, request.user, action == "promote")
+        messages.success(request, f"{profile.name} " + ("יוצר/ת אתגרים מעכשיו." if action == "promote" else "לצפייה והדפסה בלבד מעכשיו."))
     else:
         access.decline_teacher(profile)
         messages.success(request, f"הבקשה של {profile.name} נדחתה.")

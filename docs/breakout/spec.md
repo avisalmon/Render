@@ -260,9 +260,13 @@ Each print is recorded as a Download row with the group count.
 > Wording (Avi, 2026-11-27): the thing is called **אתגר** (masculine) in every string a person reads; "experience" stays the name in code, URLs and these docs.
 
 
-Any signed-in teacher writes, eventually. **For now (Avi, 2026-11-26) only
-Avi puts up challenges**: writing is gated to curators in `access.may_write`,
-and opening it to every teacher is that one line. The editor is a sequence of screens, each a
+**Who writes (B.5.1; Avi, 2026-11-27).** Two kinds of teacher pass the
+door: a **viewer**, who reads, prepares and prints, and a **creator**, who
+also writes challenges (by hand here, and with AI from B.6). The curator
+picks the level when approving and may change it at any time
+(`Profile.is_creator`, `creator_since`, `creator_by`). Writing is one
+question, `access.may_write`: a creator or a curator. (Before that, from
+2026-11-26, only curators wrote.) The editor is a sequence of screens, each a
 real object a person can add, edit, delete and reorder (methodology: "every
 item is a real object"):
 
@@ -315,10 +319,13 @@ Making a teacher a curator is a tick on their Profile in the curator's desk
 
 **The teachers' page (B.5, the desk's first corner).** `/curators/teachers/`
 lists who asked to come in (name, email, school, what they teach, their
-note, when) with approve and decline, and who is in; the nav shows the
-curators a count of people waiting. Approving records who and when and opens
-the whole site to that person at once; declining clears the ask so they may
-ask again. Curators only; anyone else gets a 404.
+note, when) with **approve as a viewer**, **approve as a creator** and
+decline, and who is in, each with their level (viewer, creator, curator) and
+a button to promote to creator or return to viewer (B.5.1); the nav shows
+the curators a count of people waiting. Approving records who and when and
+opens the whole site to that person at once; declining clears the ask so
+they may ask again. Curators only; anyone else gets a 404. The level is read
+through the API (`is_teacher`, `is_creator`) and set only here.
 
 ## 8. Look, language, device
 
@@ -342,7 +349,9 @@ approved teacher is sent from every page, file and API route to one page,
 `/welcome/`: "the site is for teachers, tell us about yourself" (school,
 what they teach, a note), stored on their Profile with `asked_at`. A curator
 approves them (chapter 7); `Profile.is_teacher`, `teacher_since`,
-`teacher_by`. A curator is a teacher; a superuser is a curator. A new sign-up
+`teacher_by`, and at the same time or later the level: viewer, or creator
+(`is_creator`; chapter 5). A curator is a teacher and a creator; a superuser
+is a curator. A new sign-up
 lands on `/welcome/`. All of this is one decorator (`access.signed_in`) and
 one DRF permission (`IsTeacher`), so the screens and the API cannot drift.
 The challenge's answers stay static (Avi: no per-teacher randomisation, so a
