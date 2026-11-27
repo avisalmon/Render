@@ -524,7 +524,9 @@ of מל״ג or ות״ת, of Intel, or of any institution. Every page, for every
 role, signed in or not, carries a **thin banner fixed at the very top**
 saying so, in Hebrew (and English on any English page). It is always on: it
 cannot be dismissed, it is part of the app's base template, and a test
-reads it on every page. Wording to settle in the design chapter; the sense
+reads it on every page. It is sticky: it stays in view while the page
+scrolls, above the bar and everything else (Avi, 2026-11-27). Wording to
+settle in the design chapter; the sense
 is: "אתר פיילוט שנבנה על ידי אבי סלמון. אינו אתר רשמי של הממשלה, מל״ג/ות״ת,
 אינטל או כל מוסד."
 
