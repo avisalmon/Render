@@ -1633,3 +1633,26 @@ pattern that can match more than the rows you made is a bug, not a
 shortcut, and a count that surprises you is read before anything else
 runs. The class sweep that found two undefined classes at the same epic's
 end runs with each sprint's tests from now on, not only at the end.
+
+### 85. Generated pages are read as pictures; bidi is decided per string; the pen records what it draws; seeded content is rewritten only by name
+
+breakout's hands-on sheets (vector drawings by code) printed a bit pattern
+backwards (bidi laid its spaced digit runs right to left), drew boxes for
+two glyphs Heebo does not have, and overlapped a label with its own arrow;
+only reading every page as a picture found them. The first kit then showed
+an empty cover page before the final lock's sheets, because the new kind of
+attachment took one of two paths. The flagship also had to be rewritten in
+production for the first time (PM-110).
+
+**The rule.** A string without a right-to-left letter skips the bidi pass. A
+glyph outside the shipped font is drawn as a shape or left out. A document
+generator records the words it draws through the pen it draws with, so the
+content tests (no secret on a player page) read generated pages too; the
+geometry that encodes an answer is tested right at the answer and wrong
+everywhere else; and every generated page is rendered to a picture and read
+before the sprint is called done, because bounds checks cannot see overlap.
+A new kind of attachment runs through every path that handles attachments
+before its first render. Seeded content that already exists in production is
+rewritten only by an explicit flag that names the slug, on the owner's word,
+through a deploy line removed on the next ship; it keeps the row and bumps
+the version.

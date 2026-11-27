@@ -98,7 +98,7 @@ by material, scaled by how many groups the teacher enters when printing.
 
 | Model | What it is | Main fields |
 | --- | --- | --- |
-| **Printable** | A ready-made page or file the author attaches: a drawn logic board, a cut-out sheet, an answer card. Belongs to a station or to the whole experience | experience, station (nullable), kind: `player_page` / `cut_out` / `teacher_page` / `image`, title, file (PDF or image, private media under the app's folder), page_count, width_px / height_px (images, kept at upload so a page is never measured while rendering), order, uploaded_at |
+| **Printable** | A ready-made page or file the author attaches: a drawn logic board, a cut-out sheet, an answer card. Belongs to a station or to the whole experience | experience, station (nullable), kind: `player_page` / `instructions` / `cut_out` / `teacher_page` / `image`, title, file (PDF or image, private media under the app's folder; empty for a generated sheet), generator (the key of a sheet drawn by code in `breakout/sheets/`, B.4; the row says which sheet and where it belongs, the code draws it), page_count, width_px / height_px (images, kept at upload so a page is never measured while rendering), order, uploaded_at |
 
 The generated kit (teacher's guide, player pages per station, shopping list)
 is a view over the rows above and is not stored. A download of it is recorded

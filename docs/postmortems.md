@@ -17,6 +17,53 @@ Newest first.
 
 ---
 
+## PM-110 · 2026-11-27 · breakout B.4 (the hands-on flagship): three things the pictures caught, one the font caught, and a rule for rewriting seeded content
+
+**What happened.** Avi asked for the example challenge to be made with
+hands (cut, fold, assemble) and for the explanation pages to be illustrated
+like a textbook, drawn as exact vector graphics. The sheets are drawn by
+code (`breakout/sheets/`) and attached as `Printable` rows with a
+`generator` key. Rendering every sheet to a picture and reading it, before
+any test, found: (1) the bit tickets "01100" printed as "00110": a digit
+string with spaces is several number runs, and the bidi pass laid them
+right to left; (2) a filler glyph (✶) and the header's ✦ are not in Heebo
+and printed as boxes; (3) three overlaps a bounds check cannot see (a label
+across its own arrow, a caption into a drawing, a note on top of the
+legend). The first kit render then showed an almost empty cover page before
+each of the final lock's sheets, because the whole-experience sheets took
+the uploaded picture's cover-page path. The seed also needed, for the first
+time, to rewrite content that already exists in production.
+
+**Why the process let it.** The kit's drawing code had one bidi rule for
+every string; a glyph outside the font fails silently; a geometry check
+proves "inside the page", not "not on top of each other"; the new kind of
+printable was added to one of two code paths. Rule 15 (show the thing),
+Rule 21 (read the picture against the data) and Rule 74 (look before done)
+all say to look, and looking is what found every one of these.
+
+**Rule.** (a) A string without a right-to-left letter skips the bidi pass
+(digits, bit patterns, codes); the renderer decides per string, not per
+document. (b) A glyph outside the shipped font is drawn as a shape or not
+at all; the test that counts a sheet's words also renders it once, and a
+reviewer reads every generated page as a picture, which is the only check
+that sees overlap. (c) A document generator records the words it draws
+through the same pen it draws with (a pen without a canvas records only),
+so the content tests read generated pages too, and the geometry that
+encodes a secret (the lock's offsets) is tested to be right at the answer
+and wrong everywhere else. (d) A new kind of attachment is run through
+every path that handles attachments (here: a station's and the whole
+experience's) before the first render. (e) Seeded content that already
+exists in production is rewritten only by an explicit, slug-naming flag
+(`--refresh <slug>`) on the owner's word, through a deploy line that is
+removed on the next ship; it keeps the row and bumps the version, never
+recreates it.
+
+- Here: `docs/building_an_app.md` (mistake 85), `breakout/sheets/toolkit.py`,
+  `breakout/management/commands/seed_breakout.py`, `tests/test_breakout_b4.py`.
+- BKM: FullStackBKM f638221 (mistake 97)
+
+---
+
 ## PM-109 · 2026-11-27 · Epic E end (Academia360 discussion, decision, letters, bell): two small things, both mine
 
 **What happened.** (1) The class sweep at the epic's end found two classes

@@ -98,8 +98,8 @@ def test_the_experience_page_offers_the_kit_with_one_question(seeded, dana):
     # The shopping list asks the same question and starts from the same answer.
     assert f'id="br-groups" min="1" max="{kit.MAX_GROUPS}" value="{kit.DEFAULT_GROUPS}"' in html
     table = re.search(r'<table class="br-table" id="br-shopping">(.*?)</table>', html, re.S).group(1)
-    cards = re.search(r"<tr><td>כרטיסיות</td><td><span class=\"br-qty\" data-per-group=\"8[\d.]*\">(\d+)</span>", table)
-    assert cards and int(cards.group(1)) == 8 * kit.DEFAULT_GROUPS
+    pages = re.search(r"<tr><td>דף A4</td><td><span class=\"br-qty\" data-per-group=\"13[\d.]*\">(\d+)</span>", table)
+    assert pages and int(pages.group(1)) == 13 * kit.DEFAULT_GROUPS
 
 
 # ---------------------------------------------------------------- the door
@@ -181,15 +181,18 @@ def test_every_group_gets_its_own_stack_of_station_pages(seeded):
     stamps = re.findall(r"קבוצה (\d) מתוך 3", three.player_text())
     assert stamps == [str(g) for g in (1, 2, 3) for _ in stations]
     pages_one, pages_three = kit.page_count(one.pdf()), kit.page_count(three.pdf())
-    assert pages_three - pages_one == 2 * len(stations)
-    assert pages_one > len(stations)  # the teacher's guide comes first
+    sheets_per_stack = sum(p.page_count for p in seeded.printables.all() if p.for_players)  # B.4: 13 generated sheets
+    assert sheets_per_stack == 13
+    assert pages_three - pages_one == 2 * (len(stations) + sheets_per_stack)
+    assert pages_one > len(stations) + sheets_per_stack  # the teacher's guide comes first
 
 
 def test_the_teacher_guide_scales_the_shopping_list_and_says_who_printed_what(seeded):
     part = kit.compose(seeded, 6).part(kit.TEACHER)
     text = part.text()
     assert "רשימת קניות ל-6 קבוצות" in text
-    assert "כרטיסיות: 48 כרטיסייה (8 לקבוצה; הזיכרון, האלגוריתם)" in text
+    assert "דף A4: 78 דף (13 לקבוצה; הזיכרון, המעבד, הבאג, הרשת, האלגוריתם)" in text
+    assert "מספריים: 6 זוג (1 לקבוצה; הזיכרון)" in text  # a shared tool is listed once, not per station
     assert "ערכה ל-6 קבוצות · כיתות ז-ט · קבוצות של 4 עד 6" in text
     assert "הקוד\n4326" in text
     # The guide's chapters, in the order a teacher prepares (headings, not substrings: mistake 1).
@@ -205,16 +208,24 @@ def test_a_thin_experience_still_prints(dana):
     assert kit.page_count(kit.compose(thin, 2).pdf()) == 3
 
 
-def test_a_program_keeps_its_lines_and_its_indentation(seeded):
-    bug = seeded.stations.get(order=3)
-    blocks = kit.compose(seeded, 1).part(kit.PLAYERS).blocks
-    start = next(i for i, b in enumerate(blocks) if b.kind == "title" and b.text == f"תחנה 3: {bug.name}")
-    end = next(i for i, b in enumerate(blocks) if i > start and b.kind == "title")
-    lines = [b.text for b in blocks[start:end] if b.kind == "kidsmono"]
+PROGRAM = (
+    "זאת התוכנית, שורה אחר שורה:\n\n1. סכום = 0\n2. עבור כל מספר מ-1 עד 10:\n3.     אם המספר מתחלק ב-2 בלי שארית:\n"
+    "4.         סכום = סכום + 1\n5. הדפס \"סכום הזוגיים הוא:\"\n6. הדפס סכום\n\nמצאו את השורה השגויה."
+)
+
+
+def test_a_program_keeps_its_lines_and_its_indentation(dana):
+    """A puzzle typed as a program (the flagship's station 3 before B.4 moved
+    the program onto a cut-out sheet) keeps every line and its indent."""
+    exp = Experience.objects.create(author=dana, title="תוכנית", slug="program", status=Experience.PUBLISHED)
+    bug = Station.objects.create(experience=exp, order=1, name="הבאג", puzzle_text=PROGRAM, solution="שורה 4 (הספרה 4)")
+    blocks = kit.compose(exp, 1).part(kit.PLAYERS).blocks
+    start = next(i for i, b in enumerate(blocks) if b.kind == "title" and b.text == f"תחנה 1: {bug.name}")
+    lines = [b.text for b in blocks[start:] if b.kind == "kidsmono"]
     assert "1. סכום = 0" in lines
     assert any(line.startswith("4.         ") for line in lines), "the indented line lost its indent"
     assert len([line for line in lines if re.match(r"\d\. ", line.strip())]) == 6
-    assert bug.puzzle_text.count("\n") >= 8  # the seed really is multi-line
+    assert PROGRAM.count("\n") >= 8  # the text really is multi-line
 
 
 # ------------------------------------------------------------ printables
@@ -231,18 +242,24 @@ def _png(width=600, height=200):
     return out.getvalue()
 
 
-def test_an_attached_image_is_appended_behind_a_cover_line(seeded, private_dir):
+def test_an_attached_image_travels_in_every_groups_stack_behind_a_cover_line(seeded, private_dir):
+    """A station's uploaded picture is a player page: it follows the station's
+    page inside each group's stack (B.4), so two groups print it twice."""
     station = seeded.stations.get(order=4)
     before = kit.page_count(kit.compose(seeded, 2).pdf())
     p = Printable.objects.create(experience=seeded, station=station, kind="cut_out", title="שמונה חבילות")
     p.file.save("packets.png", ContentFile(_png()))
     assert str(private_dir) in p.file.path
     made = kit.compose(seeded, 2)
-    cover = made.part(kit.PRINTABLES).text()
-    assert "דף מצורף: שמונה חבילות" in cover
-    assert "לתחנה 4: הרשת" in cover and "להדפיס 2 עותקים" in cover
+    players = made.part(kit.PLAYERS).text()
+    assert players.count("דף מצורף: שמונה חבילות") == 2
+    assert "שמונה חבילות" not in made.part(kit.PRINTABLES).text()
+    # Right after station 4's page, before station 5's, in each stack.
+    first = players.index("דף מצורף: שמונה חבילות")
+    assert players.rindex("תחנה 4: הרשת", 0, first) > players.rindex("תחנה 3: הבאג", 0, first)
+    assert players.index("תחנה 5: האלגוריתם") > first
     pdf = made.pdf()
-    assert kit.page_count(pdf) == before + 1
+    assert kit.page_count(pdf) == before + 2
     assert b"/Subtype /Image" in pdf or b"/Subtype/Image" in pdf
 
 

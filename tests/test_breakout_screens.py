@@ -231,13 +231,13 @@ def test_on_a_phone_a_teacher_finds_the_experience_and_reads_a_solution(browser,
         page.click(".br-station:nth-child(3) summary")
         solution = page.inner_text(".br-station:nth-child(3) .br-solution")
         assert "4" in solution
-        page.click("text=המנעול הסופי")
+        page.click("summary:has-text(\"המנעול הסופי\")")
         assert page.inner_text(".br-code").strip() == "4326"
         page.click("text=רשימת קניות")
         page.fill("#br-groups", "6")
         page.dispatch_event("#br-groups", "input")
-        cards = page.evaluate("[...document.querySelectorAll('#br-shopping tr')].find(tr => tr.textContent.includes('כרטיסיות')).querySelector('.br-qty').textContent")
-        assert cards == "48"
+        cards = page.evaluate("[...document.querySelectorAll('#br-shopping tr')].find(tr => tr.textContent.includes('דף A4')).querySelector('.br-qty').textContent")
+        assert cards == "78"  # 13 sheets per group, 6 groups
         # One number for one question (B.2): the kit form followed the shopping list.
         assert page.input_value("#br-kit-groups") == "6"
         page.fill("#br-kit-groups", "3")
