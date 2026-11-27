@@ -38,6 +38,17 @@ FLAGSHIP = "hamachshev-shenichba"
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def _teacher(user):
+    """Through the teachers' door (B.5): every reader in these tests is an
+    approved teacher; the door itself is tested in test_breakout_b5."""
+    from breakout import access
+
+    profile = access.profile_for(user)
+    profile.is_teacher = True
+    profile.save()
+    return user
+
+
 @pytest.fixture
 def avi(db):
     return User.objects.create_superuser("avi", "avi@example.com", PASSWORD, first_name="אבי")
@@ -58,7 +69,7 @@ def dana(db):
 
 @pytest.fixture
 def yossi(db):
-    return User.objects.create_user("yossi", "yossi@example.com", PASSWORD, first_name="יוסי")
+    return _teacher(User.objects.create_user("yossi", "yossi@example.com", PASSWORD, first_name="יוסי"))
 
 
 @pytest.fixture
@@ -349,7 +360,7 @@ def test_uploads_are_opened_before_they_are_kept(dana, private_dir):
 
     # Served through the checking view only, to people who may see the (draft) experience.
     assert c.get(f"/breakout/files/{rows['סריקה'].pk}/").status_code == 200
-    other = User.objects.create_user("o", "o@example.com", PASSWORD)
+    other = _teacher(User.objects.create_user("o", "o@example.com", PASSWORD))
     assert _as(other).get(f"/breakout/files/{rows['סריקה'].pk}/").status_code == 404
     assert Client().get(f"/breakout/files/{rows['סריקה'].pk}/").status_code == 302
     # Deleting the row deletes the file.

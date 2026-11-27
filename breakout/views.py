@@ -1,16 +1,22 @@
 """breakout's screens: the library and one experience, read-only (spec
-chapters 2 and 3), and the printed kit (chapter 4). The editor (B.3), the
-community (B.4) and the curator's desk (B.5) come in their own sprints.
+chapters 2 and 3), the teacher's prep page with its three prints (chapter
+4), the teachers' door (chapter 9) and the curators' approval page (chapter
+7). The editor is in edit_views; the community comes in its own sprint.
 """
 
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Exists, OuterRef, Q
 from django.http import FileResponse, Http404, HttpResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.utils.http import content_disposition_header
 from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.http import require_POST
 
 from . import access, kit
-from .models import Download, Experience, Like, Printable, Subject, hebrew_grade
+from .forms import TeacherAskForm
+from .models import Download, Experience, Like, Printable, Profile, Subject, hebrew_grade
 
 DIFFICULTY_LABELS = dict(Experience.DIFFICULTIES)
 
@@ -70,17 +76,110 @@ def experience(request, slug):
         "exp": exp,
         "stations": stations,
         "final_lock": final_lock,
-        "shopping": _shopping_list(stations, kit.DEFAULT_GROUPS),
         "total_minutes": total_minutes,
-        "printables": exp.printables.filter(station__isnull=True),
         "may_edit": access.may_edit(request.user, exp),
         "is_curator": access.is_curator(request.user),
-        "default_groups": kit.DEFAULT_GROUPS,
-        "max_groups": kit.MAX_GROUPS,
         "difficulty_label": DIFFICULTY_LABELS.get(exp.difficulty, exp.difficulty),
         "runs": exp.runs.filter(Q(is_public=True) | Q(user=request.user)).select_related("user")[:20],
         "comments": exp.comments.filter(is_hidden=False).select_related("author")[:50],
     })
+
+
+@access.signed_in
+@ensure_csrf_cookie
+def prep(request, slug):
+    """The teacher's preparation page (spec 4, Avi 2026-11-27: "one page,
+    three steps"): buy, print, run. The number of groups is asked once, here."""
+    exp = get_object_or_404(access.visible_experiences(request.user).select_related("author"), slug=slug)
+    stations = list(exp.stations.prefetch_related("materials__material", "printables").order_by("order"))
+    printables = list(exp.printables.select_related("station").order_by("station__order", "order", "pk"))
+    pages = kit.set_pages(exp)
+    prints = [
+        {"key": key, "title": title, "paper": paper, "copies": copies, "pages": pages.get(key),
+         "url": f"/breakout/x/{exp.slug}/print/{key}/"}
+        for key, (title, paper, copies) in kit.SETS.items()
+    ]
+    return render(request, "breakout/prep.html", {
+        "section": "home",
+        "exp": exp,
+        "stations": stations,
+        "final_lock": getattr(exp, "final_lock", None),
+        "shopping": _shopping_list(stations, kit.DEFAULT_GROUPS),
+        "prints": prints,
+        "plain": kit.PLAIN,
+        "card": kit.CARD,
+        "teacher": kit.TEACHER,
+        "sheets": [p for p in printables if p.for_players],
+        "teacher_pages": [p for p in printables if not p.for_players],
+        "setup_stations": [s for s in stations if s.setup_notes],
+        "default_groups": kit.DEFAULT_GROUPS,
+        "max_groups": kit.MAX_GROUPS,
+    })
+
+
+@access.signed_in
+def print_pdf(request, slug, which):
+    """One print set (kit.SETS), for one group, opened in the browser so the
+    teacher says "4 copies" in the print window. The Download row remembers
+    which set and for how many groups."""
+    if which not in kit.SETS:
+        raise Http404
+    exp = get_object_or_404(access.visible_experiences(request.user).select_related("author", "author__breakout_profile"), slug=slug)
+    groups = kit.groups_from(request.GET.get("groups"))
+    pdf = kit.compose_set(exp, which, groups).pdf()
+    Download.objects.create(experience=exp, user=request.user, groups=groups, part=which)
+    response = HttpResponse(pdf, content_type="application/pdf")
+    response["Content-Disposition"] = content_disposition_header(False, kit.set_filename(exp, which))
+    response["X-Content-Type-Options"] = "nosniff"
+    return response
+
+
+# ------------------------------------------------------- the teachers' door
+
+
+@login_required(login_url=access.LOGIN_URL)
+def welcome(request):
+    """The one page a signed-in person who is not yet a teacher can see
+    (spec 9): tell us about yourself, and wait for a curator."""
+    if access.is_teacher(request.user):
+        return redirect("breakout:home")
+    profile = access.profile_for(request.user)
+    form = TeacherAskForm(request.POST or None, instance=profile)
+    if request.method == "POST" and form.is_valid():
+        profile = form.save(commit=False)
+        profile.asked_at = timezone.now()
+        profile.save()
+        messages.success(request, "תודה. הבקשה נרשמה; כשתאושר, הכניסה תיפתח.")
+        return redirect("breakout:welcome")
+    return render(request, "breakout/welcome.html", {"section": "welcome", "form": form, "profile": profile, "asked": profile.asked_at is not None})
+
+
+@access.signed_in
+@ensure_csrf_cookie
+def teachers(request):
+    """The curators' page: who asked to come in, approve or decline; who is in."""
+    if not access.is_curator(request.user):
+        raise Http404
+    return render(request, "breakout/teachers.html", {
+        "section": "teachers",
+        "pending": access.pending_teachers(),
+        "approved": Profile.objects.filter(is_teacher=True).select_related("user", "teacher_by").order_by("-teacher_since"),
+    })
+
+
+@access.signed_in
+@require_POST
+def teacher_decide(request, pk):
+    if not access.is_curator(request.user):
+        raise Http404
+    profile = get_object_or_404(Profile, pk=pk)
+    if request.POST.get("action") == "approve":
+        access.approve_teacher(profile, request.user)
+        messages.success(request, f"{profile.name} בפנים.")
+    else:
+        access.decline_teacher(profile)
+        messages.success(request, f"הבקשה של {profile.name} נדחתה.")
+    return redirect("breakout:teachers")
 
 
 @access.signed_in

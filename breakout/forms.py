@@ -68,3 +68,21 @@ class SignupForm(forms.Form):
         first, _, last = d["name"].strip().partition(" ")
         return User.objects.create_user(username=d["email"], email=d["email"], password=d["password1"],
                                         first_name=first[:150], last_name=last[:150])
+
+
+class TeacherAskForm(forms.ModelForm):
+    """The teachers' door (spec 9): three short answers a curator reads."""
+
+    class Meta:
+        from .models import Profile
+
+        model = Profile
+        fields = ["school", "teaches", "ask_note"]
+        labels = {"school": "בית הספר", "teaches": "מה מלמדים, ולאילו כיתות", "ask_note": "עוד משהו שכדאי שנדע (לא חובה)"}
+        widgets = {"ask_note": forms.Textarea(attrs={"rows": 3})}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["school"].required = True
+        self.fields["teaches"].required = True
+        self.fields["school"].widget.attrs.update(autocomplete="organization")

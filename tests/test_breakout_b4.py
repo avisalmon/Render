@@ -32,6 +32,17 @@ ALL_SHEETS = [
 ]
 
 
+def _teacher(user):
+    """Through the teachers' door (B.5): every reader in these tests is an
+    approved teacher; the door itself is tested in test_breakout_b5."""
+    from breakout import access
+
+    profile = access.profile_for(user)
+    profile.is_teacher = True
+    profile.save()
+    return user
+
+
 @pytest.fixture
 def avi(db):
     return User.objects.create_superuser("avi", "avi@example.com", PASSWORD, first_name="אבי")
@@ -39,7 +50,7 @@ def avi(db):
 
 @pytest.fixture
 def dana(db):
-    return User.objects.create_user("dana", "dana@example.com", PASSWORD, first_name="דנה")
+    return _teacher(User.objects.create_user("dana", "dana@example.com", PASSWORD, first_name="דנה"))
 
 
 @pytest.fixture

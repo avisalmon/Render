@@ -173,7 +173,6 @@ img { max-width: 100%; height: auto; display: block; }
 
 /* ---- the kit form: one question, one button (spec 4) ---- */
 .br-kitform { display: grid; gap: 8px; justify-items: stretch; min-width: 240px; max-width: 320px; }
-.br-kitform .br-field--inline { grid-template-columns: 1fr minmax(0, 96px); margin: 0; }
 .br-kitform .br-btn { width: 100%; }
 .br-kitform p { margin: 0; }
 @media (max-width: 699px) {
@@ -234,3 +233,44 @@ a.br-row-title { text-decoration: underline; text-decoration-color: var(--br-kra
 .br-parts a { font-weight: 700; color: var(--br-ink); min-height: 44px; display: inline-flex; align-items: center; }
 .br-parts span { font-size: .9rem; overflow-wrap: anywhere; }
 .br-choices .br-check input, .br-field .br-check input { width: 22px; height: 22px; min-height: 0; flex: 0 0 auto; padding: 0; }
+
+/* ---- the prep page (spec 4): three steps, two prints ---- */
+.br-nav-count { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; background: var(--br-red); color: #fff; font-size: .8rem; font-weight: 700; margin-inline-start: 4px; }
+.br-step { margin: 0 0 14px; padding: 16px 18px 18px; background: var(--br-paper); box-shadow: 0 3px 0 var(--br-kraft-dark); }
+.br-step-title { display: flex; align-items: center; gap: 12px; margin: 0 0 10px; font-family: var(--br-f-display); font-weight: 400; font-size: 1.4rem; line-height: 1.15; }
+.br-step-num { flex: 0 0 auto; display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--br-ink); color: #fff; font-size: 1.05rem; font-weight: 700; }
+.br-step-lede { margin: 0 0 12px; color: var(--br-ink-soft); }
+.br-step .br-field--inline { max-width: 320px; }
+.br-tick { display: flex; align-items: center; gap: 8px; min-height: 44px; margin: 0; }
+.br-tick input { width: 22px; height: 22px; flex: 0 0 auto; accent-color: var(--br-green); margin: 0; }
+.br-tick input:checked + span { text-decoration: line-through; color: var(--br-ink-soft); }
+#br-shopping td:first-child { padding-top: 0; padding-bottom: 0; }
+.br-prints { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); margin: 0 0 12px; }
+.br-print { display: grid; gap: 6px; align-content: start; padding: 14px 16px 16px; background: #f6f1e6; border-top: 6px solid var(--br-ink); }
+.br-print--plain { border-top-color: var(--br-ink); }
+.br-print--card { border-top-color: var(--br-red); }
+.br-copies { font-weight: 700; }
+.br-print h3 { margin: 0; font-family: var(--br-f-display); font-weight: 400; font-size: 1.2rem; }
+.br-print-paper { margin: 0; font-weight: 700; }
+.br-print-count { margin: 0 0 6px; color: var(--br-ink-soft); }
+.br-print-count b { color: var(--br-ink); font-size: 1.15em; }
+.br-print .br-btn { width: 100%; }
+.br-print--quiet { background: transparent; border-top-color: var(--br-kraft-dark); }
+.br-runlist { margin: 0; padding: 0 20px 0 0; display: grid; gap: 6px; }
+.br-runlist li { overflow-wrap: anywhere; }
+.br-sheets { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.br-sheets li { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 4px 0; border-bottom: 1px dashed var(--br-kraft-dark); }
+.br-sheets a { min-height: 44px; display: inline-flex; align-items: center; font-weight: 700; color: var(--br-ink); flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.br-paper-tag { flex: 0 0 auto; font-size: .8rem; font-weight: 700; padding: 1px 8px; border-radius: 3px; background: var(--br-kraft); }
+.br-paper-tag--card { background: var(--br-red); color: #fff; }
+
+/* ---- the teachers' door and the curators' page ---- */
+.br-welcome .br-paper { max-width: 560px; }
+.br-welcome textarea { font: inherit; font-size: 16px; min-height: 88px; padding: 6px 10px; border: 2px solid var(--br-ink-soft); background: #fff; color: var(--br-ink); width: 100%; resize: vertical; }
+.br-waiting { padding: 12px 14px; background: var(--br-note); box-shadow: 2px 3px 0 var(--br-note-shadow); display: inline-block; margin: 0 0 12px; }
+.br-people { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.br-person { display: grid; gap: 4px; padding: 10px 12px; background: var(--br-paper); box-shadow: 0 2px 0 var(--br-kraft-dark); }
+.br-person-name { font-weight: 700; }
+.br-person-meta { font-size: .9rem; color: var(--br-ink-soft); overflow-wrap: anywhere; }
+.br-person-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.br-person-actions form { margin: 0; }

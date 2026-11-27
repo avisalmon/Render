@@ -1674,3 +1674,41 @@ rows faster than the clock moves, and a bulk insert gives them all one
 instant. A test that asserts order must pass when every row shares a
 timestamp; if it cannot, the order it tests is not the order the code
 promises.
+
+### 87. Walk the job as the role, with the printer in the room
+
+breakout's kit shipped exact and tested, and the first look as a teacher
+found it hard to use: one PDF mixed plain paper with card and multiplied
+itself by the number of groups, so the teacher could neither load card for
+the cut-outs nor say "4 copies" at the printer; the one question was asked
+twice; the page had seven folds and no order of work; and the solutions
+were open to anyone signed in, students included. Nothing was broken. The
+spec was written from the data outward, not from the teacher's day inward
+(PM-112).
+
+**The rule.** Before a screen for a role ships, walk that role's job start
+to finish with the physical world in it: what they hold, which machine they
+use and what it cannot do, who else is in the room. One question is asked
+once. A document people print is split the way the printer needs it (by
+paper, by copies), not the way the data is grouped. "Who may see this" is
+asked per page against the people the page is for, never inherited from the
+site's sign-in. A flow test proves the flow completes; only the walk proves
+it is the right flow.
+
+### 88. Generated pages are read by meaning, with a tag walk, and a parser ships with its count
+
+Academia360's first import read 24 research pages, each generated on its
+own with its own class names, by one page's class names: it kept names and
+links, dropped metrics, publications and prizes, and took 44 area headings
+for people. Its test, "runs twice and changes nothing", was true of a parser
+that read nothing (PM-113).
+
+**The rule.** Pages generated separately are read by what they say (a
+person is a name with a title, a metric is a number beside its word, a
+prize is a badge-like line that starts with the word), with a real tag walk
+and never a regex that stops at the first closing tag. A parser over a
+corpus ships with a count test against the real corpus and a sample test
+that pins known rows exactly, and the builder reads a few parsed rows next
+to their source before landing them. An import fills only what is empty, so
+a better reading can run over a worse one. Idempotence proves nothing about
+coverage.

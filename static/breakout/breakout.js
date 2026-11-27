@@ -45,10 +45,13 @@
     });
   }
 
-  // ---- the shopping list, and the kit's "how many groups" (one number) ----
+  // ---- the prep page: one number, "how many groups", scales the shopping
+  //      list, the copies on each print and the links' ?groups= ----
   var groups = document.getElementById("br-groups");
   if (groups) {
     var qtys = document.querySelectorAll("#br-shopping .br-qty");
+    var copies = document.querySelectorAll(".br-copies");
+    var links = document.querySelectorAll("a[data-groups-link]");
     function scale() {
       var n = Math.max(1, Math.min(30, parseInt(groups.value, 10) || 1));
       qtys.forEach(function (el) {
@@ -56,6 +59,8 @@
         var total = per * n;
         el.textContent = Number.isInteger(total) ? String(total) : total.toFixed(2).replace(/\.?0+$/, "");
       });
+      copies.forEach(function (el) { el.textContent = String(n); });
+      links.forEach(function (a) { a.href = a.href.replace(/([?&])groups=\d+/, "$1groups=" + n); });
     }
     groups.addEventListener("input", scale);
     groups.addEventListener("change", scale);
@@ -65,19 +70,6 @@
   document.querySelectorAll("form[data-confirm]").forEach(function (form) {
     form.addEventListener("submit", function (ev) {
       if (!window.confirm(form.dataset.confirm)) ev.preventDefault();
-    });
-  });
-
-  // The kit form and the shopping list ask the same question; answering one
-  // answers the other (data-sync names the twin).
-  document.querySelectorAll("input[data-sync]").forEach(function (el) {
-    var twin = document.getElementById(el.dataset.sync);
-    if (!twin) return;
-    el.addEventListener("input", function () {
-      if (twin.value !== el.value) {
-        twin.value = el.value;
-        twin.dispatchEvent(new Event("input"));
-      }
     });
   });
 })();

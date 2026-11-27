@@ -1,0 +1,20 @@
+{% extends "breakout/base.html" %}
+{% block title %}ברוכים הבאים · חדרי בריחה מנייר{% endblock %}
+{% block content %}
+<section class="br-door br-welcome">
+  <article class="br-paper">
+    <h1 class="br-h1">האתר מיועד למורים</h1>
+    <p>בפנים יש פתרונות, רמזים וקודים, לכן הכניסה נפתחת רק למורים. ספרו לנו בשתי שורות מי אתם, ואחד האוצרים יאשר.</p>
+    {% if asked %}
+      <p class="br-waiting">הבקשה נרשמה ב-{{ profile.asked_at|date:"d.m.Y" }}. כשתאושר, הכניסה תיפתח.</p>
+      <p class="br-muted br-small">רוצים לתקן משהו? אפשר לשלוח שוב.</p>
+    {% endif %}
+    <form method="post" class="br-form">
+      {% csrf_token %}
+      {% if form.non_field_errors %}<p class="br-error">{{ form.non_field_errors.0 }}</p>{% endif %}
+      {% for field in form %}{% include "breakout/edit/_field.html" %}{% endfor %}
+      <button type="submit" class="br-btn br-btn--main">{% if asked %}שליחה מחדש{% else %}שליחה{% endif %}</button>
+    </form>
+  </article>
+</section>
+{% endblock %}

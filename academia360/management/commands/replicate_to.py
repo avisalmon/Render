@@ -35,6 +35,7 @@ class Command(BaseCommand):
         parser.add_argument("--force", action="store_true")
         parser.add_argument("--rows-only", action="store_true")
         parser.add_argument("--files-only", action="store_true")
+        parser.add_argument("--models", default="", help="comma-separated model names; only these rows travel (Epic P: the public-knowledge tables after a re-import, never the committee's work)")
 
     # The one place the network is touched; tests replace it.
     def send(self, method, url, body, content_type):
@@ -61,6 +62,12 @@ class Command(BaseCommand):
         force = "?force=1" if options["force"] else ""
         if not options["files_only"]:
             models = [m for m in apps.get_app_config("academia360").get_models() if m.__name__ not in SKIP]
+            wanted = {m.strip() for m in options["models"].split(",") if m.strip()}
+            if wanted:
+                unknown = wanted - {m.__name__ for m in models}
+                if unknown:
+                    raise CommandError(f"--models: unknown or never-replicated: {sorted(unknown)}")
+                models = [m for m in models if m.__name__ in wanted]
             total = 0
             first = True
             for model in models:

@@ -28,6 +28,17 @@ PASSWORD = "paper-rooms-2211"
 FLAGSHIP = "hamachshev-shenichba"
 
 
+def _teacher(user):
+    """Through the teachers' door (B.5): every reader in these tests is an
+    approved teacher; the door itself is tested in test_breakout_b5."""
+    from breakout import access
+
+    profile = access.profile_for(user)
+    profile.is_teacher = True
+    profile.save()
+    return user
+
+
 @pytest.fixture
 def avi(db):
     return User.objects.create_superuser("avi", "avi@example.com", PASSWORD, first_name="אבי")
@@ -35,12 +46,12 @@ def avi(db):
 
 @pytest.fixture
 def dana(db):
-    return User.objects.create_user("dana", "dana@example.com", PASSWORD, first_name="דנה")
+    return _teacher(User.objects.create_user("dana", "dana@example.com", PASSWORD, first_name="דנה"))
 
 
 @pytest.fixture
 def yossi(db):
-    return User.objects.create_user("yossi", "yossi@example.com", PASSWORD, first_name="יוסי")
+    return _teacher(User.objects.create_user("yossi", "yossi@example.com", PASSWORD, first_name="יוסי"))
 
 
 @pytest.fixture
@@ -88,17 +99,18 @@ def leaks(exp, groups=2):
 # ------------------------------------------------------------- the screen
 
 
-def test_the_experience_page_offers_the_kit_with_one_question(seeded, dana):
+def test_the_experience_page_sends_the_teacher_to_one_prep_page(seeded, dana):
+    """B.5 (Avi, 2026-11-27): one main button, one page, one question. The
+    prints themselves are tested in test_breakout_b5."""
     html = _as(dana).get(f"/breakout/x/{FLAGSHIP}/").content.decode()
     assert "בקרוב" not in html
-    form = re.search(r'<form class="br-kitform br-pagehead-action"(.*?)</form>', html, re.S).group(0)
-    assert f'action="/breakout/x/{FLAGSHIP}/kit/"' in form and 'method="get"' in form
-    assert 'name="groups"' in form and f'value="{kit.DEFAULT_GROUPS}"' in form and f'max="{kit.MAX_GROUPS}"' in form
-    assert "הדפסת הערכה (PDF)" in form
-    # The shopping list asks the same question and starts from the same answer.
+    assert f'<a class="br-btn br-btn--main" id="br-prep-link" href="/breakout/x/{FLAGSHIP}/prep/">להכנה ולהדפסה</a>' in html
+    assert 'id="br-groups"' not in html and "br-shopping" not in html  # the question moved to the prep page
+    html = _as(dana).get(f"/breakout/x/{FLAGSHIP}/prep/").content.decode()
+    assert html.count('id="br-groups"') == 1
     assert f'id="br-groups" min="1" max="{kit.MAX_GROUPS}" value="{kit.DEFAULT_GROUPS}"' in html
     table = re.search(r'<table class="br-table" id="br-shopping">(.*?)</table>', html, re.S).group(1)
-    pages = re.search(r"<tr><td>דף A4</td><td><span class=\"br-qty\" data-per-group=\"13[\d.]*\">(\d+)</span>", table)
+    pages = re.search(r"<span>דף A4</span></label></td><td><span class=\"br-qty\" data-per-group=\"13[\d.]*\">(\d+)</span>", table)
     assert pages and int(pages.group(1)) == 13 * kit.DEFAULT_GROUPS
 
 

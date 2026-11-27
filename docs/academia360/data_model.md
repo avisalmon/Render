@@ -103,22 +103,24 @@ Circle: **public**. This is the general-interest site anyone can read.
 
 | Model | What it is | Main fields |
 | --- | --- | --- |
-| **Institution** | One higher-education institution. 32 rows from the reference to start; the list grows | name he, name en, slug, kind: `university` / `academic_college` / `teacher_training` / `research_institute`, city, region (B.2: `north` / `haifa` / `center` / `tel_aviv` / `jerusalem` / `south` / `judea_samaria`, from the city), lat, lng (B.2: the main campus, seeded by city in the import, for the map), website, founded, founder, campuses (rows below), logo, unique identity (short text), is budgeted by ות״ת, active |
+| **Institution** | One higher-education institution. 32 rows from the reference to start; the list grows | name he, name en, slug, kind: `university` / `academic_college` / `teacher_training` / `research_institute`, city, region (B.2: `north` / `haifa` / `center` / `tel_aviv` / `jerusalem` / `south` / `judea_samaria`, from the city), lat, lng (B.2: the main campus, seeded by city in the import, for the map), website, founded, founder, campuses (rows below), logo, unique identity (the one paragraph, Epic P) with identity_source and identity_as_of, tagline (one line under the name, Epic P), research_status `none` / `imported` / `rechecked` with research_as_of and research_note (the coverage list, P.5), is budgeted by ות״ת, active |
 | **Campus** | A campus or site | institution, name, city |
 | **Unit** | A faculty, school or department, nested | institution, parent unit, name, kind: `faculty` / `school` / `department`, website |
 | **StudyProgram** | A degree program ("learning track"). The thing the 20% target counts | institution, unit, name, degree (B.A., B.Sc., B.Ed., ...), field (one of the 15 למ"ס fields), level: `undergrad` / `masters` / `phd`, active |
 | **StudyProgramCount** | Students and graduates of a program in a year (נספח א, sheet 2) | study program, academic year, year-1, year-2, year-3, year-4 counts, graduates, source |
+| **UnitEnrollment** | Students of a faculty or school in a year, with its share of the institution (Epic P: "the main professions and how many students in each"); from the reference's overview pages | unit, year, students, approximate, share_pct, source, as_of, verified |
 | **InstitutionMetric** | A number about the institution at a point in time: total students, faculty count, by level, by rank, growth. The CSVs of the reference, as rows | institution, metric key, year, value, unit, source, source url, as_of |
-| **Researcher** | A professor or researcher worth showing: the "leading researchers" pages | institution, unit, name he, name en, title, areas (text), focus, kind: `algorithmic` / `applied` / other, is_leading, photo, bio (short) |
+| **Researcher** | A professor or researcher worth showing: the "leading researchers" pages | institution, unit, name he, name en, title, position (דיקן הפקולטה, פרופסור מן המניין; Epic P), areas (text), focus, kind: `algorithmic` / `applied` / other, is_leading, photo, bio (short), verified (a row the first import took for a person and is an area heading is turned off, P.2) |
 | **ResearcherMetric** | h-index or citations, dated, so it can be refreshed | researcher, metric: `h_index` / `citations`, value, as_of, source |
 | **ResearcherLink** | A verified external profile | researcher, kind: `scholar` / `orcid` / `dblp` / `homepage` / `other`, url, verified_at |
 | **Publication** | A selected work of a researcher | researcher, title, venue, year, citations, url |
 | **Grant** | A notable grant | researcher, funder, title, year |
 | **ResearchCenter** | A center or lab | institution, name, full name, founded, focus, equipment, partners, url |
+| **Distinction** | A prize or honour of a researcher or of the institution (a Nobel, an Israel Prize, an ERC grant, a ranking), Epic P's "research that stands out" | institution, researcher (optional), kind: `nobel` / `israel_prize` / `wolf` / `emet` / `turing` / `erc` / `ranking` / `other`, title, year, url, source, as_of, verified |
 | **Collaboration** | A partner of the institution | institution, kind: `academic` / `industry` / `government` / `community`, partner name, description |
-| **ProfileSection** | Long-form public text about the institution: overview, research strengths, innovation and entrepreneurship, rankings, timeline. Written by the admin, from the reference's reports to start | institution, kind, title, body (sanitized), order, as_of |
+| **ProfileSection** | Long-form public text about the institution: overview, research, innovation, rankings, structure, programs, AI, strengths, collaborations, history, and what the institution published about the program. From the reference's pages to start; folded under "the story" on the page (Epic P) | institution, kind, title, body (sanitized), order, source, as_of, published |
 | **TimelineEvent** | A dated milestone in the institution's story | institution, year, text |
-| **PublicDocument** | A public file worth linking (a public strategic plan an institution chose to publish, a press item) | institution, title, file or url, kind, published_at |
+| **PublicDocument** | What the institution published that speaks to what Academia 360 asks for: a vision, a graduate profile, a strategic plan, a special program, a report, a press item (Epic P: "what matters to Academia 360, in their own words"); empty until material is found, never invented | institution, title, file or url, kind: `vision` / `graduate_profile` / `strategic_plan` / `program` / `report` / `news` / `other`, summary, criteria (many), published_at, source, as_of, verified, order |
 
 ## 4. Taking part in the program
 

@@ -102,6 +102,9 @@ def test_the_banner_cannot_be_dismissed():
     assert "hidden" not in banner and "<button" not in html.split("a360-pilot")[1].split("</div>")[0]
     js = Path("static/academia360/a360.js").read_text(encoding="utf-8")
     assert "a360-pilot" not in js
+    css = Path("static/academia360/a360.css").read_text(encoding="utf-8")
+    rule = re.search(r"\.a360-pilot \{([^}]*)\}", css).group(1)
+    assert "position: sticky" in rule and "top: 0" in rule, "the line stays in view while the page scrolls (Avi, 2026-11-27)"
 
 
 def test_its_own_frame_and_no_link_out(client, world):

@@ -1,0 +1,45 @@
+{% extends "academia360/base.html" %}{% load a360 %}
+{% block title %}כיסוי המוסדות · ניהול · אקדמיה 360°{% endblock %}
+{% block content %}
+<section class="a360-band a360-room">
+  <div class="a360-wrap">
+    <nav class="a360-crumbs" aria-label="מיקום"><a href="{% url 'academia360:manage' %}">ניהול</a><span>·</span><span>כיסוי</span></nav>
+    <h1 class="a360-h1 a360-h1-page">מה יש על כל מוסד</h1>
+    <p class="a360-lede a360-mute a360-narrow">{{ summary.total }} מוסדות: {% for k, label, n in summary.states %}{{ n }} {{ label }}{% if not forloop.last %}, {% endif %}{% endfor %}. לפי מצב המחקר: {% for k, label, n in summary.statuses %}{{ n }} {{ label|lower }}{% if not forloop.last %}, {% endif %}{% endfor %}. שתי העבודות הבאות: לבדוק מחדש את מה שיש, ולמלא את מה שריק.</p>
+
+    <div class="a360-chips" role="group" aria-label="סינון לפי מצב">
+      <a class="a360-chip{% if not state %} a360-chip-on{% endif %}" href="{% url 'academia360:manage_coverage' %}">הכול</a>
+      {% for k, label in states %}<a class="a360-chip{% if state == k %} a360-chip-on{% endif %}" href="?state={{ k }}">{{ label }}</a>{% endfor %}
+    </div>
+
+    <div class="a360-table-wrap">
+    <table class="a360-table a360-coverage">
+      <thead><tr><th scope="col">מוסד</th><th scope="col">מצב</th>{% for key, label in columns %}<th scope="col" class="a360-num-col">{{ label }}</th>{% endfor %}<th scope="col">מצב המחקר</th></tr></thead>
+      <tbody>
+      {% for r in rows %}
+      <tr>
+        <th scope="row"><a href="{% url 'academia360:institution' r.slug %}" dir="auto">{{ r.name }}</a><div class="a360-mute a360-small">{{ r.kind }}</div></th>
+        <td data-label="מצב"><span class="a360-state a360-state-{{ r.state }}">{{ r.state_label }}</span></td>
+        {% for key, n in r.cells %}<td class="a360-num-col{% if not n %} a360-mute{% endif %}" data-label="{{ key|a360_get:labels }}">{% if n %}<span class="a360-num">{{ n }}</span>{% else %}·{% endif %}</td>{% endfor %}
+        <td data-label="מצב המחקר">
+          <form method="post" action="{% url 'academia360:manage_coverage_set' %}" class="a360-cov-form">{% csrf_token %}
+            <input type="hidden" name="institution" value="{{ r.institution.pk }}"><input type="hidden" name="state" value="{{ state }}">
+            <label class="a360-sr" for="rs-{{ r.institution.pk }}">מצב המחקר של {{ r.name }}</label>
+            <select id="rs-{{ r.institution.pk }}" name="research_status">{% for k, label in research_states %}<option value="{{ k }}"{% if r.research_status == k %} selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+            <label class="a360-sr" for="rn-{{ r.institution.pk }}">הערה</label>
+            <input id="rn-{{ r.institution.pk }}" name="research_note" value="{{ r.research_note }}" placeholder="הערה" dir="auto">
+            <button type="submit" class="a360-pill a360-pill-line a360-pill-sm">לשמור</button>
+            {% if r.research_as_of %}<span class="a360-mute a360-small">{{ r.research_as_of|date:"d.m.Y" }}</span>{% endif %}
+          </form>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="{{ columns|length|add:3 }}" class="a360-mute">אין מוסדות במצב הזה.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    <p class="a360-src">ריק: אין על המוסד דבר מעבר לשם ולמקום. עשיר: פסקה, לפחות שלושה חוקרים ואחד עם מדדים, ולפחות שלושה קטעים. השאר חלקי. אותן שורות זמינות לצ׳אט דרך <code>api/admin/coverage/</code>.</p>
+  </div>
+</section>
+{% endblock %}

@@ -26,6 +26,17 @@ FLAGSHIP = "hamachshev-shenichba"
 HEBREW = re.compile(r"[֐-׿]")
 
 
+def _teacher(user):
+    """Through the teachers' door (B.5): every reader in these tests is an
+    approved teacher; the door itself is tested in test_breakout_b5."""
+    from breakout import access
+
+    profile = access.profile_for(user)
+    profile.is_teacher = True
+    profile.save()
+    return user
+
+
 @pytest.fixture
 def avi(db):
     return User.objects.create_superuser("avi", "avi@example.com", PASSWORD, first_name="אבי")
@@ -33,12 +44,12 @@ def avi(db):
 
 @pytest.fixture
 def dana(db):
-    return User.objects.create_user("dana", "dana@example.com", PASSWORD, first_name="דנה")
+    return _teacher(User.objects.create_user("dana", "dana@example.com", PASSWORD, first_name="דנה"))
 
 
 @pytest.fixture
 def yossi(db):
-    return User.objects.create_user("yossi", "yossi@example.com", PASSWORD, first_name="יוסי")
+    return _teacher(User.objects.create_user("yossi", "yossi@example.com", PASSWORD, first_name="יוסי"))
 
 
 @pytest.fixture
@@ -79,8 +90,9 @@ def test_the_door_signs_in_by_email_and_lands_inside_breakout(client, dana):
 
 def test_sign_up_makes_a_working_account_at_once(client):
     r = client.post("/breakout/signup/", {"name": "רונית לוי", "email": "ronit@example.com", "password1": "a-long-paper-password-9", "password2": "a-long-paper-password-9", "next": "/breakout/"})
-    assert r.status_code == 302 and r["Location"] == "/breakout/"
-    assert client.get("/breakout/").status_code == 200
+    assert r.status_code == 302 and r["Location"] == "/breakout/welcome/"  # signed in, and at the teachers' door (B.5)
+    assert client.get("/breakout/welcome/").status_code == 200
+    assert client.get("/breakout/").status_code == 302  # the library waits for a curator's approval
     user = User.objects.get(email="ronit@example.com")
     assert (user.first_name, user.last_name) == ("רונית", "לוי")
     assert user.breakout_profile.name == "רונית"
@@ -214,12 +226,15 @@ def test_the_experience_page_shows_the_chain_the_lock_and_the_shopping_list(seed
     assert "<li dir=\"auto\">בגלגל: 21 היא האות ש.</li>" in chain
     lock = re.search(r'<span class="br-fold-title">המנעול הסופי</span>(.*?)</details>', html, re.S).group(1)
     assert '<span class="br-code" dir="ltr">4326</span>' in lock
+    assert "5 תחנות" in html and "כ-52 דקות" in html
+    # The shopping list lives on the prep page (B.5), with a tick box per row.
+    assert f'id="br-prep-link" href="/breakout/x/{FLAGSHIP}/prep/"' in html
+    html = _as(dana).get(f"/breakout/x/{FLAGSHIP}/prep/").content.decode()
     table = re.search(r'<table class="br-table" id="br-shopping">(.*?)</table>', html, re.S).group(1)
-    rows = re.findall(r"<tr><td>([^<]+)</td><td><span class=\"br-qty\" data-per-group=\"([\d.]+)\">", table)
+    rows = re.findall(r'<label class="br-tick"><input type="checkbox"> <span>([^<]+)</span></label></td><td><span class="br-qty" data-per-group="([\d.]+)">', table)
     per = {name: Decimal(q) for name, q in rows}
     assert per["דף A4"] == 13  # every printed sheet of the kit, per group (B.4)
     assert per["מספריים"] == 1 and per["סרט הדבקה"] == 1  # a shared tool is listed once, not per station
-    assert "5 תחנות" in html and "כ-52 דקות" in html
 
 
 def test_a_draft_is_the_authors_and_the_curators_alone(seeded, avi, dana, yossi):

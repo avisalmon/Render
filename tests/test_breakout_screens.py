@@ -119,6 +119,10 @@ def build_world():
     profile = access.profile_for(dana)  # a writing teacher: for now only curators write (Avi, 2026-11-26)
     profile.is_curator = True
     profile.save()
+    noa = User.objects.create_user("noa", "noa@example.com", PASSWORD, first_name="נועה")  # signed in, not a teacher (B.5)
+    waiting = access.profile_for(noa)
+    waiting.school, waiting.teaches, waiting.asked_at = "תיכון הנגב", "מדעי המחשב, ז-ט", waiting.joined_at
+    waiting.save()
     call_command("seed_breakout", verbosity=0)
     flagship = Experience.objects.get(slug="hamachshev-shenichba")
     Run.objects.create(experience=flagship, user=dana, group_count=5, kids_count=28, actual_minutes=50, rating=5, what_worked="הבאג היה הלהיט")
@@ -155,6 +159,11 @@ def _screens(flagship, second):
         ("home", "dana", "/breakout/"),
         ("experience", "dana", f"/breakout/x/{flagship.slug}/"),
         ("experience-thin", "dana", f"/breakout/x/{second.slug}/"),
+        ("prep", "dana", f"/breakout/x/{flagship.slug}/prep/"),
+        ("prep-thin", "dana", f"/breakout/x/{second.slug}/prep/"),
+        # The teachers' door (B.5): the one page a non-teacher sees, and the curators' page.
+        ("welcome", "noa", "/breakout/welcome/"),
+        ("teachers", "avi", "/breakout/curators/teachers/"),
         ("not-found", "dana", "/breakout/no-such-page/"),
         # The editor (B.3), as the flagship's author.
         ("edit-new", "avi", "/breakout/new/"),
@@ -183,7 +192,7 @@ def test_every_screen_holds_on_every_phone_a_tablet_and_a_desktop(browser, live_
                 for word in ALARM:
                     if re.search(rf"\b{re.escape(word)}\b", text):
                         problems.append(f"{name}@{width}: says {word!r}")
-                if name == "experience" or name.startswith("edit-"):
+                if name in ("experience", "prep") or name.startswith("edit-"):
                     # Open every fold and station so the checks see the whole page.
                     page.evaluate("document.querySelectorAll('details').forEach(d => d.open = true)")
                 for label, js, arg in (("past the edge", OVERFLOW_JS, width), ("fields under 16px", SMALL_FIELDS_JS, None),
@@ -207,7 +216,7 @@ def test_every_screen_holds_on_every_phone_a_tablet_and_a_desktop(browser, live_
 def test_on_a_phone_a_teacher_finds_the_experience_and_reads_a_solution(browser, live_server):
     """The teacher's job, start to finish, on a phone (mistake 27): sign in,
     search, open the experience, open a station, read the solution and the
-    code, scale the shopping list."""
+    code, go to the prep page, say how many groups once, and open a print."""
     flagship, _second = build_world()
     context, page = _open(browser, live_server, "dana", "/breakout/", 390)
     try:
@@ -233,23 +242,26 @@ def test_on_a_phone_a_teacher_finds_the_experience_and_reads_a_solution(browser,
         assert "4" in solution
         page.click("summary:has-text(\"המנעול הסופי\")")
         assert page.inner_text(".br-code").strip() == "4326"
-        page.click("text=רשימת קניות")
+        # One main button to one prep page (B.5), where the one question is asked.
+        page.click("#br-prep-link")
+        page.wait_for_load_state("networkidle")
+        assert page.url.endswith(f"/breakout/x/{flagship.slug}/prep/")
         page.fill("#br-groups", "6")
         page.dispatch_event("#br-groups", "input")
         cards = page.evaluate("[...document.querySelectorAll('#br-shopping tr')].find(tr => tr.textContent.includes('דף A4')).querySelector('.br-qty').textContent")
         assert cards == "78"  # 13 sheets per group, 6 groups
-        # One number for one question (B.2): the kit form followed the shopping list.
-        assert page.input_value("#br-kit-groups") == "6"
-        page.fill("#br-kit-groups", "3")
-        page.dispatch_event("#br-kit-groups", "input")
-        assert page.input_value("#br-groups") == "3"
-        with page.expect_download() as waiting:
-            page.click("#br-kitform button[type=submit]")
-        download = waiting.value
-        assert download.suggested_filename.endswith(".pdf")
-        assert download.url.endswith(f"/breakout/x/{flagship.slug}/kit/?groups=3")
+        assert page.evaluate("[...document.querySelectorAll('.br-copies')].map(e => e.textContent)") == ["6", "6"]
+        href = page.get_attribute("#br-print-card", "href")
+        assert href.endswith(f"/breakout/x/{flagship.slug}/print/card/?groups=6")
+        # The print opens in the browser (a new tab), as a PDF the teacher prints with "6 copies".
+        with context.expect_page() as opened:
+            page.click("#br-print-card")
+        opened.value  # a headless browser downloads a PDF instead of rendering it, so the tab itself shows nothing to read
+        response = page.request.get(href)
+        assert response.status == 200 and response.headers["content-type"] == "application/pdf"
         from breakout.models import Download
-        assert list(Download.objects.values_list("groups", flat=True)) == [3]
+        rows = list(Download.objects.values_list("part", "groups"))
+        assert set(rows) == {("card", 6)} and 1 <= len(rows) <= 2  # the click and the fetch, each a card print for 6 groups
     finally:
         context.close()
 

@@ -15,8 +15,8 @@
 | B. The rest of the public site | The program page, map and list, researchers, compare, comments and corrections, search (programs by field wait for data, Epic I) | shipped 2026-11-26, train T1126-191451 (0267727), live on babook.co.il; approved by Avi 2026-11-26 ("All ok") |
 | C. People | Sign-in in the app's look, requests to join, approval queue, invitations, roles, admin overview | shipped 2026-11-26, train T1126-191451 (0267727), live on babook.co.il; approved by Avi 2026-11-26 ("All ok") |
 | D2. Committee file and flow dashboard | Submissions, files, extracts, analysis, review form, dashboard | shipped 2026-11-27 morning, train T1127-073758 (96162b2), live; approved by Avi ("Ok. Push and cont") |
-| E. Discussion, decision, letters, notifications | Threads, the chair's decision, letters with shared general sections, sending, the PDF, the bell | in work from 2026-11-27 morning |
-| E. Discussion, decision, letters | Threads, meetings and summaries, decision, letters, notifications | planned |
+| E. Discussion, decision, letters, notifications | Threads, the chair's decision, letters with shared general sections, sending, the PDF, the bell | shipped 2026-11-27 10:55, train T1127-103925 (7958e06), after Avi's "Push" |
+| **P. The institution page, read like a book; the reference in full** | The page rebuilt in Avi's order (status for the committee only, one paragraph, what matters to Academia 360, what they teach and how many, research that stands out, the story folded, compare at the bottom), a rich researcher page, a second reading of the reference (focus, metrics, publications, distinctions, student split, timeline), a coverage list in manage; no new facts for institutions without material | built in dev 2026-11-27, awaiting Avi's review and push |
 | F. Leader's workspace | Home, submit, KPIs, budget, 20%, letters | planned |
 | G. Committee assistant | Model metadata, read-only queries, document index, super chat | planned |
 | H. Leader's assistant | Policies, building the request, readiness view, KPI guidance | planned |
@@ -176,9 +176,74 @@ Decisions taken while planning (2026-11-27, to raise at the review):
 | E.3 The chair's decision | `/committee/decide/<submission>/`: the chair's (or the admin's) form: outcome, approved amount, conditions; one decision per submission, re-recorded in place; logged field by field; the admin is told; the board and the file link to it for a chair and show it to everyone | a member is refused, a chair records, the admin records; a second record changes the row and logs the change; the amount accepts "5,000,000"; the admin's bell and mail | built in dev 2026-11-27; `academia360/deciding.py`, `access.chair_only`, `committee/decide.html`; the board's decision cell is the chair's link, the file's row too; `tests/test_academia360_e3.py`, 4 tests |
 | E.4 The letter | `/committee/letters/general/`: the round's general sections, written once (title, body, order; add, edit, remove); `/committee/letter/<submission>/`: the draft, made on first open with the addressee from the primary contact and every general section attached: addressee, the general sections ticked on or off, the specific sections (one textarea each, an empty one to add), a closing; "draft from the reviews" fills the specific sections from the analysis's challenges and the done reviews' notes, a section per criterion; the comments thread inline; the history (who changed what, from the ChangeLog); preview as a PDF | a general section edited once changes every draft that uses it; first open makes the draft with the addressee and the general sections; unticking removes a section row; "draft from the reviews" writes a section per criterion that has material and nothing for one that has none; an emptied section is deleted; the history lists the changes; a leader is refused | built in dev 2026-11-27; `academia360/letters.py` (general_sections, save_general, letter_of, drafted_specific, apply_draft, save_letter, compose, history), `academia360/letter_pages.py` (general, draft), `committee/letters_general.html`, `committee/letter.html`; the comments are the submission's thread "הערות על טיוטת המכתב" (discuss.letter_thread); `tests/test_academia360_e4.py`, 6 tests |
 | E.5 Sending, the letter page, the PDF | `academia360/letter_pdf.py`: the letter as an A4 PDF (header, date, addressee, subject, sections, closing, the pilot line on every page); "send" for a chair or the admin: sent at, sent by, the PDF into the letter's file unless a signed file is there, the submission and the participation to "responded", the institution's leaders told and mailed with the link; `/academia360/letters/<pk>/`: the letter as a page for the committee always and for the institution's leaders once sent, with an access log row; `/letters/<pk>/pdf/` on the fly under the same rule | a member cannot send; sending stamps, files a PDF that opens, moves the statuses, notifies and mails the leaders; before sending the leader gets "no access" and after it reads the page; a leader of another institution is refused; the PDF holds the addressee and the sections; an uploaded signed file is kept | built in dev 2026-11-27; `academia360/letter_pdf.py` (compose first, draw second; Heebo + python-bidi; the pilot line and the page number on every page), `letters.send`, `letter_pages.page` and `.pdf`, `templates/academia360/letter.html`; `/letters/<pk>/` and `/letters/<pk>/pdf/` follow `access.can_see` (the sent letter opens to the institution through `INSTITUTION_Q`); `tests/test_academia360_e5.py`, 4 tests |
-| E.6 The epic's end | The screen contract for every new screen at six widths (a member, a chair, a leader), the whole app suite, `manage.py check`, the security sweep for what E added (posts as markdown, the mention list, the mail bodies, the redirect after "go", the PDF route), bkm_drift, the post-mortem, the review with Avi | the whole suite green | done 2026-11-27 morning: the app suite green (162 collected by `tests/test_academia360_*`, 27 new in E plus one for the child-process readers), the screen contract green at six widths with ten new screens (findings fixed on the way: the bell and the account on one line at 320px, a bell never under 40px, an 18px link out of a heading, two classes the sweep caught), check clean, sweep done (markdown through nh3, mentions validated against the member list, `next` and the bell's redirect through `url_has_allowed_host_and_scheme`, the PDF route behind `can_see` with an access-log row, Notification creation admin-only through the API), drift as before plus the new headings, PM-107 (train requirements), PM-108 (the 502 on extraction, readers in a child), PM-109 (epic end) all landed in FullStackBKM; dev screenshots at 320/412/1280 read; Avi 2026-11-27 10:20: "Push"; the first train (T1127-102056) failed on the bell test, newest-first with two rows in one clock tick (PM-111, mistake 86, BKM 8f511d9; Notification orders by `-created_at, -pk`, migration 0007); shipped by the next train |
+| E.6 The epic's end | The screen contract for every new screen at six widths (a member, a chair, a leader), the whole app suite, `manage.py check`, the security sweep for what E added (posts as markdown, the mention list, the mail bodies, the redirect after "go", the PDF route), bkm_drift, the post-mortem, the review with Avi | the whole suite green | done 2026-11-27 morning: the app suite green (162 collected by `tests/test_academia360_*`, 27 new in E plus one for the child-process readers), the screen contract green at six widths with ten new screens (findings fixed on the way: the bell and the account on one line at 320px, a bell never under 40px, an 18px link out of a heading, two classes the sweep caught), check clean, sweep done (markdown through nh3, mentions validated against the member list, `next` and the bell's redirect through `url_has_allowed_host_and_scheme`, the PDF route behind `can_see` with an access-log row, Notification creation admin-only through the API), drift as before plus the new headings, PM-107 (train requirements), PM-108 (the 502 on extraction, readers in a child), PM-109 (epic end) all landed in FullStackBKM; dev screenshots at 320/412/1280 read; Avi 2026-11-27 10:20: "Push"; the first train (T1127-102056) failed on the bell test, newest-first with two rows in one clock tick (PM-111, mistake 86, BKM 8f511d9; Notification orders by `-created_at, -pk`, migration 0007); shipped by T1127-103925 (7958e06, deploy success, live 10:55 after a second deploy of the same commit from breakout's render.yaml line); production extraction then run by the agent script two files at a time: 81 files, 66 with text, 14 scans without a text layer, one .ods unsupported, no 502 |
 
 ## Epics F to J
 
 Written as sprints when their turn comes; their scope is spec chapter 4 and
 the order is spec chapter 6.
+
+## Epic P. The institution page, read like a book; the reference in full
+
+Avi, 2026-11-27 noon, after seeing the live page: "when I go into an
+institute I want it to be very very clear to read." The order he gave, top
+to bottom: the name on the right and the status on the left, the status
+for committee members only; one big paragraph (where it is, what it
+teaches, what its research is known for); public material that matches
+what Academia 360 cares about (graduate image, vision, special programs),
+clean, with links; the main professions with student numbers per domain;
+research that stands out (prizes, leading researchers) that opens to rich
+pages; compare out of the front, into a menu. Two content rules: first,
+everything his October 2025 research holds finds its place on the site;
+second, nothing is added for an institution we have no material for: it
+stays an honest placeholder, and a management list says which institutions
+are empty, so that two later jobs (recheck the existing, fill the empty)
+have a list to work from. Fresh deep research per institution is a
+separate job (Epic I), by me or by someone else.
+
+What the check found before planning (2026-11-27): 24 of 36 institutions
+have research pages in the reference (an overview page and a researchers
+page each; 5 also have a structured file); 12 have nothing (the music
+academy, Achva, Western Galilee, Hadassah, College of Management, Carmel,
+Oranim, Kaye, Orot, Gordon, David Yellin, the Hebrew University). The first
+import kept researcher names, areas and links and lost focus, h-index,
+citations, publications and distinctions (0 of 219 researchers have a
+metric in production); the overview pages became 147 short sections, 103 of
+them "other"; the timeline matched nothing; one institution has an identity
+paragraph. The pages do not share one markup (each was generated on its
+own), so the second reading goes by meaning, not by class names.
+
+Decisions taken while planning (to raise at the review):
+
+- The status card shows participation, letter and next step to committee
+  members and the admin; the public sees no status at all, not even "took
+  part" (Avi: "any other random user just sees public information").
+- The one paragraph is written by a model from the institution's own
+  reference overview page and nothing else, marked with that source and
+  date; an institution without a page gets no paragraph. It is the only
+  model call in this epic, one per institution, once.
+- New tables: Distinction (a prize or honour, of a researcher or of the
+  institution), UnitEnrollment (students per faculty or school, with the
+  share), and PublicDocument grows a kind, a summary and the criteria it
+  speaks to. Institution grows a tagline and a research status (none /
+  imported / rechecked, with a date and a note) for the coverage list.
+- Numbers stay in sentences and rows, never tiles (spec 5).
+- Pass-1 rows reach production by replication of the public-knowledge
+  models only (a `--models` option), after the code ships.
+- Found on the way (PM-113): the first import had read the pages by class
+  names and kept little; the second reading goes by meaning, with a tag
+  walk, and fills only what is empty, so it ran over the first without
+  harm. Beit Berl's people page lists research areas, not people, so it
+  is the one "partial" institution; 44 area headings the first import had
+  taken for researchers are turned off (verified=False), not deleted.
+- Researcher gets a `position` field (migration 0009). Publications keep
+  their venue and year; a year already inside the venue is not repeated.
+
+| Sprint | Content | Tests written first | Status |
+| --- | --- | --- | --- |
+| P.1 Data model | Distinction, UnitEnrollment, PublicDocument's kind / summary / criteria / source / verified, Institution.tagline + research_status / research_as_of / research_note, new ProfileSection kinds; migration; API routes and write policy; data_model.md §3 | the API lists and writes the new rows under the same rules as their neighbours |done 2026-11-27 noon: migrations 0008 and 0009 (Researcher.position), 3 tests |
+| P.2 The second reading | `import_reference` reads the people pages by meaning (a card is a heading with a title; unit, focus, h-index and citations with ~, bio, publications, links incl. homepage, prizes) and the overview pages (tagline, hero facts as metrics, students per faculty, timeline, section kinds, prize sections); fills only what is empty; `--identity` writes the one paragraph from the page's text through the model | two small pages in two vocabularies parse to the same rows; a second run changes nothing; a filled field is never overwritten; the real folder, when present, yields at least the counts we measured |done 2026-11-27 afternoon: `reference_pages.py` (a tag walk, not a regex; a label is words only; a prize is a badge-like line), `reread.py`, `reread_reference` command; landed in dev: 116 new researchers (291 verified, 44 area headings turned off), 306 publications, 214 metrics, 107 timeline rows, 45 faculty splits, 18 distinctions, 19 taglines, 23 paragraphs for $0.01 (gpt-4o-mini); second run: 0 changes; 6 tests |
+| P.3 The page | Avi's order; status for the committee only; one paragraph; "what matters to Academia 360" from PublicDocument (hidden when empty); what they teach and how many (units with their share and count); research that stands out (distinctions, researcher cards); the story folded under "read more"; compare at the bottom and on the list page; an honest line when the institution has no material yet | the public sees no status and a member does; sections hide when empty; the compare link is not in the hero; no stat tiles; the b3/a4 assertions updated |done 2026-11-27 afternoon: `institution.html` rewritten in Avi's order, `<details>` folds for the story, compare in a tools line at the bottom; a4 test turned around; 4 tests |
+| P.4 The researcher page | Focus and bio, metrics with dates, publications, distinctions, links, colleagues; a page with nothing says so | a rich page shows all of it; an empty one says what is missing |done 2026-11-27 afternoon: `researcher.html` rewritten; publications and prizes section; 1 test (in p3) |
+| P.5 Coverage | `/academia360/manage/coverage/`: a row per institution with what it has (paragraph, sections, researchers, with metrics, publications, split, timeline, documents, distinctions), a state (empty / partial / rich), the research status editable in place, filters; the same through the API for the chat | the list counts right; the admin only; setting a status is logged |done 2026-11-27 afternoon: `coverage.py` (page, set, API view), `manage/coverage.html`; dev: 12 empty, 1 partial (Beit Berl: an areas page, no people), 23 rich; 3 tests |
+| P.6 Epic end | `replicate_to --models`; the screen contract for the new screens at six widths; suite, check, sweep, drift, post-mortem; the review with Avi; after his push: replicate the pass-1 rows to production | | done 2026-11-27 evening: `--models` with its test; screen contract green at six widths with four new screens (findings fixed on the way: a document title link too short to tap, the institution tag on the researcher page as a short link, the coverage table past the phone's edge, now a stack of labelled cards under 700px, two dynamic class names); class sweep clean; check clean; drift as before; PM-113 (BKM d03590c, mistake 99); dev screenshots at 390/1280 read; awaiting Avi's epic review and push, then `replicate_to --models <public-knowledge tables>` to production |

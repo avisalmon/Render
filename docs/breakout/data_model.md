@@ -56,7 +56,7 @@ Experience / Comment ──* Report        (flag content for a curator)
 
 | Model | What it is | Main fields |
 | --- | --- | --- |
-| **Profile** | The app's own one-to-one to the site's shared `User`. Created on a person's first visit. Never adds fields to `User` | user, display_name (what other teachers see; defaults to the first name), school (optional, free text), is_curator, joined_at |
+| **Profile** | The app's own one-to-one to the site's shared `User`. Created on a person's first visit. Never adds fields to `User` | user, display_name (what other teachers see; defaults to the first name), school (free text), is_curator, joined_at; the teachers' door (B.5): teaches, ask_note, asked_at (the ask), is_teacher, teacher_since, teacher_by (the approval) |
 
 Who can do what is decided by two facts: `request.user == experience.author`
 and `profile.is_curator`. A superuser is a curator (so the site admin is not
@@ -98,7 +98,7 @@ by material, scaled by how many groups the teacher enters when printing.
 
 | Model | What it is | Main fields |
 | --- | --- | --- |
-| **Printable** | A ready-made page or file the author attaches: a drawn logic board, a cut-out sheet, an answer card. Belongs to a station or to the whole experience | experience, station (nullable), kind: `player_page` / `instructions` / `cut_out` / `teacher_page` / `image`, title, file (PDF or image, private media under the app's folder; empty for a generated sheet), generator (the key of a sheet drawn by code in `breakout/sheets/`, B.4; the row says which sheet and where it belongs, the code draws it), page_count, width_px / height_px (images, kept at upload so a page is never measured while rendering), order, uploaded_at |
+| **Printable** | A ready-made page or file the author attaches: a drawn logic board, a cut-out sheet, an answer card. Belongs to a station or to the whole experience | experience, station (nullable), kind: `player_page` / `instructions` / `cut_out` / `teacher_page` / `image`, title, file (PDF or image, private media under the app's folder; empty for a generated sheet), generator (the key of a sheet drawn by code in `breakout/sheets/`, B.4; the row says which sheet and where it belongs, the code draws it), page_count, width_px / height_px (images, kept at upload so a page is never measured while rendering), order, uploaded_at. `paper` (property, B.5): `card` for a `cut_out`, `plain` for everything else; the two group prints split on it |
 
 The generated kit (teacher's guide, player pages per station, shopping list)
 is a view over the rows above and is not stored. A download of it is recorded
@@ -113,7 +113,7 @@ is a view over the rows above and is not stored. A download of it is recorded
 | **Like** | One per person per experience | experience, user, created_at (unique together) |
 | **Comment** | A flat comment on an experience. Author may edit and delete; a curator may hide | experience, author, text, created_at, edited_at, is_hidden, hidden_by |
 | **Run** | A teacher ran this experience with a real group and reports back. The most useful signal the library has | experience, user, ran_on (date), group_count, kids_count, actual_minutes, rating (1 to 5), what_worked, what_to_change, is_public (shown to others or kept as the teacher's own note), created_at |
-| **Download** | One kit download or print, for the counter and for "who uses this" | experience, user, groups (how many groups the kit was scaled for), created_at |
+| **Download** | One kit download or print, for the counter and for "who uses this" | experience, user, groups (how many groups the kit was scaled for, or the copies a print was meant for), part (`kit`, or the print set: `plain`, `card`, `teacher`; B.5), created_at |
 | **Report** | Flagging an experience or a comment to a curator | reporter, experience (nullable), comment (nullable), reason, created_at, status: `open` / `resolved`, resolved_by, resolved_at, note |
 
 Counts shown in the library (likes, runs, downloads, comments) are computed

@@ -1,50 +1,59 @@
 {% extends "academia360/base.html" %}
 {% block title %}{{ inst.name_he }} · אקדמיה 360°{% endblock %}
 {% block content %}
+{# Epic P (Avi, 2026-11-27): the page reads top to bottom like a book. The name on the right; the status on the left, for the committee only; then one paragraph; what matters to Academia 360; what they teach and how many; research that stands out; the story, folded; compare at the very bottom. #}
 <section class="a360-hero a360-hero-inst">
   <svg class="a360-arc a360-arc-tr" aria-hidden="true" viewBox="0 0 560 560"><circle cx="280" cy="280" r="210" fill="none" stroke="#E7F5F7" stroke-width="90" stroke-dasharray="900 500" stroke-linecap="round" transform="rotate(140 280 280)"/></svg>
   <div class="a360-wrap a360-rel">
     <nav class="a360-crumbs" aria-label="מיקום"><a href="{% url 'academia360:home' %}">הבית</a><span>›</span><a href="{% url 'academia360:institutions' %}">המוסדות</a><span>›</span><span dir="auto">{{ inst.name }}</span></nav>
-    <div class="a360-hero-in a360-hero-in-inst">
+    <div class="a360-hero-in a360-hero-in-inst{% if not committee %} a360-hero-in-one{% endif %}">
       <div class="a360-hero-text">
         <div class="a360-tags">
           <span class="a360-tag a360-tag-teal">{{ inst.get_kind_display }}</span>
           {% if inst.city %}<span class="a360-tag a360-tag-line" dir="auto">{{ inst.city }}</span>{% endif %}
-          {% if part and part.applied %}<span class="a360-tag a360-tag-green">משתתף באקדמיה 360</span>{% elif part %}<span class="a360-tag a360-tag-line">לא ניגש למחזור תשפ״ה</span>{% endif %}
         </div>
         <h1 class="a360-h1" dir="auto">{{ inst.name_he }}</h1>
         <div class="a360-mute a360-small a360-sub a360-sub-row">{% if inst.name_en %}<span dir="ltr">{{ inst.name_en }}</span>{% endif %}{% if inst.founded %}<span>נוסד {{ inst.founded }}</span>{% endif %}{% if inst.website %}<a href="{{ inst.website }}" rel="noopener" dir="ltr">{{ inst.website|cut:"https://"|cut:"http://"|cut:"www."|cut:"/" }}</a>{% endif %}</div>
-        {% if inst.identity %}<p class="a360-lede a360-narrow" dir="auto">{{ inst.identity }}</p>{% endif %}
-        <div class="a360-actions">
-          {% if program_sections %}<a href="#a360" class="a360-pill a360-pill-dark">{{ inst.name }} באקדמיה 360</a>{% endif %}
-          {% if researchers %}<a href="#r" class="a360-pill a360-pill-line">מי חוקר כאן</a>{% endif %}
-          <a href="{% url 'academia360:compare' %}?a={{ inst.slug }}" class="a360-pill a360-pill-line">להשוות למוסד אחר</a>
-        </div>
+        {% if inst.tagline %}<p class="a360-tagline" dir="auto">{{ inst.tagline }}</p>{% endif %}
+        {% if inst.identity %}
+        <p class="a360-lede a360-identity" dir="auto">{{ inst.identity }}</p>
+        {% if inst.identity_source %}<div class="a360-src">{{ inst.identity_source }}{% if inst.identity_as_of %} · {{ inst.identity_as_of|date:"m.Y" }}{% endif %}</div>{% endif %}
+        {% elif thin %}
+        <p class="a360-lede a360-mute a360-narrow">על המוסד הזה עוד לא נאסף חומר מעבר לשורות שלמעלה. כשייאסף, הוא יופיע כאן עם המקור והתאריך שלו.</p>
+        {% endif %}
       </div>
-      {% if part %}
-      <div class="a360-card a360-pad a360-prog-box">
-        <b>באקדמיה 360</b>
+      {% if committee %}
+      <div class="a360-card a360-pad a360-prog-box a360-status-box">
+        <b>באקדמיה 360 <span class="a360-mute a360-small">· לחברי הוועדה</span></b>
         <div class="a360-rows">
-          <div class="a360-row a360-row-tight"><span>מחזור תשפ״ה</span><span class="a360-b">{% if part.applied %}הגיש תכנית ארבע־שנתית{% else %}לא ניגש{% endif %}</span></div>
-          {% if part.applied %}<div class="a360-row a360-row-tight"><span>מכתב הוועדה</span><span class="a360-b">{% if letter_sent %}נשלח למוסד{% else %}בעבודה{% endif %}</span></div>{% endif %}
-          {% if part.lead_title %}<div class="a360-row a360-row-tight"><span>הובלה במוסד</span><span class="a360-b" dir="auto">{{ part.lead_title }}</span></div>{% endif %}
-          {% if part.applied %}<div class="a360-row a360-row-tight"><span>השלב הבא</span><span class="a360-b">דוח ביצוע תשפ״ו</span></div>{% endif %}
+          <div class="a360-row a360-row-tight"><span>מחזור תשפ״ה</span><span class="a360-b">{% if part and part.applied %}הגיש תכנית ארבע־שנתית{% elif part %}לא ניגש{% else %}אין רשומה{% endif %}</span></div>
+          {% if part and part.applied %}<div class="a360-row a360-row-tight"><span>מכתב הוועדה</span><span class="a360-b">{% if letter_sent %}נשלח למוסד{% else %}בעבודה{% endif %}</span></div>{% endif %}
+          {% if part and part.lead_title %}<div class="a360-row a360-row-tight"><span>הובלה במוסד</span><span class="a360-b" dir="auto">{{ part.lead_title }}</span></div>{% endif %}
+          {% if part and part.applied %}<div class="a360-row a360-row-tight"><span>השלב הבא</span><span class="a360-b">דוח ביצוע תשפ״ו</span></div>{% endif %}
         </div>
-        <p class="a360-src">מה שהמוסד הגיש לוועדה אינו ציבורי. כאן מופיעים שלבי התהליך, ומה שהמוסד עצמו פרסם.</p>
+        <p class="a360-src"><a href="{% url 'academia360:committee' %}">לחדר הוועדה</a> · הציבור אינו רואה את התיבה הזאת.</p>
       </div>
       {% endif %}
     </div>
   </div>
 </section>
 
-{% if program_sections %}
+{% if documents or program_sections %}
 <section id="a360" class="a360-band a360-band-white">
   <div class="a360-wrap a360-two">
     <div>
-      <h2 class="a360-h2">מה {{ inst.name }} פרסם על התכנית שלו</h2>
-      <p class="a360-mute">מתוך מה שהמוסד עצמו פרסם. מה שהוגש לוועדה נשאר בין המוסד לוועדה.</p>
+      <h2 class="a360-h2">מה שחשוב לאקדמיה 360, במילים של {{ inst.name }}</h2>
+      <p class="a360-mute">חומר שהמוסד עצמו פרסם ונוגע למה שהתכנית מבקשת: דמות הבוגר, חזון, תכניות מיוחדות. מה שהוגש לוועדה נשאר בין המוסד לוועדה.</p>
     </div>
     <div class="a360-stack a360-stack-tight">
+      {% for d in documents %}
+      <article class="a360-doc">
+        <div class="a360-doc-head"><span class="a360-tag a360-tag-teal">{{ d.get_kind_display }}</span>{% for c in d.criteria.all %}<span class="a360-tag a360-tag-line" dir="auto">{{ c.name }}</span>{% endfor %}</div>
+        <h3 class="a360-h3" dir="auto">{% if d.url %}<a href="{{ d.url }}" rel="noopener">{{ d.title }}</a>{% elif d.file %}<a href="{{ d.file.url }}" rel="noopener">{{ d.title }}</a>{% else %}{{ d.title }}{% endif %}</h3>
+        {% if d.summary %}<p class="a360-prose" dir="auto">{{ d.summary }}</p>{% endif %}
+        <div class="a360-src">{% if d.source %}מקור: {{ d.source }}{% endif %}{% if d.published_at %} · פורסם {{ d.published_at|date:"m.Y" }}{% elif d.as_of %} · {{ d.as_of|date:"m.Y" }}{% endif %}</div>
+      </article>
+      {% endfor %}
       {% for s in program_sections %}
       <article class="a360-section"><h3 class="a360-h3" dir="auto">{{ s.title }}</h3><div class="a360-prose" dir="auto">{{ s.body|linebreaks }}</div>{% if s.source %}<div class="a360-src">מקור: {{ s.source }}{% if s.as_of %} · {{ s.as_of|date:"m.Y" }}{% endif %}</div>{% endif %}</article>
       {% endfor %}
@@ -53,71 +62,100 @@
 </section>
 {% endif %}
 
-<section class="a360-band {% if not program_sections %}a360-band-white{% endif %}">
-  <div class="a360-wrap a360-two a360-two-wide">
-    <div class="a360-stack">
-      {% if researchers %}
-      <article class="a360-section" id="r">
-        <div class="a360-head-row"><h2 class="a360-h2">מי חוקר כאן</h2><a class="a360-mute a360-small a360-link-sm" href="{% url 'academia360:researchers' %}?inst={{ inst.slug }}">{% if researcher_count > researchers|length %}{{ researchers|length }} מתוך {{ researcher_count }} · {% endif %}כולם, לפי תחום</a></div>
-        <p class="a360-mute a360-small">חוקרים מובילים, עם קישור לפרופיל מאומת ותאריך הקריאה של המדדים. מה שלא נאסף עדיין נשאר ריק.</p>
-        <div class="a360-rows">
-          {% for r in researchers %}
-          <div class="a360-row">
-            <div class="a360-row-main"><a href="{% url 'academia360:researcher' r.slug %}" dir="auto"><b>{% if r.title %}{{ r.title }} {% endif %}{{ r.name_he }}</b></a><div class="a360-mute a360-small" dir="auto">{% if r.unit %}{{ r.unit.name }}{% if r.areas %} · {% endif %}{% endif %}{{ r.areas }}</div></div>
-            {% if r.h_index or r.citations or r.links.all %}<div class="a360-row-end">
-              {% if r.h_index or r.citations %}<div class="a360-small">{% if r.h_index %}h-index <span class="a360-num">{% if r.h_index.approximate %}≈{% endif %}{{ r.h_index.value }}</span>{% endif %}{% if r.citations %}{% if r.h_index %} · {% endif %}<span class="a360-num">{{ r.citations.value }}</span> ציטוטים{% endif %}</div>{% endif %}
-              <div class="a360-src">{% for l in r.links.all %}<a href="{{ l.url }}" rel="noopener">{{ l.get_kind_display }}</a>{% if not forloop.last %} · {% endif %}{% endfor %}{% if r.h_index.as_of %}{% if r.links.all %} · {% endif %}{{ r.h_index.as_of|date:"m.Y" }}{% endif %}</div>
-            </div>{% endif %}
-          </div>
-          {% endfor %}
-        </div>
-      </article>
+{% if taught or loose_programs or headline %}
+<section class="a360-band{% if not documents and not program_sections %} a360-band-white{% endif %}">
+  <div class="a360-wrap a360-two">
+    <div>
+      <h2 class="a360-h2">מה לומדים כאן, וכמה</h2>
+      {% if headline %}
+      <p class="a360-prose a360-narrow">{% for m in headline %}{% if forloop.first %}{% elif forloop.last %} ו־{% else %}, {% endif %}{% if m.key == "students_total" %}<span class="a360-num">{% if m.approximate %}כ־{% endif %}{{ m.text }}</span> סטודנטים{% elif m.key == "students_undergrad" %}<span class="a360-num">{{ m.text }}</span> מהם לתואר ראשון{% else %}<span class="a360-num">{% if m.approximate %}כ־{% endif %}{{ m.text }}</span> חברי סגל{% endif %}{% endfor %}{% if headline.0.year %} (נכון ל־{{ headline.0.year }}){% endif %}.</p>
+      <div class="a360-src">מקור: {{ headline.0.source|default:"אתר הרפרנס" }}{% if headline.0.as_of %} · {{ headline.0.as_of|date:"m.Y" }}{% endif %}</div>
+      {% else %}
+      <p class="a360-mute">התחומים המרכזיים, ומספר הסטודנטים בכל אחד כשהוא ידוע.</p>
       {% endif %}
-
-      {% if units or loose_programs %}
-      <article class="a360-section">
-        <div class="a360-head-row"><h2 class="a360-h2">מה לומדים כאן</h2>{% if program_count %}<span class="a360-mute a360-small">{{ program_count }} תכניות במערכת</span>{% endif %}</div>
-        <div class="a360-units">
-          {% for u in units %}
-          <div class="a360-unit"><div class="a360-inst-head" dir="auto">{{ u.name }}</div>
-            {% for p in u.study_programs.all %}<span dir="auto">{{ p.name }}{% if p.degree %} <span class="a360-mute">· {{ p.degree }}</span>{% endif %}</span>{% endfor %}
-          </div>
-          {% endfor %}
-          {% if loose_programs %}<div class="a360-unit"><div class="a360-inst-head">תכניות נוספות</div>{% for p in loose_programs %}<span dir="auto">{{ p.name }}</span>{% endfor %}</div>{% endif %}
-        </div>
-      </article>
-      {% endif %}
-
-      {% for s in sections %}
-      <article class="a360-section">
-        <h2 class="a360-h2" dir="auto">{{ s.title }}</h2>
-        <div class="a360-prose" dir="auto">{{ s.body|linebreaks }}</div>
-        {% if s.source or s.as_of %}<div class="a360-src">מקור: {{ s.source }}{% if s.as_of %} · נכון ל־{{ s.as_of|date:"m.Y" }}{% endif %}</div>{% endif %}
-      </article>
-      {% endfor %}
     </div>
-
-    <aside class="a360-stack">
-      {% if metrics %}
-      <div class="a360-card a360-pad">
-        <b>במספרים</b>
-        <div class="a360-rows">
-          {% for m in metrics %}<div class="a360-row a360-row-tight"><span>{{ m.label }}{% if m.year %} <span class="a360-mute">· {{ m.year }}</span>{% endif %}</span><span class="a360-num">{{ m.value|floatformat:"-2" }}</span></div>{% endfor %}
+    <div>
+      {% if taught %}
+      <div class="a360-rows a360-taught">
+        {% for u in taught %}
+        <div class="a360-row">
+          <div class="a360-row-main">
+            <b dir="auto">{{ u.name }}</b>
+            {% if u.programs %}<div class="a360-mute a360-small a360-progs" dir="auto">{% for p in u.programs %}{{ p.name }}{% if p.degree %} <span class="a360-mute">({{ p.degree }})</span>{% endif %}{% if not forloop.last %} · {% endif %}{% endfor %}</div>{% endif %}
+          </div>
+          {% if u.count %}<div class="a360-row-end a360-small">{% if u.count.students %}<span class="a360-num">{% if u.count.approximate %}כ־{% endif %}{{ u.count.text }}</span> סטודנטים{% endif %}{% if u.count.share_pct %}{% if u.count.students %} · {% endif %}<span class="a360-num">{{ u.count.share_pct|floatformat:"-1" }}%</span> מהמוסד{% endif %}{% if u.count.year %} <span class="a360-mute">· {{ u.count.year }}</span>{% endif %}</div>{% endif %}
         </div>
-        <div class="a360-src">{% with metrics.0 as m0 %}מקור: {{ m0.source|default:"אתר הרפרנס" }}{% if m0.as_of %} · {{ m0.as_of|date:"m.Y" }}{% endif %}{% endwith %}</div>
+        {% endfor %}
       </div>
       {% endif %}
-      {% if collaborations %}<div class="a360-card a360-pad"><b>שותפים</b><div class="a360-rows">{% for c in collaborations %}<div class="a360-row a360-row-tight"><span dir="auto">{{ c.partner }}{% if c.description %} <span class="a360-mute">· {{ c.description|truncatechars:70 }}</span>{% endif %}</span><span class="a360-mute a360-small">{{ c.get_kind_display }}</span></div>{% endfor %}</div></div>{% endif %}
-      {% if centers %}
-      <div class="a360-card a360-pad"><b>מרכזים שכדאי להכיר</b><div class="a360-rows">{% for c in centers %}<div class="a360-row a360-row-tight"><span dir="auto">{{ c.name }}{% if c.focus %} <span class="a360-mute">· {{ c.focus|truncatechars:60 }}</span>{% endif %}</span></div>{% endfor %}</div></div>
-      {% endif %}
+      {% if loose_programs %}<div class="a360-unit a360-loose"><div class="a360-inst-head">תכניות נוספות</div><div class="a360-progs" dir="auto">{% for p in loose_programs %}{{ p.name }}{% if not forloop.last %} · {% endif %}{% endfor %}</div></div>{% endif %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if prized or researchers or centers %}
+<section class="a360-band a360-band-white" id="r">
+  <div class="a360-wrap">
+    <div class="a360-head-row"><h2 class="a360-h2">מחקר שבולט כאן</h2>{% if researcher_count %}<a class="a360-mute a360-small a360-link-sm" href="{% url 'academia360:researchers' %}?inst={{ inst.slug }}">{% if researcher_count > researchers|length %}{{ researchers|length }} מתוך {{ researcher_count }} · {% endif %}כל החוקרים, לפי תחום</a>{% endif %}</div>
+    {% if prized %}
+    <ul class="a360-prizes">
+      {% for d in prized %}<li><span class="a360-prize-kind">{{ d.get_kind_display }}</span> <span dir="auto">{% if d.researcher %}<a href="{% url 'academia360:researcher' d.researcher.slug %}">{% if d.researcher.title %}{{ d.researcher.title }} {% endif %}{{ d.researcher.name_he }}</a>{% if d.year %}, {% endif %}{% endif %}{% if d.year %}{{ d.year }}{% endif %}{% if d.title and d.title != d.get_kind_display %} <span class="a360-mute">· {{ d.title }}</span>{% endif %}</span></li>{% endfor %}
+    </ul>
+    {% endif %}
+    {% if researchers %}
+    <div class="a360-people">
+      {% for r in researchers %}
+      <a class="a360-person" href="{% url 'academia360:researcher' r.slug %}">
+        <b dir="auto">{% if r.title %}{{ r.title }} {% endif %}{{ r.name_he }}</b>
+        {% if r.position or r.unit %}<span class="a360-mute a360-small" dir="auto">{% if r.position %}{{ r.position }}{% endif %}{% if r.position and r.unit %} · {% endif %}{% if r.unit %}{{ r.unit.name }}{% endif %}</span>{% endif %}
+        {% if r.focus or r.areas %}<span class="a360-person-focus" dir="auto">{{ r.focus|default:r.areas|truncatechars:110 }}</span>{% endif %}
+        <span class="a360-src">{% if r.prize %}{{ r.prize.get_kind_display }}{% if r.prize.year %} {{ r.prize.year }}{% endif %}{% endif %}{% if r.h_index %}{% if r.prize %} · {% endif %}h-index <span class="a360-num">{% if r.h_index.approximate %}≈{% endif %}{{ r.h_index.value }}</span>{% endif %}{% if r.citations %}{% if r.prize or r.h_index %} · {% endif %}<span class="a360-num">{{ r.citations.value }}</span> ציטוטים{% endif %}{% if r.h_index.as_of %} · {{ r.h_index.as_of|date:"Y" }}{% endif %}{% if not r.prize and not r.h_index and not r.citations %}לעמוד החוקר{% endif %}</span>
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% if centers %}
+    <div class="a360-centers">
+      <div class="a360-inst-head">מרכזים ומעבדות שכדאי להכיר</div>
+      <div class="a360-rows">{% for c in centers %}<div class="a360-row a360-row-tight"><span dir="auto"><b>{{ c.name }}</b>{% if c.focus %} <span class="a360-mute">· {{ c.focus|truncatechars:90 }}</span>{% endif %}</span>{% if c.founded %}<span class="a360-mute a360-small">מאז {{ c.founded }}</span>{% endif %}</div>{% endfor %}</div>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
+
+{% if has_story %}
+<section class="a360-band{% if not prized and not researchers and not centers %} a360-band-white{% endif %}">
+  <div class="a360-wrap a360-two a360-two-wide">
+    <div class="a360-stack">
+      <h2 class="a360-h2">הסיפור של {{ inst.name }}</h2>
+      {% for s in story %}
+      <details class="a360-fold"{% if forloop.first %} open{% endif %}>
+        <summary><span dir="auto">{{ s.title }}</span><span class="a360-mute a360-small">{{ s.get_kind_display }}</span></summary>
+        <div class="a360-prose" dir="auto">{{ s.body|linebreaks }}</div>
+        {% if s.source or s.as_of %}<div class="a360-src">מקור: {{ s.source }}{% if s.as_of %} · נכון ל־{{ s.as_of|date:"m.Y" }}{% endif %}</div>{% endif %}
+      </details>
+      {% endfor %}
+    </div>
+    <aside class="a360-stack">
       {% if timeline %}
-      <div class="a360-card a360-pad"><b>בקצרה, לאורך השנים</b>
+      <div class="a360-card a360-pad"><b>לאורך השנים</b>
         <ol class="a360-timeline">{% for t in timeline %}<li><span class="a360-num a360-year">{{ t.year }}</span><span dir="auto">{{ t.text }}</span></li>{% endfor %}</ol>
       </div>
       {% endif %}
+      {% if collaborations %}<div class="a360-card a360-pad"><b>שותפים</b><div class="a360-rows">{% for c in collaborations %}<div class="a360-row a360-row-tight"><span dir="auto">{{ c.partner }}{% if c.description %} <span class="a360-mute">· {{ c.description|truncatechars:70 }}</span>{% endif %}</span><span class="a360-mute a360-small">{{ c.get_kind_display }}</span></div>{% endfor %}</div></div>{% endif %}
       <div class="a360-fix"><b>מצאתם טעות?</b><p>כל עובדה בעמוד נושאת מקור ותאריך. <a href="#talk">הציעו תיקון</a>, והוא יגיע לוועדה.</p></div>
     </aside>
+  </div>
+</section>
+{% endif %}
+
+<section class="a360-band a360-band-tools">
+  <div class="a360-wrap a360-tools">
+    <a href="{% url 'academia360:compare' %}?a={{ inst.slug }}" class="a360-link-sm">להשוות את {{ inst.name }} למוסד אחר</a>
+    <a href="{% url 'academia360:institutions' %}" class="a360-link-sm">לכל המוסדות</a>
+    {% if not has_story %}<span class="a360-mute a360-small">מצאתם טעות? <a href="#talk">הציעו תיקון</a>.</span>{% endif %}
   </div>
 </section>
 {% include "academia360/_talk.html" %}

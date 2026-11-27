@@ -34,7 +34,7 @@ a:hover { color: #15606A; }
 .a360 * { box-sizing: border-box; }
 
 /* frame */
-.a360-pilot { background: var(--a360-yellow-tint); color: var(--a360-yellow-ink); font-size: 12px; line-height: 18px; padding: 5px 16px; text-align: center; }
+.a360-pilot { position: sticky; top: 0; z-index: 60; background: var(--a360-yellow-tint); color: var(--a360-yellow-ink); font-size: 12px; line-height: 18px; padding: 5px 16px; text-align: center; } /* Avi 2026-11-27: the line stays in view while the page scrolls */
 .a360-bar { background: var(--a360-char); color: #fff; }
 .a360-wrap { max-width: 1140px; margin: 0 auto; padding: 0 16px; width: 100%; }
 @media (min-width: 700px) { .a360-wrap { padding: 0 24px; } }
@@ -244,7 +244,7 @@ a:hover { color: #15606A; }
 .a360-domain-head b { font-size: 16px; }
 .a360-docs { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; margin-top: 18px; align-items: start; }
 .a360-toc { display: none; flex-direction: column; gap: 2px; font-size: 14px; }
-@media (min-width: 900px) { .a360-docs { grid-template-columns: 260px minmax(0, 1fr); gap: 40px; } .a360-toc { display: flex; position: sticky; top: 16px; } }
+@media (min-width: 900px) { .a360-docs { grid-template-columns: 260px minmax(0, 1fr); gap: 40px; } .a360-toc { display: flex; position: sticky; top: 44px; } }
 .a360-toc a { color: var(--a360-ink); text-decoration: none; padding: 8px 12px; border-inline-start: 3px solid var(--a360-line-2); min-height: 40px; display: flex; align-items: center; }
 .a360-toc a:hover { border-color: var(--a360-teal); color: var(--a360-teal-deep); }
 .a360-sec { background: var(--a360-card); border-radius: var(--a360-radius); box-shadow: var(--a360-shadow); margin-bottom: 10px; min-width: 0; }
@@ -291,7 +291,7 @@ a:hover { color: #15606A; }
 @media (min-width: 900px) {
   .a360-has-map { grid-template-columns: minmax(0, 1fr) 440px; gap: 40px; }
   .a360-has-map .a360-inst-groups { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .a360-map-col { position: sticky; top: 16px; }
+  .a360-map-col { position: sticky; top: 44px; }
   .a360-map { height: 560px; }
   .a360-map-toggle { display: none; }
 }
@@ -588,3 +588,76 @@ a.a360-state:hover { border-color: var(--a360-char); }
   .a360-board td:nth-child(2)::before { display: none; }
 }
 .a360-q-mark { margin: 0 0 6px; }
+
+/* Epic P (2026-11-27): the institution page read like a book, the researcher page */
+.a360-hero-in-one { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 900px) { .a360-hero-in-one { grid-template-columns: minmax(0, 1fr); } }
+.a360-tagline { margin: 10px 0 0; font-size: 18px; font-weight: 600; color: var(--a360-teal-deep); line-height: 1.5; }
+.a360-identity { max-width: 760px; margin-top: 14px; }
+.a360-status-box b { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.a360-doc { padding: 18px 20px; border: 1px solid var(--a360-line); border-radius: var(--a360-radius); background: var(--a360-card); display: flex; flex-direction: column; gap: 8px; }
+.a360-doc-head { display: flex; gap: 8px; flex-wrap: wrap; }
+.a360-doc .a360-h3 { margin: 2px 0 0; }
+.a360-doc .a360-prose { font-size: 15px; }
+.a360-taught .a360-row { align-items: flex-start; }
+.a360-progs { line-height: 1.6; margin-top: 2px; }
+.a360-loose { margin-top: 18px; }
+.a360-prizes { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 16px; }
+.a360-prizes li { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.a360-prize-kind { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 999px; background: var(--a360-yellow-tint); color: var(--a360-yellow-ink); font-size: 13px; font-weight: 700; white-space: nowrap; }
+.a360-tag-gold { background: var(--a360-yellow-tint); color: var(--a360-yellow-ink); }
+.a360-people { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; margin-top: 18px; }
+@media (min-width: 700px) { .a360-people { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1000px) { .a360-people { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.a360-person { display: flex; flex-direction: column; gap: 4px; padding: 16px 18px; border: 1px solid var(--a360-line); border-radius: var(--a360-radius); background: var(--a360-card); color: var(--a360-ink); text-decoration: none; min-height: 44px; }
+.a360-person:hover { border-color: var(--a360-teal); }
+.a360-person b { font-size: 16px; line-height: 1.4; }
+.a360-person-focus { font-size: 14px; line-height: 1.55; color: var(--a360-ink); flex: 1; }
+.a360-person .a360-src { margin-top: 6px; }
+.a360-centers { margin-top: 26px; }
+.a360-fold { border: 1px solid var(--a360-line); border-radius: var(--a360-radius); background: var(--a360-card); padding: 0 18px; }
+.a360-fold summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; gap: 12px; align-items: baseline; padding: 14px 0; font-weight: 700; font-size: 17px; min-height: 44px; }
+.a360-fold summary::-webkit-details-marker { display: none; }
+.a360-fold summary::after { content: "+"; color: var(--a360-teal-deep); font-weight: 800; margin-inline-start: auto; }
+.a360-fold[open] summary::after { content: "–"; }
+.a360-fold summary .a360-mute { font-weight: 400; }
+.a360-fold .a360-prose { padding-bottom: 6px; }
+.a360-fold .a360-src { padding-bottom: 14px; }
+.a360-band-tools { padding: 18px 0; }
+.a360-tools { display: flex; gap: 10px 24px; flex-wrap: wrap; align-items: center; font-size: 14px; }
+.a360-tools a { min-height: 44px; display: inline-flex; align-items: center; }
+.a360-bio { margin-top: 10px; }
+.a360-pubs { margin: 0; padding: 0 20px 0 0; display: flex; flex-direction: column; gap: 10px; font-size: 15px; line-height: 1.55; }
+.a360-pubs li { padding-inline-start: 4px; }
+.a360-pub-title { display: block; }
+
+/* P.5: the coverage list */
+.a360-table-wrap { overflow-x: auto; margin-top: 18px; -webkit-overflow-scrolling: touch; }
+.a360-table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 900px; }
+.a360-table th, .a360-table td { text-align: start; padding: 10px 8px; border-bottom: 1px solid var(--a360-line-2); vertical-align: top; }
+.a360-table thead th { font-size: 12px; color: var(--a360-mute); font-weight: 600; white-space: nowrap; }
+.a360-table tbody th { font-weight: 700; }
+.a360-table tbody th a { color: var(--a360-ink); text-decoration: none; }
+.a360-num-col { text-align: center !important; white-space: nowrap; }
+.a360-state-empty { background: var(--a360-coral-tint); color: #A3302D; }
+.a360-state-partial { background: var(--a360-yellow-tint); color: var(--a360-yellow-ink); }
+.a360-state-rich { background: var(--a360-green-tint); color: #3E6B14; }
+.a360-cov-form { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.a360-cov-form select, .a360-cov-form input { height: 40px; border: 1.5px solid var(--a360-line); border-radius: 8px; padding: 0 10px; font: inherit; font-size: 16px; background: #fff; }
+.a360-cov-form input { width: 150px; }
+.a360-cov-form .a360-pill-sm { min-height: 40px; }
+.a360-coverage tbody th a { display: inline-flex; align-items: center; min-height: 44px; }
+.a360-doc .a360-h3 a { display: inline-block; padding: 11px 0; }
+@media (max-width: 699px) {
+  /* the coverage list on a phone: each institution is a stack, the numbers are labelled chips */
+  .a360-table-wrap { overflow: visible; }
+  .a360-coverage, .a360-coverage tbody, .a360-coverage tr, .a360-coverage th, .a360-coverage td { display: block; min-width: 0; width: auto; }
+  .a360-coverage thead { display: none; }
+  .a360-coverage tr { border: 1px solid var(--a360-line); border-radius: var(--a360-radius); background: var(--a360-card); padding: 10px 14px 12px; margin-top: 12px; }
+  .a360-coverage th, .a360-coverage td { border: 0; padding: 4px 0; }
+  .a360-coverage td.a360-num-col { display: inline-flex; gap: 4px; align-items: center; text-align: start !important; padding: 2px 10px 2px 0; font-size: 13px; }
+  .a360-coverage td.a360-num-col::before { content: attr(data-label); color: var(--a360-mute); }
+  .a360-coverage td[data-label="מצב"] { padding-bottom: 8px; }
+  .a360-coverage td[data-label="מצב המחקר"] { padding-top: 10px; }
+  .a360-cov-form input { width: 100%; }
+}
