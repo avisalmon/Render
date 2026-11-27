@@ -1656,3 +1656,21 @@ before its first render. Seeded content that already exists in production is
 rewritten only by an explicit flag that names the slug, on the owner's word,
 through a deploy line removed on the next ship; it keeps the row and bumps
 the version.
+
+### 86. "Newest first" is a tiebreak away from a coin toss
+
+Academia360's notifications order by `-created_at`, and the bell test
+creates two in a row and asserts the second is first. On the dev PC the two
+timestamps differed and the test passed; on the release train they were
+created in the same clock tick, tied, and the database handed back the older
+one first. The train failed on a test that had been green in every local run
+(PM-111).
+
+**The rule.** Every ordering by a timestamp carries the primary key as its
+tiebreak (`["-created_at", "-pk"]`), in the model's Meta and in every
+`order_by` that promises an order to a screen. A timestamp is not unique:
+Windows hands out the same value for several milliseconds, a fixture creates
+rows faster than the clock moves, and a bulk insert gives them all one
+instant. A test that asserts order must pass when every row shares a
+timestamp; if it cannot, the order it tests is not the order the code
+promises.

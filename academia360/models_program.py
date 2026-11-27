@@ -791,7 +791,7 @@ class Notification(Row):
     read_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        ordering = ["-created_at"]
+        ordering = ["-created_at", "-pk"]
 
     def __str__(self):
         return self.title

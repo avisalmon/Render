@@ -17,6 +17,30 @@ Newest first.
 
 ---
 
+## PM-111 · 2026-11-27 · Academia360 Epic E ship: a "newest first" test that passed on the PC and failed on the train
+
+**What happened.** Avi said "Push". The train (T1127-102056) ran the full
+suite and failed on one test of mine: the bell test creates two
+notifications in a row and asserts the newer one is first. Locally it had
+passed in every run. On the train both rows got the same `created_at` (one
+clock tick), the model orders by `-created_at` alone, and SQLite returned
+the older row first.
+
+**Why the process let it.** The ordering was written as if a timestamp
+were unique. The test was written to pass on a machine where the clock
+moved between two inserts, which is luck, not the contract. Nothing in the
+sprint asked "what if these tie".
+
+**Rule.** Every ordering by a timestamp carries the primary key as its
+tiebreak, in Meta and in every `order_by` a screen depends on; a test that
+asserts an order must pass when every row shares one timestamp.
+
+- Here: `docs/building_an_app.md` (mistake 86),
+  `academia360/models_program.py` (Notification.Meta, migration 0007).
+- BKM: FullStackBKM 8f511d9 (mistake 98)
+
+---
+
 ## PM-110 · 2026-11-27 · breakout B.4 (the hands-on flagship): three things the pictures caught, one the font caught, and a rule for rewriting seeded content
 
 **What happened.** Avi asked for the example challenge to be made with
