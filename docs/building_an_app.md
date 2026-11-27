@@ -1744,3 +1744,15 @@ prize and drops what was counted, inferred or vague. Parallel agents share
 the network's quotas, so one agent does the rate-limited API work or a
 backfill runs after the reset.
 
+### 91. One Count per to-many relation per query
+
+Academia360's coverage list annotated eight related Counts on one queryset.
+On thin data it was instant; once the institutions were filled the joins
+multiplied to millions of rows and production answered 502 (PM-116).
+
+**The rule.** Count each to-many relation in its own grouped query
+(`values(fk).annotate(Count)`) and merge in Python; never stack Counts over
+different relations on one queryset. A summary screen gets a query-count
+test, and after a bulk landing every screen that aggregates the new rows
+is timed.
+

@@ -14,7 +14,7 @@ for the chat. Admin only, in the committee room's restraint.
 from datetime import date
 
 from django.contrib import messages
-from django.db.models import Count, Q
+from django.db.models import Count
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
 from rest_framework.response import Response
@@ -30,24 +30,41 @@ COLUMNS = [("identity", "פסקה"), ("sections", "קטעים"), ("researchers",
            ("distinctions", "פרסים")]
 
 
+def _per_institution(model, path, **filters):
+    """{institution_id: count} in one grouped query. One query per column:
+    eight Counts on one joined query multiply the rows (sections x
+    researchers x publications ...) and took 42 s on the filled data."""
+    key = f"{path}_id" if path else "institution_id"
+    return dict(model.objects.filter(**filters).values(key).annotate(n=Count("pk", distinct=True))
+                .values_list(key, "n"))
+
+
 def rows(state=""):
     """A dict per institution, newest-poorest first unless filtered."""
-    qs = Institution.objects.filter(active=True).annotate(
-        n_sections=Count("sections", filter=Q(sections__published=True), distinct=True),
-        n_researchers=Count("researchers", filter=Q(researchers__verified=True), distinct=True),
-        n_with_metrics=Count("researchers", filter=Q(researchers__verified=True, researchers__metrics__isnull=False),
-                             distinct=True),
-        n_publications=Count("researchers__publications", filter=Q(researchers__verified=True), distinct=True),
-        n_split=Count("units__enrollments", filter=Q(units__enrollments__verified=True), distinct=True),
-        n_timeline=Count("timeline", distinct=True),
-        n_documents=Count("public_documents", filter=Q(public_documents__verified=True), distinct=True),
-        n_distinctions=Count("distinctions", filter=Q(distinctions__verified=True), distinct=True),
-    ).order_by("kind", "name_he")
+    from .models import Distinction as Dist
+    from .models import (
+        ProfileSection,
+        Publication,
+        PublicDocument,
+        Researcher,
+        TimelineEvent,
+        UnitEnrollment,
+    )
+
+    cols = {
+        "sections": _per_institution(ProfileSection, "", published=True),
+        "researchers": _per_institution(Researcher, "", verified=True),
+        "with_metrics": _per_institution(Researcher, "", verified=True, metrics__isnull=False),
+        "publications": _per_institution(Publication, "researcher__institution", researcher__verified=True),
+        "split": _per_institution(UnitEnrollment, "unit__institution", verified=True),
+        "timeline": _per_institution(TimelineEvent, ""),
+        "documents": _per_institution(PublicDocument, "", verified=True),
+        "distinctions": _per_institution(Dist, "", verified=True),
+    }
     out = []
-    for i in qs:
-        counts = {"identity": 1 if i.identity else 0, "sections": i.n_sections, "researchers": i.n_researchers,
-                  "with_metrics": i.n_with_metrics, "publications": i.n_publications, "split": i.n_split,
-                  "timeline": i.n_timeline, "documents": i.n_documents, "distinctions": i.n_distinctions}
+    for i in Institution.objects.filter(active=True).order_by("kind", "name_he"):
+        counts = {"identity": 1 if i.identity else 0}
+        counts.update({k: col.get(i.pk, 0) for k, col in cols.items()})
         s = state_of(counts)
         if state and s != state:
             continue
