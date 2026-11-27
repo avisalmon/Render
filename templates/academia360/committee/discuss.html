@@ -1,0 +1,37 @@
+{% extends "academia360/base.html" %}{% load a360 %}
+{% block title %}דיונים{% if inst %} · {{ inst.name }}{% endif %} · הוועדה · אקדמיה 360°{% endblock %}
+{% block content %}
+<section class="a360-band a360-room">
+  <div class="a360-wrap">
+    <nav class="a360-crumbs" aria-label="מיקום"><a href="{% url 'academia360:committee' %}">הוועדה</a><span>·</span>{% if inst %}<a href="{% url 'academia360:committee_discuss' %}">דיונים</a><span>·</span><a href="{% url 'academia360:committee_file' inst.slug %}" dir="auto">{{ inst.name }}</a>{% else %}<span>דיונים</span>{% endif %}</nav>
+    <h1 class="a360-h1 a360-h1-page">דיונים{% if inst %} · <span dir="auto">{{ inst.name }}</span>{% endif %}</h1>
+    <p class="a360-lede a360-narrow">{% if sub %}הדיונים של הוועדה על {{ sub.get_kind_display }} של <span dir="auto">{{ inst.name }}</span>. פנימי לוועדה, לא נראה בשום מקום אחר.{% else %}השיחה הפנימית של הוועדה: דיון על הגשה נפתח מהתיק שלה, דיון על התכנית כולה נפתח כאן. פנימי לוועדה, לא נראה בשום מקום אחר.{% endif %} {{ rows|length }} דיונים.</p>
+
+    <details class="a360-open-thread" {% if not rows %}open{% endif %}>
+      <summary class="a360-pill a360-pill-dark a360-pill-sm">{% if sub %}לפתוח דיון על ההגשה{% else %}לפתוח דיון על התכנית{% endif %}</summary>
+      <form method="post" class="a360-thread-form">
+        {% csrf_token %}
+        {% if sub %}<input type="hidden" name="sub" value="{{ sub.pk }}">{% endif %}
+        <label class="a360-field"><span>הכותרת</span><input type="text" name="title" maxlength="200" required dir="auto"></label>
+        <label class="a360-field"><span>הדברים הראשונים (אפשר markdown)</span><textarea name="body" rows="4" dir="auto"></textarea></label>
+        {% include "academia360/committee/_mentions.html" %}
+        <div class="a360-review-acts"><button type="submit" class="a360-pill a360-pill-dark">לפתוח את הדיון</button></div>
+      </form>
+    </details>
+
+    <div class="a360-rows a360-threads">
+      {% for r in rows %}
+      <div class="a360-row">
+        <div class="a360-row-main">
+          <a href="{% url 'academia360:committee_thread' r.pk %}" dir="auto"><b>{{ r.title }}</b></a>
+          <div class="a360-src">{% if r.submission %}<span dir="auto">{{ r.submission.participation.institution.short_name_he|default:r.submission.participation.institution.name_he }}</span> · {{ r.submission.get_kind_display }}{% else %}על התכנית{% endif %}{% if r.opened_by %} · פתח/ה <span dir="auto">{{ r.opened_by|a360_name }}</span>{% endif %}</div>
+        </div>
+        <div class="a360-row-end a360-small"><span class="a360-num">{{ r.n_posts }}</span> תגובות<div class="a360-src">{{ r.last_at|date:"d.m.Y H:i" }}</div></div>
+      </div>
+      {% empty %}
+      <div class="a360-row a360-row-tight"><span class="a360-mute">עוד אין דיונים{% if sub %} על ההגשה הזאת{% endif %}.</span></div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

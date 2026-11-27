@@ -13,7 +13,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 
-from . import access, reviewing
+from . import access, discuss, reviewing
 from .access import committee_only
 from .models import (
     AccessLog,
@@ -151,6 +151,7 @@ def board(request):
         "reviewers": [(u, str(u.pk) == reviewer) for u in sorted(all_reviewers.values(), key=lambda u: u.get_full_name() or u.username)],
         "mine_only": mine_only, "keep": keep, "filtered": bool(keep),
         "analysis_states": ANALYSIS_STATES, "letter_states": LETTER_STATES, "is_admin": access.is_admin(me),
+        "is_chair": access.is_chair(me),
     })
 
 
@@ -220,6 +221,7 @@ def file(request, slug):
             s.community = CommunityShare.objects.filter(submission=s).first()
             s.has_extracts = any([s.graduate, s.standard_row, s.plan_rows, comps, s.governance_row, s.budget_rows,
                                   s.commitment_rows, s.community])
+            s.threads = discuss.threads(program, s)  # E.2
             subs.append(s)
     kpis = _kpi_table(part, program) if part is not None else {"years": [], "rows": [], "any": False}
     return render(request, "academia360/committee/file.html", {
@@ -229,6 +231,7 @@ def file(request, slug):
         "leaders": list(LeaderOf.objects.filter(institution=inst, active=True).select_related("user")),
         "reviewers": [a.user for a in CommitteeAttribute.objects.filter(program=program, kind=CommitteeAttribute.REVIEWER, institution=inst).select_related("user")] if program else [],
         "analysis_states": ANALYSIS_STATES, "letter_states": LETTER_STATES, "is_admin": access.is_admin(request.user),
+        "is_chair": access.is_chair(request.user),
     })
 
 

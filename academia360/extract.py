@@ -1,10 +1,13 @@
 """Text out of submitted files (spec 4.7, backlog D2.3), for the committee's
 "text beside the file" view and, in Epic G, the document index.
 
-PDF goes through PyMuPDF: measured on four real submitted PDFs (2026-11-26),
-pypdf returned one of them with every Hebrew word reversed, PyMuPDF read all
-four in reading order, five to ten times faster. DOCX is read from its own
-XML and XLSX through `xlsx.py`, so neither needs a library.
+The readers live in readers.py (pure Python). Each file is read in a child
+process with a time limit and, where the platform allows, a memory cap:
+the first production run of the extraction (2026-11-27) answered 502 again
+and again on one 2.8 MB spreadsheet, because the reader ate the starter
+instance's memory inside the one web worker, and with one worker that is the
+whole site (PM-108). A child that crashes or runs too long is a note on the
+row; the server stays up and the queue moves on.
 
 The extraction runs where the files are (the server holds them; the PC that
 replicated them does not ship text), through `extract_missing`, called by
@@ -12,83 +15,72 @@ the token endpoint `api/admin/extract/` and by the API on upload. It never
 raises for a bad file: the note says what happened and the row stays.
 """
 
-import io
-import re
-import zipfile
-from xml.etree import ElementTree as ET
+import json
+import subprocess
+import sys
 
+from django.conf import settings
 from django.utils import timezone
 
+from .readers import READERS, clean  # noqa: F401  (the tests and D2 callers import them from here)
+
 MAX_CHARS = 400_000
-WORD_NS = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 
 
-def _clean(text):
-    text = text.replace("\x00", "")
-    text = re.sub(r"[ \t ]+", " ", text)
-    text = re.sub(r" *\n *", "\n", text)
-    text = re.sub(r"\n{3,}", "\n\n", text)
-    return text.strip()[:MAX_CHARS]
+def _timeout():
+    return int(getattr(settings, "ACADEMIA360_READER_TIMEOUT", 60))
 
 
-def pdf_text(data):
-    import pymupdf
-
-    with pymupdf.open(stream=data, filetype="pdf") as doc:
-        pages = [page.get_text() for page in doc]
-    text = _clean("\n\n".join(pages))
-    return text, f"pdf: {len(pages)} pages" + ("" if text else ", no text (a scan?)")
+def _memory_mb():
+    return int(getattr(settings, "ACADEMIA360_READER_MEMORY_MB", 300))
 
 
-def docx_text(data):
-    with zipfile.ZipFile(io.BytesIO(data)) as z:
-        root = ET.fromstring(z.read("word/document.xml"))
-    paragraphs = []
-    for p in root.iter(WORD_NS + "p"):
-        runs = []
-        for node in p.iter():
-            if node.tag == WORD_NS + "t":
-                runs.append(node.text or "")
-            elif node.tag == WORD_NS + "tab":
-                runs.append("\t")
-            elif node.tag == WORD_NS + "br":
-                runs.append("\n")
-        paragraphs.append("".join(runs))
-    text = _clean("\n".join(paragraphs))
-    return text, f"docx: {len(paragraphs)} paragraphs" + ("" if text else ", no text")
+def _script(ext):
+    """The child's program: cap its memory where the platform can (Linux),
+    read the bytes from stdin, answer with JSON on stdout."""
+    base = str(settings.BASE_DIR).replace("\\", "/")
+    return (
+        "import sys, json\n"
+        "try:\n"
+        "    import resource\n"
+        f"    cap = {_memory_mb()} * 1024 * 1024\n"
+        "    resource.setrlimit(resource.RLIMIT_AS, (cap, cap))\n"
+        "except Exception:\n"
+        "    pass\n"
+        f"sys.path.insert(0, {base!r})\n"
+        "from academia360 import readers\n"
+        f"text, note = readers.read({ext!r}, sys.stdin.buffer.read())\n"
+        "sys.stdout.write(json.dumps({'text': text, 'note': note}))\n"
+    )
 
 
-def xlsx_text(data):
-    from . import xlsx
-
-    sheets = xlsx.sheets(io.BytesIO(data))
-    parts = []
-    for name, rows in sheets.items():
-        lines = []
-        for row in rows:
-            cells = ["" if v is None else (f"{v:g}" if isinstance(v, float) else str(v)).strip() for v in row]
-            while cells and not cells[-1]:
-                cells.pop()
-            if any(cells):
-                lines.append(" | ".join(cells))
-        parts.append(f"## {name}\n" + "\n".join(lines))
-    text = _clean("\n\n".join(parts))
-    return text, f"xlsx: {len(sheets)} sheets" + ("" if text else ", no text")
-
-
-READERS = {"pdf": pdf_text, "docx": docx_text, "xlsx": xlsx_text}
+def _in_child(script, data, timeout):
+    """Run a reader in its own process. Returns (stdout, None) or (None, why)."""
+    try:
+        proc = subprocess.run([sys.executable, "-I", "-c", script], input=data, capture_output=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        return None, f"timeout after {timeout}s (a heavy scan?)"
+    except OSError as exc:
+        return None, f"cannot start the reader: {str(exc)[:80]}"
+    if proc.returncode != 0:
+        tail = proc.stderr.decode("utf-8", "replace").strip().splitlines()
+        return None, f"the reader crashed (exit {proc.returncode})" + (f": {tail[-1][:80]}" if tail else "")
+    return proc.stdout.decode("utf-8", "replace"), None
 
 
 def extract_bytes(data, name):
     """(text, note) for a file's bytes by its name's extension. Never raises."""
     ext = name.rsplit(".", 1)[-1].lower() if "." in name else ""
-    reader = READERS.get(ext)
-    if reader is None:
+    if ext not in READERS:
         return "", f"unsupported .{ext or '?'}"
+    out, why = _in_child(_script(ext), data, _timeout())
+    if why is not None:
+        return "", f"error: {why}"
     try:
-        return reader(data)
-    except Exception as exc:  # noqa: BLE001  a broken file is a note on its row, not a crash
-        return "", f"error: {exc.__class__.__name__}: {str(exc)[:120]}"
+        answer = json.loads(out)
+    except ValueError:
+        return "", "error: the reader answered nothing readable"
+    return answer.get("text", "")[:MAX_CHARS], answer.get("note", "")[:200]
 
 
 def extract_row(row, save=True):

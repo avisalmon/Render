@@ -444,7 +444,7 @@ a.a360-state:hover { border-color: var(--a360-char); }
 .a360-state-responded, .a360-state-approved, .a360-state-confirmed, .a360-state-letter-sent, .a360-state-mark-yes { background: var(--a360-green-tint); color: #3E6B14; border-color: transparent; }
 .a360-state-declined, .a360-state-mark-no { background: var(--a360-coral-tint); color: #A3302D; border-color: transparent; }
 .a360-state-did_not_apply, .a360-state-none, .a360-state-letter-none, .a360-state-mark-na { color: var(--a360-mute); }
-.a360-state-mark-partly { background: var(--a360-yellow-tint); color: var(--a360-yellow-ink); border-color: transparent; }
+.a360-state-mark-partly, .a360-state-letter-draft { background: var(--a360-yellow-tint); color: var(--a360-yellow-ink); border-color: transparent; }
 @media (max-width: 899px) {
   .a360-board, .a360-board tbody, .a360-board tr, .a360-board td { display: block; }
   .a360-board thead { display: none; }
@@ -511,6 +511,76 @@ a.a360-state:hover { border-color: var(--a360-char); }
 .a360-check input:focus-visible + span::before { outline: 2px solid var(--a360-teal-deep); outline-offset: 2px; }
 /* links in running text on the room's grey: 4.5:1 needs a darker teal (#1B737E = 5.0:1 on #F3F4F4) */
 .a360-room { --a360-teal-deep: #1B737E; }
+/* Epic E: the bell (spec 4.8), notifications, discussion, decision, letters */
+.a360-bell { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; color: #fff; border-radius: 999px; text-decoration: none; }
+.a360-bell:hover { background: var(--a360-char-2); color: #fff; }
+.a360-bell[aria-current="page"] { background: var(--a360-char-2); }
+.a360-bell-n { position: absolute; top: 4px; inset-inline-start: 22px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--a360-yellow); color: var(--a360-char); font-size: 11px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
+@media (max-width: 699px) { .a360-bell { width: 40px; height: 40px; } .a360-bell-n { inset-inline-start: 20px; top: 2px; } }
+/* the narrowest phones: brand, bell, "שלי" and "יציאה" on one line (the contract's bar rule) */
+@media (max-width: 360px) {
+  .a360-bell { width: 36px; height: 40px; }  /* narrower, never shorter than the contract's 40px */
+  .a360-bell-n { inset-inline-start: 18px; top: 2px; }
+  .a360-account { gap: 4px; }
+  .a360-account .a360-pill-ghost { padding: 0 10px; }
+}
+.a360-bell-acts { margin: 8px 0 12px; }
+.a360-bell-list { margin-top: 8px; }
+.a360-bell-list .a360-row-main a { text-decoration: none; color: var(--a360-ink); }
+.a360-bell-list .a360-row-main a:hover { color: var(--a360-teal-deep); }
+.a360-bell-unread { box-shadow: inset 4px 0 0 var(--a360-teal); }
+.a360-bell-unread .a360-row-main b { font-weight: 800; }
+/* discussion (E.2) */
+.a360-open-thread { margin: 14px 0 6px; }
+.a360-open-thread > summary { list-style: none; cursor: pointer; display: inline-flex; }
+.a360-open-thread > summary::-webkit-details-marker { display: none; }
+.a360-open-thread[open] > summary { margin-bottom: 10px; }
+.a360-thread-form { display: flex; flex-direction: column; gap: 12px; background: var(--a360-card); border-radius: 10px; padding: 14px 16px; }
+.a360-thread-form .a360-field > span { font-size: 13px; font-weight: 600; color: var(--a360-mute); }
+.a360-thread-form .a360-field input, .a360-thread-form .a360-field textarea { width: 100%; min-width: 0; background: #fff; }
+.a360-mentions > summary { cursor: pointer; font-size: 14px; font-weight: 600; min-height: 44px; display: inline-flex; align-items: center; color: var(--a360-teal-deep); }
+.a360-mention-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0 16px; padding: 4px 0; }
+.a360-threads { margin-top: 14px; }
+.a360-threads .a360-row-main a { text-decoration: none; color: var(--a360-ink); }
+.a360-threads .a360-row-main a:hover { color: var(--a360-teal-deep); }
+.a360-posts { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+.a360-post { background: var(--a360-card); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+.a360-post-head { font-size: 14px; margin-bottom: 6px; }
+.a360-post-body { font-size: 15px; line-height: 1.65; overflow-wrap: anywhere; }
+.a360-post-body p { margin: 0 0 8px; }
+.a360-post-body p:last-child { margin-bottom: 0; }
+.a360-post-body ul, .a360-post-body ol { margin: 4px 0 8px; padding-inline-start: 22px; }
+.a360-post-body pre { white-space: pre-wrap; background: var(--a360-paper); padding: 8px 10px; border-radius: 8px; font-size: 13px; }
+.a360-post-body table { border-collapse: collapse; font-size: 14px; }
+.a360-post-body td, .a360-post-body th { border: 1px solid var(--a360-line-2); padding: 4px 8px; }
+.a360-post-edit { margin-top: 6px; }
+.a360-post-edit > summary { list-style: none; cursor: pointer; color: var(--a360-teal-deep); font-size: 14px; font-weight: 600; }
+.a360-post-edit > summary::-webkit-details-marker { display: none; }
+.a360-post-edit .a360-thread-form { padding: 10px 0 0; background: transparent; }
+/* the decision (E.3) and the letters (E.4, E.5) */
+.a360-decide { display: flex; flex-direction: column; gap: 12px; margin-top: 14px; }
+.a360-decide .a360-field > span { font-size: 13px; font-weight: 600; color: var(--a360-mute); }
+.a360-decide .a360-field input, .a360-decide .a360-field textarea { width: 100%; min-width: 0; }
+.a360-letter-form { display: flex; flex-direction: column; gap: 10px; }
+.a360-letter-form .a360-field > span { font-size: 13px; font-weight: 600; color: var(--a360-mute); }
+.a360-letter-form .a360-field input, .a360-letter-form .a360-field textarea { width: 100%; min-width: 0; }
+.a360-letter-block { border: 0; padding: 14px 16px; margin: 8px 0 0; min-width: 0; background: var(--a360-card); border-radius: 10px; display: flex; flex-direction: column; gap: 10px; }
+.a360-letter-block legend { width: 100%; padding: 0; margin: 0 0 4px; }
+.a360-letter-new { background: transparent; border: 1.5px dashed var(--a360-line); }
+.a360-letter-generals { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0 20px; }
+@media (min-width: 900px) { .a360-letter-generals { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.a360-pill-send { border-color: var(--a360-char); }
+.a360-letter-paper { background: #fff; border-radius: 12px; box-shadow: var(--a360-shadow); padding: 28px 24px; margin-top: 16px; max-width: 760px; line-height: 1.75; font-size: 16px; border-top: 4px solid var(--a360-teal); }
+@media (min-width: 700px) { .a360-letter-paper { padding: 40px 44px; } }
+.a360-letter-paper p { margin: 0 0 12px; overflow-wrap: anywhere; }
+.a360-letter-paper .a360-h4 { margin-top: 22px; }
+.a360-letter-md p { margin: 0 0 10px; }
+.a360-letter-md ul, .a360-letter-md ol { margin: 4px 0 10px; padding-inline-start: 22px; }
+.a360-letter-sec { margin-bottom: 14px; }
+.a360-letter-sign { margin-top: 28px !important; }
+.a360-letter-gap { height: 8px; }
+.a360-history { font-size: 14px; }
+.a360-history .a360-row-main { overflow-wrap: anywhere; }
 /* on a phone the board's name and state share the first line, so a card is one row shorter */
 @media (max-width: 899px) {
   .a360-board td:first-child { grid-column: auto; }

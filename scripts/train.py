@@ -43,10 +43,10 @@ makes a commit, and the bot's clone and the shared tree read the same one.
 import argparse
 import contextlib
 import datetime as dt
+import hashlib
 import json
 import os
 import re
-import shutil
 import subprocess
 import sys
 import threading
@@ -695,6 +695,61 @@ def collect_static(repo):
     return None if result.returncode == 0 else (result.stdout + result.stderr).strip()[-600:]
 
 
+REQUIREMENT_FILES = ("requirements.txt", "requirements-dev.txt")
+
+
+def requirements_fingerprint(repo):
+    """One hash over the requirement files the candidate carries; empty when
+    the repo has none (the tests' tiny world)."""
+    digest = hashlib.sha256()
+    found = False
+    for name in REQUIREMENT_FILES:
+        path = repo / name
+        if path.exists():
+            found = True
+            digest.update(name.encode("utf-8"))
+            digest.update(path.read_bytes())
+    return digest.hexdigest() if found else ""
+
+
+def pip_install(py, path):
+    """Install one requirements file into the interpreter's environment.
+    Returns a problem string, or None."""
+    result = subprocess.run([py, "-m", "pip", "install", "-q", "-r", str(path)], cwd=str(path.parent),
+                            capture_output=True, text=True, encoding="utf-8", errors="replace")
+    if result.returncode != 0:
+        return f"pip install -r {path.name} failed: {(result.stdout + result.stderr).strip()[-600:]}"
+    return None
+
+
+def ensure_requirements(repo):
+    """The clone's own environment carries what the candidate requires.
+
+    `setup` installs the requirements once; nothing installed into the clone
+    after that. A commit that added a package to requirements.txt passed in
+    the shared tree, where the developer had installed it, and failed ten
+    tests in the train with "No module named ..." (PM-107). Now every ride
+    and every nightly compares a hash of the requirement files with the one
+    last installed and runs pip when they differ. Returns a problem string,
+    or None."""
+    fingerprint = requirements_fingerprint(repo)
+    if not fingerprint:
+        return None
+    marker = home() / "requirements.installed"
+    if marker.exists() and marker.read_text(encoding="utf-8").strip() == fingerprint:
+        return None
+    py = python_in(repo)
+    for name in REQUIREMENT_FILES:
+        path = repo / name
+        if path.exists():
+            problem = pip_install(py, path)
+            if problem:
+                return problem
+    marker.parent.mkdir(parents=True, exist_ok=True)
+    marker.write_text(fingerprint, encoding="utf-8")
+    return None
+
+
 def build_candidate(repo, requests, include_local=True):
     """Merge what is waiting onto origin/main. Returns (base, head, conflicts)."""
     base = git("rev-parse", "HEAD", cwd=repo).stdout.strip()
@@ -854,6 +909,9 @@ def _ride(record, waiting, include_local):
     for r in waiting:  # a request may name extra tests of its own
         targets += [t for t in r.get("tests", []) if t not in targets]
     out.update(scope=scope, apps=apps, tests=len(targets) if scope == "some" else "all")
+    problem = ensure_requirements(repo)  # the candidate's packages, before anything imports them (PM-107)
+    if problem:
+        return {**out, "result": "failed", "detail": problem, "new_failures": []}
     problem = site_checks(repo)
     if problem:
         return {**out, "result": "failed", "detail": problem, "new_failures": []}
@@ -951,6 +1009,9 @@ def nightly(force=False):
             return None
         repo = prepare_clone()
         started = iso()
+        problem = ensure_requirements(repo)
+        if problem:
+            _log(problem)
         outcome, failures, log = run_pytest(repo, "full", [], NIGHTLY_MINUTES, "nightly")
         known = known_failures(repo)
         new = [{"test": f, "app": app_of(repo, f)} for f in failures if f not in known]

@@ -34,6 +34,7 @@
       </nav>
       <div class="a360-account">
         {% if user.is_authenticated %}
+          {% a360_unread user as unread %}<a class="a360-bell" href="{% url 'academia360:notifications' %}" aria-label="התראות{% if unread %}, {{ unread }} חדשות{% endif %}" {% if section == 'notifications' %}aria-current="page"{% endif %}><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>{% if unread %}<span class="a360-bell-n">{{ unread }}</span>{% endif %}</a>
           <a class="a360-pill a360-pill-ghost a360-pill-me" href="{% url 'academia360:me' %}" {% if section == 'me' %}aria-current="page"{% endif %}>שלי</a>
           <form method="post" action="{% url 'academia360:logout' %}">{% csrf_token %}<button type="submit" class="a360-pill a360-pill-ghost">יציאה</button></form>
         {% else %}

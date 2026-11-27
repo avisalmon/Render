@@ -209,6 +209,7 @@ Circle: the person's own conversations; usage is **committee** (admin).
 | **ChangeLog** | Who changed what, when, from what to what, on every row in the institution and committee circles and on public facts. The actor is a person in the app or the agent working for Avi from the chat (spec chapter 3) | model, row, field, old, new, by (user), actor_kind: `person` / `agent` / `import`, at, reason (for accepted corrections; for the agent, the source it worked from) |
 | **AgentRun** | One piece of work the agent did from the chat: what it was asked, which rows it touched, which sources it used. The admin's trail of the enrichment | started at, finished at, purpose, sources (urls, files), rows touched (count), notes |
 | **AccessLog** | Every opening or download of a submitted file or a letter | user, target, action: `view` / `download`, at |
+| **Notification** | One item of the bell (spec 4.8), one row per person told; the same events the mails carry. Added in Epic E.1 | user, kind: `submission` / `review` / `letter` / `decision` / `correction` / `mention` / `post`, title, url (inside the app), actor, read at |
 
 ---
 

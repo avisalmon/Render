@@ -206,6 +206,37 @@ def test_a_change_to_something_shared_runs_every_test(world):
     assert result["result"] == "shipped"
 
 
+def test_a_changed_requirement_is_installed_into_the_trains_environment(world, monkeypatch):
+    """PM-107: the clone has its own env; a package added to requirements.txt
+    must reach it before the tests import it, and only when it changed."""
+    installed = []
+    monkeypatch.setattr(train, "pip_install", lambda py, path: installed.append(path.read_text(encoding="utf-8")) or None)
+    write(world.shared, "requirements.txt", "six\n")
+    commit(world.shared, "a new package")
+    train.ship("alpha")
+    assert train.run_train()["result"] == "shipped"
+    assert installed == ["six\n"]
+    # nothing about the requirements changed: no second install
+    write(world.shared, "alpha/logic.py", "VALUE = 2\n")
+    commit(world.shared, "alpha only")
+    train.ship("alpha")
+    assert train.run_train()["result"] == "shipped"
+    assert installed == ["six\n"]
+    # they changed again: installed again
+    write(world.shared, "requirements.txt", "six\nattrs\n")
+    commit(world.shared, "another package")
+    train.ship("alpha")
+    assert train.run_train()["result"] == "shipped"
+    assert installed == ["six\n", "six\nattrs\n"]
+    # a refused install fails the train and says why, before any test runs
+    monkeypatch.setattr(train, "pip_install", lambda py, path: "pip install -r requirements.txt failed: no such package")
+    write(world.shared, "requirements.txt", "nonsense-package\n")
+    commit(world.shared, "a bad package")
+    train.ship("alpha")
+    result = train.run_train()
+    assert result["result"] == "failed" and "no such package" in result["detail"]
+
+
 def test_documentation_ships_without_running_tests(world):
     write(world.shared, "docs/readme.md", "hello again\n")
     commit(world.shared, "docs only")

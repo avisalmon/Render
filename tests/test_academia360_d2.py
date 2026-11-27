@@ -83,7 +83,7 @@ def test_the_haifa_file_shows_analysis_letter_and_decision(client, world):
     assert "אושר · <span" in html and "5,000,000" in html.replace("5000000", "5,000,000")
     assert "נשלח <span class=\"a360-num\">01.04.2025" in html
     assert "פרופ׳ גור אלרואי" in html and "הוועדה מברכת על התכנית" in html
-    assert "/letters/" not in html  # the letter has no file, so no file link
+    assert f"/letters/{world['letter'].pk}/file/" not in html  # the letter has no file, so no file link (its page link is E.5's)
     # the extracts are empty for haifa and the page says so instead of hiding it
     assert "עוד לא חולצו מהקבצים" in html
 

@@ -1,0 +1,24 @@
+{% extends "academia360/base.html" %}{% load a360 %}
+{% block title %}התראות · אקדמיה 360°{% endblock %}
+{% block content %}
+<section class="a360-band">
+  <div class="a360-wrap">
+    <h1 class="a360-h1 a360-h1-page">התראות</h1>
+    <p class="a360-lede a360-mute a360-narrow">{% if unread %}<b>{{ unread }} חדשות.</b> {% endif %}מה שקרה ונוגע לך: הגשות, סקירות, מכתבים, החלטות, דיונים. אותם הדברים נשלחים גם במייל, לפי הכלל של כל סוג.</p>
+    {% if unread %}<form method="post" action="{% url 'academia360:notifications_read_all' %}" class="a360-bell-acts">{% csrf_token %}<button type="submit" class="a360-pill a360-pill-line a360-pill-sm">לסמן את הכול כנקרא</button></form>{% endif %}
+    <div class="a360-rows a360-bell-list">
+      {% for r in rows %}
+      <div class="a360-row {% if r.unread %}a360-bell-unread{% endif %}">
+        <div class="a360-row-main">
+          <a href="{% url 'academia360:notification_follow' r.pk %}" dir="auto"><b>{{ r.title }}</b></a>
+          <div class="a360-src">{{ r.get_kind_display }} · {{ r.created_at|date:"d.m.Y H:i" }}{% if r.actor %} · <span dir="auto">{{ r.actor|a360_name }}</span>{% endif %}</div>
+        </div>
+        {% if r.unread %}<span class="a360-state a360-state-under_review">חדש</span>{% endif %}
+      </div>
+      {% empty %}
+      <p class="a360-mute">עוד אין התראות.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

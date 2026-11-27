@@ -1,0 +1,26 @@
+{% extends "academia360/base.html" %}{% load a360 %}
+{% block title %}החלטה · {{ inst.name }} · הוועדה · אקדמיה 360°{% endblock %}
+{% block content %}
+<section class="a360-band a360-room">
+  <div class="a360-wrap">
+    <nav class="a360-crumbs" aria-label="מיקום"><a href="{% url 'academia360:committee' %}">הוועדה</a><span>·</span><a href="{% url 'academia360:committee_file' inst.slug %}" dir="auto">{{ inst.name }}</a><span>·</span><span>החלטה</span></nav>
+    <h1 class="a360-h1 a360-h1-page">ההחלטה · <span dir="auto">{{ inst.name }}</span></h1>
+    <p class="a360-lede a360-narrow">{{ sub.get_kind_display }}{% if sub.submitted_at %}, הוגשה <span class="a360-num">{{ sub.submitted_at|date:"d.m.Y" }}</span>{% endif %}. ההחלטה של יושב/ת הראש נרשמת כאן ולא שולחת דבר: המוסד רואה רק את המכתב, כשהוא נשלח.{% if decision %} נרשמה <span class="a360-num">{{ decision.decided_at|date:"d.m.Y" }}</span>{% if decision.decided_by %} על ידי <span dir="auto">{{ decision.decided_by|a360_name }}</span>{% endif %}; שמירה מחליפה אותה.{% endif %}</p>
+
+    <form method="post" class="a360-decide">
+      {% csrf_token %}
+      <div class="a360-opts" role="radiogroup" aria-label="ההחלטה">
+        {% for v, label in outcomes %}<label class="a360-opt"><input type="radio" name="outcome" value="{{ v }}" {% if decision and decision.outcome == v %}checked{% endif %} required><span>{{ label }}</span></label>{% endfor %}
+      </div>
+      <div class="a360-q-fields">
+        <label class="a360-field"><span>הסכום המאושר, ב־₪</span><input type="text" name="approved_amount_nis" inputmode="decimal" value="{{ amount }}" dir="ltr" placeholder="5,000,000"></label>
+        <label class="a360-field"><span>תנאים</span><textarea name="conditions" rows="4" dir="auto">{% if decision %}{{ decision.conditions }}{% endif %}</textarea></label>
+      </div>
+      <div class="a360-review-acts">
+        <button type="submit" class="a360-pill a360-pill-dark">{% if decision %}לעדכן את ההחלטה{% else %}לרשום את ההחלטה{% endif %}</button>
+        <a class="a360-pill a360-pill-line" href="{% url 'academia360:committee_file' inst.slug %}#decision-{{ sub.pk }}">חזרה לתיק</a>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}

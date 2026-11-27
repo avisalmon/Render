@@ -1,0 +1,28 @@
+{% extends "academia360/base.html" %}{% load a360 %}
+{% block title %}ההערות הכלליות · מכתבים · הוועדה · אקדמיה 360°{% endblock %}
+{% block content %}
+<section class="a360-band a360-room">
+  <div class="a360-wrap">
+    <nav class="a360-crumbs" aria-label="מיקום"><a href="{% url 'academia360:committee' %}">הוועדה</a><span>·</span><span>מכתבים</span><span>·</span><span>ההערות הכלליות</span></nav>
+    <h1 class="a360-h1 a360-h1-page">ההערות הכלליות של המחזור</h1>
+    <p class="a360-lede a360-narrow">הקטעים שחוזרים בכל מכתב של המחזור, כתובים פעם אחת: שינוי כאן משנה כל טיוטה שמשתמשת בהם, ולא מכתב שכבר נשלח (הוא רשומה). במכתב של מוסד מסמנים אילו מהם נכנסים. {{ rows|length }} קטעים, {{ unsent }} טיוטות פתוחות.</p>
+
+    <form method="post" class="a360-letter-form">
+      {% csrf_token %}
+      {% for r in rows %}
+      <fieldset class="a360-letter-block">
+        <legend class="a360-h3 a360-room-h3">קטע {{ forloop.counter }} <span class="a360-mute">· ב־<span class="a360-num">{{ r.used_by }}</span> מכתבים · ריק בכותרת ובגוף מוחק אותו</span></legend>
+        <label class="a360-field"><span>הכותרת</span><input type="text" name="g{{ r.pk }}_title" value="{{ r.title }}" maxlength="200" dir="auto"></label>
+        <label class="a360-field"><span>הגוף (אפשר markdown)</span><textarea name="g{{ r.pk }}_body" rows="6" dir="auto">{{ r.body }}</textarea></label>
+      </fieldset>
+      {% endfor %}
+      <fieldset class="a360-letter-block a360-letter-new">
+        <legend class="a360-h3 a360-room-h3">קטע חדש</legend>
+        <label class="a360-field"><span>הכותרת</span><input type="text" name="new_title" maxlength="200" dir="auto" placeholder="למשל: הערות כלליות לכל המוסדות"></label>
+        <label class="a360-field"><span>הגוף</span><textarea name="new_body" rows="4" dir="auto"></textarea></label>
+      </fieldset>
+      <div class="a360-review-acts"><button type="submit" class="a360-pill a360-pill-dark">לשמור את ההערות הכלליות</button><a class="a360-pill a360-pill-line" href="{% url 'academia360:committee' %}">ללוח הזרימה</a></div>
+    </form>
+  </div>
+</section>
+{% endblock %}
