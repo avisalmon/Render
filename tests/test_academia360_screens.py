@@ -178,6 +178,21 @@ def build_world():
         ResearcherMetric.objects.create(researcher=r, metric="citations", value=33000 - i * 1000, as_of=date(2025, 10, 1))
         ResearcherLink.objects.create(researcher=r, kind="scholar", url="https://scholar.google.com/citations?user=x")
     InstitutionMetric.objects.create(institution=technion, key="students_total", year=2024, value=14000, source="אתר הטכניון", as_of=date(2024, 12, 1))
+    # Epic P: the page read like a book
+    from academia360.models import Distinction, PublicDocument, UnitEnrollment
+    technion.tagline = "מוסד אקדמי מוביל עולמי במדע, הנדסה וטכנולוגיה"
+    technion.identity_source, technion.identity_as_of = "סיכום מתוך דף הסקירה ברפרנס (אוקטובר 2025)", date(2025, 10, 1)
+    technion.save(update_fields=["tagline", "identity_source", "identity_as_of"])
+    UnitEnrollment.objects.create(unit=eng, students=1900, approximate=True, share_pct=18, source="דף הרפרנס", as_of=date(2025, 10, 1))
+    r0 = Researcher.objects.get(slug="r0")
+    r0.position, r0.focus, r0.bio = "מופקד קתדרה", "למידת חיזוק ובקרה תחת אי־ודאות", "חלוץ באלגוריתמי למידת חיזוק לפתרון בעיות תפעול מורכבות, עם יישומים ברשתות חשמל ובתחבורה."
+    r0.save(update_fields=["position", "focus", "bio"])
+    Distinction.objects.create(institution=technion, researcher=r0, kind="nobel", title="פרס נובל לכימיה", year=2004, source="דף הרפרנס")
+    from academia360.models import Publication
+    Publication.objects.create(researcher=r0, title="A Polypeptide for Specific Attachment of Ubiquitin", venue="Nature", year=1980)
+    doc = PublicDocument.objects.create(institution=technion, title="דמות הבוגר של הטכניון", url="https://www.technion.ac.il/graduate",
+                                        kind="graduate_profile", summary="מה הטכניון מצפה שבוגר ידע ויהיה, במילותיו שלו.", source="אתר הטכניון")
+    doc.criteria.add(Criterion.objects.get(slug="innovation"))
     InstitutionMetric.objects.create(institution=technion, key="faculty_total", value=600, source="אתר הטכניון")
     ResearchCenter.objects.create(institution=technion, name="Tech.AI", focus="בינה מלאכותית")
     for y, t in ((1912, "הקמת הטכניון בחיפה"), (2004, "פרס נובל בכימיה"), (2021, "תכנית אסטרטגית ללימודי הסמכה")):
@@ -213,6 +228,7 @@ def build_world():
     Invitation.objects.create(email="invited@example.com", role_kind="leader", institution=technion, title="סגן נשיא",
                               token="screens-invite-token-4410", sent_by=avi, sent_at=timezone.now())
     # Epic D2: the committee's room, with a submission in every state the screens show
+    from academia360_d2_world import pdf_bytes, xlsx_bytes
     from django.core.files.base import ContentFile
 
     from academia360 import extract
@@ -228,7 +244,6 @@ def build_world():
         Submission,
         SubmittedFile,
     )
-    from academia360_d2_world import pdf_bytes, xlsx_bytes
     part = Participation.objects.get(institution=technion)
     part.status = "under_review"
     part.save()
@@ -305,6 +320,10 @@ SCREENS = [
     ("institutions-filtered", None, "/academia360/institutions/?kind=university&q=%D7%97%D7%99%D7%A4%D7%94"),
     ("institution", None, "/academia360/institutions/technion/"),
     ("institution-long", None, "/academia360/institutions/long/"),
+    ("institution-member", "shira", "/academia360/institutions/technion/"),
+    ("institution-empty", None, "/academia360/institutions/c3/"),
+    ("manage-coverage", "avi", "/academia360/manage/coverage/"),
+    ("manage-coverage-empty", "avi", "/academia360/manage/coverage/?state=empty"),
     ("researchers", None, "/academia360/researchers/"),
     ("researchers-filtered", None, "/academia360/researchers/?area=%D7%9C%D7%9E%D7%99%D7%93%D7%AA&inst=technion"),
     ("researcher", None, "/academia360/researchers/r0/"),

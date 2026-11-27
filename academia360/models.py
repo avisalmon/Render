@@ -267,6 +267,17 @@ class Institution(Row):
     founder = models.CharField(max_length=200, blank=True)
     logo = models.ImageField(upload_to="academia360/logos/", blank=True)
     identity = models.TextField(blank=True, help_text="A short public paragraph: what makes this place itself")
+    # Epic P (Avi, 2026-11-27): the one paragraph carries where it came from; a one-line tagline sits under the name
+    tagline = models.CharField(max_length=200, blank=True, help_text="One line under the name: 'מוסד אקדמי מוביל במדע, הנדסה וטכנולוגיה'")
+    identity_source = models.CharField(max_length=200, blank=True)
+    identity_as_of = models.DateField(null=True, blank=True)
+    # The coverage list (P.5): where this institution's public material stands, for the two later jobs
+    # (recheck what we have, fill what is empty)
+    RESEARCH_NONE, RESEARCH_IMPORTED, RESEARCH_RECHECKED = "none", "imported", "rechecked"
+    RESEARCH_STATES = [(RESEARCH_NONE, "אין חומר"), (RESEARCH_IMPORTED, "יובא מהרפרנס"), (RESEARCH_RECHECKED, "נבדק מחדש")]
+    research_status = models.CharField(max_length=12, choices=RESEARCH_STATES, default=RESEARCH_NONE)
+    research_as_of = models.DateField(null=True, blank=True)
+    research_note = models.TextField(blank=True)
     budgeted_by_vatat = models.BooleanField(default=True)
     active = models.BooleanField(default=True)
 
@@ -370,6 +381,30 @@ class StudyProgramCount(Row):
         unique_together = [("study_program", "academic_year")]
 
 
+class UnitEnrollment(Row):
+    """Students of a faculty or school in a year, with its share of the
+    institution (Epic P: "the main professions and the number of students
+    in each"). From the reference's overview pages to start."""
+
+    CIRCLE = PUBLIC
+    INSTITUTION_PATH = "unit__institution"
+
+    unit = models.ForeignKey(Unit, on_delete=models.CASCADE, related_name="enrollments")
+    year = models.PositiveSmallIntegerField(null=True, blank=True)
+    students = models.PositiveIntegerField(null=True, blank=True)
+    approximate = models.BooleanField(default=False)
+    share_pct = models.DecimalField(max_digits=5, decimal_places=1, null=True, blank=True)
+    source = models.CharField(max_length=200, blank=True)
+    as_of = models.DateField(null=True, blank=True)
+    verified = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["unit_id", "-year", "-pk"]
+
+    def __str__(self):
+        return f"{self.unit}: {self.students}"
+
+
 class InstitutionMetric(Row):
     """A number about the institution at a point in time, with its source."""
 
@@ -408,6 +443,7 @@ class Researcher(Row):
     name_he = models.CharField(max_length=160)
     name_en = models.CharField(max_length=160, blank=True)
     title = models.CharField(max_length=80, blank=True, help_text="פרופ׳, ד״ר")
+    position = models.CharField(max_length=160, blank=True, help_text="דיקן הפקולטה להנדסה, פרופסור מן המניין (Epic P)")
     areas = models.CharField(max_length=300, blank=True)
     focus = models.TextField(blank=True)
     kind = models.CharField(max_length=12, choices=KINDS, default=OTHER)
@@ -501,6 +537,35 @@ class ResearchCenter(Row):
         return self.name
 
 
+class Distinction(Row):
+    """A prize or honour: of a researcher (a Nobel, an Israel Prize, an ERC
+    grant) or of the institution itself (Epic P: "research that stands
+    out"). Shown only when verified."""
+
+    CIRCLE = PUBLIC
+    INSTITUTION_PATH = "institution"
+
+    KINDS = [("nobel", "פרס נובל"), ("israel_prize", "פרס ישראל"), ("wolf", "פרס וולף"), ("emet", "פרס א.מ.ת"),
+             ("turing", "פרס טיורינג"), ("erc", "מענק ERC"), ("ranking", "דירוג"), ("other", "אחר")]
+
+    institution = models.ForeignKey(Institution, on_delete=models.CASCADE, related_name="distinctions")
+    researcher = models.ForeignKey(Researcher, null=True, blank=True, on_delete=models.CASCADE,
+                                   related_name="distinctions")
+    kind = models.CharField(max_length=14, choices=KINDS, default="other")
+    title = models.CharField(max_length=300, help_text="פרס נובל לכימיה")
+    year = models.PositiveSmallIntegerField(null=True, blank=True)
+    url = models.URLField(blank=True)
+    source = models.CharField(max_length=200, blank=True)
+    as_of = models.DateField(null=True, blank=True)
+    verified = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["institution_id", "-year", "pk"]
+
+    def __str__(self):
+        return f"{self.title} {self.year or ''}".strip()
+
+
 class Collaboration(Row):
     CIRCLE = PUBLIC
     INSTITUTION_PATH = "institution"
@@ -520,6 +585,8 @@ class ProfileSection(Row):
     INSTITUTION_PATH = "institution"
 
     KINDS = [("overview", "סקירה"), ("research", "מחקר"), ("innovation", "חדשנות ויזמות"), ("rankings", "דירוגים"),
+             ("structure", "מבנה אקדמי"), ("programs", "תכניות ולימודים"), ("ai", "בינה מלאכותית"),
+             ("strengths", "נקודות חוזקה"), ("collaborations", "שיתופי פעולה"), ("history", "היסטוריה"),
              ("program_public", "מה המוסד פרסם על התכנית"), ("other", "אחר")]
 
     institution = models.ForeignKey(Institution, on_delete=models.CASCADE, related_name="sections")
@@ -557,12 +624,28 @@ class PublicDocument(Row):
     CIRCLE = PUBLIC
     INSTITUTION_PATH = "institution"
 
+    # Epic P: what the institution published that speaks to what Academia 360 asks for
+    KINDS = [("vision", "חזון"), ("graduate_profile", "דמות הבוגר"), ("strategic_plan", "תכנית אסטרטגית"),
+             ("program", "תכנית מיוחדת"), ("report", "דוח"), ("news", "ידיעה"), ("other", "אחר")]
+
     institution = models.ForeignKey(Institution, on_delete=models.CASCADE, related_name="public_documents")
     title = models.CharField(max_length=300)
     url = models.URLField(blank=True)
     file = models.FileField(upload_to="academia360/public/", blank=True)
-    kind = models.CharField(max_length=40, blank=True)
+    kind = models.CharField(max_length=40, choices=KINDS, default="other", blank=True)
+    summary = models.TextField(blank=True, help_text="Two or three sentences: what it is and why it matters here")
+    criteria = models.ManyToManyField(Criterion, blank=True, related_name="public_documents")
     published_at = models.DateField(null=True, blank=True)
+    source = models.CharField(max_length=200, blank=True)
+    as_of = models.DateField(null=True, blank=True)
+    verified = models.BooleanField(default=True)
+    order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ["institution_id", "order", "pk"]
+
+    def __str__(self):
+        return self.title
 
 
 # ---------------------------------------------------------------- 10. audit

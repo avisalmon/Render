@@ -1694,3 +1694,21 @@ paper, by copies), not the way the data is grouped. "Who may see this" is
 asked per page against the people the page is for, never inherited from the
 site's sign-in. A flow test proves the flow completes; only the walk proves
 it is the right flow.
+
+### 88. Generated pages are read by meaning, with a tag walk, and a parser ships with its count
+
+Academia360's first import read 24 research pages, each generated on its
+own with its own class names, by one page's class names: it kept names and
+links, dropped metrics, publications and prizes, and took 44 area headings
+for people. Its test, "runs twice and changes nothing", was true of a parser
+that read nothing (PM-113).
+
+**The rule.** Pages generated separately are read by what they say (a
+person is a name with a title, a metric is a number beside its word, a
+prize is a badge-like line that starts with the word), with a real tag walk
+and never a regex that stops at the first closing tag. A parser over a
+corpus ships with a count test against the real corpus and a sample test
+that pins known rows exactly, and the builder reads a few parsed rows next
+to their source before landing them. An import fills only what is empty, so
+a better reading can run over a worse one. Idempotence proves nothing about
+coverage.

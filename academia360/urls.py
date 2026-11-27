@@ -6,6 +6,7 @@ from rest_framework import permissions, routers
 from . import (
     auth_views,
     committee,
+    coverage,
     deciding,
     discuss,
     doors,
@@ -60,6 +61,8 @@ urlpatterns = [
     path("manage/", manage.overview, name="manage"),
     path("manage/people/", manage.people_page, name="manage_people"),
     path("manage/act/", manage.act, name="manage_act"),
+    path("manage/coverage/", coverage.page, name="manage_coverage"),
+    path("manage/coverage/set/", coverage.set_status, name="manage_coverage_set"),
     path("compare/", views.compare, name="compare"),
     path("talk/comment/", talk.comment, name="talk_comment"),
     path("talk/like/", talk.like, name="talk_like"),
@@ -89,6 +92,7 @@ urlpatterns = [
     path("api/admin/requests/<int:pk>/decide/", RequestDecideView.as_view(), name="api_request_decide"),
     path("api/admin/invitations/", InviteView.as_view(), name="api_invite"),
     path("api/admin/replicate/", ReplicateView.as_view(), name="api_replicate"),
+    path("api/admin/coverage/", coverage.CoverageView.as_view(), name="api_coverage"),
     path("api/admin/replicate/file/<str:model>/<int:pk>/", ReplicateFileView.as_view(), name="api_replicate_file"),
     path("api/", include(router.urls)),
 ]

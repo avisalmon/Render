@@ -63,11 +63,23 @@ def test_the_home_page_tells_who_applied_and_who_did_not(client, world):
     assert "a360-out" not in technion
 
 
-def test_the_institution_page_shows_the_process_and_never_the_letter(client, world):
+def test_the_institution_page_shows_the_process_to_the_committee_only_and_never_the_letter(client, world):
+    # Epic P (Avi, 2026-11-27): the public sees public information only; the status card is the committee's
     main = _main(client, "/academia360/institutions/technion/")
-    assert "הגיש תכנית ארבע־שנתית" in main and "נשלח למוסד" in main and "דיקן" in main
+    assert "הגיש תכנית ארבע־שנתית" not in main and "נשלח למוסד" not in main and "דיקן" not in main
     assert "טקסט סודי" not in main and "רקטור" not in main
     assert "הרחבת אופקים" in main and "קורסי חובה במדעי הרוח" in main
+    main = _main(client, "/academia360/institutions/huji/")
+    assert "לא ניגש" not in main
+    from django.contrib.auth.models import User
+
+    from academia360.models import Role
+    member = User.objects.create_user("member@example.com", "member@example.com", "pw-a360-4411")
+    Role.objects.create(user=member, kind=Role.COMMITTEE_MEMBER)
+    client.force_login(member)
+    main = _main(client, "/academia360/institutions/technion/")
+    assert "הגיש תכנית ארבע־שנתית" in main and "נשלח למוסד" in main and "דיקן" in main and "לחברי הוועדה" in main
+    assert "טקסט סודי" not in main
     main = _main(client, "/academia360/institutions/huji/")
     assert "לא ניגש" in main and "נשלח למוסד" not in main
 

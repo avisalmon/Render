@@ -17,6 +17,49 @@ Newest first.
 
 ---
 
+## PM-113 · 2026-11-27 · Academia360 Epic P: the first import read 24 generated pages by their class names and lost most of what they said
+
+**What happened.** Avi asked that everything his October 2025 research
+holds find its place on the site. Counting production against the
+reference showed the first import (A.2) had kept researcher names, areas
+and links and dropped focus, position, h-index, citations, publications,
+prizes, the faculty splits and the timelines; 0 of 219 researchers had a
+metric. It had also taken 44 area headings ("בינה מלאכותית ומדעי המחשב",
+"למידע נוסף") for people, because it split on a card class and took the
+next heading as the name. Nobody noticed for a day because the pages
+looked populated.
+
+**Why the process let it.** The pages were generated one by one and do not
+share a markup; a parser written against one page's class names reads the
+others partly or wrongly, and silently. The import's test proved "it runs
+twice and the second run changes nothing", which is true of a parser that
+reads nothing. No test counted the parser's output against the source, and
+no one read a sample of what it produced next to the page it came from.
+The second reading also started with a regex block scanner that stopped at
+the first closing tag, so a wrapper swallowed its children and a label's
+value sat invisible next to it; and a value-then-label layout and a
+label-then-value layout gave each other's numbers until the rule became
+"a label is words only, and the neighbour whose class says value wins".
+
+**Rule.** (a) Pages generated separately are read by meaning (a person is a
+name with a title; a metric is a number next to its word; a prize is a
+badge-like line that starts with the word), never by class names, and
+with a real tag walk, never a regex that ends at the first closing tag.
+(b) A parser over a corpus ships with a count test against the real corpus
+(people, publications, metrics, splits: at least what was measured by
+hand) and a sample test that pins a few known rows exactly, and the
+builder reads a handful of parsed rows next to their source before the
+rows are landed. (c) An import that lands rows only fills what is empty
+and never overwrites, so a second, better reading can run over the first.
+(d) "It runs twice and changes nothing" is not evidence that it read
+anything.
+
+- Here: `docs/building_an_app.md` (mistake 88), `academia360/reference_pages.py`,
+  `academia360/reread.py`, `tests/test_academia360_p2.py`.
+- BKM: pending
+
+---
+
 ## PM-112 · 2026-11-27 · breakout B.4 review: the teacher's job was never walked as the teacher
 
 **What happened.** B.4 shipped with every sheet exact and every test

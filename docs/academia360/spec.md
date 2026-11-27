@@ -301,11 +301,34 @@ building is decided there, not here.
 - **The map of higher education.** Every budgeted institution on a map and
   in a list, by kind (university, college, teacher training) and region,
   with whether it takes part in the program.
-- **An institution's page.** Identity, campuses, units and degree programs,
-  student numbers over the years as a chart, research strengths and
-  centers, collaborations, a timeline, and the leading researchers with
-  their verified profiles and dated metrics. Every number shows its source
-  and date.
+- **An institution's page** (rewritten to Avi's order, 2026-11-27, Epic P).
+  Read top to bottom like a book: the name on the right and, for committee
+  members and the admin only, the program status on the left (the public
+  sees public information only, not even "took part"); a one-line tagline
+  and one paragraph (where it is, what it mainly teaches, what its research
+  is known for), written from the institution's own reference page and
+  marked with that source; "what matters to Academia 360, in their own
+  words": public documents the institution published that speak to the
+  criteria (graduate image, vision, strategic plan, special programs), each
+  a card with a link, a summary and the criteria it touches; "what they
+  teach, and how many": the faculties and schools with their share and
+  student count where known, the totals in a sentence; "research that
+  stands out": prizes and honours, the leading researchers as cards that
+  open to a full page, centres and labs; "the story": the longer sections
+  folded under their titles, the timeline and partners beside them; and
+  compare at the very bottom, out of the front. Every section hides when it
+  has nothing; an institution without material says so in one honest line.
+  Every number shows its source and date, in sentences and rows, never
+  tiles (ch. 5).
+- **A researcher's page** (Epic P.4). Position and unit, focus, a short
+  bio, the dated metrics, selected publications, prizes, verified links,
+  colleagues at the same institution; a page with little says what is
+  missing.
+- **The coverage list** (admin, Epic P.5, `/academia360/manage/coverage/`
+  and `api/admin/coverage/`): a row per institution with what it has, a
+  state (empty / partial / rich) and a research status kept by hand (none /
+  imported / rechecked, with a date and a note), for the two later jobs:
+  recheck what exists, fill what is empty.
 - **Researchers.** A page per researcher, and a cross-institution view: who
   works on what, by field, with links out.
 - **Study programs across the country.** All bachelor's programs by field

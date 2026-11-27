@@ -139,40 +139,69 @@ def institutions(request):
 
 
 def institution(request, slug):
+    """The institution page in Avi's order (Epic P, 2026-11-27): the name and,
+    for the committee only, the status; one paragraph; what the institution
+    published that speaks to Academia 360; what they teach and how many;
+    research that stands out; the story, folded; compare at the bottom.
+    Every section hides when it has nothing, and a page with nothing says so
+    in one honest line."""
     inst = get_object_or_404(Institution, slug=slug, active=True)
     program = _program()
-    part = Participation.objects.filter(program=program, institution=inst).first() if program else None
-    letter_sent = False
-    if part is not None and part.applied:
-        letter_sent = ResponseLetter.objects.filter(submission__participation=part, sent_at__isnull=False).exists()
-    sections = list(inst.sections.filter(published=True).order_by("order"))
-    program_sections = [s for s in sections if s.kind == "program_public"]
-    other_sections = [s for s in sections if s.kind != "program_public"]
+    committee = access.is_committee(request.user)
+    part = letter_sent = None
+    if committee and program:
+        part = Participation.objects.filter(program=program, institution=inst).first()
+        if part is not None and part.applied:
+            letter_sent = ResponseLetter.objects.filter(submission__participation=part, sent_at__isnull=False).exists()
+    sections = list(inst.sections.filter(published=True).order_by("order", "pk"))
+    program_sections = [x for x in sections if x.kind == "program_public"]
+    story = [x for x in sections if x.kind != "program_public"]
+    documents = list(inst.public_documents.filter(verified=True).prefetch_related("criteria").order_by("order", "pk"))
+    # what they teach, and how many: units with their share and count, the programs under them
+    units = list(inst.units.filter(parent__isnull=True).order_by("order", "name")
+                 .prefetch_related("study_programs", "enrollments"))
+    taught = []
+    for u in units:
+        rows = [e for e in u.enrollments.all() if e.verified]
+        rows.sort(key=lambda e: ((e.year or 0), e.pk), reverse=True)
+        u.count = rows[0] if rows else None
+        if u.count and u.count.students:
+            u.count.text = f"{u.count.students:,}"
+        u.programs = [x for x in u.study_programs.all() if x.active]
+        if u.count or u.programs:
+            taught.append(u)
+    taught.sort(key=lambda u: (-(u.count.students or 0) if u.count and u.count.students else 0,
+                               -(float(u.count.share_pct) if u.count and u.count.share_pct else 0), u.name))
+    loose_programs = list(inst.study_programs.filter(unit__isnull=True, active=True).order_by("name"))
+    facts = {}
+    for m in inst.metrics.filter(verified=True).order_by("key", "-year", "-as_of", "-pk"):
+        facts.setdefault(m.key, m)
+    headline = [facts[k] for k in ("students_total", "students_undergrad", "faculty_total") if k in facts]
+    for m in headline:
+        m.text = f"{m.value:,.0f}"
+    # research that stands out
+    distinctions = list(inst.distinctions.filter(verified=True).select_related("researcher").order_by("-year", "pk"))
+    prized = [d for d in distinctions if d.kind in ("nobel", "israel_prize", "wolf", "turing", "emet")]
     researchers = list(inst.researchers.filter(verified=True).order_by("-is_leading", "name_he")
-                       .prefetch_related("links", "metrics")[:10])
+                       .prefetch_related("links", "metrics", "distinctions")[:8])
     for r in researchers:
         metrics = sorted(r.metrics.all(), key=lambda m: (m.as_of is None, m.as_of), reverse=True)
         r.h_index = next((m for m in metrics if m.metric == "h_index"), None)
         r.citations = next((m for m in metrics if m.metric == "citations"), None)
-    units = list(inst.units.filter(parent__isnull=True).order_by("order", "name").prefetch_related("study_programs"))
-    loose_programs = list(inst.study_programs.filter(unit__isnull=True, active=True).order_by("name"))
-    metrics = []
-    seen = set()
-    for m in inst.metrics.filter(verified=True).order_by("key", "-year", "-as_of"):
-        if m.key in seen:
-            continue
-        seen.add(m.key)
-        m.label = METRIC_LABELS.get(m.key, m.key.replace("_", " "))
-        metrics.append(m)
+        r.prize = next((d for d in r.distinctions.all() if d.kind != "other"), None)
+    centers = list(inst.centers.order_by("order", "name"))
+    timeline = list(inst.timeline.order_by("year", "pk"))
+    collaborations = list(inst.collaborations.order_by("kind", "partner"))
+    has_story = bool(story or timeline or centers or collaborations)
+    thin = not (inst.identity or documents or taught or researchers or prized or has_story or program_sections)
     return render(request, "academia360/institution.html", {
-        "section": "institutions", "inst": inst, "part": part, "letter_sent": letter_sent,
-        "program": program, "program_sections": program_sections, "sections": other_sections,
-        "researchers": researchers, "researcher_count": inst.researchers.filter(verified=True).count(),
-        "units": units, "loose_programs": loose_programs,
-        "program_count": inst.study_programs.filter(active=True).count(),
-        "timeline": inst.timeline.order_by("year"), "centers": inst.centers.order_by("order", "name"),
-        "collaborations": inst.collaborations.order_by("kind", "partner"),
-        "metrics": metrics, "can_edit": access.is_admin(request.user),
+        "section": "institutions", "inst": inst, "committee": committee, "part": part, "letter_sent": letter_sent,
+        "program": program, "program_sections": program_sections, "documents": documents,
+        "taught": taught, "loose_programs": loose_programs, "headline": headline, "facts": facts,
+        "distinctions": distinctions, "prized": prized, "researchers": researchers,
+        "researcher_count": inst.researchers.filter(verified=True).count(),
+        "centers": centers, "timeline": timeline, "story": story, "collaborations": collaborations,
+        "has_story": has_story, "thin": thin, "can_edit": access.is_admin(request.user),
         **talk_context(request, inst, "institution"),
     })
 
@@ -280,6 +309,9 @@ METRIC_NAMES = {"h_index": "h-index", "citations": "ציטוטים", "i10": "i10
 
 
 def researcher(request, slug):
+    """A researcher's page (Epic P.4): who they are, what they work on, the
+    dated metrics, selected publications, prizes, verified links, and the
+    colleagues at the same institution. A page with little says so."""
     r = get_object_or_404(Researcher.objects.select_related("institution", "unit"), slug=slug, verified=True,
                           institution__active=True)
     metrics = []
@@ -290,9 +322,15 @@ def researcher(request, slug):
         seen.add(m.metric)
         m.label = METRIC_NAMES.get(m.metric, m.metric)
         metrics.append(m)
+    publications = list(r.publications.order_by("-year", "pk"))
+    for pub in publications:
+        pub.show_year = bool(pub.year) and str(pub.year) not in (pub.venue or "")
+    prizes = list(r.distinctions.filter(verified=True).order_by("-year", "pk"))
     colleagues = list(r.institution.researchers.filter(verified=True).exclude(pk=r.pk).order_by("-is_leading", "name_he")[:8])
+    thin = not (r.focus or r.bio or metrics or publications or prizes)
     return render(request, "academia360/researcher.html", {
         "section": "researchers", "r": r, "metrics": metrics, "links": list(r.links.all()), "colleagues": colleagues,
+        "publications": publications, "prizes": prizes, "thin": thin,
         **talk_context(request, r, "researcher"),
     })
 
