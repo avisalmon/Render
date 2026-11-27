@@ -249,7 +249,7 @@ def _printables_part(exp, stations, groups):
         part.add("header", exp.title)
         part.add("title", f"דף מצורף: {p.title}")
         station = by_station.get(p.station_id) or p.station
-        where = f"לתחנה {station.order}: {station.name}" if station else "לכל החוויה"
+        where = f"לתחנה {station.order}: {station.name}" if station else "לכל האתגר"
         copies = 1 if p.kind == "teacher_page" else groups
         how_many = "עותק אחד" if copies == 1 else f"להדפיס {copies} עותקים, אחד לכל קבוצה"
         part.add("kv", f"{p.get_kind_display()} · {where} · {how_many}")
@@ -257,7 +257,7 @@ def _printables_part(exp, stations, groups):
         if name.endswith(IMAGE_EXTENSIONS):
             part.add("image", path=p.file.name)
         else:
-            part.add("note", "הקובץ הזה אינו תמונה, לכן הוא לא מודפס כאן. מורידים אותו מעמוד החוויה ומדפיסים בנפרד.")
+            part.add("note", "הקובץ הזה אינו תמונה, לכן הוא לא מודפס כאן. מורידים אותו מעמוד האתגר ומדפיסים בנפרד.")
     return part
 
 
@@ -416,7 +416,7 @@ class _Page:
                 reader = ImageReader(io.BytesIO(handle.read()))
             iw, ih = reader.getSize()
         except Exception:  # a missing or unreadable file must not break the kit
-            self.text(Block("note", "התמונה לא נמצאה; מורידים אותה מעמוד החוויה."))
+            self.text(Block("note", "התמונה לא נמצאה; מורידים אותה מעמוד האתגר."))
             return
         # Fill the page (an A4 scan is pixels, not points); keep the shape.
         box_w = self.line_width

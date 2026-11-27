@@ -95,7 +95,7 @@ class ExperienceViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         if not access.may_write(self.request.user):
-            raise PermissionDenied("כרגע רק האוצרים כותבים חוויות.")
+            raise PermissionDenied("כרגע רק האוצרים כותבים אתגרים.")
         serializer.save(author=self.request.user)
 
     def perform_update(self, serializer):
@@ -132,7 +132,7 @@ class ChildOfExperience(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         experience = self._experience_from(serializer.validated_data)
         if experience is None or not access.may_edit(self.request.user, experience):
-            raise PermissionDenied("רק מי שכתב את החוויה מוסיף לה.")
+            raise PermissionDenied("רק מי שכתב את האתגר מוסיף לו.")
         serializer.save()
 
     def _experience_from(self, data):
@@ -266,7 +266,7 @@ class MineOrCurator(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         experience = serializer.validated_data.get("experience")
         if experience is not None and not access.may_see(self.request.user, experience):
-            raise PermissionDenied("החוויה הזאת אינה זמינה.")
+            raise PermissionDenied("האתגר הזה אינו זמין.")
         serializer.save(**{self.owner_field: self.request.user})
 
 

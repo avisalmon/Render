@@ -115,7 +115,7 @@ class AboutForm(TidyMixin, forms.ModelForm):
         fields = ["title", "tagline", "audience_from", "audience_to", "group_size_min", "group_size_max",
                   "duration_minutes", "prep_minutes", "difficulty", "subjects"]
         labels = {
-            "title": "שם החוויה", "tagline": "משפט אחד שמסביר אותה", "group_size_min": "קבוצה מינימלית",
+            "title": "שם האתגר", "tagline": "משפט אחד שמסביר אותו", "group_size_min": "קבוצה מינימלית",
             "group_size_max": "קבוצה מקסימלית", "duration_minutes": "דקות משחק", "prep_minutes": "דקות הכנה",
             "difficulty": "רמה",
         }

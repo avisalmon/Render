@@ -43,8 +43,8 @@ Headline for the site's purpose (approved by Avi, 2026-11-26):
 **Breakout: escape-room experiences made of paper, scissors and office
 supplies. Pick one, print it, run it with your group; or publish your own.**
 
-In Hebrew: חדרי בריחה מנייר: חוויות חדר בריחה שבנויות מדפים, מספריים וציוד
-משרדי. בוחרים, מדפיסים ומריצים עם הקבוצה, או מפרסמים חוויה משלכם.
+In Hebrew: חדרי בריחה מנייר: אתגרי חדר בריחה שבנויים מדפים, מספריים וציוד
+משרדי. בוחרים, מדפיסים ומריצים עם הקבוצה, או מפרסמים אתגר משלכם.
 
 ## Where the open questions landed
 
@@ -96,8 +96,8 @@ publishes it for other teachers to download, run, like and comment on. The
 teenagers never touch the app: their whole experience is on paper, at the
 desk, in the real world.
 
-Headline: **חדרי בריחה מנייר: חוויות חדר בריחה שבנויות מדפים, מספריים וציוד
-משרדי. בוחרים, מדפיסים ומריצים עם הקבוצה, או מפרסמים חוויה משלכם.**
+Headline: **חדרי בריחה מנייר: אתגרי חדר בריחה שבנויים מדפים, מספריים וציוד
+משרדי. בוחרים, מדפיסים ומריצים עם הקבוצה, או מפרסמים אתגר משלכם.**
 
 ### 1.2 Why it exists
 
@@ -210,6 +210,9 @@ from `static/fonts/`, python-bidi for shaping), in the app's own module
 Each print is recorded as a Download row with the group count.
 
 ## 5. Writing an experience
+
+> Wording (Avi, 2026-11-27): the thing is called **אתגר** (masculine) in every string a person reads; "experience" stays the name in code, URLs and these docs.
+
 
 Any signed-in teacher writes, eventually. **For now (Avi, 2026-11-26) only
 Avi puts up challenges**: writing is gated to curators in `access.may_write`,

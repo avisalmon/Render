@@ -1,11 +1,11 @@
 {% extends "breakout/base.html" %}
-{% block title %}{% if is_new %}חוויה חדשה{% else %}אודות · {{ exp.title }}{% endif %} · חדרי בריחה מנייר{% endblock %}
+{% block title %}{% if is_new %}אתגר חדש{% else %}אודות · {{ exp.title }}{% endif %} · חדרי בריחה מנייר{% endblock %}
 {% block content %}
 <p class="br-back"><a href="{% if is_new %}{% url 'breakout:home' %}{% else %}{% url 'breakout:edit' exp.slug %}{% endif %}">→ {% if is_new %}הספרייה{% else %}סקירה ופרסום{% endif %}</a></p>
 <section class="br-pagehead br-pagehead--exp">
   <div>
-    <h1 class="br-h1" dir="auto">{% if is_new %}חוויה חדשה{% else %}{{ exp.title }}{% endif %}</h1>
-    <p class="br-lede">{% if is_new %}מתחילים מהעובדות היבשות. הכל אפשר לשנות אחר כך, והחוויה נשארת טיוטה שרק אתם רואים עד שתפרסמו.{% else %}העובדות היבשות: למי, כמה זמן, איזו רמה.{% endif %}</p>
+    <h1 class="br-h1" dir="auto">{% if is_new %}אתגר חדש{% else %}{{ exp.title }}{% endif %}</h1>
+    <p class="br-lede">{% if is_new %}מתחילים מהעובדות היבשות. הכל אפשר לשנות אחר כך, והאתגר נשאר טיוטה שרק אתם רואים עד שתפרסמו.{% else %}העובדות היבשות: למי, כמה זמן, איזו רמה.{% endif %}</p>
   </div>
 </section>
 {% include "breakout/edit/_steps.html" %}

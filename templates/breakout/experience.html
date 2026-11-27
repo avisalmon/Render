@@ -6,7 +6,7 @@
 
 <section class="br-pagehead br-pagehead--exp">
   <div>
-    {% if exp.is_flagship %}<span class="br-flag">חוויית דגל</span>{% endif %}
+    {% if exp.is_flagship %}<span class="br-flag">אתגר דגל</span>{% endif %}
     {% if exp.status != 'published' %}<span class="br-tag br-tag--{{ exp.status }}">{{ exp.get_status_display }}{% if exp.hidden_reason %}: {{ exp.hidden_reason }}{% endif %}</span>{% endif %}
     <h1 class="br-h1" dir="auto">{{ exp.title }}</h1>
     <p class="br-lede" dir="auto">{{ exp.tagline }}</p>
@@ -72,7 +72,7 @@
 
 {% if final_lock %}
 <details class="br-fold">
-  <summary><span class="br-fold-title">המנעול הסופי</span><span class="br-fold-value">{% if final_lock.final_code %}הקוד: <span class="br-code" dir="ltr">{{ final_lock.final_code }}</span>{% else %}איך החוויה נגמרת{% endif %}</span></summary>
+  <summary><span class="br-fold-title">המנעול הסופי</span><span class="br-fold-value">{% if final_lock.final_code %}הקוד: <span class="br-code" dir="ltr">{{ final_lock.final_code }}</span>{% else %}איך האתגר נגמר{% endif %}</span></summary>
   <div class="br-fold-body">
     {% if final_lock.description %}<h3 class="br-h3">מה הקבוצה רואה</h3><div class="br-prose br-kids" dir="auto">{{ final_lock.description|linebreaks }}</div>{% endif %}
     {% if final_lock.code_rule %}<h3 class="br-h3">איך הקוד מתרכב <span class="br-teacher-only">(למורה)</span></h3><div class="br-prose" dir="auto">{{ final_lock.code_rule|linebreaks }}</div>{% endif %}

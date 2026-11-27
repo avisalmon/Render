@@ -23,6 +23,7 @@
 | 2026-11-26 | Headline approved; app for teachers; kids never in the app; signed-in only; Hebrew only; no AI in v1 | spec 0, 1 |
 | 2026-11-26 | Data model approved with the section 7 defaults | data_model.md |
 | 2026-11-26 (evening, after B.1 to B.3 shipped) | **Not in the "more on babook" menu** until it looks good (Avi). **Only Avi puts up challenges for now**: writing is gated to curators (`access.may_write`), teachers read, print and (B.4) react; the open-to-all editor of spec 5 waits for his word, one line to flip. One example experience is enough for the moment | access.py, edit_views.new, api.py |
+| 2026-11-27 | **The word is "אתגר"** (m.), not "חוויה" (f.), in every person-facing string: screens, messages, the kit, the dashboard (Avi: "אתגר."). Code, URLs, model names and the docs' English "experience" stay as they are | templates/breakout/, breakout/*.py |
 | 2026-11-26 | The kit is composed into text blocks first and drawn second, so the "no secret on a player page" promise is tested on the blocks, not by parsing a PDF | breakout/kit.py |
 | 2026-11-26 | Player pages come one stack per group (group 1: stations 1 to N, then group 2 ...), each stamped "קבוצה g מתוך N", so the teacher tears the printout into piles | spec 4 |
 | 2026-11-26 | The kit is a GET with `?groups=`; the Download row is written on that GET (signed-in only, so no crawler inflates it); junk counts fall back to 4, wild ones clamp to 1..30 | breakout/views.py |

@@ -183,7 +183,7 @@ def test_a_card_carries_what_the_filters_read(seeded, dana):
     full = re.search(r'<article class="br-card[^"]*"[^>]*>', html).group(0)
     assert 'data-difficulty="medium"' in full and 'data-from="7"' in full and 'data-to="9"' in full
     assert "programming" in re.search(r'data-subjects="([^"]*)"', full).group(1)
-    assert "כיתות ז-ט" in card and "45 דק׳" in card and "בינוני" in card and "חוויית דגל" in card
+    assert "כיתות ז-ט" in card and "45 דק׳" in card and "בינוני" in card and "אתגר דגל" in card
 
 
 def test_the_grade_filter_offers_every_grade_the_data_can_hold(seeded, dana):
@@ -197,7 +197,7 @@ def test_the_grade_filter_offers_every_grade_the_data_can_hold(seeded, dana):
 
 def test_the_library_is_empty_honestly(dana):
     html = _as(dana).get("/breakout/").content.decode()
-    assert "עוד אין חוויות בספרייה" in html
+    assert "עוד אין אתגרים בספרייה" in html
 
 
 # ------------------------------------------------------ the experience page
@@ -345,8 +345,8 @@ def test_a_plain_teacher_cannot_start_an_experience_for_now(seeded, yossi):
     r = _as(yossi).post("/breakout/api/experiences/", {"title": "חדר של יוסי", "slug": "yossi-room"})
     assert r.status_code == 403 and not Experience.objects.filter(slug="yossi-room").exists()
     assert _as(yossi).get("/breakout/new/").status_code == 404
-    assert "כתיבת חוויה" not in _as(yossi).get("/breakout/").content.decode()
-    assert "כתיבת חוויה" in _as(seeded.author).get("/breakout/").content.decode()  # the superuser is a curator
+    assert "כתיבת אתגר" not in _as(yossi).get("/breakout/").content.decode()
+    assert "כתיבת אתגר" in _as(seeded.author).get("/breakout/").content.decode()  # the superuser is a curator
 
 
 def test_only_the_author_writes_an_experience_and_its_children(seeded, dana, yossi):
