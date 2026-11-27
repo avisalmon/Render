@@ -20,6 +20,7 @@
 | F. Leader's workspace | Home, submit, KPIs, budget, 20%, letters | planned |
 | G. Committee assistant | Model metadata, read-only queries, document index, super chat | planned |
 | H. Leader's assistant | Policies, building the request, readiness view, KPI guidance | planned |
+| **I.1 The first research pass** | The 12 empty institutions filled by public research, every fact with its link, landed by `load_research` | built in dev 2026-11-27 evening |
 | I. Enrichment at scale | Agent runs as a routine, health view | planned |
 | J. Later | Mail bot, scheduler, English, open data | planned |
 
@@ -247,3 +248,44 @@ Decisions taken while planning (to raise at the review):
 | P.4 The researcher page | Focus and bio, metrics with dates, publications, distinctions, links, colleagues; a page with nothing says so | a rich page shows all of it; an empty one says what is missing |done 2026-11-27 afternoon: `researcher.html` rewritten; publications and prizes section; 1 test (in p3) |
 | P.5 Coverage | `/academia360/manage/coverage/`: a row per institution with what it has (paragraph, sections, researchers, with metrics, publications, split, timeline, documents, distinctions), a state (empty / partial / rich), the research status editable in place, filters; the same through the API for the chat | the list counts right; the admin only; setting a status is logged |done 2026-11-27 afternoon: `coverage.py` (page, set, API view), `manage/coverage.html`; dev: 12 empty, 1 partial (Beit Berl: an areas page, no people), 23 rich; 3 tests |
 | P.6 Epic end | `replicate_to --models`; the screen contract for the new screens at six widths; suite, check, sweep, drift, post-mortem; the review with Avi; after his push: replicate the pass-1 rows to production | | done 2026-11-27 evening: `--models` with its test; screen contract green at six widths with four new screens (findings fixed on the way: a document title link too short to tap, the institution tag on the researcher page as a short link, the coverage table past the phone's edge, now a stack of labelled cards under 700px, two dynamic class names); class sweep clean; check clean; drift as before; PM-113 (BKM d03590c, mistake 99); dev screenshots at 390/1280 read; Avi 2026-11-27 18:20: "Ok..push"; carried by the breakout chat's train T1127-181834 (bc3f738, live 18:42 after the second deploy of the same commit); then `replicate_to --models` of the 15 public-knowledge tables, 1,676 rows: production went from 1 rich / 23 partial / 12 empty to 23 rich / 1 partial / 12 empty, 291 researchers, 306 publications, 45 splits, 24 paragraphs; live pages checked |
+
+---
+
+## I.1 The first research pass (the 12 empty institutions)
+
+Avi, 2026-11-27 evening: "do them all and make it rich, correct and
+interesting." The second of the two later jobs from Epic P (fill the
+empty); recheck of the other 23 is still open.
+
+- Research outside the app: one agent per institution, one brief
+  (scratchpad, not committed), one JSON file each with a URL per fact; prose
+  in Hebrew, no em dashes; researchers' h-index, citations and top works
+  from OpenAlex, matched by affiliation only.
+- `academia360/research_load.py` + `manage.py load_research FILE_OR_FOLDER
+  [--only] [--dry-run]`: fills only empty fields, adds only missing rows,
+  drops what does not fit (unknown kinds, non-http links, years out of
+  range, Scholar links), source line "מחקר ציבורי, נובמבר 2026 · domain",
+  as_of 2026-11-27, research_status imported with the gaps in the note, an
+  AgentRun.
+- Review before landing removed: a counted faculty number and a counted
+  program number (Western Galilee), a year given to an undated total
+  (Kaye), two timeline years inferred from page dates (Orot), a vague
+  Turing line and a QS rank that matches no table (Hebrew University), a
+  vague 1967 prize (Gordon); Yonath's Nobel line says graduate, Einstein's
+  gets 1921.
+- Found on the way: Carmel Academic Center was closed by the CHE in 2017
+  (its page says so); Hadassah Academic College is called המרכז האקדמי הרב
+  תחומי ירושלים since February 2025 (name left for Avi to decide).
+- Researcher slugs are unique site-wide now (PM-115); a long prize list
+  shows ten and folds the rest; an OpenAlex link reads "OpenAlex".
+- Dev result: 1,616 rows; coverage 33 rich, 3 partial, 0 empty (Carmel and
+  Gordon have no metrics; Beit Berl as before). OpenAlex's free daily
+  budget ran out during the run: publications for Achva, Western Galilee
+  and part of Gordon, Oranim, Kaye and Orot wait for a backfill after the
+  reset.
+
+| Sprint | Content | Tests written first | Status |
+| --- | --- | --- | --- |
+| I.1 Load and land | loader + command, review pass, land in dev, render every page | lands with source and drops what does not fit; a second run adds nothing and keeps an admin edit; coverage reads rich and the command records a run; one name at two institutions gets two addresses | built in dev 2026-11-27 evening; 4 tests |
+| I.1b OpenAlex backfill | publications and metrics for people the agents could not reach, by stored OpenAlex id or a sure affiliation match | | planned, after the quota resets |
+

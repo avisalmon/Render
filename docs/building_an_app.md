@@ -1728,3 +1728,19 @@ gate's audience before the gate ships. The level is chosen on the approval
 screen in the same click and changed on the same screen later; a yes/no
 door with rights on a second screen costs the approver a second visit per
 person.
+
+### 90. Research by agents lands through a review, and a page address is unique where the page looks
+
+Academia360 filled 12 institutions by twelve research agents writing sourced
+JSON files. Rendering every new page found two people with one slug at two
+places (the URL reads the slug alone); reviewing the files found counted,
+inferred and vague facts; and the agents shared one free API budget (PM-115).
+
+**The rule.** The field a URL resolves by is unique over the URL's whole
+scope, and every new row's page is rendered after a bulk landing. Agent
+research is a file per subject with a URL per fact, landed by a loader that
+fills only empty fields, after a review that reads every number, year and
+prize and drops what was counted, inferred or vague. Parallel agents share
+the network's quotas, so one agent does the rate-limited API work or a
+backfill runs after the reset.
+

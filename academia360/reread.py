@@ -76,7 +76,7 @@ def _match_researcher(inst, person):
 def _slug(inst, person):
     base = slugify(person["name_he"] or person["name_en"], allow_unicode=True)[:48] or "r"
     slug, n = base, 2
-    while Researcher.objects.filter(institution=inst, slug=slug).exists():
+    while Researcher.objects.filter(slug=slug).exists():  # the page address is the slug alone: unique site-wide
         slug, n = f"{base}-{n}", n + 1
     return slug
 

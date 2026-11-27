@@ -181,7 +181,9 @@ def institution(request, slug):
         m.text = f"{m.value:,.0f}"
     # research that stands out
     distinctions = list(inst.distinctions.filter(verified=True).select_related("researcher").order_by("-year", "pk"))
-    prized = [d for d in distinctions if d.kind in ("nobel", "israel_prize", "wolf", "turing", "emet")]
+    weight = {"nobel": 0, "turing": 1, "wolf": 2, "israel_prize": 3, "emet": 4}
+    prized = sorted((d for d in distinctions if d.kind in weight), key=lambda d: (weight[d.kind], -(d.year or 0)))
+    prized, prized_more = prized[:10], prized[10:]  # the rest folded: a long list hides the people
     researchers = list(inst.researchers.filter(verified=True).order_by("-is_leading", "name_he")
                        .prefetch_related("links", "metrics", "distinctions")[:8])
     for r in researchers:
@@ -198,7 +200,7 @@ def institution(request, slug):
         "section": "institutions", "inst": inst, "committee": committee, "part": part, "letter_sent": letter_sent,
         "program": program, "program_sections": program_sections, "documents": documents,
         "taught": taught, "loose_programs": loose_programs, "headline": headline, "facts": facts,
-        "distinctions": distinctions, "prized": prized, "researchers": researchers,
+        "distinctions": distinctions, "prized": prized, "prized_more": prized_more, "researchers": researchers,
         "researcher_count": inst.researchers.filter(verified=True).count(),
         "centers": centers, "timeline": timeline, "story": story, "collaborations": collaborations,
         "has_story": has_story, "thin": thin, "can_edit": access.is_admin(request.user),
