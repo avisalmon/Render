@@ -17,6 +17,31 @@ Newest first.
 
 ---
 
+## PM-116 · 2026-11-27 · Academia360 coverage list: eight counts on one join, fast on thin data, a 502 once the data was rich
+
+**What happened.** After the research rows were replicated, the admin's
+coverage list (page and API) timed out in production with a 502. The query
+annotated eight related Counts on one queryset; each join multiplies the
+rows, so 16 researchers x 57 publications x 45 distinctions x 14 timeline
+rows ... became millions of rows. It took 42 s in dev on the same data and
+0.03 s after the fix.
+
+**Why the process let it.** The tests and the screen contract ran on a few
+rows per institution, where the product of joins is small. Nobody timed the
+admin screen after the bulk landing, only the public pages.
+
+**Rule.** Never put more than one Count over different to-many relations on
+one queryset; count each relation in its own grouped query and merge in
+Python. A list that summarises related tables gets a query-count test, and
+after any bulk landing the builder times every screen that aggregates the
+new rows, not only the pages that show them.
+
+- Here: `docs/building_an_app.md` (mistake 91), `academia360/coverage.py`,
+  `tests/test_academia360_p5.py`.
+- BKM: ade9240 (mistake 103)
+
+---
+
 ## PM-115 · 2026-11-27 · Academia360 I.1: a bulk landing of researched people broke a page address, and research agents guessed where they should have stopped
 
 **What happened.** Avi asked to fill the 12 empty institutions by public

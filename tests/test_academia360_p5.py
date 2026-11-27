@@ -127,3 +127,18 @@ def test_replicate_to_models_sends_only_those_rows(world, monkeypatch):
         call_command("replicate_to", "--base", "https://example.test", "--token", TOKEN, "--rows-only", "--models", "Role")
     with pytest.raises(CommandError):
         call_command("replicate_to", "--base", "https://example.test", "--token", TOKEN, "--rows-only", "--models", "Nothing")
+
+
+def test_the_coverage_rows_cost_a_handful_of_queries_however_rich(django_assert_max_num_queries):
+    """Eight Counts on one join multiplied the rows and took 42 s once the
+    institutions were filled (production 502); one grouped query per column."""
+    from academia360 import coverage
+    from academia360.models import Institution, ProfileSection, Researcher
+    inst = Institution.objects.create(slug="rich-one", name_he="עשיר", kind=Institution.UNIVERSITY, identity="פסקה")
+    for n in range(4):
+        ProfileSection.objects.create(institution=inst, title=f"s{n}", body="b")
+        Researcher.objects.create(institution=inst, slug=f"r{n}", name_he=f"חוקר {n}")
+    with django_assert_max_num_queries(12):
+        rows = coverage.rows()
+    row = next(r for r in rows if r["slug"] == "rich-one")
+    assert row["counts"]["sections"] == 4 and row["counts"]["researchers"] == 4
