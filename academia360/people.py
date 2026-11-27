@@ -245,6 +245,9 @@ def set_attribute(actor, user, kind, institution=None, agent=False, reason=""):
     _log(actor, attr, agent=agent, reason=reason)
     mailed = mail.send(f"סומנתם: {word}",
                        f"שלום {_name(user)},\n\nבאקדמיה 360° סומנתם כ{word}.\n{mail.base_url()}{HOME}\n", user.email)
+    if kind == CommitteeAttribute.REVIEWER:
+        from . import notify
+        notify.review_assigned(user, program, institution, actor=actor if not agent else None)  # E.1
     return Done(True, f"{_name(user)} עכשיו {word}.", mailed=mailed, row=attr)
 
 

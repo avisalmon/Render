@@ -62,7 +62,7 @@ def test_a_member_sees_a_row_per_institution_reading_the_seed(client, world):
     assert ">הגיש<" in t and "2 קבצים" in t
     assert "נועה" in t and "יוסי" in t            # the reviewers
     assert re.search(r'>1/2<', t)                   # yossi done, noa not: 1 of 2 expected
-    assert "אין ניתוח" in t and "אין עדיין" in t  # no analysis, no decision
+    assert "אין ניתוח" in t and "לרשום" in t  # no analysis, no decision (shira is a chair: the cell offers to record one, E.3)
     h = rows["haifa"]
     assert "נענה" in h and "מאושר" in h and "אושר" in h and "נשלח" in h and "01.04.2025" in h
     s = rows["sapir"]

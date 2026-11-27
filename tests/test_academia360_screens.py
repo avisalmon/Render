@@ -255,7 +255,45 @@ def build_world():
     review = Review.objects.create(submission=sub, reviewer=shira)
     ReviewAnswer.objects.create(review=review, question=q1, answer="partly", main_points="החזון מפורט; מנגנוני הבקרה מתוארים בקצרה")
     Review.objects.create(submission=sub, reviewer=avi, status="done", done_at=timezone.now(), overall_note="תכנית בשלה")
-    return {"technion": technion, "sub": sub.pk, "file": plan.pk}
+    # Epic E: a thread, the bell, a decision, the round's general sections, a draft letter, a sent letter a leader reads
+    from academia360.models import (
+        Decision,
+        Discussion,
+        DiscussionPost,
+        LetterSection,
+        LetterTemplateSection,
+        Notification,
+        ResponseLetter,
+    )
+    thread = Discussion.objects.create(submission=sub, title="התקציב של הטכניון נראה גבוה", opened_by=shira)
+    DiscussionPost.objects.create(discussion=thread, author=shira, body="ההקצאה **5,500 אלף ₪** מול 36 תכניות; מישהו בדק את נספח ב׳?")
+    DiscussionPost.objects.create(discussion=thread, author=avi, body="בדקתי. הפירוט בעמוד 4 של הנספח:\n\n- שכר: 60%\n- שאינו שכר: 40%")
+    Discussion.objects.create(program=program, title="סדר היום לישיבה הבאה", opened_by=avi)
+    Notification.objects.create(user=shira, kind="mention", title="אבי אזכר אותך בדיון: התקציב של הטכניון נראה גבוה",
+                                url=f"/academia360/committee/discuss/{thread.pk}/", actor=avi)
+    Notification.objects.create(user=shira, kind="review", title="סקירה מחכה לך: הטכניון, הצעה", url=f"/academia360/committee/review/{sub.pk}/",
+                                read_at=timezone.now())
+    Notification.objects.create(user=avi, kind="decision", title="החלטה נרשמה: הטכניון, אושר בתנאים", url="/academia360/committee/technion/", actor=shira)
+    Decision.objects.create(submission=sub, decided_by=shira, outcome="conditional", approved_amount_nis=5_500_000,
+                            conditions="דיווח חצי־שנתי על מדדי ההצלחה", decided_at=timezone.now())
+    g1 = LetterTemplateSection.objects.create(program=program, title="הערות כלליות לכל המוסדות",
+                                              body="הוועדה קראה את 28 ההגשות וראתה בהן מאמץ מוסדי אמיתי.\n\n- כל מוסד יגיש דוח ביצוע ראשון עד סוף תשפ״ו.\n- מדדי ההצלחה יוגשו בפורמט נספח א׳.", order=0)
+    letter = ResponseLetter.objects.create(submission=sub, addressee_name="רונית כהן", addressee_title="סמנכ״לית אקדמית", drafted_by=shira)
+    LetterSection.objects.create(letter=letter, kind="general", template=g1, order=0)
+    LetterSection.objects.create(letter=letter, kind="specific", order=100,
+                                 body="חדשנות בהוראה\n- אין מנגנון הערכה כמותי לשיטות ההוראה החדשות; הוועדה מבקשת להגדיר אחד עד הדוח הראשון.")
+    LetterSection.objects.create(letter=letter, kind="closing", order=900, body="הוועדה מודה על העבודה ומאחלת הצלחה.")
+    letter_thread = Discussion.objects.create(submission=sub, title="הערות על טיוטת המכתב")
+    DiscussionPost.objects.create(discussion=letter_thread, author=avi, body="הסיום קצר מדי לטעמי.")
+    # a second institution with a sent letter, and the leader leads it too
+    c2 = Institution.objects.get(slug="c2")
+    p2 = Participation.objects.create(program=program, institution=c2, applied=True, status="responded")
+    s2 = Submission.objects.create(participation=p2, kind="proposal", status="responded", submitted_at=date(2024, 12, 15))
+    sent = ResponseLetter.objects.create(submission=s2, addressee_name="ד״ר יעל לוי", addressee_title="הנשיאה", sent_at=date(2025, 4, 1), sent_by=shira)
+    LetterSection.objects.create(letter=sent, kind="general", template=g1, order=0)
+    LetterSection.objects.create(letter=sent, kind="specific", order=100, body="תעסוקתיות\n- לציין מעסיקים שותפים בשמם.")
+    LeaderOf.objects.create(user=lead, institution=c2, title="רקטורית")
+    return {"technion": technion, "sub": sub.pk, "file": plan.pk, "thread": thread.pk, "sent": sent.pk}
 
 
 SCREENS = [
@@ -281,6 +319,14 @@ SCREENS = [
     ("committee-review", "shira", "/academia360/committee/review/{sub}/"),
     ("committee-analysis", "shira", "/academia360/committee/analysis/{sub}/"),
     ("file-text", "shira", "/academia360/files/{file}/text/"),
+    ("notifications", "shira", "/academia360/notifications/"), ("notifications-admin", "avi", "/academia360/notifications/"),
+    ("discuss", "shira", "/academia360/committee/discuss/"), ("discuss-sub", "shira", "/academia360/committee/discuss/?sub={sub}"),
+    ("thread", "shira", "/academia360/committee/discuss/{thread}/"),
+    ("decide", "shira", "/academia360/committee/decide/{sub}/"),
+    ("letters-general", "shira", "/academia360/committee/letters/general/"),
+    ("letter-draft", "shira", "/academia360/committee/letter/{sub}/"),
+    ("letter-sent-committee", "shira", "/academia360/letters/{sent}/"),
+    ("letter-leader", "lead", "/academia360/letters/{sent}/"),
     ("login", None, "/academia360/login/"),
     ("no-access", None, "/academia360/no-access/"),
     ("not-found", None, "/academia360/nothing-here/"),
@@ -342,7 +388,7 @@ def test_every_screen_holds_on_the_narrowest_phones_and_a_desktop(browser, live_
         contexts = {}
         try:
             for name, who, path in SCREENS:
-                path = path.format(sub=world["sub"], file=world["file"])
+                path = path.format(sub=world["sub"], file=world["file"], thread=world["thread"], sent=world["sent"])
                 if who not in contexts:
                     contexts[who] = _context(browser, live_server, who, width)
                 page = contexts[who].new_page()

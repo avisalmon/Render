@@ -2,7 +2,8 @@
 
 > **Status: data model approved 2026-11-26; spec in chapters 1 to 13;
 > B.1 (skeleton, library, experience page, API, flagship seed), B.2
-> (the printed kit) and B.3 (the editor) built in dev 2026-11-26, not yet
+> (the printed kit) and B.3 (the editor) built in dev 2026-11-26 and live
+> that evening; B.4 (the hands-on flagship, generated sheets) built in dev 2026-11-27, not yet
 > shipped.** Working name for the
 > app, the URL and this folder: `breakout`. Avi may rename it.
 > Data model: [data_model.md](data_model.md). Process:
@@ -198,11 +199,30 @@ with three parts, built from the rows every time (data model, principle 2):
 1. **Teacher's guide**: story, the chain with solutions, explanations,
    hints, the final lock and code, setup notes per station, prep checklist,
    and the shopping list scaled to the groups.
-2. **Player pages**: for each station, a page the kids get: station name,
-   story text, the puzzle. One copy per group. No solutions anywhere on
-   these pages; a test proves no solution string appears in the player part.
-3. **Attached printables**, appended in order, with a cover line saying
-   which station each belongs to and how many copies to make.
+2. **Player pages**, one stack per group: for each station, a page the
+   kids get (station name, story text, the puzzle) and right after it the
+   station's **sheets for the players**: the illustrated guide page (what
+   to build, numbered steps with a small drawing each, how to use it) and
+   the cut-out worksheets (cut lines solid, fold lines dashed, glue areas
+   grey, the station's colour throughout). The final lock's two sheets close
+   every stack. No solutions anywhere on these pages; a test proves no
+   solution string appears in the player part, the sheets' words included.
+3. **Attached teacher pages**, appended in order, one copy each, with a
+   cover line saying which station each belongs to.
+
+**Generated sheets (B.4, Avi 2026-11-27: "hands-on, and illustrated like a
+good textbook; vector, exact, engineering-like").** A sheet is drawn by code
+in `breakout/sheets/` (ReportLab vector graphics in millimetres, the station's
+colour, a shared legend) and attached as a `Printable` row whose `generator`
+names it; the row is the data, the drawing is code. Every sheet records the
+words it draws, so the leak test reads them; every sheet is tested to fit
+the printable area; the lock's offsets are tested to align only at the code.
+The example challenge's stations are built this way: bit tents and a decoder
+wheel, three paper gate machines, a flowchart jigsaw with number chips, a
+paper chain of packets, four cube nets and a tower, and a paper combination
+lock whose four key quarters line up only at the code. The shopping list
+counts the printed pages and the per-group tools (scissors, tape, glue, a
+split pin).
 
 Hebrew PDF is made the way exo makes its download (ReportLab, the Heebo font
 from `static/fonts/`, python-bidi for shaping), in the app's own module

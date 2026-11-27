@@ -22,14 +22,40 @@ def _col_index(ref):
 
 
 def _shared_strings(z):
+    """Streamed: a 3 MB spreadsheet's string table as a full tree once took a
+    web worker's memory (PM-108)."""
     try:
-        root = ET.fromstring(z.read("xl/sharedStrings.xml"))
+        info = z.getinfo("xl/sharedStrings.xml")
     except KeyError:
         return []
     out = []
-    for si in root.findall("m:si", NS):
-        out.append("".join(t.text or "" for t in si.iter(f"{{{NS['m']}}}t")))
+    si_tag, t_tag = f"{{{NS['m']}}}si", f"{{{NS['m']}}}t"
+    with z.open(info) as fh:
+        for _event, node in ET.iterparse(fh, events=("end",)):
+            if node.tag == si_tag:
+                out.append("".join(t.text or "" for t in node.iter(t_tag)))
+                node.clear()
     return out
+
+
+def _row_cells(row, strings):
+    cells = []
+    for c in row.findall("m:c", NS):
+        idx = _col_index(c.get("r", "A1"))
+        while len(cells) <= idx:
+            cells.append(None)
+        kind = c.get("t")
+        v = c.find("m:v", NS)
+        if kind == "s" and v is not None:
+            cells[idx] = strings[int(v.text)]
+        elif kind == "inlineStr":
+            cells[idx] = "".join(t.text or "" for t in c.iter(f"{{{NS['m']}}}t"))
+        elif v is not None and v.text is not None:
+            try:
+                cells[idx] = float(v.text)
+            except ValueError:
+                cells[idx] = v.text
+    return cells
 
 
 def sheets(path):
@@ -39,33 +65,23 @@ def sheets(path):
         rels = ET.fromstring(z.read("xl/_rels/workbook.xml.rels"))
         targets = {rel.get("Id"): rel.get("Target") for rel in rels}
         out = {}
+        row_tag = f"{{{NS['m']}}}row"
         for sheet in wb.find("m:sheets", NS):
             rid = sheet.get(f"{{{NS['r']}}}id")
             target = targets.get(rid, "")
             member = target if target.startswith("xl/") else "xl/" + target.lstrip("/")
             try:
-                root = ET.fromstring(z.read(member))
+                info = z.getinfo(member)
             except KeyError:
                 continue
             rows = []
-            for row in root.iter(f"{{{NS['m']}}}row"):
-                cells = []
-                for c in row.findall("m:c", NS):
-                    idx = _col_index(c.get("r", "A1"))
-                    while len(cells) <= idx:
-                        cells.append(None)
-                    kind = c.get("t")
-                    v = c.find("m:v", NS)
-                    if kind == "s" and v is not None:
-                        cells[idx] = strings[int(v.text)]
-                    elif kind == "inlineStr":
-                        cells[idx] = "".join(t.text or "" for t in c.iter(f"{{{NS['m']}}}t"))
-                    elif v is not None and v.text is not None:
-                        try:
-                            cells[idx] = float(v.text)
-                        except ValueError:
-                            cells[idx] = v.text
-                rows.append(cells)
+            # Streamed row by row, each row's tree dropped once read: the
+            # whole sheet as one tree is what ran the server out of memory.
+            with z.open(info) as fh:
+                for _event, node in ET.iterparse(fh, events=("end",)):
+                    if node.tag == row_tag:
+                        rows.append(_row_cells(node, strings))
+                        node.clear()
             out[sheet.get("name")] = rows
         return out
 

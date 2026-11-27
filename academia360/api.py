@@ -96,6 +96,12 @@ def actor_of(request):
     return user, kind, run, reason
 
 
+def mail_base(request):
+    """Where a mail's link points when the request is a DRF one."""
+    from . import mail
+    return mail.base_url(getattr(request, "_request", request))
+
+
 def _text(value):
     if value is None:
         return ""
@@ -161,6 +167,9 @@ class CircleViewSet(viewsets.ModelViewSet):
         if type(instance).__name__ == "SubmittedFile" and instance.file:
             from . import extract
             extract.extract_row(instance)  # the text is read the moment a file arrives (D2.3)
+        if type(instance).__name__ == "Submission" and instance.status == "submitted":
+            from . import notify
+            notify.submission_arrived(instance, actor=actor_of(self.request)[0], base=mail_base(self.request))  # E.1
 
     def perform_update(self, serializer):
         if not access.may_write(self.request.user, type(serializer.instance), serializer.instance):
@@ -178,6 +187,9 @@ class CircleViewSet(viewsets.ModelViewSet):
             if not access.may_write(self.request.user, type(instance), instance):
                 raise PermissionDenied  # moved into a package that is not theirs
             log_change(self.request, instance, before=before)
+        if type(instance).__name__ == "Submission" and after.get("status") == "submitted" and before.get("status") != "submitted":
+            from . import notify
+            notify.submission_arrived(instance, actor=actor_of(self.request)[0], base=mail_base(self.request))  # E.1
 
     def perform_destroy(self, instance):
         if not access.may_write(self.request.user, type(instance), instance):

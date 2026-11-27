@@ -261,6 +261,16 @@ def committee_only(view):
     return wrapped
 
 
+def chair_only(view):
+    """The chair's acts (the decision, sending a letter): a chair or the admin."""
+    @wraps(view)
+    def wrapped(request, *args, **kwargs):
+        if not is_chair(request.user):
+            return no_access(request)
+        return view(request, *args, **kwargs)
+    return wrapped
+
+
 def admin_only(view):
     @wraps(view)
     def wrapped(request, *args, **kwargs):

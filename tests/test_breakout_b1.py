@@ -183,7 +183,7 @@ def test_a_card_carries_what_the_filters_read(seeded, dana):
     full = re.search(r'<article class="br-card[^"]*"[^>]*>', html).group(0)
     assert 'data-difficulty="medium"' in full and 'data-from="7"' in full and 'data-to="9"' in full
     assert "programming" in re.search(r'data-subjects="([^"]*)"', full).group(1)
-    assert "כיתות ז-ט" in card and "45 דק׳" in card and "בינוני" in card and "אתגר דגל" in card
+    assert "כיתות ז-ט" in card and "60 דק׳" in card and "בינוני" in card and "אתגר דגל" in card
 
 
 def test_the_grade_filter_offers_every_grade_the_data_can_hold(seeded, dana):
@@ -211,15 +211,15 @@ def test_the_experience_page_shows_the_chain_the_lock_and_the_shopping_list(seed
     names = re.findall(r'<span class="br-station-name" dir="auto">([^<]+)</span>', chain)
     assert names == ["הזיכרון", "המעבד", "הבאג", "הרשת", "האלגוריתם"]
     assert chain.count('<p class="br-solution"') == 5
-    assert "<li dir=\"auto\">21 היא האות ש.</li>" in chain
+    assert "<li dir=\"auto\">בגלגל: 21 היא האות ש.</li>" in chain
     lock = re.search(r'<span class="br-fold-title">המנעול הסופי</span>(.*?)</details>', html, re.S).group(1)
     assert '<span class="br-code" dir="ltr">4326</span>' in lock
     table = re.search(r'<table class="br-table" id="br-shopping">(.*?)</table>', html, re.S).group(1)
     rows = re.findall(r"<tr><td>([^<]+)</td><td><span class=\"br-qty\" data-per-group=\"([\d.]+)\">", table)
     per = {name: Decimal(q) for name, q in rows}
-    assert per["כרטיסיות"] == 8  # 4 for the memory, 4 for the algorithm
-    assert per["דף A4"] == 3 and per["טוש"] == 4
-    assert "5 תחנות" in html and "כ-39 דקות" in html
+    assert per["דף A4"] == 13  # every printed sheet of the kit, per group (B.4)
+    assert per["מספריים"] == 1 and per["סרט הדבקה"] == 1  # a shared tool is listed once, not per station
+    assert "5 תחנות" in html and "כ-52 דקות" in html
 
 
 def test_a_draft_is_the_authors_and_the_curators_alone(seeded, avi, dana, yossi):

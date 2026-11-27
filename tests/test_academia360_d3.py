@@ -50,6 +50,25 @@ def test_each_format_from_bytes_and_the_bad_cases():
     assert note == "unsupported .?"
 
 
+def test_a_reader_that_crashes_or_hangs_is_a_note_on_the_row_not_a_dead_server(monkeypatch, settings):
+    """PM-108: the reader runs in a child; its death or its slowness is a
+    note, the web worker lives, the queue moves on."""
+    real = extract._script
+    monkeypatch.setattr(extract, "_script", lambda ext: "import sys\nsys.stderr.write('boom\\n')\nsys.exit(3)\n")
+    text, note = extract.extract_bytes(pdf_bytes("x"), "plan.pdf")
+    assert text == "" and note == "error: the reader crashed (exit 3): boom"
+    settings.ACADEMIA360_READER_TIMEOUT = 1
+    monkeypatch.setattr(extract, "_script", lambda ext: "import time\ntime.sleep(5)\n")
+    text, note = extract.extract_bytes(pdf_bytes("x"), "plan.pdf")
+    assert text == "" and note == "error: timeout after 1s (a heavy scan?)"
+    monkeypatch.setattr(extract, "_script", lambda ext: "print('not json')\n")
+    text, note = extract.extract_bytes(b"x", "a.docx")
+    assert text == "" and note == "error: the reader answered nothing readable"
+    # the real child caps its memory where it can and answers through JSON
+    script = real("xlsx")
+    assert "RLIMIT_AS" in script and "readers.read('xlsx'" in script
+
+
 def test_extract_missing_reads_the_rows_a_few_at_a_time(world):
     assert extract.missing().count() == 2
     result = extract.extract_missing(limit=1)

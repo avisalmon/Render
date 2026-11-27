@@ -1,0 +1,23 @@
+{% extends "academia360/base.html" %}{% load a360 %}
+{% block title %}מכתב הוועדה · {{ inst.name }} · אקדמיה 360°{% endblock %}
+{% block content %}
+<section class="a360-band">
+  <div class="a360-wrap">
+    <nav class="a360-crumbs" aria-label="מיקום">{% if committee %}<a href="{% url 'academia360:committee' %}">הוועדה</a><span>·</span><a href="{% url 'academia360:committee_file' inst.slug %}" dir="auto">{{ inst.name }}</a>{% else %}<a href="{% url 'academia360:me' %}">שלי</a><span>·</span><a href="{% url 'academia360:institution' inst.slug %}" dir="auto">{{ inst.name }}</a>{% endif %}<span>·</span><span>מכתב הוועדה</span></nav>
+    <h1 class="a360-h1 a360-h1-page">מכתב הוועדה · <span dir="auto">{{ inst.name }}</span></h1>
+    <p class="a360-lede a360-narrow">על {{ sub.get_kind_display }}{% if sub.submitted_at %} שהוגשה <span class="a360-num">{{ sub.submitted_at|date:"d.m.Y" }}</span>{% endif %}.{% if letter.sent_at %} נשלח <span class="a360-num">{{ letter.sent_at|date:"d.m.Y" }}</span>.{% else %} <span class="a360-state a360-state-letter-draft">טיוטה</span>, עוד לא נשלח.{% endif %}
+      <a href="{% url 'academia360:letter_pdf' letter.pk %}" target="_blank" rel="noopener">PDF</a>{% if letter.file %} · <a href="{% url 'academia360:letter_file' letter.pk %}" target="_blank" rel="noopener">הקובץ החתום</a>{% endif %}{% if committee and not letter.sent_at %} · <a href="{% url 'academia360:committee_letter' sub.pk %}">לערוך את הטיוטה</a>{% endif %}</p>
+
+    <div class="a360-letter-paper" dir="auto">
+      <p class="a360-mute a360-small">{{ program.name }} · <span class="a360-num">{% if letter.sent_at %}{{ letter.sent_at|date:"d.m.Y" }}{% else %}{% now "d.m.Y" %}{% endif %}</span></p>
+      <p>לכבוד<br>{% if letter.addressee_name %}{{ letter.addressee_name }}<br>{% endif %}{% if letter.addressee_title %}{{ letter.addressee_title }}<br>{% endif %}{{ inst.name_he }}</p>
+      <p><b>הנדון: תשובת הוועדה ל{{ sub.get_kind_display }} של {{ inst.short_name_he|default:inst.name_he }} לתכנית {{ program.short_name|default:program.name }}</b></p>
+      {% if not parts.general and not parts.specific and not parts.closing %}<p class="a360-mute">{% if letter.file %}גוף המכתב נמצא <a href="{% url 'academia360:letter_file' letter.pk %}" target="_blank" rel="noopener">בקובץ החתום</a>; הטקסט שלו עוד לא הוקלד לאתר.{% else %}למכתב עוד אין קטעים.{% endif %}</p>{% endif %}
+      {% for s in parts.general %}<h3 class="a360-h4">{% if s.template %}{{ s.template.title }}{% else %}הערות כלליות{% endif %}</h3><div class="a360-letter-md">{{ s.html }}</div>{% endfor %}
+      {% if parts.specific %}<h3 class="a360-h4">הערות פרטניות</h3>{% for s in parts.specific %}<div class="a360-letter-md a360-letter-sec">{{ s.html }}</div>{% endfor %}{% endif %}
+      {% if parts.closing %}<div class="a360-letter-md">{{ parts.closing.html }}</div>{% endif %}
+      <p class="a360-letter-sign">בברכה,<br>{% if letter.sent_by %}{{ letter.sent_by|a360_name }}{% else %}ועדת אקדמיה 360°{% endif %}</p>
+    </div>
+  </div>
+</section>
+{% endblock %}

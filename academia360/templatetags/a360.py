@@ -20,6 +20,14 @@ def a360_is_committee(user):
     return access.is_committee(user)
 
 
+@register.simple_tag
+def a360_unread(user):
+    """The bell's number (E.1)."""
+    from .. import notify
+
+    return notify.unread_count(user)
+
+
 @register.filter
 def a360_name(user):
     """A person as the admin reads them: the name, else the email."""

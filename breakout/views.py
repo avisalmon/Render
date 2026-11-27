@@ -103,6 +103,14 @@ def printable_file(request, pk):
     printable = get_object_or_404(Printable.objects.select_related("experience"), pk=pk)
     if not access.may_see(request.user, printable.experience):
         raise Http404
-    response = FileResponse(printable.file.open("rb"))
+    if printable.is_generated:
+        from . import sheets
+
+        if sheets.get(printable.generator) is None:
+            raise Http404
+        response = HttpResponse(sheets.render_pdf(printable.generator, printable.title), content_type="application/pdf")
+        response["Content-Disposition"] = content_disposition_header(False, f"{printable.title}.pdf")
+    else:
+        response = FileResponse(printable.file.open("rb"))
     response["X-Content-Type-Options"] = "nosniff"
     return response

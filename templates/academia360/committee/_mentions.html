@@ -1,0 +1,8 @@
+{% load a360 %}{% if members %}
+<details class="a360-mentions">
+  <summary>לתייג חברי ועדה (יקבלו פעמון ומייל)</summary>
+  <div class="a360-mention-list">
+    {% for u in members %}<label class="a360-check"><input type="checkbox" name="mention" value="{{ u.pk }}"><span dir="auto">{{ u|a360_name }}</span></label>{% endfor %}
+  </div>
+</details>
+{% endif %}

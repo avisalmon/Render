@@ -17,6 +17,162 @@ Newest first.
 
 ---
 
+## PM-111 · 2026-11-27 · Academia360 Epic E ship: a "newest first" test that passed on the PC and failed on the train
+
+**What happened.** Avi said "Push". The train (T1127-102056) ran the full
+suite and failed on one test of mine: the bell test creates two
+notifications in a row and asserts the newer one is first. Locally it had
+passed in every run. On the train both rows got the same `created_at` (one
+clock tick), the model orders by `-created_at` alone, and SQLite returned
+the older row first.
+
+**Why the process let it.** The ordering was written as if a timestamp
+were unique. The test was written to pass on a machine where the clock
+moved between two inserts, which is luck, not the contract. Nothing in the
+sprint asked "what if these tie".
+
+**Rule.** Every ordering by a timestamp carries the primary key as its
+tiebreak, in Meta and in every `order_by` a screen depends on; a test that
+asserts an order must pass when every row shares one timestamp.
+
+- Here: `docs/building_an_app.md` (mistake 86),
+  `academia360/models_program.py` (Notification.Meta, migration 0007).
+- BKM: FullStackBKM 8f511d9 (mistake 98)
+
+---
+
+## PM-110 · 2026-11-27 · breakout B.4 (the hands-on flagship): three things the pictures caught, one the font caught, and a rule for rewriting seeded content
+
+**What happened.** Avi asked for the example challenge to be made with
+hands (cut, fold, assemble) and for the explanation pages to be illustrated
+like a textbook, drawn as exact vector graphics. The sheets are drawn by
+code (`breakout/sheets/`) and attached as `Printable` rows with a
+`generator` key. Rendering every sheet to a picture and reading it, before
+any test, found: (1) the bit tickets "01100" printed as "00110": a digit
+string with spaces is several number runs, and the bidi pass laid them
+right to left; (2) a filler glyph (✶) and the header's ✦ are not in Heebo
+and printed as boxes; (3) three overlaps a bounds check cannot see (a label
+across its own arrow, a caption into a drawing, a note on top of the
+legend). The first kit render then showed an almost empty cover page before
+each of the final lock's sheets, because the whole-experience sheets took
+the uploaded picture's cover-page path. The seed also needed, for the first
+time, to rewrite content that already exists in production.
+
+**Why the process let it.** The kit's drawing code had one bidi rule for
+every string; a glyph outside the font fails silently; a geometry check
+proves "inside the page", not "not on top of each other"; the new kind of
+printable was added to one of two code paths. Rule 15 (show the thing),
+Rule 21 (read the picture against the data) and Rule 74 (look before done)
+all say to look, and looking is what found every one of these.
+
+**Rule.** (a) A string without a right-to-left letter skips the bidi pass
+(digits, bit patterns, codes); the renderer decides per string, not per
+document. (b) A glyph outside the shipped font is drawn as a shape or not
+at all; the test that counts a sheet's words also renders it once, and a
+reviewer reads every generated page as a picture, which is the only check
+that sees overlap. (c) A document generator records the words it draws
+through the same pen it draws with (a pen without a canvas records only),
+so the content tests read generated pages too, and the geometry that
+encodes a secret (the lock's offsets) is tested to be right at the answer
+and wrong everywhere else. (d) A new kind of attachment is run through
+every path that handles attachments (here: a station's and the whole
+experience's) before the first render. (e) Seeded content that already
+exists in production is rewritten only by an explicit, slug-naming flag
+(`--refresh <slug>`) on the owner's word, through a deploy line that is
+removed on the next ship; it keeps the row and bumps the version, never
+recreates it.
+
+- Here: `docs/building_an_app.md` (mistake 85), `breakout/sheets/toolkit.py`,
+  `breakout/management/commands/seed_breakout.py`, `tests/test_breakout_b4.py`.
+- BKM: FullStackBKM f638221 (mistake 97)
+
+---
+
+## PM-109 · 2026-11-27 · Epic E end (Academia360 discussion, decision, letters, bell): two small things, both mine
+
+**What happened.** (1) The class sweep at the epic's end found two classes
+written in templates and defined nowhere (`a360-letter-new`, and a letter
+state pill spelled out by hand instead of through the loop the sweep
+already allows). (2) Cleaning up after the screenshots, I turned off every
+dev account ending in `@example.com` with one blanket update, which caught
+54 demo accounts of other apps on the shared dev database; noticed from the
+count, restored within the minute, and the five Academia360 screenshot
+accounts were then turned off by name.
+
+**Why the process let it.** A class written late in a sprint was not run
+through the sweep until the epic's end; a cleanup on a database other chats
+share was written as a pattern instead of a list of rows.
+
+**Rule.** The class sweep runs with each sprint's tests, not only at the
+epic's end. On a database shared with other work, a cleanup names its rows
+(an explicit list of accounts or ids) and prints the count before it
+writes; a pattern that matches more than the rows you made is a bug, and a
+count that surprises you is read before anything else runs.
+
+Here: `tests/test_academia360_a1.py` (the sweep), the dev cleanup in this
+chat, [building_an_app.md](building_an_app.md) mistake 84
+BKM: FullStackBKM (mistake 96, pushed 2026-11-27)
+
+## PM-108 · 2026-11-27 · The first production extraction answered 502 on one spreadsheet, again and again
+
+**What happened.** D2 shipped and the chat ran `a360 extract` against
+production to read the text of 81 submitted files, as planned. The first
+call answered 502; so did every call after it, with ten files or with two.
+One file had been read; the next in line was a 2.8 MB spreadsheet. The
+XLSX reader (our own, ElementTree) built the whole sheet as one tree, the
+starter instance has 512 MB, the web worker was killed, and with one gunicorn
+worker a killed worker is the whole site answering 502 for a moment. Each
+retry started from the same file. In dev the same batch of 81 had taken 200
+seconds on a PC with plenty of memory and never hinted at it.
+
+**Why the process let it.** A reader of uploaded files ran inside the web
+worker, with no limit on time or memory, and a background batch job was
+first run against production at full size (ten per call) instead of one
+item. The dev measurement was about speed, not about memory on the
+production plan.
+
+**Rule.** A reader of other people's files runs in a child process with a
+time limit and a memory cap where the platform allows one; a crash or a
+timeout becomes a note on the row, the server lives, and the queue moves
+past it. Parsers of uploaded XML stream and drop what they have read. The
+first production run of any batch job is one item, watched, before the
+batch. A dev measurement of a reader says how fast it is on the PC, not
+whether it fits the production instance.
+
+Here: `academia360/extract.py` (`_in_child`, `_script`), `academia360/readers.py`,
+`academia360/xlsx.py` (iterparse), `tests/test_academia360_d3.py`,
+[building_an_app.md](building_an_app.md) mistake 83
+BKM: FullStackBKM (mistake 95, pushed 2026-11-27)
+
+## PM-107 · 2026-11-27 · The D2 train failed on a package the train never installed
+
+**What happened.** Epic D2 added PyMuPDF to `requirements.txt`. The shared
+tree had it (installed while measuring it against pypdf), 151 app tests
+passed there, and the first train for D2 (T1127-072834) failed ten of them
+at setup with "No module named 'pymupdf'". The train tests in its own clone
+with its own virtualenv, and `train.py setup` installs the requirements once;
+nothing installed into that env afterwards. The next chat's train, queued
+behind it, was about to hit the same ten failures for a package it never
+touched.
+
+**Why the process let it.** The train knew that a change to `requirements`
+means "run the full suite" and did not know that it also means "install
+them first". The developer's environment and the train's drifted apart
+silently, and the only check was the test run itself.
+
+**Rule.** The environment that runs the tests installs the candidate's
+requirements before anything imports them: every ride and every nightly
+compares a hash of the requirement files with the one it last installed and
+runs pip when they differ; a refused install fails the train and says why,
+before any test runs. A new requirement is a change to the environment,
+not only to the code, and the process that ships it owns both. The
+immediate fix was one `pip install` into the clone's env while the next
+train was already running.
+
+Here: `scripts/train.py: ensure_requirements`, `tests/test_release_train.py`,
+[building_an_app.md](building_an_app.md) mistake 82
+BKM: FullStackBKM 72b2fcf
+
 ## PM-106 · 2026-11-26 · Epic D2 end (Academia360 committee room): five small things, all caught before Avi
 
 **What happened.** (1) The API's change logger read DRF's `query_params`;

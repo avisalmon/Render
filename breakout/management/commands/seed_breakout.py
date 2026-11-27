@@ -11,6 +11,13 @@ absent (a new flagship written later) and changes nothing that exists.
 The author of the flagship experiences is the first superuser (Avi), or
 the account named with `--author`. Without either, the catalogue is seeded
 and the experiences are skipped, and the command says so.
+
+**`--refresh <slug>`** is the one deliberate exception, for Avi's own
+flagships when he asks for them to be rewritten (2026-11-27: the hands-on
+version of "המחשב שנכבה"). It replaces that experience's stations, hints,
+materials, sheets and final lock with the seed's, keeps the row (its slug,
+author, likes, comments, runs, downloads) and bumps the version. It names
+its slugs explicitly and runs only while a deploy line asks for it.
 """
 
 import json
@@ -28,6 +35,7 @@ from breakout.models import (
     FinalLock,
     Hint,
     Material,
+    Printable,
     Station,
     StationMaterial,
     Subject,
@@ -42,6 +50,8 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("--author", default="", help="email of the flagship experiences' author (default: first superuser)")
+        parser.add_argument("--refresh", action="append", default=[], metavar="SLUG",
+                            help="rewrite this seeded experience's content from the seed file (keeps the row; bumps the version)")
 
     def handle(self, *args, **options):
         catalogue = json.loads((ASSETS / "catalogue.json").read_text(encoding="utf-8"))
@@ -52,7 +62,11 @@ class Command(BaseCommand):
             author = self._author(options["author"])
             made_experiences, left = 0, 0
             for data in experiences:
-                if Experience.objects.filter(slug=data["slug"]).exists():
+                existing = Experience.objects.filter(slug=data["slug"]).first()
+                if existing is not None:
+                    if data["slug"] in options["refresh"]:
+                        self._refresh(existing, data)
+                        continue
                     left += 1
                     self.stdout.write(f"left alone: {data['slug']} (exists)")
                     continue
@@ -92,30 +106,53 @@ class Command(BaseCommand):
             return User.objects.filter(email__iexact=email).order_by("pk").first()
         return User.objects.filter(is_superuser=True).order_by("pk").first()
 
+    FIELDS = ("title", "tagline", "story", "teacher_notes", "audience_from", "audience_to", "group_size_min",
+              "group_size_max", "duration_minutes", "prep_minutes", "difficulty")
+    DEFAULTS = {"tagline": "", "story": "", "teacher_notes": "", "audience_from": 7, "audience_to": 9, "group_size_min": 4,
+                "group_size_max": 6, "duration_minutes": 45, "prep_minutes": 30, "difficulty": Experience.MEDIUM}
+
     def _experience(self, data, author):
         now = timezone.now()
         exp = Experience.objects.create(
             author=author,
             slug=data["slug"],
-            title=data["title"],
-            tagline=data.get("tagline", ""),
-            story=data.get("story", ""),
-            teacher_notes=data.get("teacher_notes", ""),
-            audience_from=data.get("audience_from", 7),
-            audience_to=data.get("audience_to", 9),
-            group_size_min=data.get("group_size_min", 4),
-            group_size_max=data.get("group_size_max", 6),
-            duration_minutes=data.get("duration_minutes", 45),
-            prep_minutes=data.get("prep_minutes", 30),
-            difficulty=data.get("difficulty", Experience.MEDIUM),
             status=Experience.PUBLISHED,
             is_flagship=bool(data.get("is_flagship")),
             published_at=now,
+            **{f: data.get(f, self.DEFAULTS.get(f)) for f in self.FIELDS},
         )
         for slug in data.get("subjects", []):
             subject = Subject.objects.filter(slug=slug).first()
             if subject is not None:
                 ExperienceSubject.objects.create(experience=exp, subject=subject)
+        self._children(exp, data)
+        self.stdout.write(f"created: {exp.slug} ({exp.stations.count()} stations)")
+        return exp
+
+    def _refresh(self, exp, data):
+        """Replace a seeded experience's content with the seed's (see the
+        module docstring). Children go, the row stays, the version grows."""
+        exp.stations.all().delete()  # hints, materials and station sheets go with them
+        exp.printables.all().delete()
+        FinalLock.objects.filter(experience=exp).delete()
+        for f in self.FIELDS:
+            setattr(exp, f, data.get(f, self.DEFAULTS.get(f)))
+        exp.version += 1
+        exp.save()
+        self._children(exp, data)
+        self.stdout.write(self.style.SUCCESS(f"refreshed: {exp.slug} ({exp.stations.count()} stations, {exp.printables.count()} sheets, version {exp.version})"))
+
+    def _sheets(self, exp, station, keys):
+        from breakout import sheets
+
+        for order, key in enumerate(keys, start=1):
+            sheet = sheets.get(key)
+            if sheet is None:
+                raise SystemExit(f"seed_breakout: no generated sheet named {key}")
+            Printable.objects.create(experience=exp, station=station, kind=sheet.kind, title=sheet.title,
+                                     generator=key, page_count=sheet.pages, order=order)
+
+    def _children(self, exp, data):
         for s in data.get("stations", []):
             station = Station.objects.create(
                 experience=exp,
@@ -137,6 +174,7 @@ class Command(BaseCommand):
                 if material is None:
                     raise SystemExit(f"seed_breakout: station {s['name']} names a material not in the catalogue: {use['material']}")
                 StationMaterial.objects.create(station=station, material=material, quantity=Decimal(str(use.get("quantity", 1))), note=use.get("note", ""))
+            self._sheets(exp, station, s.get("sheets", []))
         lock = data.get("final_lock")
         if lock:
             FinalLock.objects.create(
@@ -147,5 +185,4 @@ class Command(BaseCommand):
                 final_message=lock.get("final_message", ""),
                 setup_notes=lock.get("setup_notes", ""),
             )
-        self.stdout.write(f"created: {exp.slug} ({exp.stations.count()} stations)")
-        return exp
+            self._sheets(exp, None, lock.get("sheets", []))

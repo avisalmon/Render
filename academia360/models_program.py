@@ -769,3 +769,33 @@ class AccessLog(Row):
 
     class Meta:
         ordering = ["-created_at"]
+
+
+class Notification(Row):
+    """One item of the bell (spec 4.8): the same events the mails carry, one
+    row per person told. The person's own; the admin sees all."""
+
+    CIRCLE = PRIVATE
+    OWN_PATH = "user"
+
+    KINDS = [("submission", "הגשה הגיעה"), ("review", "סקירה מחכה"), ("letter", "מכתב נשלח"),
+             ("decision", "החלטה נרשמה"), ("correction", "הצעת תיקון"), ("mention", "אוזכרתם בדיון"),
+             ("post", "תגובה בדיון")]
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="a360_notifications")
+    kind = models.CharField(max_length=12, choices=KINDS)
+    title = models.CharField(max_length=200)
+    url = models.CharField(max_length=300, blank=True, help_text="Inside the app; where following the item leads")
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+                              related_name="+")
+    read_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at", "-pk"]
+
+    def __str__(self):
+        return self.title
+
+    @property
+    def unread(self):
+        return self.read_at is None

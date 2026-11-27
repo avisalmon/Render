@@ -284,7 +284,8 @@ class Printable(models.Model):
 
     KINDS = [
         ("player_page", "דף לשחקנים"),
-        ("cut_out", "דף גזירה"),
+        ("instructions", "דף הדרכה"),
+        ("cut_out", "דף עבודה לגזירה"),
         ("teacher_page", "דף למורה"),
         ("image", "תמונה"),
     ]
@@ -293,7 +294,10 @@ class Printable(models.Model):
     station = models.ForeignKey(Station, null=True, blank=True, on_delete=models.CASCADE, related_name="printables")
     kind = models.CharField(max_length=14, choices=KINDS, default="player_page")
     title = models.CharField(max_length=120)
-    file = models.FileField(upload_to=printable_path, storage=private_storage)
+    # Either an uploaded file, or the key of a sheet drawn by code
+    # (breakout/sheets): the row says which sheet, the code draws it.
+    file = models.FileField(upload_to=printable_path, storage=private_storage, blank=True)
+    generator = models.CharField(max_length=40, blank=True)
     page_count = models.PositiveSmallIntegerField(default=1)
     width_px = models.PositiveIntegerField(null=True, blank=True)
     height_px = models.PositiveIntegerField(null=True, blank=True)
@@ -302,6 +306,14 @@ class Printable(models.Model):
 
     class Meta:
         ordering = ["experience", "order", "pk"]
+
+    @property
+    def is_generated(self):
+        return bool(self.generator)
+
+    @property
+    def for_players(self):
+        return self.kind != "teacher_page"
 
 
 # --------------------------------------------------------------- community

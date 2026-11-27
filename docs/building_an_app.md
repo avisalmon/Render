@@ -1585,3 +1585,92 @@ a visually hidden legend. A screenshot proves itself: the server was started
 after the last edit, and the picture shows something only the new code has.
 Numbers for people come from a normalized Decimal. A "waiting for you" rule
 names the states in which the thing can still wait.
+
+### 82. The environment that runs the tests installs the candidate's requirements first
+
+Epic D2 added a PDF library to `requirements.txt`. The developer's tree had
+it and 151 tests passed; the release train, which tests in its own clone with
+its own virtualenv, failed ten of them with "No module named ...", and the
+next chat's train was queued to fail the same way on a package it never
+touched. The train's setup had installed the requirements once, and nothing
+installed into that environment afterwards (PM-107).
+
+**The rule.** A new requirement is a change to the environment, not only to
+the code, and the process that ships it owns both. Any environment that
+runs tests on a candidate (a train, a nightly, a CI job, a bot's clone)
+installs the candidate's requirement files before anything imports them,
+cheaply: a hash of the files against the one last installed, pip only when
+they differ, and a refused install fails the run and says why before any
+test starts. "Requirements changed, run everything" is only half the rule.
+
+### 83. A reader of other people's files runs in a child with a cap; a batch job's first production run is one item
+
+The first production run of Academia360's text extraction answered 502 on
+every call: one 2.8 MB spreadsheet, parsed as a whole XML tree inside the
+single web worker, took the starter instance's memory, the worker was
+killed, and each retry began with the same file. In dev the same 81 files
+had taken 200 seconds on a PC with memory to spare (PM-108).
+
+**The rule.** Anything that parses uploaded files (PDF, spreadsheets, Word,
+images) runs in a child process with a time limit and, where the platform
+allows, a memory cap; a crash or a timeout is a note on the row, the web
+worker lives, and the queue moves past the bad file instead of retrying it
+forever. Parsers of uploaded XML stream and drop what they have read. The
+first production run of a batch job is one item, watched, before the batch.
+A measurement in dev tells you speed on the PC, not whether the reader fits
+the production instance.
+
+### 84. A cleanup on a shared database names its rows
+
+Turning off the screenshot accounts after an epic, one blanket update on
+"every account ending in the test domain" caught 54 demo accounts that
+other apps keep on the shared dev database. The count gave it away and the
+rows were restored within the minute (PM-109).
+
+**The rule.** On a database other work shares, a cleanup names its rows (an
+explicit list of accounts or ids) and prints the count before it writes. A
+pattern that can match more than the rows you made is a bug, not a
+shortcut, and a count that surprises you is read before anything else
+runs. The class sweep that found two undefined classes at the same epic's
+end runs with each sprint's tests from now on, not only at the end.
+
+### 85. Generated pages are read as pictures; bidi is decided per string; the pen records what it draws; seeded content is rewritten only by name
+
+breakout's hands-on sheets (vector drawings by code) printed a bit pattern
+backwards (bidi laid its spaced digit runs right to left), drew boxes for
+two glyphs Heebo does not have, and overlapped a label with its own arrow;
+only reading every page as a picture found them. The first kit then showed
+an empty cover page before the final lock's sheets, because the new kind of
+attachment took one of two paths. The flagship also had to be rewritten in
+production for the first time (PM-110).
+
+**The rule.** A string without a right-to-left letter skips the bidi pass. A
+glyph outside the shipped font is drawn as a shape or left out. A document
+generator records the words it draws through the pen it draws with, so the
+content tests (no secret on a player page) read generated pages too; the
+geometry that encodes an answer is tested right at the answer and wrong
+everywhere else; and every generated page is rendered to a picture and read
+before the sprint is called done, because bounds checks cannot see overlap.
+A new kind of attachment runs through every path that handles attachments
+before its first render. Seeded content that already exists in production is
+rewritten only by an explicit flag that names the slug, on the owner's word,
+through a deploy line removed on the next ship; it keeps the row and bumps
+the version.
+
+### 86. "Newest first" is a tiebreak away from a coin toss
+
+Academia360's notifications order by `-created_at`, and the bell test
+creates two in a row and asserts the second is first. On the dev PC the two
+timestamps differed and the test passed; on the release train they were
+created in the same clock tick, tied, and the database handed back the older
+one first. The train failed on a test that had been green in every local run
+(PM-111).
+
+**The rule.** Every ordering by a timestamp carries the primary key as its
+tiebreak (`["-created_at", "-pk"]`), in the model's Meta and in every
+`order_by` that promises an order to a screen. A timestamp is not unique:
+Windows hands out the same value for several milliseconds, a fixture creates
+rows faster than the clock moves, and a bulk insert gives them all one
+instant. A test that asserts order must pass when every row shares a
+timestamp; if it cannot, the order it tests is not the order the code
+promises.

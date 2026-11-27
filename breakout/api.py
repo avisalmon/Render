@@ -204,8 +204,8 @@ class StationMaterialViewSet(ChildOfExperience):
 class PrintableSerializer(serializers.ModelSerializer):
     class Meta:
         model = Printable
-        fields = ["id", "experience", "station", "kind", "title", "file", "page_count", "width_px", "height_px", "order", "uploaded_at"]
-        read_only_fields = ["width_px", "height_px", "uploaded_at"]
+        fields = ["id", "experience", "station", "kind", "title", "file", "generator", "page_count", "width_px", "height_px", "order", "uploaded_at"]
+        read_only_fields = ["generator", "width_px", "height_px", "uploaded_at"]
 
 
 class PrintableViewSet(ChildOfExperience):

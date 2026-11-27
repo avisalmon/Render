@@ -1,0 +1,74 @@
+{% extends "academia360/base.html" %}{% load a360 %}
+{% block title %}המכתב · {{ inst.name }} · הוועדה · אקדמיה 360°{% endblock %}
+{% block content %}
+<section class="a360-band a360-room">
+  <div class="a360-wrap">
+    <nav class="a360-crumbs" aria-label="מיקום"><a href="{% url 'academia360:committee' %}">הוועדה</a><span>·</span><a href="{% url 'academia360:committee_file' inst.slug %}" dir="auto">{{ inst.name }}</a><span>·</span><span>המכתב</span></nav>
+    <h1 class="a360-h1 a360-h1-page">המכתב · <span dir="auto">{{ inst.name }}</span></h1>
+    <p class="a360-lede a360-narrow">{{ sub.get_kind_display }}{% if sub.submitted_at %}, הוגשה <span class="a360-num">{{ sub.submitted_at|date:"d.m.Y" }}</span>{% endif %}.
+      {% if letter.sent_at %}<span class="a360-state a360-state-letter-sent">נשלח</span> <span class="a360-num">{{ letter.sent_at|date:"d.m.Y" }}</span>{% if letter.sent_by %} על ידי <span dir="auto">{{ letter.sent_by|a360_name }}</span>{% endif %}; מובילי המוסד קוראים אותו. המכתב הוא רשומה ולא עורכים אותו.{% else %}<span class="a360-state a360-state-letter-draft">טיוטה</span>{% if letter.drafted_by %} של <span dir="auto">{{ letter.drafted_by|a360_name }}</span>{% endif %}. כל חברי הוועדה עורכים ומעירים; יושב/ת הראש שולח/ת, והשליחה פותחת את המכתב למובילי המוסד ושולחת להם מייל.{% endif %}
+      <a href="{% url 'academia360:letter_pdf' letter.pk %}" target="_blank" rel="noopener">PDF</a> · <a href="{% url 'academia360:letter' letter.pk %}">כעמוד</a>{% if letter.file %} · <a href="{% url 'academia360:letter_file' letter.pk %}" target="_blank" rel="noopener">הקובץ</a>{% endif %}</p>
+
+    {% if letter.sent_at %}
+    <div class="a360-letter-paper" dir="auto">
+      {% for kind, text in blocks %}{% if kind == 'h' %}<h3 class="a360-h4">{{ text }}</h3>{% elif kind == 'subject' %}<p><b>{{ text }}</b></p>{% elif kind == 'gap' %}<div class="a360-letter-gap"></div>{% elif kind == 'header' or kind == 'date' %}<p class="a360-mute a360-small">{{ text }}</p>{% else %}<p>{{ text }}</p>{% endif %}{% endfor %}
+    </div>
+    {% else %}
+    <form method="post" class="a360-letter-form">
+      {% csrf_token %}
+      <h2 class="a360-h2 a360-room-h2">הנמען</h2>
+      <div class="a360-q-fields">
+        <label class="a360-field"><span>שם</span><input type="text" name="addressee_name" value="{{ letter.addressee_name }}" maxlength="160" dir="auto"></label>
+        <label class="a360-field"><span>תפקיד</span><input type="text" name="addressee_title" value="{{ letter.addressee_title }}" maxlength="160" dir="auto"></label>
+      </div>
+
+      <h2 class="a360-h2 a360-room-h2">ההערות הכלליות</h2>
+      <p class="a360-small a360-mute">הקטעים המשותפים לכל מכתבי המחזור; כאן מסמנים אילו נכנסים. <a class="a360-link-sm" href="{% url 'academia360:committee_letters_general' %}">לערוך את הקטעים של המחזור</a></p>
+      {% if templates %}
+      <div class="a360-letter-generals">
+        {% for t, on in templates %}<label class="a360-check"><input type="checkbox" name="general_{{ t.pk }}" value="1" {% if on %}checked{% endif %}><span dir="auto">{{ t.title }}</span></label>{% endfor %}
+      </div>
+      {% else %}<p class="a360-mute a360-small">עוד אין קטעים כלליים למחזור; <a href="{% url 'academia360:committee_letters_general' %}">כותבים אותם פעם אחת</a>.</p>{% endif %}
+
+      <h2 class="a360-h2 a360-room-h2" id="specific">ההערות הפרטניות</h2>
+      <p class="a360-small a360-mute">קטע לכל נושא; קטע שמתרוקן נמחק. "לנסח מהסקירות" מחליף את הקטעים הפרטניים בטיוטה מאתגרי הניתוח ומהערות לשיפור בסקירות שהושלמו ({{ drafted_count }} תחומים עם חומר).</p>
+      {% for s in parts.specific %}<label class="a360-field"><span>קטע {{ forloop.counter }}</span><textarea name="s{{ s.pk }}_body" rows="5" dir="auto">{{ s.body }}</textarea></label>{% endfor %}
+      <label class="a360-field"><span>קטע חדש</span><textarea name="s_new" rows="3" dir="auto"></textarea></label>
+
+      <h2 class="a360-h2 a360-room-h2">סיום</h2>
+      <label class="a360-field"><span class="a360-sr">סיום</span><textarea name="closing_body" rows="3" dir="auto">{% if parts.closing %}{{ parts.closing.body }}{% endif %}</textarea></label>
+
+      <div class="a360-review-acts">
+        <button type="submit" name="action" value="save" class="a360-pill a360-pill-dark">לשמור את הטיוטה</button>
+        <button type="submit" name="action" value="draft" class="a360-pill a360-pill-line">לנסח מהסקירות ומהניתוח</button>
+        {% if is_chair %}<button type="submit" name="action" value="send" class="a360-pill a360-pill-line a360-pill-send">לשלוח למוסד</button>{% endif %}
+      </div>
+    </form>
+    {% endif %}
+
+    <h2 class="a360-h2 a360-room-h2" id="comments">הערות של חברי הוועדה על הטיוטה · {{ posts|length }}</h2>
+    <div class="a360-posts">
+      {% for p in posts %}
+      <article class="a360-post" id="post-{{ p.pk }}">
+        <header class="a360-post-head"><b dir="auto">{{ p.author|a360_name }}</b> <span class="a360-mute">· <span class="a360-num">{{ p.created_at|date:"d.m.Y H:i" }}</span>{% if p.edited_at %} · נערכה{% endif %}</span></header>
+        <div class="a360-post-body" dir="auto">{{ p.html }}</div>
+      </article>
+      {% empty %}<p class="a360-mute a360-small">עוד אין הערות על הטיוטה.</p>{% endfor %}
+    </div>
+    <form method="post" action="{% url 'academia360:committee_thread' thread.pk %}" class="a360-thread-form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="reply"><input type="hidden" name="next" value="{% url 'academia360:committee_letter' sub.pk %}#comments">
+      <label class="a360-field"><span>הערה על הטיוטה (אפשר markdown)</span><textarea name="body" rows="3" dir="auto" required></textarea></label>
+      {% include "academia360/committee/_mentions.html" %}
+      <div class="a360-review-acts"><button type="submit" class="a360-pill a360-pill-line a360-pill-sm">להעיר</button></div>
+    </form>
+
+    <h2 class="a360-h2 a360-room-h2" id="history">ההיסטוריה · {{ history|length }}</h2>
+    <div class="a360-rows a360-history">
+      {% for h in history %}
+      <div class="a360-row a360-row-tight"><div class="a360-row-main"><span dir="auto">{% if h.by %}{{ h.by|a360_name }}{% else %}{{ h.get_actor_kind_display }}{% endif %}</span> · <span class="a360-mute">{% if h.model == 'academia360.LetterSection' %}קטע{% else %}המכתב{% endif %}{% if h.field %} · {{ h.field }}{% endif %}</span>{% if h.new == 'created' %} נוצר{% elif h.old == 'deleted' %} נמחק{% else %}: <span class="a360-small" dir="auto">{{ h.old|truncatechars:60 }} → {{ h.new|truncatechars:60 }}</span>{% endif %}</div><span class="a360-src a360-num">{{ h.created_at|date:"d.m.Y H:i" }}</span></div>
+      {% empty %}<div class="a360-row a360-row-tight"><span class="a360-mute">אין עדיין.</span></div>{% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -90,13 +90,22 @@
         </div>
         {% if not s.my_review %}<p><a class="a360-pill a360-pill-dark a360-pill-sm" href="{% url 'academia360:committee_review' s.pk %}">לפתוח את הסקירה שלי</a></p>{% endif %}
 
-        <h3 class="a360-h3 a360-room-h3">ההחלטה והמכתב</h3>
+        <h3 class="a360-h3 a360-room-h3" id="decision-{{ s.pk }}">ההחלטה והמכתב</h3>
         <div class="a360-rows">
-          <div class="a360-row a360-row-tight"><span>החלטה</span><span class="a360-b">{% if s.decision_row %}{{ s.decision_row.get_outcome_display }}{% if s.decision_row.approved_amount_nis %} · <span class="a360-num" dir="ltr">{{ s.decision_row.approved_amount_nis|floatformat:0 }} ₪</span>{% endif %}{% else %}<span class="a360-mute">אין עדיין</span>{% endif %}</span></div>
-          <div class="a360-row a360-row-tight"><span>המכתב</span><span class="a360-b">{% if s.letter_row %}{% if s.letter_row.sent_at %}נשלח <span class="a360-num">{{ s.letter_row.sent_at|date:"d.m.Y" }}</span>{% else %}טיוטה{% endif %}{% if s.letter_row.file %} · <a href="{% url 'academia360:letter_file' s.letter_row.pk %}" target="_blank" rel="noopener">הקובץ</a>{% endif %}{% else %}<span class="a360-mute">אין</span>{% endif %}</span></div>
+          <div class="a360-row a360-row-tight"><span>החלטה</span><span class="a360-b">{% if s.decision_row %}{{ s.decision_row.get_outcome_display }}{% if s.decision_row.approved_amount_nis %} · <span class="a360-num" dir="ltr">{{ s.decision_row.approved_amount_nis|floatformat:0 }} ₪</span>{% endif %}{% else %}<span class="a360-mute">אין עדיין</span>{% endif %}{% if is_chair %} · <a href="{% url 'academia360:committee_decide' s.pk %}">{% if s.decision_row %}לעדכן{% else %}לרשום{% endif %}</a>{% endif %}</span></div>
+          {% if s.decision_row.conditions %}<div class="a360-row a360-row-tight"><span>תנאים</span><span dir="auto">{{ s.decision_row.conditions }}</span></div>{% endif %}
+          <div class="a360-row a360-row-tight"><span>המכתב</span><span class="a360-b">{% if s.letter_row %}{% if s.letter_row.sent_at %}נשלח <span class="a360-num">{{ s.letter_row.sent_at|date:"d.m.Y" }}</span> · <a href="{% url 'academia360:letter' s.letter_row.pk %}">לקרוא</a>{% else %}טיוטה · <a href="{% url 'academia360:committee_letter' s.pk %}">לערוך</a>{% endif %}{% if s.letter_row.file %} · <a href="{% url 'academia360:letter_file' s.letter_row.pk %}" target="_blank" rel="noopener">הקובץ</a>{% endif %}{% else %}<span class="a360-mute">אין</span> · <a href="{% url 'academia360:committee_letter' s.pk %}">לכתוב</a>{% endif %}</span></div>
           {% if s.letter_row.addressee_name %}<div class="a360-row a360-row-tight"><span>נמען</span><span dir="auto">{{ s.letter_row.addressee_name }}{% if s.letter_row.addressee_title %}, {{ s.letter_row.addressee_title }}{% endif %}</span></div>{% endif %}
         </div>
         {% for sec in s.letter_sections %}<h4 class="a360-h4">{% if sec.template %}{{ sec.template.title }}{% else %}{{ sec.get_kind_display }}{% endif %}</h4><p class="a360-small a360-letter-text" dir="auto">{{ sec.text }}</p>{% endfor %}
+
+        <h3 class="a360-h3 a360-room-h3" id="discuss-{{ s.pk }}">דיונים · {{ s.threads|length }}</h3>
+        <div class="a360-rows">
+          {% for t in s.threads %}
+          <div class="a360-row a360-row-tight"><div class="a360-row-main"><a href="{% url 'academia360:committee_thread' t.pk %}" dir="auto"><b>{{ t.title }}</b></a><div class="a360-src"><span class="a360-num">{{ t.n_posts }}</span> תגובות · {{ t.last_at|date:"d.m.Y" }}</div></div></div>
+          {% empty %}<div class="a360-row a360-row-tight"><span class="a360-mute">עוד אין דיון על ההגשה הזאת.</span></div>{% endfor %}
+        </div>
+        <p><a class="a360-pill a360-pill-line a360-pill-sm" href="{% url 'academia360:committee_discuss' %}?sub={{ s.pk }}">לפתוח דיון על ההגשה</a></p>
       </div>
     </div>
     {% empty %}

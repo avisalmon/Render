@@ -155,6 +155,9 @@ def correct(request):
         proposer=request.user, model=target._meta.label, row_id=str(target.pk), field=field,
         current_value=str(getattr(target, field, "") or "") if field else "", proposed_value=proposed, reason=reason)
     _log(request.user, row)
+    from . import mail, notify
+    from .models import Program
+    notify.correction_proposed(row, Program.objects.order_by("pk").first(), actor=request.user, base=mail.base_url(request))  # E.1
     messages.success(request, "ההצעה נשלחה. היא מחכה לבדיקה; מצבה יופיע בעמוד 'שלי'.")
     return _back(request, target, kind)
 

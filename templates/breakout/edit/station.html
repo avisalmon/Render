@@ -105,7 +105,7 @@
     <ul class="br-rows">
       {% for p in station.printables.all %}
         <li class="br-row">
-          <div class="br-row-main"><a class="br-row-title" href="{% url 'breakout:printable_file' p.pk %}" dir="auto">{{ p.title }}</a><span class="br-row-meta">{{ p.get_kind_display }}{% if p.width_px %} · {{ p.width_px }}×{{ p.height_px }}{% else %} · {{ p.page_count }} עמודים{% endif %}</span></div>
+          <div class="br-row-main"><a class="br-row-title" href="{% url 'breakout:printable_file' p.pk %}" dir="auto">{{ p.title }}</a><span class="br-row-meta">{{ p.get_kind_display }}{% if p.generator %} · מצויר בקוד{% elif p.width_px %} · {{ p.width_px }}×{{ p.height_px }}{% else %} · {{ p.page_count }} עמודים{% endif %}</span></div>
           <div class="br-row-actions">
             <form method="post" action="{% url 'breakout:printable_delete' exp.slug station.pk p.pk %}" data-confirm="למחוק את הדף &quot;{{ p.title }}&quot;?">{% csrf_token %}<button type="submit" class="br-iconbtn br-iconbtn--danger" aria-label="למחוק את {{ p.title }}">✕</button></form>
           </div>

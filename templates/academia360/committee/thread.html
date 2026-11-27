@@ -1,0 +1,40 @@
+{% extends "academia360/base.html" %}{% load a360 %}
+{% block title %}{{ d.title }} · דיונים · הוועדה · אקדמיה 360°{% endblock %}
+{% block content %}
+<section class="a360-band a360-room">
+  <div class="a360-wrap">
+    <nav class="a360-crumbs" aria-label="מיקום"><a href="{% url 'academia360:committee' %}">הוועדה</a><span>·</span><a href="{% url 'academia360:committee_discuss' %}{% if sub %}?sub={{ sub.pk }}{% endif %}">דיונים</a>{% if inst %}<span>·</span><a href="{% url 'academia360:committee_file' inst.slug %}#sub-{{ sub.pk }}" dir="auto">{{ inst.name }}</a>{% endif %}</nav>
+    <h1 class="a360-h1 a360-h1-page" dir="auto">{{ d.title }}</h1>
+    <p class="a360-lede a360-narrow">{% if sub %}על {{ sub.get_kind_display }} של <a href="{% url 'academia360:committee_file' inst.slug %}#sub-{{ sub.pk }}" dir="auto">{{ inst.name }}</a>{% else %}על התכנית{% endif %}{% if d.opened_by %} · פתח/ה <span dir="auto">{{ d.opened_by|a360_name }}</span>{% endif %} · <span class="a360-num">{{ d.created_at|date:"d.m.Y" }}</span> · {{ posts|length }} תגובות. פנימי לוועדה.</p>
+
+    <div class="a360-posts">
+      {% for p in posts %}
+      <article class="a360-post" id="post-{{ p.pk }}">
+        <header class="a360-post-head"><b dir="auto">{{ p.author|a360_name }}</b> <span class="a360-mute">· <span class="a360-num">{{ p.created_at|date:"d.m.Y H:i" }}</span>{% if p.edited_at %} · נערכה{% endif %}</span></header>
+        <div class="a360-post-body" dir="auto">{{ p.html }}</div>
+        {% if p.mine %}
+        <details class="a360-post-edit">
+          <summary class="a360-link-sm">לערוך</summary>
+          <form method="post" class="a360-thread-form">{% csrf_token %}<input type="hidden" name="action" value="edit"><input type="hidden" name="post" value="{{ p.pk }}">
+            <label class="a360-field"><span class="a360-sr">התגובה</span><textarea name="body" rows="4" dir="auto">{{ p.body }}</textarea></label>
+            <div class="a360-review-acts"><button type="submit" class="a360-pill a360-pill-line a360-pill-sm">לשמור את העריכה</button></div>
+          </form>
+        </details>
+        {% endif %}
+      </article>
+      {% empty %}
+      <p class="a360-mute">הדיון נפתח בלי דברים ראשונים; התגובה הראשונה היא שלך.</p>
+      {% endfor %}
+    </div>
+
+    <h2 class="a360-h2 a360-room-h2" id="reply">להגיב</h2>
+    <form method="post" class="a360-thread-form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="reply">
+      <label class="a360-field"><span>התגובה (אפשר markdown)</span><textarea name="body" rows="5" dir="auto" required></textarea></label>
+      {% include "academia360/committee/_mentions.html" %}
+      <div class="a360-review-acts"><button type="submit" class="a360-pill a360-pill-dark">להגיב</button></div>
+    </form>
+  </div>
+</section>
+{% endblock %}
