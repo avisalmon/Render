@@ -17,6 +17,36 @@ Newest first.
 
 ---
 
+## PM-117 · 2026-11-28 · Academia360: raw markdown on the institution pages and a blocked map, both found by Avi on the live site
+
+**What happened.** Avi saw `**` and list dashes inside section text on the
+live institution pages, and the map showing OpenStreetMap's "Access
+blocked" tiles. ProfileSection.body is documented as markdown and the
+research pass wrote markdown, but the template showed it through
+`|linebreaks`. The site's referrer policy (same-origin) sends no Referer to
+other sites, and OSM now refuses tile requests without one.
+
+**Why the process let it.** The field's contract ("Markdown; sanitized
+before it is shown") lived in the model's help text and nobody checked the
+template against it; the first import's text had no markdown, so it looked
+right until rows with markdown arrived. The screenshots were read for
+layout, not for stray markup. The map was never looked at after the last
+deploys; tiles are a third party whose policy changes without notice.
+
+**Rule.** (a) A text field declared as markdown is rendered by the app's one
+markdown renderer wherever it is shown, and a test puts markdown in it and
+asserts no raw markup reaches the page. (b) Reading a screenshot includes
+reading the text for raw markup (`**`, `- `, `#`). (c) A page that loads a
+third party (tiles, fonts, embeds) is opened on the live site after a
+deploy, and the request carries what that party's usage policy asks for
+(here a Referer).
+
+- Here: `docs/building_an_app.md` (mistake 92), `academia360/templatetags/a360.py`,
+  `static/academia360/a360.js`, `tests/test_academia360_i1.py`.
+- BKM: eb30aa1 (mistake 104)
+
+---
+
 ## PM-116 · 2026-11-27 · Academia360 coverage list: eight counts on one join, fast on thin data, a 502 once the data was rich
 
 **What happened.** After the research rows were replicated, the admin's

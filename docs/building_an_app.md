@@ -1756,3 +1756,15 @@ different relations on one queryset. A summary screen gets a query-count
 test, and after a bulk landing every screen that aggregates the new rows
 is timed.
 
+### 92. A markdown field renders as markdown everywhere, and third parties are checked live
+
+Academia360 showed `**` inside section text (a markdown field shown through
+`|linebreaks`) and a map of "Access blocked" tiles (no Referer sent to
+OpenStreetMap). Avi found both on the live site (PM-117).
+
+**The rule.** A field declared as markdown goes through the app's one
+renderer wherever it is shown, with a test that puts markdown in and finds
+no raw markup on the page. Screenshots are read for stray markup too. A page
+that loads a third party (tiles, fonts, embeds) is opened live after a
+deploy, and its requests carry what that party's usage policy asks for.
+
