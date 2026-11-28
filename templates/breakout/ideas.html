@@ -1,0 +1,31 @@
+{% extends "breakout/base.html" %}
+{% block title %}השיחות שלי · חדרי בריחה מנייר{% endblock %}
+{% block content %}
+<section class="br-pagehead">
+  <div>
+    <h1 class="br-h1">השיחות שלי</h1>
+    <p class="br-lede">מספרים ל-AI על רעיון, מעלים סקיצות, וכשהרעיון סגור הוא בונה את האתגר כטיוטה שלכם.</p>
+  </div>
+  <form class="br-pagehead-action" method="post" action="{% url 'breakout:idea_new' %}">{% csrf_token %}<button type="submit" class="br-btn br-btn--main" id="br-idea-new">שיחה חדשה</button></form>
+</section>
+
+{% if ideas %}
+  <ul class="br-rows" id="br-ideas">
+    {% for i in ideas %}
+      <li class="br-row">
+        <div class="br-row-main">
+          <a class="br-row-title" href="{% url 'breakout:idea' i.pk %}" dir="auto">{{ i.title|default:"שיחה חדשה" }}</a>
+          <span class="br-row-meta" dir="auto">{% if i.experience %}<span class="br-tag br-tag--published">נבנה</span> {{ i.experience.title }}{% else %}<span class="br-tag br-tag--draft">בשיחה</span> {{ i.theme|default:"עוד לא סיפרתם על הרעיון"|truncatechars:80 }}{% endif %} · {{ i.updated_at|date:"d.m.Y H:i" }}</span>
+        </div>
+        <div class="br-row-actions">
+          <form method="post" action="{% url 'breakout:idea_delete' i.pk %}" data-confirm="למחוק את השיחה? {% if i.experience %}האתגר שנבנה ממנה נשאר.{% endif %}">{% csrf_token %}<button type="submit" class="br-btn br-btn--quiet">מחיקה</button></form>
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p class="br-empty">עוד אין שיחות. פתחו שיחה חדשה וספרו על רעיון, אפילו חצי רעיון.</p>
+{% endif %}
+
+<p class="br-small br-muted">מעדיפים לכתוב לבד? <a href="{% url 'breakout:new' %}" id="br-write-by-hand">כתיבה ידנית בטפסים</a>.</p>
+{% endblock %}

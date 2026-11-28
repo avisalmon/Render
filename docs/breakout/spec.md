@@ -402,10 +402,89 @@ the train ships it when Avi says so.
 
 ## 13. Later, by Avi's decision only
 
-**Decided 2026-11-27: next is AI generation of challenges (B.6)**, for
-authorised teachers, drafting a full experience into the editor, with its
-own cap and log; its chapter is written with Avi before it is built.
+**Decided 2026-11-27: AI generation of challenges (B.6)**, written up in
+chapter 14 and built from it.
 
 Still later: share links for kits without an account; a versions table; an
 English UI. Declined 2026-11-27: randomising the codes per teacher (static
 answers let a teacher reuse the printed sheets).
+
+## 14. Writing a challenge with AI (B.6)
+
+Avi, 2026-11-27: "a chat session guided by AI: the teacher explains,
+suggests, the AI gives proposals, the teacher can upload sketches of ideas
+until they conclude the idea; then the AI generates it, and the teacher can
+edit either in the forms or by asking the chat." For creators only
+(chapter 5); the kids still never see a screen, the AI helps the teacher.
+
+**One screen, three phases.** `/breakout/ideas/` lists a creator's
+conversations ("שיחות רעיון") and opens a new one; `/breakout/ideas/<n>/` is
+the conversation.
+
+1. **Talking about the idea.** The teacher writes and may attach a sketch
+   or a photo (PNG or JPG). The AI asks one or two questions at a time and
+   offers concrete proposals. Beside the chat (above it on a phone, folded)
+   a card, **"הרעיון שלנו"**, shows what is agreed so far: a working title,
+   the theme, grades, number of stations, length, the story in a line, one
+   line per station, and what is still open. The model rewrites the card
+   on every turn, so the conversation never sprawls: the card is the
+   agreement.
+2. **"בנו את האתגר".** One button, open once the card has a theme and a
+   station plan. A stronger model writes the whole challenge as a draft in
+   the existing editor: title, tagline, story, teacher notes, grades,
+   length, difficulty, subjects, every station (story, puzzle, solution,
+   how one gets there, its piece of the code, mechanic, minutes, setup,
+   two or three hints from gentle to nearly the answer, materials from the
+   catalogue) and the final lock (code rule, code, message). It is the
+   creator's draft like any other: nothing reaches the library until they
+   publish.
+3. **Changing it.** In the editor's forms, as today, or in the same chat
+   ("make station 3 harder"). A chat request comes back as **a proposal**:
+   a list of exactly what would change (field, before, after). The teacher
+   applies it or declines it. The AI never writes into the challenge
+   without that click. The editor's review page links back to the chat.
+
+**Checks before a draft is saved.** Every station has a puzzle and a
+solution; the number of stations is the one agreed; the lock's code is
+built from the stations' pieces, in order. A finding that "cannot be
+right" goes back to the model once with the findings (methodology 70);
+what is still wrong after that is saved and said plainly in the chat.
+Materials are matched to the catalogue by exact name; any other is
+listed in the chat, to be asked for through the material request.
+
+**Sketches are inspiration, not printouts.** The AI reads a sketch to
+understand the idea. The printed sheets are the station pages the kit
+already composes. Drawn cut-out sheets filled with new content (a decoder
+wheel with any alphabet, a paper lock for any code) are **B.6.2, the
+machine library**: today's sheets are drawn for the flagship only.
+
+**Models and cost.** A fast model for the conversation
+(`BREAKOUT_CHAT_MODEL`, default `gpt-6.1-terra`) and a stronger one for
+the build (`BREAKOUT_BUILD_MODEL`, default `gpt-6.1-sol`), both read from
+the environment. Every model answer is an `IdeaMessage` row with its
+model, tokens and cost. Caps in our own code (methodology 24): per creator
+per day (`BREAKOUT_AI_DAILY_USD`, default $2) and for the whole app per
+month (`BREAKOUT_AI_MONTHLY_USD`, default $40); over a cap the chat says
+so and makes no call. The curators' teachers page shows each creator's
+spend this month. Without a key (a developer's PC, every test) the app
+answers from a fixed stub, so every screen works without a bill.
+
+Measured 2026-11-27, one real session on the dev database (a solar-system
+challenge for grade 7, four stations): a chat turn 12 to 15 seconds and
+less than half a cent; the build 2 minutes 15 seconds and 8 cents (7,700
+tokens out); a change request 16 seconds and about one cent. A whole
+session of talk, build and a few changes is about 10 to 15 cents, so the
+daily cap of $2 is about fifteen challenges a day per creator. The puzzles
+came out complete and solvable, with the code chain right on the first
+try.
+
+**Safety.** Creators are approved teachers, so there is no relevance gate
+on the text; the system prompt keeps the AI on classroom challenges. Every
+picture passes the app's upload check (type, size, turned upright,
+downscaled to 1600px) and the site's image moderation
+(`app.safety.image_is_safe`, fails open), and is served only to its
+author. A conversation is its author's alone: other creators and curators
+get a 404, on the screens and in the API.
+
+**Language.** The AI speaks Hebrew to the teacher, in the plural like the
+rest of the site, and calls the thing **אתגר**.

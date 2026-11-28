@@ -278,3 +278,38 @@ a.br-row-title { text-decoration: underline; text-decoration-color: var(--br-kra
 .br-person-actions form { margin: 0; }
 .br-levels { display: grid; gap: 4px; margin: 0 0 18px; padding: 10px 12px; background: var(--br-note); box-shadow: 0 2px 0 var(--br-note-shadow); font-size: .95rem; }
 .br-levels p { margin: 0; }
+
+/* Writing with AI (B.6): the conversation and its card */
+.br-idea { display: grid; gap: 14px; align-items: start; }
+@media (min-width: 900px) { .br-idea { grid-template-columns: minmax(0, 1fr) 340px; } .br-idea-card { grid-column: 2; grid-row: 1; position: sticky; top: 12px; } .br-chat { grid-column: 1; grid-row: 1; } }
+.br-idea-card { padding: 12px 14px; background: var(--br-note); box-shadow: 0 3px 0 var(--br-note-shadow); }
+.br-idea-card > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; gap: 8px; font-weight: 700; }
+.br-brief { margin: 8px 0 0; display: grid; gap: 2px; }
+.br-brief dt { font-weight: 700; font-size: .85rem; color: var(--br-ink-soft); margin-top: 8px; }
+.br-brief dd { margin: 0; overflow-wrap: anywhere; }
+.br-plan { margin: 2px 0 0; padding-inline-start: 22px; }
+.br-plan li { margin: 2px 0; }
+.br-idea-build { display: grid; gap: 8px; margin-top: 14px; }
+.br-idea-build form { margin: 0; }
+.br-idea-build .br-btn { width: 100%; }
+.br-chat { display: grid; gap: 12px; min-width: 0; }
+.br-msgs { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.br-msg { max-width: 88%; padding: 10px 14px; background: var(--br-paper); box-shadow: 0 2px 0 var(--br-kraft-dark); overflow-wrap: anywhere; }
+.br-msg p { margin: 0; }
+.br-msg--teacher { justify-self: start; background: #fff; border-inline-start: 4px solid var(--br-blue); }
+.br-msg--ai { justify-self: end; border-inline-end: 4px solid var(--br-red); }
+.br-msg--thinking { color: var(--br-ink-soft); font-style: italic; }
+.br-msg--failed { border-inline-end-color: var(--br-ink); background: var(--br-note); }
+.br-msg-picture { display: block; max-width: 100%; max-height: 260px; margin-top: 8px; border: 1px solid var(--br-kraft-dark); }
+.br-proposal { margin-top: 10px; padding: 10px 12px; background: #fff; border: 2px dashed var(--br-ink-soft); display: grid; gap: 8px; }
+.br-proposal-title { font-weight: 700; }
+.br-changes { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.br-changes > li { display: grid; gap: 2px; }
+.br-change-new { display: block; }
+.br-change-old { font-size: .85rem; color: var(--br-ink-soft); }
+.br-composer { display: grid; gap: 10px; padding: 12px 14px; background: var(--br-paper); box-shadow: 0 3px 0 var(--br-kraft-dark); }
+.br-composer-row { display: grid; gap: 10px; align-items: end; }
+@media (min-width: 560px) { .br-composer-row { grid-template-columns: minmax(0, 1fr) auto; } }
+.br-notice { margin: 0 0 12px; padding: 8px 12px; background: var(--br-note); color: var(--br-ink); font-weight: 700; box-shadow: 0 2px 0 var(--br-note-shadow); }
+.br-mine .br-list a { display: inline-flex; align-items: center; min-height: 44px; }
+.br-apply { white-space: nowrap; }

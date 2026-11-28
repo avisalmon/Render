@@ -1782,6 +1782,18 @@ corrections by row id quoting the current value, and the applier changes a
 field only while it still holds that value, hides before it deletes, and
 logs every change.
 
+### 94. A step that saves through its own copy leaves the caller's copy stale
+
+A build step loaded a conversation fresh, wrote a draft and marked it
+built. The caller still held its old copy, so its next message was sent
+as the wrong kind. The views never saw it, because they reload on every
+request; a screenshot did (PM-119).
+
+**The rule.** A function that saves through a copy it loaded itself
+refreshes the caller's object before it returns, or takes only an id and
+returns the fresh object. A test that holds the object across two calls
+is the test for it. Read a screenshot against what that state should
+show, not only for breakage.
 
 ### 95. Something that only attaches to a record never creates the record
 

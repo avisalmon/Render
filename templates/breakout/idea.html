@@ -1,0 +1,98 @@
+{% extends "breakout/base.html" %}
+{% block title %}{{ idea.title|default:"שיחה חדשה" }} · השיחות שלי · חדרי בריחה מנייר{% endblock %}
+{% block content %}
+<p class="br-back"><a href="{% url 'breakout:ideas' %}">→ השיחות שלי</a></p>
+<section class="br-pagehead">
+  <div>
+    <h1 class="br-h1" dir="auto">{{ idea.title|default:"שיחה חדשה" }}</h1>
+    <p class="br-lede">{% if idea.experience %}האתגר נבנה. אפשר לבקש כאן שינויים, והם נכנסים רק כשתאשרו.{% else %}ספרו על הרעיון. כשהכרטיס מלא, בונים את האתגר.{% endif %}</p>
+  </div>
+</section>
+{% if stub %}<p class="br-notice" id="br-stub">מצב הדגמה: אין מודל בשרת הזה, והתשובות קבועות.</p>{% endif %}
+
+<div class="br-idea"{% if thinking %} data-status-url="{% url 'breakout:idea_status' idea.pk %}"{% endif %} id="br-idea">
+  <details class="br-idea-card" id="br-idea-card">
+    <summary class="br-fold-title">הרעיון שלנו{% if idea.ready %} <span class="br-tag br-tag--published">מוכן לבנייה</span>{% endif %}</summary>
+    <dl class="br-brief">
+      <dt>נושא</dt><dd dir="auto">{{ idea.theme|default:"עוד לא נקבע" }}</dd>
+      <dt>למי ולכמה זמן</dt><dd>{{ idea.grades|default:"כיתות עוד לא נקבעו" }}{% if idea.duration_minutes %} · {{ idea.duration_minutes }} דקות{% endif %}{% if idea.station_count %} · {{ idea.station_count }} תחנות{% endif %}</dd>
+      <dt>הסיפור</dt><dd dir="auto">{{ idea.story_line|default:"עוד אין"|linebreaksbr }}</dd>
+      <dt>התחנות</dt>
+      <dd>{% if idea.plan_lines %}<ol class="br-plan">{% for line in idea.plan_lines %}<li dir="auto">{{ line }}</li>{% endfor %}</ol>{% else %}עוד אין{% endif %}</dd>
+      {% if idea.open_lines %}<dt>עוד פתוח</dt><dd><ul class="br-plan">{% for line in idea.open_lines %}<li dir="auto">{{ line }}</li>{% endfor %}</ul></dd>{% endif %}
+    </dl>
+    <div class="br-idea-build">
+      {% if idea.experience %}
+        <a class="br-btn br-btn--main" id="br-idea-edit" href="{% url 'breakout:edit' idea.experience.slug %}">לעורך האתגר</a>
+        <a class="br-btn" href="{% url 'breakout:experience' idea.experience.slug %}">העמוד כפי שמורה רואה אותו</a>
+      {% elif idea.ready %}
+        <form method="post" action="{% url 'breakout:idea_build' idea.pk %}">{% csrf_token %}<button type="submit" class="br-btn br-btn--main" id="br-idea-build" {% if thinking or stop %}disabled{% endif %}>בנו את האתגר</button></form>
+        <p class="br-small br-muted">הבנייה לוקחת כשתי דקות. אפשר לסגור את הדף ולחזור. האתגר נשמר כטיוטה שרק אתם רואים.</p>
+      {% else %}
+        <p class="br-small br-muted">הכפתור "בנו את האתגר" נפתח כשיש נושא ותוכנית תחנות.</p>
+      {% endif %}
+    </div>
+  </details>
+
+  <section class="br-chat" aria-label="השיחה">
+    <ol class="br-msgs" id="br-msgs">
+      {% if not chat %}
+        <li class="br-msg br-msg--ai"><p>שלום. ספרו לי על האתגר שאתם רוצים: על מה, לאיזה גיל, כמה זמן יש לכם. אפשר גם לצרף סקיצה או צילום של רעיון.</p></li>
+      {% endif %}
+      {% for m in chat %}
+        <li class="br-msg {% if m.role == 'teacher' %}br-msg--teacher{% else %}br-msg--ai{% endif %}{% if m.state == 'thinking' %} br-msg--thinking{% elif m.state == 'failed' %} br-msg--failed{% endif %}" id="br-msg-{{ m.pk }}">
+          {% if m.state == 'thinking' %}
+            <p>{% if m.kind == 'build' %}בונה את האתגר, זה לוקח כשתי דקות{% else %}כותב תשובה{% endif %}…</p>
+          {% else %}
+            {% if m.text %}<p dir="auto">{{ m.text|linebreaksbr }}</p>{% endif %}
+            {% if m.picture %}<a href="{% url 'breakout:idea_picture' idea.pk m.pk %}" target="_blank" rel="noopener" aria-label="הסקיצה בגודל מלא"><img class="br-msg-picture" src="{% url 'breakout:idea_picture' idea.pk m.pk %}" alt="הסקיצה שצירפתם" loading="lazy"></a>{% endif %}
+            {% if m.changes %}
+              <div class="br-proposal">
+                <p class="br-proposal-title">ההצעה: מה ישתנה</p>
+                <ul class="br-changes">
+                  {% for c in m.changes %}
+                    <li>
+                      <b dir="auto">{{ c.label }}</b>
+                      {% if c.target == 'hints' %}
+                        <ol class="br-plan">{% for h in c.value %}<li dir="auto">{{ h }}</li>{% endfor %}</ol>
+                      {% else %}
+                        <span class="br-change-new" dir="auto">{{ c.value|linebreaksbr }}</span>
+                      {% endif %}
+                      {% if c.before %}<span class="br-change-old" dir="auto">היה: {{ c.before|truncatechars:160 }}</span>{% endif %}
+                    </li>
+                  {% endfor %}
+                </ul>
+                {% if m.changes_state == 'pending' %}
+                  <div class="br-actions">
+                    <form method="post" action="{% url 'breakout:idea_changes' idea.pk m.pk %}">{% csrf_token %}<input type="hidden" name="action" value="apply"><button type="submit" class="br-btn br-btn--main br-apply">להחיל את השינויים</button></form>
+                    <form method="post" action="{% url 'breakout:idea_changes' idea.pk m.pk %}">{% csrf_token %}<input type="hidden" name="action" value="decline"><button type="submit" class="br-btn br-btn--quiet">לא, תודה</button></form>
+                  </div>
+                {% elif m.changes_state == 'applied' %}
+                  <span class="br-tag br-tag--published">הוחל</span>
+                {% else %}
+                  <span class="br-tag">נדחה</span>
+                {% endif %}
+              </div>
+            {% endif %}
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ol>
+    <span id="br-chat-end"></span>
+
+    {% if stop %}
+      <p class="br-notice" id="br-stop">{{ stop }}</p>
+    {% else %}
+      <form class="br-composer" method="post" action="{% url 'breakout:idea_say' idea.pk %}" enctype="multipart/form-data" id="br-composer">
+        {% csrf_token %}
+        <label class="br-field"><span>{% if idea.experience %}מה לשנות באתגר?{% else %}מה תרצו לספר או לשאול?{% endif %}</span>
+          <textarea name="text" rows="3" dir="auto" maxlength="4000" {% if thinking %}disabled{% endif %}></textarea></label>
+        <div class="br-composer-row">
+          <label class="br-field br-upload"><span>סקיצה או תמונה (לא חובה)</span><input type="file" name="picture" accept="image/png,image/jpeg" {% if thinking %}disabled{% endif %}></label>
+          <button type="submit" class="br-btn br-btn--main" id="br-send" {% if thinking %}disabled{% endif %}>שליחה</button>
+        </div>
+      </form>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

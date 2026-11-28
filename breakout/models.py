@@ -406,3 +406,97 @@ class Report(models.Model):
     resolved_at = models.DateTimeField(null=True, blank=True)
     note = models.CharField(max_length=300, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
+
+
+# ------------------------------------------------------- writing with AI (B.6)
+
+
+def idea_picture_path(instance, filename):
+    return f"ideas/{instance.idea_id}/{timezone.now():%Y%m%d%H%M%S%f}.jpg"
+
+
+class Idea(models.Model):
+    """A creator's conversation with the AI about one challenge (spec 14).
+    The card ("הרעיון שלנו") is these fields, rewritten by the model on every
+    turn; once built, `experience` is the draft it wrote and the same
+    conversation goes on as change requests."""
+
+    TALKING, BUILT = "talking", "built"
+    STATES = [(TALKING, "בשיחה"), (BUILT, "נבנה")]
+
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="breakout_ideas")
+    state = models.CharField(max_length=10, choices=STATES, default=TALKING)
+    experience = models.ForeignKey(Experience, null=True, blank=True, on_delete=models.SET_NULL, related_name="ideas")
+    title = models.CharField(max_length=120, blank=True)
+    theme = models.CharField(max_length=300, blank=True)
+    audience_from = models.PositiveSmallIntegerField(null=True, blank=True)
+    audience_to = models.PositiveSmallIntegerField(null=True, blank=True)
+    station_count = models.PositiveSmallIntegerField(null=True, blank=True)
+    duration_minutes = models.PositiveSmallIntegerField(null=True, blank=True)
+    story_line = models.TextField(blank=True)
+    stations_plan = models.TextField(blank=True, help_text="one station per line")
+    open_questions = models.TextField(blank=True, help_text="one per line")
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-updated_at", "-pk"]
+
+    def __str__(self):
+        return self.title or f"שיחה {self.pk}"
+
+    @property
+    def plan_lines(self):
+        return [line for line in self.stations_plan.split("\n") if line.strip()]
+
+    @property
+    def open_lines(self):
+        return [line for line in self.open_questions.split("\n") if line.strip()]
+
+    @property
+    def ready(self):
+        """The build button opens once there is a theme and a station plan."""
+        return bool(self.theme.strip() and self.plan_lines)
+
+    @property
+    def grades(self):
+        lo, hi = self.audience_from, self.audience_to or self.audience_from
+        if not lo:
+            return ""
+        if lo == hi:
+            return f"כיתה {hebrew_grade(lo)}"
+        return f"כיתות {hebrew_grade(min(lo, hi))}-{hebrew_grade(max(lo, hi))}"
+
+
+class IdeaMessage(models.Model):
+    """One message in an idea's conversation. A model answer carries its
+    model, tokens and cost (the log the caps add up); a change request's
+    answer carries the proposed changes until the teacher applies or
+    declines them."""
+
+    TEACHER, AI = "teacher", "ai"
+    ROLES = [(TEACHER, "מורה"), (AI, "AI")]
+    CHAT, BUILD, EDIT = "chat", "build", "edit"
+    KINDS = [(CHAT, "שיחה"), (BUILD, "בנייה"), (EDIT, "שינוי")]
+    THINKING, DONE, FAILED = "thinking", "done", "failed"
+    STATES = [(THINKING, "חושב"), (DONE, "הושלם"), (FAILED, "נכשל")]
+    NONE, PENDING, APPLIED, DECLINED = "", "pending", "applied", "declined"
+    CHANGE_STATES = [(NONE, "אין"), (PENDING, "ממתין"), (APPLIED, "הוחל"), (DECLINED, "נדחה")]
+
+    idea = models.ForeignKey(Idea, on_delete=models.CASCADE, related_name="messages")
+    role = models.CharField(max_length=8, choices=ROLES)
+    kind = models.CharField(max_length=6, choices=KINDS, default=CHAT)
+    state = models.CharField(max_length=9, choices=STATES, default=DONE)
+    text = models.TextField(blank=True)
+    picture = models.ImageField(upload_to=idea_picture_path, storage=private_storage, blank=True)
+    changes = models.JSONField(null=True, blank=True)
+    changes_state = models.CharField(max_length=9, choices=CHANGE_STATES, default=NONE, blank=True)
+    model = models.CharField(max_length=40, blank=True)
+    tokens_in = models.PositiveIntegerField(default=0)
+    tokens_cached = models.PositiveIntegerField(default=0)
+    tokens_out = models.PositiveIntegerField(default=0)
+    cost_usd = models.DecimalField(max_digits=9, decimal_places=5, default=0)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ["idea", "created_at", "pk"]

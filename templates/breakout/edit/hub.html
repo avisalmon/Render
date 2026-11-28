@@ -42,6 +42,7 @@
       <li><a href="{% url 'breakout:edit_stations' exp.slug %}">התחנות</a><span class="br-muted">{% if stations %}{% for s in stations %}{{ s.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% else %}אין עדיין{% endif %}</span></li>
       <li><a href="{% url 'breakout:edit_lock' exp.slug %}">המנעול הסופי</a><span class="br-muted">{% if lock and lock.final_code %}הקוד: <span dir="ltr">{{ lock.final_code }}</span>{% else %}אין עדיין{% endif %}</span></li>
     </ul>
+    {% if idea %}<p><a class="br-btn" id="br-idea-back" href="{% url 'breakout:idea' idea.pk %}">לשנות בשיחה עם ה-AI</a></p>{% endif %}
     <p class="br-small br-muted">פרסום הוא מיידי. עריכה אחרי הפרסום מעדכנת את האתגר במקום ומעלה את מספר הגרסה, שמודפס בתחתית הערכה.</p>
   </article>
 </div>

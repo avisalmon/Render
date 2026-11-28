@@ -47,6 +47,34 @@ publishing.
 
 ---
 
+## PM-119 · 2026-11-28 · breakout B.6 (writing a challenge with AI): a caller's copy went stale after a step that saved through its own
+
+**What happened.** The build step loads the conversation fresh, writes
+the draft and marks the conversation built, all on its own copy. The
+screen world that called it kept its older copy, so its next message was
+sent as plain chat instead of a change request. The screenshot showed a
+built conversation with no proposal on it. The views were not affected,
+because each request loads the conversation again, but any later caller
+holding the object would have been.
+
+**Why the process let it.** The unit tests went through the views, which
+always load fresh rows, so they never held a copy across the step. Only
+a caller that held one object across two calls could see the problem,
+and the first such caller was the screen world. The screenshot caught
+it because it was read against what the screen should show.
+
+**Rule.** A function that saves through a copy it loaded itself either
+refreshes the caller's object before it returns, or takes only an id and
+returns the fresh object. A test that holds the object across two calls
+is the test for it. A screenshot is read against what that state should
+show, not only checked for breakage.
+
+- Here: `docs/building_an_app.md` (mistake 94), `breakout/ai.py`
+  (`_answer` refreshes the idea after an inline turn).
+- BKM: FullStackBKM (mistake 106)
+
+---
+
 ## PM-118 · 2026-11-28 · Academia360: most of the reference import was invented, found only when Avi asked for a recheck
 
 **What happened.** Avi asked to recheck every institution. Agents compared

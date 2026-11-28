@@ -120,6 +120,7 @@ def hub(request, slug):
     return render(request, "breakout/edit/hub.html", _ctx(
         exp, "review", items=items, can_publish=can_publish,
         stations=list(exp.stations.all()), lock=getattr(exp, "final_lock", None),
+        idea=exp.ideas.filter(author=request.user).first(),
     ))
 
 

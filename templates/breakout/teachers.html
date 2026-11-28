@@ -11,7 +11,8 @@
 
 <div class="br-levels" id="br-levels">
   <p><span class="br-tag">צופה</span> רואה את האתגרים, מכין ומדפיס.</p>
-  <p><span class="br-tag br-tag--creator">יוצר/ת</span> כל זה, וגם כותב/ת אתגרים חדשים. אפשר להעלות ולהחזיר בכל רגע.</p>
+  <p><span class="br-tag br-tag--creator">יוצר/ת</span> כל זה, וגם כותב/ת אתגרים חדשים, בטפסים או בשיחה עם AI. אפשר להעלות ולהחזיר בכל רגע.</p>
+  <p class="br-small">שימוש ב-AI החודש, כל האתר: <span dir="ltr">${{ ai_month|floatformat:2 }}</span></p>
 </div>
 
 <section class="br-step" aria-labelledby="br-pending-title">
@@ -45,7 +46,7 @@
           <span class="br-person-name" dir="auto">{{ p.name }} <span class="br-muted br-small" dir="ltr">{{ p.user.email }}</span>
             {% if p.is_curator %}<span class="br-tag br-tag--curator">אוצר/ת</span>{% elif p.is_creator %}<span class="br-tag br-tag--creator">יוצר/ת</span>{% else %}<span class="br-tag">צופה</span>{% endif %}
           </span>
-          <span class="br-person-meta" dir="auto">{{ p.school }}{% if p.teaches %} · {{ p.teaches }}{% endif %} · אושר/ה ב-{{ p.teacher_since|date:"d.m.Y" }}{% if p.teacher_by %} על ידי {{ p.teacher_by.first_name|default:p.teacher_by.username }}{% endif %}{% if p.is_creator and p.creator_since %} · יוצר/ת מ-{{ p.creator_since|date:"d.m.Y" }}{% endif %}</span>
+          <span class="br-person-meta" dir="auto">{{ p.school }}{% if p.teaches %} · {{ p.teaches }}{% endif %} · אושר/ה ב-{{ p.teacher_since|date:"d.m.Y" }}{% if p.teacher_by %} על ידי {{ p.teacher_by.first_name|default:p.teacher_by.username }}{% endif %}{% if p.is_creator and p.creator_since %} · יוצר/ת מ-{{ p.creator_since|date:"d.m.Y" }}{% endif %}{% if p.ai_month is not None %} · AI החודש: <span dir="ltr">${{ p.ai_month|floatformat:2 }}</span>{% endif %}</span>
           {% if not p.is_curator %}
           <div class="br-person-actions">
             {% if p.is_creator %}
