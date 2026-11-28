@@ -1768,3 +1768,17 @@ no raw markup on the page. Screenshots are read for stray markup too. A page
 that loads a third party (tiles, fonts, embeds) is opened live after a
 deploy, and its requests carry what that party's usage policy asks for.
 
+### 93. Imported knowledge is unverified until each fact is checked
+
+Academia360's reference import (a document written with an AI) put
+invented researchers, prizes, papers, partners and numbers on the public
+site, and the source line made them look checked. A recheck found it
+(PM-118).
+
+**The rule.** A document that is not itself a primary source is not a
+source: each fact it brings is checked against a page that states it
+before the public sees it, or is shown as unchecked. Rechecks return
+corrections by row id quoting the current value, and the applier changes a
+field only while it still holds that value, hides before it deletes, and
+logs every change.
+

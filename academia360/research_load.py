@@ -32,8 +32,8 @@ from .models import (
     Institution,
     InstitutionMetric,
     ProfileSection,
-    PublicDocument,
     Publication,
+    PublicDocument,
     ResearchCenter,
     Researcher,
     ResearcherLink,
@@ -299,7 +299,10 @@ def _researchers(inst, rows, units, counts):
             row.kind = kind
             row.save(update_fields=["kind"])
         out[name_he] = row
-        as_of = AS_OF
+        try:  # the day the metrics were read, when the file says it
+            as_of = date.fromisoformat(str(p.get("metrics_as_of") or "")[:10])
+        except ValueError:
+            as_of = AS_OF
         oa = (p.get("openalex_id") or "").strip()
         for metric, value in (("h_index", whole(p.get("h_index"))), ("citations", whole(p.get("citations")))):
             if value is None or row.metrics.filter(metric=metric, as_of=as_of).exists():
