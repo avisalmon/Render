@@ -284,7 +284,13 @@ def _researchers(inst, rows, units, counts):
         if not (name_he or name_en):
             continue
         title = text(p.get("title"), 80)
-        row = _match_researcher(inst, {"title": title, "name_he": name_he, "name_en": name_en})
+        oa_id = (p.get("openalex_id") or "").strip().rsplit("/", 1)[-1]
+        row = Researcher.objects.filter(  # the same OpenAlex author is the same person, whatever the spelling
+            institution=inst, links__url__iendswith=f"/{oa_id}").first() if oa_id.upper().startswith("A") else None
+        row = row or _match_researcher(inst, {"title": title, "name_he": name_he, "name_en": name_en})
+        if row is None and not any(text(p.get(k)) for k in ("position", "focus", "bio")):
+            counts.hit("researchers unmatched (prize or numbers only, not created)", False)
+            continue  # a prize or a metric for someone not found is never a new person
         if row is None:
             row = Researcher.objects.create(institution=inst, slug=_slug(inst, {"name_he": name_he, "name_en": name_en}),
                                             name_he=name_he or name_en, name_en=name_en, title=title, is_leading=True)
