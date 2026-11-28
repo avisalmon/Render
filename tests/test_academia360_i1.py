@@ -134,3 +134,24 @@ def test_the_same_name_at_two_institutions_gets_two_addresses(world):
     assert a.slug != b.slug
     from django.test import Client
     assert Client().get(f"/academia360/researchers/{b.slug}/").status_code == 200
+
+
+def test_markdown_in_a_section_and_a_bio_renders_and_never_shows_raw(world):
+    from django.test import Client
+    from academia360.models import ProfileSection
+    ProfileSection.objects.create(institution=world, kind="structure", title="מבנה",
+                                  body="- **הפקולטה לאמנויות**, בראשות הדיקן\n- **הפקולטה למחול**<script>x</script>")
+    r = Researcher.objects.create(institution=world, slug="bio-md", name_he="רות", bio="**חוקרת** ותיקה")
+    page = Client().get(f"/academia360/institutions/{world.slug}/").content.decode()
+    assert "<strong>הפקולטה לאמנויות</strong>" in page and "**" not in page and "<script>x" not in page
+    assert "<li>" in page
+    bio = Client().get(f"/academia360/researchers/{r.slug}/").content.decode()
+    assert "<strong>חוקרת</strong>" in bio and "**" not in bio
+
+
+def test_the_map_tiles_ask_with_a_referrer():
+    """OSM refuses tile requests without a Referer, and the site's default
+    policy sends none cross-origin (the map showed 'Access blocked')."""
+    from pathlib import Path
+    js = (Path(__file__).resolve().parent.parent / "static" / "academia360" / "a360.js").read_text(encoding="utf-8")
+    assert 'referrerPolicy: "strict-origin-when-cross-origin"' in js

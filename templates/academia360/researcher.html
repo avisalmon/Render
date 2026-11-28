@@ -1,4 +1,4 @@
-{% extends "academia360/base.html" %}
+{% extends "academia360/base.html" %}{% load a360 %}
 {% block title %}{{ r.name_he }} · אקדמיה 360°{% endblock %}
 {% block content %}
 {# Epic P.4: who they are, what they work on, the dated metrics, selected publications, prizes, verified links, colleagues. A page with little says so. #}
@@ -16,7 +16,7 @@
         <h1 class="a360-h1" dir="auto">{% if r.title %}{{ r.title }} {% endif %}{{ r.name_he }}</h1>
         <div class="a360-mute a360-sub a360-sub-row">{% if r.name_en %}<span dir="ltr">{{ r.name_en }}</span>{% endif %}{% if r.position %}<span dir="auto">{{ r.position }}</span>{% endif %}</div>
         {% if r.focus %}<p class="a360-lede a360-narrow" dir="auto">{{ r.focus }}</p>{% elif r.areas %}<p class="a360-lede a360-narrow" dir="auto">{{ r.areas }}</p>{% endif %}
-        {% if r.bio %}<div class="a360-prose a360-narrow a360-bio" dir="auto">{{ r.bio|linebreaks }}</div>{% endif %}
+        {% if r.bio %}<div class="a360-prose a360-narrow a360-bio" dir="auto">{{ r.bio|a360_md }}</div>{% endif %}
         {% if thin %}<p class="a360-mute a360-narrow">על {{ r.name_he }} יש כאן בינתיים רק את השורות שלמעלה. כשייאסף עוד, הוא יופיע כאן עם המקור והתאריך שלו.</p>{% endif %}
         {% if links %}
         <div class="a360-actions">

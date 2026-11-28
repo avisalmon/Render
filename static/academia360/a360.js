@@ -18,6 +18,8 @@
     map = L.map(mapNode, { scrollWheelZoom: false, attributionControl: true });
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 18, className: "a360-tiles",
+      // the site sends no Referer cross-origin by default; OSM refuses tile requests without one
+      referrerPolicy: "strict-origin-when-cross-origin",
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(map);
     var bounds = [];

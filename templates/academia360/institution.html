@@ -1,4 +1,4 @@
-{% extends "academia360/base.html" %}
+{% extends "academia360/base.html" %}{% load a360 %}
 {% block title %}{{ inst.name_he }} · אקדמיה 360°{% endblock %}
 {% block content %}
 {# Epic P (Avi, 2026-11-27): the page reads top to bottom like a book. The name on the right; the status on the left, for the committee only; then one paragraph; what matters to Academia 360; what they teach and how many; research that stands out; the story, folded; compare at the very bottom. #}
@@ -55,7 +55,7 @@
       </article>
       {% endfor %}
       {% for s in program_sections %}
-      <article class="a360-section"><h3 class="a360-h3" dir="auto">{{ s.title }}</h3><div class="a360-prose" dir="auto">{{ s.body|linebreaks }}</div>{% if s.source %}<div class="a360-src">מקור: {{ s.source }}{% if s.as_of %} · {{ s.as_of|date:"m.Y" }}{% endif %}</div>{% endif %}</article>
+      <article class="a360-section"><h3 class="a360-h3" dir="auto">{{ s.title }}</h3><div class="a360-prose" dir="auto">{{ s.body|a360_md }}</div>{% if s.source %}<div class="a360-src">מקור: {{ s.source }}{% if s.as_of %} · {{ s.as_of|date:"m.Y" }}{% endif %}</div>{% endif %}</article>
       {% endfor %}
     </div>
   </div>
@@ -135,7 +135,7 @@
       {% for s in story %}
       <details class="a360-fold"{% if forloop.first %} open{% endif %}>
         <summary><span dir="auto">{{ s.title }}</span><span class="a360-mute a360-small">{{ s.get_kind_display }}</span></summary>
-        <div class="a360-prose" dir="auto">{{ s.body|linebreaks }}</div>
+        <div class="a360-prose" dir="auto">{{ s.body|a360_md }}</div>
         {% if s.source or s.as_of %}<div class="a360-src">מקור: {{ s.source }}{% if s.as_of %} · נכון ל־{{ s.as_of|date:"m.Y" }}{% endif %}</div>{% endif %}
       </details>
       {% endfor %}
