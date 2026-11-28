@@ -57,3 +57,12 @@ def a360_at(items, index):
         return items[int(index)]
     except (IndexError, TypeError, ValueError):
         return ""
+
+
+@register.filter
+def a360_md(text):
+    """Public text written in markdown (profile sections, a bio), rendered
+    and sanitized by the app's one renderer. Plain text passes through as
+    paragraphs, so rows without markdown look as they did."""
+    from academia360.text import render_markdown
+    return render_markdown(text or "")
