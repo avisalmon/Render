@@ -17,6 +17,36 @@ Newest first.
 
 ---
 
+## PM-120 · 2026-11-28 · Academia360: five duplicate researchers reached production with the I.2 recheck
+
+**What happened.** Right after the recheck went live, while applying Avi's
+held decisions, five people turned out to appear twice on the public
+site. Two were empty rows holding only a prize: the agent added the prize
+under the person's correct name, the stored name was still misspelt (the
+name fix itself was held), so the name match failed and the loader made a
+new person. Three came from the central OpenAlex pass, where OpenAlex
+spells the name differently from the staff page (Dimitri / Dmitry, Fried /
+Frid), so it made a second row with the same numbers and papers.
+
+**Why the process let it.** The loader treated "no match by name" as "a
+new person", even for an entry with nothing but a prize or numbers. The
+review after landing counted researchers and checked pages, but never
+looked for the same person twice within an institution. The OpenAlex id
+already stored on the real row was not used to match.
+
+**Rule.** (a) A loader matches a person by a stable id first (here the
+OpenAlex author id on a stored link), then by name. (b) An entry that only
+attaches something (a prize, metrics) to a person never creates that
+person; it is reported as unmatched. (c) After any load that adds people,
+list rows with no description and same-id pairs per institution before
+publishing.
+
+- Here: `docs/building_an_app.md` (mistake 95), `academia360/research_load.py`,
+  `tests/test_academia360_i2.py`.
+- BKM: 2eb95be
+
+---
+
 ## PM-118 · 2026-11-28 · Academia360: most of the reference import was invented, found only when Avi asked for a recheck
 
 **What happened.** Avi asked to recheck every institution. Agents compared

@@ -1782,3 +1782,15 @@ corrections by row id quoting the current value, and the applier changes a
 field only while it still holds that value, hides before it deletes, and
 logs every change.
 
+
+### 95. Something that only attaches to a record never creates the record
+
+A recheck added a prize for a person whose stored name was still
+misspelt, and a metrics pass matched people by name while the source
+spelt them differently. Each made a second copy of the person on the
+public site (PM-120).
+
+**The rule.** Match by a stable id before a name. An entry that only
+attaches data (a prize, numbers, a link) to someone not found is reported
+as unmatched, never made into a new record. After a load that adds
+people, look for empty rows and same-id pairs before publishing.
