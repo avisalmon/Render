@@ -48,6 +48,9 @@ Experience ──* Download                (a kit was downloaded or printed)
 
 Material ──* MaterialRequest           (a teacher asks for a new material)
 Experience / Comment ──* Report        (flag content for a curator)
+
+User ──* Idea ──* IdeaMessage          (B.6: a creator's conversation with the AI)
+Idea ──0..1 Experience                 (the draft it built)
 ```
 
 ---
@@ -121,6 +124,20 @@ is a view over the rows above and is not stored. A download of it is recorded
 Counts shown in the library (likes, runs, downloads, comments) are computed
 from these rows, with the counting done before any filter on the same
 relation (mistake 20).
+
+---
+
+## 5a. Writing with AI (B.6)
+
+| Model | What it is | Main fields |
+| --- | --- | --- |
+| **Idea** | A creator's conversation with the AI about one challenge. Its card ("הרעיון שלנו") is fields, rewritten by the model each turn; once built it points at the draft it wrote | author, state: `talking` / `built`, experience (null until built; SET_NULL, so deleting the draft keeps the talk and deleting the talk keeps the draft), title, theme, audience_from, audience_to, station_count, duration_minutes, story_line, stations_plan (one station per line), open_questions (one per line), created_at, updated_at |
+| **IdeaMessage** | One message. A model answer carries what it cost; a change request's answer carries the proposed changes until the teacher applies or declines them | idea, role: `teacher` / `ai`, kind: `chat` / `build` / `edit`, state: `thinking` / `done` / `failed`, text, picture (a sketch, private storage, JPEG at most 1600px), changes (the proposal: target, field, label, before, value), changes_state: `pending` / `applied` / `declined`, model, tokens_in, tokens_cached, tokens_out, cost_usd, created_at |
+
+The caps add up `IdeaMessage.cost_usd`: per creator since midnight, and for
+the whole app since the first of the month. The proposal is a JSON list on
+purpose: it is a transient offer, written once and read once; what it
+changes lands in the real rows (Station, Hint, FinalLock) when applied.
 
 ---
 

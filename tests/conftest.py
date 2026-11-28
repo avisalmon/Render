@@ -29,9 +29,9 @@ def _books_no_real_model_calls(request, settings):
 
 @pytest.fixture(autouse=True)
 def _breakout_no_real_model_calls(request, settings):
-    """breakout has no AI feature (spec 1.5), and still blanks the key from
-    its first test, because a later sprint may put a model behind a path an
-    old test already walks (methodology 26)."""
+    """breakout blanks the key in every test (methodology 26): its AI
+    writing (B.6, spec 14) then answers from a fixed stub, and a test that
+    needs a model's words replaces `breakout.ai._call`."""
     if request.node.fspath.basename.startswith("test_breakout"):
         settings.OPENAI_API_KEY = ""
     yield

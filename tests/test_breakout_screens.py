@@ -95,6 +95,13 @@ CONTRAST_JS = r"""() => {
 FIRST_CARD_TOP_JS = """() => { const c = document.querySelector('.br-card'); return c ? c.getBoundingClientRect().top : -1; }"""
 
 
+@pytest.fixture(autouse=True)
+def _private_files(settings, tmp_path):
+    """The conversations' sketches (B.6) go to a temporary folder."""
+    settings.BREAKOUT_PRIVATE_DIR = tmp_path / "breakout_private"
+    settings.IMAGE_MODERATION_ENABLED = False
+
+
 @pytest.fixture(scope="module")
 def browser():
     playwright = pytest.importorskip("playwright.sync_api")
@@ -133,6 +140,24 @@ def build_world():
         status=Experience.PUBLISHED, audience_from=5, audience_to=8, duration_minutes=60, difficulty=Experience.HARD,
     )
     Station.objects.create(experience=second, order=1, name="הצופן הראשון", puzzle_text="א" * 40, solution="ב", estimated_minutes=10)
+    # Writing with AI (B.6), in stub mode: one conversation still talking, with
+    # a sketch, and one built with a change proposal waiting.
+    import io
+
+    from PIL import Image
+
+    from breakout import ai
+    from breakout.models import Idea
+
+    talking = Idea.objects.create(author=dana)
+    sketch = io.BytesIO()
+    Image.new("RGB", (300, 200), (230, 200, 120)).save(sketch, "JPEG")
+    ai.say(talking, "אני רוצה אתגר על מסע בזמן לכיתות ו עד ח, עם הרבה גזירה והרכבה, בערך ארבעים וחמש דקות", sketch.getvalue())
+    built = Idea.objects.create(author=dana)
+    ai.say(built, "אתגר על מסע בזמן")
+    ai.build(built)
+    ai.say(built, "תעשו את המשפט בכרטיס קצת יותר מסקרן")
+    assert built.messages.last().changes_state == "pending"
     return flagship, second
 
 
@@ -152,7 +177,10 @@ def _open(browser, live_server, who, path, width):
 
 
 def _screens(flagship, second):
+    from breakout.models import Idea
+
     station = flagship.stations.order_by("order").first()
+    talking, built = Idea.objects.get(state=Idea.TALKING), Idea.objects.get(state=Idea.BUILT)
     return [
         ("login", None, "/breakout/login/"),
         ("signup", None, "/breakout/signup/"),
@@ -174,6 +202,10 @@ def _screens(flagship, second):
         ("edit-station", "avi", f"/breakout/x/{flagship.slug}/edit/stations/{station.pk}/"),
         ("edit-lock", "avi", f"/breakout/x/{flagship.slug}/edit/lock/"),
         ("edit-hub-thin", "dana", f"/breakout/x/{second.slug}/edit/"),
+        # Writing with AI (B.6).
+        ("ideas", "dana", "/breakout/ideas/"),
+        ("idea", "dana", f"/breakout/ideas/{talking.pk}/"),
+        ("idea-built", "dana", f"/breakout/ideas/{built.pk}/"),
     ]
 
 
@@ -192,7 +224,7 @@ def test_every_screen_holds_on_every_phone_a_tablet_and_a_desktop(browser, live_
                 for word in ALARM:
                     if re.search(rf"\b{re.escape(word)}\b", text):
                         problems.append(f"{name}@{width}: says {word!r}")
-                if name in ("experience", "prep") or name.startswith("edit-"):
+                if name in ("experience", "prep") or name.startswith(("edit-", "idea")):
                     # Open every fold and station so the checks see the whole page.
                     page.evaluate("document.querySelectorAll('details').forEach(d => d.open = true)")
                 for label, js, arg in (("past the edge", OVERFLOW_JS, width), ("fields under 16px", SMALL_FIELDS_JS, None),
@@ -275,7 +307,10 @@ def test_on_a_phone_a_teacher_writes_an_experience_and_publishes_it(browser, liv
     build_world()
     context, page = _open(browser, live_server, "dana", "/breakout/", 390)
     try:
-        page.click("a.br-pagehead-action")
+        page.click("#br-create")
+        page.wait_for_load_state("networkidle")
+        assert page.url.endswith("/breakout/ideas/")  # B.6: the conversations first, writing by hand one link away
+        page.click("#br-write-by-hand")
         page.wait_for_load_state("networkidle")
         assert page.url.endswith("/breakout/new/")
         page.fill('input[name="title"]', "צופן הפסנתר")
@@ -329,6 +364,53 @@ def test_on_a_phone_a_teacher_writes_an_experience_and_publishes_it(browser, liv
         SHOTS.mkdir(parents=True, exist_ok=True)
         page.screenshot(path=str(SHOTS / "authoring-failed.png"), full_page=True)
         print("authoring flow failed at", page.url)
+        raise
+    finally:
+        context.close()
+
+
+def test_on_a_phone_a_creator_talks_builds_and_changes_a_challenge(browser, live_server):
+    """The creator's job with AI on a phone (B.6, stub mode): open a
+    conversation, tell the idea, see the card fill, build, ask a change in
+    the chat and apply it, then find the draft in the editor."""
+    from breakout.models import Experience, Idea
+
+    build_world()
+    Idea.objects.all().delete()  # the world's two conversations; their drafts stay
+    context, page = _open(browser, live_server, "dana", "/breakout/", 390)
+    try:
+        page.click("#br-create")
+        page.wait_for_load_state("networkidle")
+        page.click("#br-idea-new")
+        page.wait_for_load_state("networkidle")
+        assert re.search(r"/breakout/ideas/\d+/$", page.url)
+        page.fill('#br-composer textarea[name="text"]', "אתגר על מסע בזמן לכיתות ו עד ח")
+        page.click("#br-send")
+        page.wait_for_load_state("networkidle")
+        assert page.locator(".br-msg--ai").count() == 1
+        card = page.locator("#br-idea-card")
+        assert card.get_attribute("open") is None  # folded on a phone
+        page.click("#br-idea-card > summary")
+        assert page.is_visible("#br-idea-build") and "מצרים העתיקה" in card.inner_text()
+        page.click("#br-idea-build")
+        page.wait_for_load_state("networkidle")
+        exp = Idea.objects.get().experience
+        assert exp.status == Experience.DRAFT and exp.stations.count() == 3
+        page.fill('#br-composer textarea[name="text"]', "משפט מסקרן יותר")
+        page.click("#br-send")
+        page.wait_for_load_state("networkidle")
+        page.click(".br-apply")
+        page.wait_for_load_state("networkidle")
+        exp.refresh_from_db()
+        assert exp.tagline.startswith("גרסה מעודכנת")
+        assert page.locator(".br-proposal .br-tag--published").count() == 1  # "הוחל"
+        page.click("#br-idea-card > summary")
+        page.click("#br-idea-edit")
+        page.wait_for_load_state("networkidle")
+        assert page.url.endswith(f"/breakout/x/{exp.slug}/edit/")
+        assert page.is_visible("#br-idea-back")
+    except Exception:
+        page.screenshot(path=str(SHOTS / "idea-journey-failed.png"), full_page=True)
         raise
     finally:
         context.close()

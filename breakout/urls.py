@@ -3,7 +3,7 @@
 from django.urls import include, path
 from rest_framework import routers
 
-from . import auth_views, edit_views, views
+from . import auth_views, edit_views, idea_views, views
 from .api import ROUTES
 
 app_name = "breakout"
@@ -23,6 +23,16 @@ urlpatterns = [
     path("files/<int:pk>/", views.printable_file, name="printable_file"),
     path("api/", include(router.urls)),
     path("new/", edit_views.new, name="new"),
+    # Writing a challenge with AI (B.6, spec 14): creators only.
+    path("ideas/", idea_views.ideas, name="ideas"),
+    path("ideas/new/", idea_views.idea_new, name="idea_new"),
+    path("ideas/<int:pk>/", idea_views.idea, name="idea"),
+    path("ideas/<int:pk>/say/", idea_views.idea_say, name="idea_say"),
+    path("ideas/<int:pk>/build/", idea_views.idea_build, name="idea_build"),
+    path("ideas/<int:pk>/status/", idea_views.idea_status, name="idea_status"),
+    path("ideas/<int:pk>/delete/", idea_views.idea_delete, name="idea_delete"),
+    path("ideas/<int:pk>/changes/<int:msg_pk>/", idea_views.idea_changes, name="idea_changes"),
+    path("ideas/<int:pk>/pictures/<int:msg_pk>/", idea_views.idea_picture, name="idea_picture"),
     path("x/<slug:slug>/", views.experience, name="experience"),
     path("x/<slug:slug>/kit/", views.kit_pdf, name="kit"),
     path("x/<slug:slug>/prep/", views.prep, name="prep"),

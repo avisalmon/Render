@@ -17,6 +17,64 @@ Newest first.
 
 ---
 
+## PM-120 · 2026-11-28 · Academia360: five duplicate researchers reached production with the I.2 recheck
+
+**What happened.** Right after the recheck went live, while applying Avi's
+held decisions, five people turned out to appear twice on the public
+site. Two were empty rows holding only a prize: the agent added the prize
+under the person's correct name, the stored name was still misspelt (the
+name fix itself was held), so the name match failed and the loader made a
+new person. Three came from the central OpenAlex pass, where OpenAlex
+spells the name differently from the staff page (Dimitri / Dmitry, Fried /
+Frid), so it made a second row with the same numbers and papers.
+
+**Why the process let it.** The loader treated "no match by name" as "a
+new person", even for an entry with nothing but a prize or numbers. The
+review after landing counted researchers and checked pages, but never
+looked for the same person twice within an institution. The OpenAlex id
+already stored on the real row was not used to match.
+
+**Rule.** (a) A loader matches a person by a stable id first (here the
+OpenAlex author id on a stored link), then by name. (b) An entry that only
+attaches something (a prize, metrics) to a person never creates that
+person; it is reported as unmatched. (c) After any load that adds people,
+list rows with no description and same-id pairs per institution before
+publishing.
+
+- Here: `docs/building_an_app.md` (mistake 95), `academia360/research_load.py`,
+  `tests/test_academia360_i2.py`.
+- BKM: 2eb95be
+
+---
+
+## PM-119 · 2026-11-28 · breakout B.6 (writing a challenge with AI): a caller's copy went stale after a step that saved through its own
+
+**What happened.** The build step loads the conversation fresh, writes
+the draft and marks the conversation built, all on its own copy. The
+screen world that called it kept its older copy, so its next message was
+sent as plain chat instead of a change request. The screenshot showed a
+built conversation with no proposal on it. The views were not affected,
+because each request loads the conversation again, but any later caller
+holding the object would have been.
+
+**Why the process let it.** The unit tests went through the views, which
+always load fresh rows, so they never held a copy across the step. Only
+a caller that held one object across two calls could see the problem,
+and the first such caller was the screen world. The screenshot caught
+it because it was read against what the screen should show.
+
+**Rule.** A function that saves through a copy it loaded itself either
+refreshes the caller's object before it returns, or takes only an id and
+returns the fresh object. A test that holds the object across two calls
+is the test for it. A screenshot is read against what that state should
+show, not only checked for breakage.
+
+- Here: `docs/building_an_app.md` (mistake 94), `breakout/ai.py`
+  (`_answer` refreshes the idea after an inline turn).
+- BKM: FullStackBKM (mistake 106)
+
+---
+
 ## PM-118 · 2026-11-28 · Academia360: most of the reference import was invented, found only when Avi asked for a recheck
 
 **What happened.** Avi asked to recheck every institution. Agents compared

@@ -72,4 +72,27 @@
       if (!window.confirm(form.dataset.confirm)) ev.preventDefault();
     });
   });
+
+  // Writing with AI (B.6): the card is open beside the chat on a wide screen
+  // and folded above it on a phone; while an answer is being written the page
+  // asks one small route every few seconds and reloads when it is done.
+  var card = document.getElementById("br-idea-card");
+  if (card && window.matchMedia && window.matchMedia("(min-width: 900px)").matches) card.open = true;
+  var idea = document.getElementById("br-idea");
+  if (idea && idea.dataset.statusUrl) {
+    var tries = 0;
+    var poll = function () {
+      tries += 1;
+      fetch(idea.dataset.statusUrl, { credentials: "same-origin" })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (!d.thinking) { window.location.replace(window.location.pathname + "#br-chat-end"); window.location.reload(); }
+          else if (tries < 120) window.setTimeout(poll, 3000);
+        })
+        .catch(function () { if (tries < 120) window.setTimeout(poll, 5000); });
+    };
+    window.setTimeout(poll, 2500);
+  }
+  var end = document.getElementById("br-chat-end");
+  if (end && window.location.hash === "#br-chat-end") end.scrollIntoView({ block: "end" });
 })();

@@ -66,6 +66,7 @@ def recheck(w):
         ],
         "additions": {
             "researchers": [{"name_he": "עדה יונת", "name_en": "Ada Yonath", "title": "פרופ׳", "kind": "other",
+                             "focus": "מבנה הריבוזום",
                              "prizes": [{"kind": "nobel", "title": "פרס נובל בכימיה", "year": 2009}]},
                             {"name_he": "דנה לוי", "prizes": [{"kind": "other", "title": "פרס הוראה", "year": 2024}]}],
             "timeline": [{"year": 1956, "text": "האוניברסיטה נוסדה"}],
@@ -132,3 +133,18 @@ def test_a_person_moves_to_a_named_unit_of_the_same_institution_before_a_wrong_u
     stays.refresh_from_db()
     assert stays.unit.name == "מדעי המחשב" and stays.unit.institution == inst and stays.unit != foreign
     assert not Unit.objects.filter(pk=rank.pk).exists() and report["corrected"] == 1
+
+
+def test_a_prize_or_numbers_for_someone_not_found_never_make_a_new_person(world):
+    from academia360 import research_load
+    from academia360.models import ResearcherLink
+
+    inst, stays = world["inst"], world["stays"]
+    ResearcherLink.objects.create(researcher=stays, url="https://openalex.org/A5000000001", kind="other")
+    before = Researcher.objects.count()
+    research_load.land(inst, {"researchers": [
+        {"name_he": "דנה לוי-כהן", "prizes": [{"kind": "erc", "title": "ERC Starting Grant", "year": 2024}]},  # misspelt
+        {"name_he": "Dana Levy", "name_en": "Dana Levy", "openalex_id": "A5000000001", "h_index": 12},  # other spelling
+    ]})
+    assert Researcher.objects.count() == before
+    assert stays.metrics.get(metric="h_index").value == 12  # found by her OpenAlex id

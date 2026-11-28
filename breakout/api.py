@@ -14,10 +14,14 @@ signed-in only (the project default). Who may do what:
 - **MaterialRequest**: anyone creates; the decision fields are the curator's
   (B.5 opens them).
 - **Profile**: your own, and curators see all.
+- **Idea, IdeaMessage** (B.6): creators only, and only their own; an idea is
+  created, renamed and deleted here, its messages are read-only (a message
+  is written by talking on the screen, which calls the model; the same
+  exception design3d records for its chat).
 """
 
 from django.utils import timezone
-from rest_framework import permissions, serializers, viewsets
+from rest_framework import mixins, permissions, serializers, viewsets
 from rest_framework.exceptions import PermissionDenied
 
 from . import access
@@ -27,6 +31,8 @@ from .models import (
     Experience,
     FinalLock,
     Hint,
+    Idea,
+    IdeaMessage,
     Like,
     Material,
     MaterialRequest,
@@ -393,6 +399,50 @@ class ProfileViewSet(viewsets.ModelViewSet):
         return Profile.objects.filter(user=self.request.user)
 
 
+# ------------------------------------------------------- writing with AI (B.6)
+
+
+class IsCreator(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return access.may_write(request.user)
+
+
+class IdeaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Idea
+        fields = ["id", "author", "state", "experience", "title", "theme", "audience_from", "audience_to",
+                  "station_count", "duration_minutes", "story_line", "stations_plan", "open_questions",
+                  "created_at", "updated_at"]
+        read_only_fields = ["author", "state", "experience", "created_at", "updated_at"]
+
+
+class IdeaViewSet(viewsets.ModelViewSet):
+    serializer_class = IdeaSerializer
+    permission_classes = [IsTeacher, IsCreator]
+
+    def get_queryset(self):
+        return Idea.objects.filter(author=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
+
+
+class IdeaMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IdeaMessage
+        fields = ["id", "idea", "role", "kind", "state", "text", "changes", "changes_state", "model",
+                  "tokens_in", "tokens_cached", "tokens_out", "cost_usd", "created_at"]
+        read_only_fields = fields
+
+
+class IdeaMessageViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+    serializer_class = IdeaMessageSerializer
+    permission_classes = [IsTeacher, IsCreator]
+
+    def get_queryset(self):
+        return IdeaMessage.objects.filter(idea__author=self.request.user)
+
+
 ROUTES = [
     ("experiences", ExperienceViewSet, Experience),
     ("stations", StationViewSet, Station),
@@ -409,4 +459,6 @@ ROUTES = [
     ("downloads", DownloadViewSet, Download),
     ("reports", ReportViewSet, Report),
     ("profiles", ProfileViewSet, Profile),
+    ("ideas", IdeaViewSet, Idea),
+    ("idea-messages", IdeaMessageViewSet, IdeaMessage),
 ]

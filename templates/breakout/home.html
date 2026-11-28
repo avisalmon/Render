@@ -6,7 +6,7 @@
     <h1 class="br-h1">הספרייה</h1>
     <p class="br-intro">אתגרי חדר בריחה שבנויים מדפים, מספריים וציוד משרדי. בוחרים אתגר, מדפיסים את הערכה, ומריצים עם הקבוצה. בלי מסכים.</p>
   </div>
-  {% if can_write %}<a class="br-btn br-pagehead-action" href="{% url 'breakout:new' %}">כתיבת אתגר</a>{% endif %}
+  {% if can_write %}<a class="br-btn br-pagehead-action" id="br-create" href="{% url 'breakout:ideas' %}">כתיבת אתגר</a>{% endif %}
 </section>
 
 <details class="br-filterbox" id="br-filters">

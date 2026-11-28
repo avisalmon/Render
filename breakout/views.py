@@ -160,10 +160,16 @@ def teachers(request):
     """The curators' page: who asked to come in, approve or decline; who is in."""
     if not access.is_curator(request.user):
         raise Http404
+    from . import ai
+
+    approved = list(Profile.objects.filter(is_teacher=True).select_related("user", "teacher_by", "creator_by").order_by("-is_creator", "-teacher_since"))
+    for p in approved:
+        p.ai_month = ai.spent_this_month(p.user) if (p.is_creator or p.is_curator) else None
     return render(request, "breakout/teachers.html", {
         "section": "teachers",
         "pending": access.pending_teachers(),
-        "approved": Profile.objects.filter(is_teacher=True).select_related("user", "teacher_by", "creator_by").order_by("-is_creator", "-teacher_since"),
+        "approved": approved,
+        "ai_month": ai.spent_this_month(),
     })
 
 

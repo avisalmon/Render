@@ -14,3 +14,9 @@ def pending_teacher_count(user):
     if not access.is_curator(user):
         return None
     return access.pending_teachers().count()
+
+
+@register.simple_tag
+def user_may_write(user):
+    """Creators and curators see "my conversations" in the nav (B.6)."""
+    return access.may_write(user)

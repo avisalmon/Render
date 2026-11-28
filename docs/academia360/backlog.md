@@ -21,7 +21,7 @@
 | G. Committee assistant | Model metadata, read-only queries, document index, super chat | planned |
 | H. Leader's assistant | Policies, building the request, readiness view, KPI guidance | planned |
 | **I.1 The first research pass** | The 12 empty institutions filled by public research, every fact with its link, landed by `load_research` | LIVE 2026-11-27 22:40 |
-| **I.2 The recheck of every institution** | All 36 rechecked against public sources: corrections by row id, removals, more researchers (441 to 780), OpenAlex numbers in one central pass | built in dev 2026-11-28 |
+| **I.2 The recheck of every institution** | All 36 rechecked against public sources: corrections by row id, removals, more researchers (441 to 780), OpenAlex numbers in one central pass | LIVE 2026-11-28 10:25 (train T1128-101620; 9,183 rows replicated, 649 removed rows mirrored) |
 | I. Enrichment at scale | Agent runs as a routine, health view | planned |
 | J. Later | Mail bot, scheduler, English, open data | planned |
 
@@ -331,5 +331,5 @@ correct... find more interesting professors and researchers for each one."
 
 | Sprint | Content | Tests written first | Status |
 | --- | --- | --- | --- |
-| I.2 Recheck | applier + command, pilot, 21 agents, review and land per file, OpenAlex pass, sweep of old metrics and names | quoted corrections only, locked fields and other institutions out of reach; removal hides or deletes; logged under one run, dry run leaves nothing, a second run changes nothing; a move to a named unit before the wrong unit is removed | built in dev 2026-11-28; 4 tests |
+| I.2 Recheck | applier + command, pilot, 21 agents, review and land per file, OpenAlex pass, sweep of old metrics and names | quoted corrections only, locked fields and other institutions out of reach; removal hides or deletes; logged under one run, dry run leaves nothing, a second run changes nothing; a move to a named unit before the wrong unit is removed | LIVE 2026-11-28 (T1128-101620); 4 tests |
 
