@@ -20,7 +20,8 @@
 | F. Leader's workspace | Home, submit, KPIs, budget, 20%, letters | planned |
 | G. Committee assistant | Model metadata, read-only queries, document index, super chat | planned |
 | H. Leader's assistant | Policies, building the request, readiness view, KPI guidance | planned |
-| **I.1 The first research pass** | The 12 empty institutions filled by public research, every fact with its link, landed by `load_research` | built in dev 2026-11-27 evening |
+| **I.1 The first research pass** | The 12 empty institutions filled by public research, every fact with its link, landed by `load_research` | LIVE 2026-11-27 22:40 |
+| **I.2 The recheck of every institution** | All 36 rechecked against public sources: corrections by row id, removals, more researchers (441 to 780), OpenAlex numbers in one central pass | built in dev 2026-11-28 |
 | I. Enrichment at scale | Agent runs as a routine, health view | planned |
 | J. Later | Mail bot, scheduler, English, open data | planned |
 
@@ -287,5 +288,48 @@ empty); recheck of the other 23 is still open.
 | Sprint | Content | Tests written first | Status |
 | --- | --- | --- | --- |
 | I.1 Load and land | loader + command, review pass, land in dev, render every page | lands with source and drops what does not fit; a second run adds nothing and keeps an admin edit; coverage reads rich and the command records a run; one name at two institutions gets two addresses | built in dev 2026-11-27 evening; 4 tests |
-| I.1b OpenAlex backfill | publications and metrics for people the agents could not reach, by stored OpenAlex id or a sure affiliation match | | planned, after the quota resets |
+| I.1b OpenAlex backfill | publications and metrics for people the agents could not reach, by stored OpenAlex id or a sure affiliation match | | done inside I.2 (the central OpenAlex pass) |
+
+
+## I.2 The recheck of every institution
+
+Avi, 2026-11-28: "go over all existing institutes and reinvestigate
+everything to see that the information that we have is, first of all,
+correct... find more interesting professors and researchers for each one."
+
+- Each agent got what the site holds for its institution (every row with
+  its id) plus OpenAlex's most-cited authors there as a hint, and wrote
+  corrections (one field of one row, quoting the stored value), removals
+  and additions. A pilot (Tel Aviv, Kinneret, Tel-Hai) first, then the rest.
+- `academia360/research_recheck.py` + `manage.py recheck_research
+  FILE_OR_FOLDER [--only] [--dry-run]`: a correction lands only while the
+  stored value is the quoted one; plain fields only (no ids, slugs, flags,
+  bookkeeping); a person or program may move to a unit of the same
+  institution, by name; removals hide where a flag exists and delete
+  otherwise; additions through `land`; order corrections, additions, moves,
+  removals; every change in the change log under one run; the institution
+  reads "rechecked" with a note of counts and gaps.
+- OpenAlex centrally, not from the agents: one filtered list per
+  institution (1 credit each, a text search costs 10), names matched
+  exactly within that list or by a stored id, top five works for people
+  with fewer than three. About 600 of the 1,000 free daily credits.
+- What the recheck found: most of the October reference import was
+  invented. Researchers who do not exist, headings and projects loaded as
+  people, academic ranks loaded as faculties, invented prizes, papers,
+  datasets, partners and grants, wrong fields for real people, wrong
+  founding years and rankings. The 177 h-index and citation numbers from
+  the reference were removed (a quarter were far from OpenAlex; the rest
+  were rounded guesses).
+- Held for Avi: Tel-Hai's new name and university status (from 2026/27),
+  Hadassah's new name, Carmel's active flag (closed 2017), Rishon's
+  budgeted-by-VATAT flag (the college is not state-funded), one Hebrew
+  spelling made by transliteration only (Ariel).
+- Dev result: 36 rechecked, 35 rich, 1 partial (Carmel); 780 researchers,
+  557 with fresh OpenAlex metrics, 2,771 publications. Prod needs the
+  removals mirrored too: replication adds and updates rows, it never
+  deletes.
+
+| Sprint | Content | Tests written first | Status |
+| --- | --- | --- | --- |
+| I.2 Recheck | applier + command, pilot, 21 agents, review and land per file, OpenAlex pass, sweep of old metrics and names | quoted corrections only, locked fields and other institutions out of reach; removal hides or deletes; logged under one run, dry run leaves nothing, a second run changes nothing; a move to a named unit before the wrong unit is removed | built in dev 2026-11-28; 4 tests |
 

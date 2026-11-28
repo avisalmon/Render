@@ -17,6 +17,41 @@ Newest first.
 
 ---
 
+## PM-118 · 2026-11-28 · Academia360: most of the reference import was invented, found only when Avi asked for a recheck
+
+**What happened.** Avi asked to recheck every institution. Agents compared
+each stored row with public sources and found that most of what the
+October reference import brought was not true: researchers who do not
+exist, chapter headings and projects stored as people, academic ranks
+stored as faculties, invented prizes, papers, datasets, partners and
+grants, real people given the wrong field, wrong founding years and
+rankings, and h-index numbers that were rounded guesses. It had been on
+the public site for weeks, each row with a source line that looked
+trustworthy.
+
+**Why the process let it.** The reference was treated as a source. It was
+itself written with an AI, so "from the reference" only said where the text
+came from, never that a fact was checked. The import's tests checked shape
+(kinds, links, years), not truth. The first research pass (I.1) required a
+URL per fact for the new institutions, but nobody applied the same bar to
+the rows already there.
+
+**Rule.** (a) Knowledge imported from any document that is not itself a
+primary source, above all one an AI helped write, is unverified until each
+fact is checked against a page that states it; before a public page shows
+it, it is either checked or marked as unchecked. (b) A recheck pass reads
+what is stored row by row and returns corrections by id with the quoted
+current value, removals and additions; the applier changes a field only
+while it still holds the quoted value, hides before it deletes, and logs
+every change. (c) Numbers about people (h-index, citations) come from the
+one database that states them, fetched centrally, never from prose.
+
+- Here: `docs/building_an_app.md` (mistake 93), `academia360/research_recheck.py`,
+  `tests/test_academia360_i2.py`, `docs/academia360/backlog.md` (I.2).
+- BKM: f45fc1d
+
+---
+
 ## PM-117 · 2026-11-28 · Academia360: raw markdown on the institution pages and a blocked map, both found by Avi on the live site
 
 **What happened.** Avi saw `**` and list dashes inside section text on the
